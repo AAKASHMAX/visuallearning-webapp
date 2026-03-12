@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
-import { useLanguage, LANGUAGES } from "@/lib/language";
+import { useLanguage } from "@/lib/language";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Menu, X, User, LogOut, Globe } from "lucide-react";
@@ -27,7 +27,7 @@ export function Navbar() {
     return () => document.removeEventListener("click", handler);
   }, [langOpen]);
 
-  const currentLang = LANGUAGES.find((l) => l.value === language);
+  const currentLang = enabledLanguages.find((l) => l.value === language);
 
   return (
     <nav className="bg-primary text-white sticky top-0 z-50 shadow-lg">

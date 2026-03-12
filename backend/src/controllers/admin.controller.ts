@@ -9,7 +9,7 @@ export const subjectSchema = z.object({ classId: z.string(), name: z.string().mi
 export const chapterSchema = z.object({ subjectId: z.string(), name: z.string().min(1), order: z.number().int().optional() });
 export const videoSchema = z.object({
   chapterId: z.string(), title: z.string().min(1), youtubeVideoId: z.string().min(1),
-  language: z.enum(["ENGLISH", "HINDI", "MARATHI", "TAMIL", "TELUGU"]).optional(),
+  language: z.string().optional(),
   duration: z.string().optional(), order: z.number().int().optional(), isFree: z.boolean().optional(),
 });
 export const noteSchema = z.object({ chapterId: z.string(), title: z.string().min(1), pdfUrl: z.string().min(1) });
@@ -172,14 +172,14 @@ export async function deleteQuestion(req: Request, res: Response) { return crudD
 // --- Subscriptions Management ---
 export const grantSubscriptionSchema = z.object({
   userId: z.string(),
-  plan: z.enum(["MONTHLY", "YEARLY", "SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS"]),
+  plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
   durationDays: z.number().int().min(1),
   amount: z.number().int().min(0).optional(),
 });
 
 export const updateSubscriptionSchema = z.object({
-  plan: z.enum(["MONTHLY", "YEARLY", "SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS"]).optional(),
+  plan: z.string().optional(),
   classesAccess: z.array(z.string()).optional(),
   status: z.enum(["ACTIVE", "EXPIRED", "CANCELLED"]).optional(),
   expiryDate: z.string().optional(),
@@ -296,7 +296,13 @@ export async function cancelSubscription(req: Request, res: Response) {
 
 // --- Settings Management ---
 const DEFAULT_SETTINGS: Record<string, string> = {
-  enabled_languages: JSON.stringify(["ENGLISH", "HINDI", "MARATHI", "TAMIL", "TELUGU"]),
+  enabled_languages: JSON.stringify([
+    { key: "ENGLISH", label: "English" },
+    { key: "HINDI", label: "Hindi" },
+    { key: "MARATHI", label: "Marathi" },
+    { key: "TAMIL", label: "Tamil" },
+    { key: "TELUGU", label: "Telugu" },
+  ]),
   plans_config: JSON.stringify({
     SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1 },
     MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2 },
@@ -334,9 +340,10 @@ export async function updateLanguageSettings(req: Request, res: Response) {
     if (!Array.isArray(enabledLanguages) || enabledLanguages.length === 0) {
       return error(res, "At least one language must be enabled", 400);
     }
-    // ENGLISH must always be enabled (it's the fallback)
-    if (!enabledLanguages.includes("ENGLISH")) {
-      enabledLanguages.unshift("ENGLISH");
+    // Ensure ENGLISH is always present
+    const hasEnglish = enabledLanguages.some((l: any) => (typeof l === "string" ? l : l.key) === "ENGLISH");
+    if (!hasEnglish) {
+      enabledLanguages.unshift({ key: "ENGLISH", label: "English" });
     }
 
     await prisma.setting.upsert({
@@ -380,7 +387,12 @@ export async function getPublicSettings(_req: Request, res: Response) {
       getSetting("plans_config"),
     ]);
 
-    const languages = JSON.parse(enabledLanguages);
+    const rawLanguages = JSON.parse(enabledLanguages);
+    // Normalize: support both old format (string[]) and new format ({key, label}[])
+    const languages = rawLanguages.map((l: any) =>
+      typeof l === "string" ? { key: l, label: l.charAt(0) + l.slice(1).toLowerCase() } : l
+    );
+
     const plans = JSON.parse(plansConfig);
 
     // Only return enabled plans to the public

@@ -1,19 +1,23 @@
 "use client";
 import { create } from "zustand";
-import type { Language } from "@/types";
 import api from "@/lib/api";
 
+export interface LangOption {
+  value: string;
+  label: string;
+}
+
 interface LanguageState {
-  language: Language;
-  enabledLanguages: { value: Language; label: string }[];
+  language: string;
+  enabledLanguages: LangOption[];
   loaded: boolean;
-  setLanguage: (language: Language) => void;
+  setLanguage: (language: string) => void;
   hydrate: () => void;
   fetchEnabledLanguages: () => Promise<void>;
 }
 
-// Full list for label mapping
-const ALL_LANGUAGES: { value: Language; label: string }[] = [
+// Fallback defaults
+const DEFAULT_LANGUAGES: LangOption[] = [
   { value: "ENGLISH", label: "English" },
   { value: "HINDI", label: "Hindi" },
   { value: "MARATHI", label: "Marathi" },
@@ -21,12 +25,12 @@ const ALL_LANGUAGES: { value: Language; label: string }[] = [
   { value: "TELUGU", label: "Telugu" },
 ];
 
-// Fallback export for components that just need the full list
-export const LANGUAGES = ALL_LANGUAGES;
+// Kept for backwards compatibility with imports
+export const LANGUAGES = DEFAULT_LANGUAGES;
 
 export const useLanguage = create<LanguageState>((set, get) => ({
   language: "ENGLISH",
-  enabledLanguages: ALL_LANGUAGES, // default to all until API responds
+  enabledLanguages: DEFAULT_LANGUAGES,
   loaded: false,
 
   setLanguage: (language) => {
@@ -35,11 +39,10 @@ export const useLanguage = create<LanguageState>((set, get) => ({
   },
 
   hydrate: () => {
-    const stored = localStorage.getItem("vl_language") as Language | null;
-    if (stored && ALL_LANGUAGES.some((l) => l.value === stored)) {
+    const stored = localStorage.getItem("vl_language");
+    if (stored) {
       set({ language: stored });
     }
-    // Fetch enabled languages if not loaded yet
     if (!get().loaded) {
       get().fetchEnabledLanguages();
     }
@@ -48,18 +51,21 @@ export const useLanguage = create<LanguageState>((set, get) => ({
   fetchEnabledLanguages: async () => {
     try {
       const { data } = await api.get("/admin/public-settings");
-      const enabled: string[] = data.data.languages || [];
-      const filtered = ALL_LANGUAGES.filter((l) => enabled.includes(l.value));
-      set({ enabledLanguages: filtered.length > 0 ? filtered : ALL_LANGUAGES, loaded: true });
+      const rawLangs: any[] = data.data.languages || [];
+      // API returns {key, label} objects
+      const langs: LangOption[] = rawLangs.map((l: any) => ({
+        value: typeof l === "string" ? l : l.key,
+        label: typeof l === "string" ? l.charAt(0) + l.slice(1).toLowerCase() : l.label,
+      }));
+      set({ enabledLanguages: langs.length > 0 ? langs : DEFAULT_LANGUAGES, loaded: true });
 
       // If current language is no longer enabled, reset to ENGLISH
       const current = get().language;
-      if (!enabled.includes(current)) {
+      if (!langs.some((l) => l.value === current)) {
         localStorage.setItem("vl_language", "ENGLISH");
         set({ language: "ENGLISH" });
       }
     } catch {
-      // If API fails, keep all languages available
       set({ loaded: true });
     }
   },

@@ -5,10 +5,8 @@ import { config } from "../config";
 import { createOrder, verifySignature } from "../services/razorpay";
 import { success, error } from "../utils/apiResponse";
 
-const allPlanTypes = ["MONTHLY", "YEARLY", "SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS"] as const;
-
 export const createOrderSchema = z.object({
-  plan: z.enum(allPlanTypes),
+  plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
 });
 
@@ -16,7 +14,7 @@ export const verifyPaymentSchema = z.object({
   razorpay_order_id: z.string(),
   razorpay_payment_id: z.string(),
   razorpay_signature: z.string(),
-  plan: z.enum(allPlanTypes),
+  plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
 });
 
@@ -81,12 +79,11 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     const { plan, classesAccess } = req.body;
     const planConfig = await getPlanConfig(plan);
 
-    // Validate classesAccess for class-based plans
-    if (plan === "SINGLE_CLASS" && (!classesAccess || classesAccess.length !== 1)) {
-      return error(res, "Single Class plan requires exactly 1 class", 400);
-    }
-    if (plan === "MULTI_CLASS" && (!classesAccess || classesAccess.length !== 2)) {
-      return error(res, "Multi Class plan requires exactly 2 classes", 400);
+    // Validate classesAccess based on plan's classSelection setting
+    if (planConfig.classSelection > 0) {
+      if (!classesAccess || classesAccess.length !== planConfig.classSelection) {
+        return error(res, `This plan requires exactly ${planConfig.classSelection} class(es)`, 400);
+      }
     }
 
     // Check existing active subscription
@@ -122,9 +119,9 @@ export async function verifyPayment(req: Request, res: Response) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
 
-    // For FULL_ACCESS, MONTHLY, YEARLY — grant all classes
+    // If plan has classSelection > 0, use provided classesAccess; otherwise grant all
     let resolvedClassesAccess: string[] = [];
-    if (plan === "SINGLE_CLASS" || plan === "MULTI_CLASS") {
+    if (planConfig.classSelection > 0) {
       resolvedClassesAccess = classesAccess || [];
     } else {
       const allClasses = await prisma.class.findMany({ select: { id: true } });
@@ -140,7 +137,7 @@ export async function verifyPayment(req: Request, res: Response) {
     const subscription = await prisma.subscription.create({
       data: {
         userId: req.user!.id,
-        plan: plan as any,
+        plan,
         classesAccess: resolvedClassesAccess,
         expiryDate,
         paymentId: razorpay_payment_id,

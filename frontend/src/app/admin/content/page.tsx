@@ -7,6 +7,7 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useLanguage, type LangOption } from "@/lib/language";
 
 type Tab = "classes" | "subjects" | "chapters" | "videos";
 
@@ -17,6 +18,9 @@ export default function AdminContentPage() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [editing, setEditing] = useState<string | null>(null);
+
+  // Languages from API
+  const { enabledLanguages } = useLanguage();
 
   // Parent selectors
   const [classes, setClasses] = useState<any[]>([]);
@@ -176,11 +180,9 @@ export default function AdminContentPage() {
                     onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                     className="border rounded-lg px-3 py-2 text-sm w-full"
                   >
-                    <option value="ENGLISH">English</option>
-                    <option value="HINDI">Hindi</option>
-                    <option value="MARATHI">Marathi</option>
-                    <option value="TAMIL">Tamil</option>
-                    <option value="TELUGU">Telugu</option>
+                    {enabledLanguages.map((lang) => (
+                      <option key={lang.value} value={lang.value}>{lang.label}</option>
+                    ))}
                   </select>
                 </div>
                 <Input label="YouTube Link or Video ID" value={formData.youtubeVideoId || ""} onChange={(e) => {

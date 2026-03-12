@@ -20,13 +20,7 @@ interface SubRow {
   user: { id: string; name: string; email: string };
 }
 
-const PLAN_LABELS: Record<string, string> = {
-  MONTHLY: "Monthly",
-  YEARLY: "Yearly",
-  SINGLE_CLASS: "Single Class",
-  MULTI_CLASS: "Multi Class",
-  FULL_ACCESS: "Full Access",
-};
+// Will be loaded from settings API
 
 export default function AdminSubscriptionsPage() {
   const [subscriptions, setSubs] = useState<SubRow[]>([]);
@@ -44,9 +38,19 @@ export default function AdminSubscriptionsPage() {
 
   // Classes for selection
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  // Plan labels from settings
+  const [planLabels, setPlanLabels] = useState<Record<string, string>>({});
+  const [planKeys, setPlanKeys] = useState<string[]>([]);
 
   useEffect(() => {
     api.get("/courses/classes").then(({ data }) => setClasses(data.data));
+    api.get("/admin/settings").then(({ data }) => {
+      const plans = data.data.plansConfig || {};
+      const labels: Record<string, string> = {};
+      Object.entries(plans).forEach(([k, v]: [string, any]) => { labels[k] = v.label; });
+      setPlanLabels(labels);
+      setPlanKeys(Object.keys(plans));
+    });
   }, []);
 
   const load = () => {
@@ -151,7 +155,7 @@ export default function AdminSubscriptionsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
               <select value={grantForm.plan} onChange={(e) => setGrantForm({ ...grantForm, plan: e.target.value })}
                 className="border rounded-lg px-3 py-2 text-sm w-full">
-                {Object.entries(PLAN_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {planKeys.map((k) => <option key={k} value={k}>{planLabels[k] || k}</option>)}
               </select>
             </div>
             <Input label="Duration (days)" type="number" value={grantForm.durationDays} onChange={(e) => setGrantForm({ ...grantForm, durationDays: parseInt(e.target.value) || 30 })} />
@@ -185,7 +189,7 @@ export default function AdminSubscriptionsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
               <select value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}
                 className="border rounded-lg px-3 py-2 text-sm w-full">
-                {Object.entries(PLAN_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {planKeys.map((k) => <option key={k} value={k}>{planLabels[k] || k}</option>)}
               </select>
             </div>
             <div>
@@ -239,7 +243,7 @@ export default function AdminSubscriptionsPage() {
                       <p className="font-medium">{sub.user.name}</p>
                       <p className="text-xs text-gray-400">{sub.user.email}</p>
                     </td>
-                    <td className="p-4"><Badge variant="info">{PLAN_LABELS[sub.plan] || sub.plan}</Badge></td>
+                    <td className="p-4"><Badge variant="info">{planLabels[sub.plan] || sub.plan}</Badge></td>
                     <td className="p-4 text-xs text-gray-500">
                       {sub.classesAccess.length > 0
                         ? classes.filter((c) => sub.classesAccess.includes(c.id)).map((c) => c.name).join(", ") || "All"

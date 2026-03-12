@@ -8,11 +8,11 @@ export interface User {
   subscription?: Subscription | null;
 }
 
-export type Language = "ENGLISH" | "HINDI" | "MARATHI" | "TAMIL" | "TELUGU";
+export type Language = string;
 
 export interface Subscription {
   id: string;
-  plan: "MONTHLY" | "YEARLY" | "SINGLE_CLASS" | "MULTI_CLASS" | "FULL_ACCESS";
+  plan: string;
   classesAccess: string[];
   startDate: string;
   expiryDate: string;

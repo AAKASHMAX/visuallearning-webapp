@@ -82,7 +82,7 @@ export async function getVideos(req: Request, res: Response) {
 
     // Fetch videos for requested language
     let videos = await prisma.video.findMany({
-      where: { chapterId: id, language: language as any },
+      where: { chapterId: id, language },
       orderBy: { order: "asc" },
     });
 

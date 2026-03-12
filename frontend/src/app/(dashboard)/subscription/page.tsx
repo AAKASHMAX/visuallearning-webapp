@@ -43,13 +43,9 @@ export default function SubscriptionPage() {
 
   const isActive = subscription?.status === "ACTIVE" && new Date(subscription.expiryDate) > new Date();
 
-  const planLabel: Record<string, string> = {
-    MONTHLY: "Monthly",
-    YEARLY: "Yearly",
-    SINGLE_CLASS: "Single Class",
-    MULTI_CLASS: "Multi Class",
-    FULL_ACCESS: "Full Access",
-  };
+  // Build plan labels from fetched plans
+  const planLabel: Record<string, string> = {};
+  plans.forEach((p) => { planLabel[p.id] = p.name; });
 
   return (
     <div className="max-w-5xl mx-auto">

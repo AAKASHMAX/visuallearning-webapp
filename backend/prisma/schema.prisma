@@ -12,22 +12,6 @@ enum Role {
   ADMIN
 }
 
-enum PlanType {
-  MONTHLY
-  YEARLY
-  SINGLE_CLASS
-  MULTI_CLASS
-  FULL_ACCESS
-}
-
-enum Language {
-  ENGLISH
-  HINDI
-  MARATHI
-  TAMIL
-  TELUGU
-}
-
 enum SubscriptionStatus {
   ACTIVE
   EXPIRED
@@ -58,7 +42,7 @@ model User {
 model Subscription {
   id                 String             @id @default(cuid())
   userId             String
-  plan               PlanType
+  plan               String
   classesAccess      String[]           @default([])
   startDate          DateTime           @default(now())
   expiryDate         DateTime
@@ -119,7 +103,7 @@ model Video {
   chapterId      String
   title          String
   youtubeVideoId String
-  language       Language        @default(ENGLISH)
+  language       String          @default("ENGLISH")
   duration       String?
   order          Int             @default(0)
   isFree         Boolean         @default(false)

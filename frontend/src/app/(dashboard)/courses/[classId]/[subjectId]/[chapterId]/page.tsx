@@ -6,16 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import { VideoPlayer } from "@/components/video/video-player";
-import { useLanguage, LANGUAGES } from "@/lib/language";
+import { useLanguage } from "@/lib/language";
 import api from "@/lib/api";
-import type { Video, Note, Question, Language } from "@/types";
+import type { Video, Note, Question } from "@/types";
 import { PlayCircle, Lock, FileText, CheckCircle, XCircle, Globe, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function ChapterDetailPage() {
   const { chapterId } = useParams();
-  const { language } = useLanguage();
+  const { language, enabledLanguages } = useLanguage();
   const [videos, setVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -25,7 +25,7 @@ export default function ChapterDetailPage() {
   const [tab, setTab] = useState<"videos" | "notes" | "questions">("videos");
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
   const [usingFallback, setUsingFallback] = useState(false);
-  const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
 
   const loadVideos = useCallback(async () => {
     try {
@@ -59,7 +59,7 @@ export default function ChapterDetailPage() {
 
   if (loading) return <PageLoader />;
 
-  const currentLangLabel = LANGUAGES.find((l) => l.value === language)?.label || language;
+  const currentLangLabel = enabledLanguages.find((l) => l.value === language)?.label || language;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -68,7 +68,7 @@ export default function ChapterDetailPage() {
         {availableLanguages.length > 0 && (
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Globe className="w-4 h-4" />
-            <span>Available in: {availableLanguages.map((l) => LANGUAGES.find((x) => x.value === l)?.label || l).join(", ")}</span>
+            <span>Available in: {availableLanguages.map((l) => enabledLanguages.find((x) => x.value === l)?.label || l).join(", ")}</span>
           </div>
         )}
       </div>
