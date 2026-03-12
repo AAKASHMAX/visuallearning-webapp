@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: visuallearning-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_qLi6vFODMz4k@ep-polished-cell-a18eh31p-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRY
+        value: 7d
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: FRONTEND_URL
+        value: https://visuallearning-webapp.vercel.app
