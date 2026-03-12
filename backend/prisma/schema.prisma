@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum PlanType {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id                String         @id @default(cuid())
+  name              String
+  email             String         @unique
+  password          String
+  role              Role           @default(STUDENT)
+  emailVerified     Boolean        @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  blocked           Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  subscriptions     Subscription[]
+  watchProgress     WatchProgress[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String
+  plan               PlanType
+  startDate          DateTime           @default(now())
+  expiryDate         DateTime
+  paymentId          String?
+  razorpayOrderId    String?
+  razorpaySignature  String?
+  status             SubscriptionStatus @default(ACTIVE)
+  amount             Int
+  createdAt          DateTime           @default(now())
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+model Class {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  order    Int       @default(0)
+
+  subjects Subject[]
+
+  @@index([order])
+}
+
+model Subject {
+  id       String    @id @default(cuid())
+  classId  String
+  name     String
+  icon     String?
+
+  class    Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+
+  @@unique([classId, name])
+  @@index([classId])
+}
+
+model Chapter {
+  id        String     @id @default(cuid())
+  subjectId String
+  name      String
+  order     Int        @default(0)
+
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  videos    Video[]
+  notes     Note[]
+  questions Question[]
+
+  @@index([subjectId])
+  @@index([order])
+}
+
+model Video {
+  id             String          @id @default(cuid())
+  chapterId      String
+  title          String
+  youtubeVideoId String
+  duration       String?
+  order          Int             @default(0)
+  isFree         Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+
+  chapter        Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  watchProgress  WatchProgress[]
+
+  @@index([chapterId])
+  @@index([order])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  chapterId String
+  title     String
+  pdfUrl    String
+  createdAt DateTime @default(now())
+
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  chapterId     String
+  questionText  String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctOption String
+  solution      String?
+  createdAt     DateTime @default(now())
+
+  chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+}
+
+model WatchProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  progress  Float    @default(0)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+}
