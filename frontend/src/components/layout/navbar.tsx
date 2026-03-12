@@ -8,7 +8,7 @@ import { BookOpen, Menu, X, User, LogOut, Globe } from "lucide-react";
 
 export function Navbar() {
   const { user, isAuthenticated, logout, hydrate } = useAuth();
-  const { language, setLanguage, hydrate: hydrateLanguage } = useLanguage();
+  const { language, setLanguage, enabledLanguages, hydrate: hydrateLanguage } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -56,7 +56,7 @@ export function Navbar() {
                 </button>
                 {langOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl py-1 z-50">
-                    {LANGUAGES.map((lang) => (
+                    {enabledLanguages.map((lang) => (
                       <button
                         key={lang.value}
                         onClick={(e) => {
@@ -117,7 +117,7 @@ export function Navbar() {
               <div className="py-2">
                 <p className="text-xs text-white/60 mb-1 flex items-center gap-1"><Globe className="w-3 h-3" /> Language</p>
                 <div className="flex flex-wrap gap-2">
-                  {LANGUAGES.map((lang) => (
+                  {enabledLanguages.map((lang) => (
                     <button
                       key={lang.value}
                       onClick={() => { setLanguage(lang.value); }}

@@ -162,6 +162,12 @@ model Question {
   @@index([chapterId])
 }
 
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model WatchProgress {
   id        String   @id @default(cuid())
   userId    String

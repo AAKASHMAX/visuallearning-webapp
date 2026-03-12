@@ -169,6 +169,239 @@ export async function addQuestion(req: Request, res: Response) { return crudCrea
 export async function updateQuestion(req: Request, res: Response) { return crudUpdate(prisma.question, req.params.id, req.body, res); }
 export async function deleteQuestion(req: Request, res: Response) { return crudDelete(prisma.question, req.params.id, res); }
 
+// --- Subscriptions Management ---
+export const grantSubscriptionSchema = z.object({
+  userId: z.string(),
+  plan: z.enum(["MONTHLY", "YEARLY", "SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS"]),
+  classesAccess: z.array(z.string()).optional(),
+  durationDays: z.number().int().min(1),
+  amount: z.number().int().min(0).optional(),
+});
+
+export const updateSubscriptionSchema = z.object({
+  plan: z.enum(["MONTHLY", "YEARLY", "SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS"]).optional(),
+  classesAccess: z.array(z.string()).optional(),
+  status: z.enum(["ACTIVE", "EXPIRED", "CANCELLED"]).optional(),
+  expiryDate: z.string().optional(),
+});
+
+export async function getAllSubscriptions(req: Request, res: Response) {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const status = req.query.status as string || "";
+
+    const where = status ? { status: status as any } : {};
+
+    const [subscriptions, total] = await Promise.all([
+      prisma.subscription.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true, email: true } } },
+      }),
+      prisma.subscription.count({ where }),
+    ]);
+
+    return success(res, { subscriptions, total, page, totalPages: Math.ceil(total / limit) });
+  } catch (e) {
+    console.error("Get subscriptions error:", e);
+    return error(res, "Failed to fetch subscriptions");
+  }
+}
+
+export async function grantSubscription(req: Request, res: Response) {
+  try {
+    const { userId, plan, classesAccess, durationDays, amount } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return error(res, "User not found", 404);
+
+    // Expire existing active subscriptions
+    await prisma.subscription.updateMany({
+      where: { userId, status: "ACTIVE" },
+      data: { status: "EXPIRED" },
+    });
+
+    // Resolve classesAccess for full access plans
+    let resolvedClasses = classesAccess || [];
+    if (["MONTHLY", "YEARLY", "FULL_ACCESS"].includes(plan)) {
+      const allClasses = await prisma.class.findMany({ select: { id: true } });
+      resolvedClasses = allClasses.map((c) => c.id);
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + durationDays);
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId,
+        plan,
+        classesAccess: resolvedClasses,
+        expiryDate,
+        status: "ACTIVE",
+        amount: amount || 0,
+      },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+
+    return success(res, subscription, "Subscription granted successfully", 201);
+  } catch (e) {
+    console.error("Grant subscription error:", e);
+    return error(res, "Failed to grant subscription");
+  }
+}
+
+export async function updateSubscription(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const { plan, classesAccess, status: newStatus, expiryDate } = req.body;
+
+    const existing = await prisma.subscription.findUnique({ where: { id } });
+    if (!existing) return error(res, "Subscription not found", 404);
+
+    const updateData: any = {};
+    if (plan) updateData.plan = plan;
+    if (classesAccess) updateData.classesAccess = classesAccess;
+    if (newStatus) updateData.status = newStatus;
+    if (expiryDate) updateData.expiryDate = new Date(expiryDate);
+
+    const subscription = await prisma.subscription.update({
+      where: { id },
+      data: updateData,
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+
+    return success(res, subscription, "Subscription updated");
+  } catch (e) {
+    console.error("Update subscription error:", e);
+    return error(res, "Failed to update subscription");
+  }
+}
+
+export async function cancelSubscription(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const subscription = await prisma.subscription.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+    return success(res, subscription, "Subscription cancelled");
+  } catch (e: any) {
+    console.error("Cancel subscription error:", e);
+    return error(res, e.code === "P2025" ? "Subscription not found" : "Failed to cancel");
+  }
+}
+
+// --- Settings Management ---
+const DEFAULT_SETTINGS: Record<string, string> = {
+  enabled_languages: JSON.stringify(["ENGLISH", "HINDI", "MARATHI", "TAMIL", "TELUGU"]),
+  plans_config: JSON.stringify({
+    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1 },
+    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2 },
+    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0 },
+    MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0 },
+    YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0 },
+  }),
+};
+
+async function getSetting(key: string): Promise<string> {
+  const setting = await prisma.setting.findUnique({ where: { key } });
+  return setting?.value || DEFAULT_SETTINGS[key] || "";
+}
+
+export async function getSettings(_req: Request, res: Response) {
+  try {
+    const [enabledLanguages, plansConfig] = await Promise.all([
+      getSetting("enabled_languages"),
+      getSetting("plans_config"),
+    ]);
+
+    return success(res, {
+      enabledLanguages: JSON.parse(enabledLanguages),
+      plansConfig: JSON.parse(plansConfig),
+    });
+  } catch (e) {
+    console.error("Get settings error:", e);
+    return error(res, "Failed to fetch settings");
+  }
+}
+
+export async function updateLanguageSettings(req: Request, res: Response) {
+  try {
+    const { enabledLanguages } = req.body;
+    if (!Array.isArray(enabledLanguages) || enabledLanguages.length === 0) {
+      return error(res, "At least one language must be enabled", 400);
+    }
+    // ENGLISH must always be enabled (it's the fallback)
+    if (!enabledLanguages.includes("ENGLISH")) {
+      enabledLanguages.unshift("ENGLISH");
+    }
+
+    await prisma.setting.upsert({
+      where: { key: "enabled_languages" },
+      update: { value: JSON.stringify(enabledLanguages) },
+      create: { key: "enabled_languages", value: JSON.stringify(enabledLanguages) },
+    });
+
+    return success(res, { enabledLanguages }, "Language settings updated");
+  } catch (e) {
+    console.error("Update language settings error:", e);
+    return error(res, "Failed to update language settings");
+  }
+}
+
+export async function updatePlanSettings(req: Request, res: Response) {
+  try {
+    const { plansConfig } = req.body;
+    if (!plansConfig || typeof plansConfig !== "object") {
+      return error(res, "Invalid plans configuration", 400);
+    }
+
+    await prisma.setting.upsert({
+      where: { key: "plans_config" },
+      update: { value: JSON.stringify(plansConfig) },
+      create: { key: "plans_config", value: JSON.stringify(plansConfig) },
+    });
+
+    return success(res, { plansConfig }, "Plan settings updated");
+  } catch (e) {
+    console.error("Update plan settings error:", e);
+    return error(res, "Failed to update plan settings");
+  }
+}
+
+// --- Public settings (no auth needed) ---
+export async function getPublicSettings(_req: Request, res: Response) {
+  try {
+    const [enabledLanguages, plansConfig] = await Promise.all([
+      getSetting("enabled_languages"),
+      getSetting("plans_config"),
+    ]);
+
+    const languages = JSON.parse(enabledLanguages);
+    const plans = JSON.parse(plansConfig);
+
+    // Only return enabled plans to the public
+    const enabledPlans = Object.entries(plans)
+      .filter(([_, v]: [string, any]) => v.enabled)
+      .map(([key, v]: [string, any]) => ({
+        id: key,
+        name: v.label,
+        price: v.amount / 100,
+        duration: `${v.duration} days`,
+        classSelection: v.classSelection || 0,
+        enabled: v.enabled,
+      }));
+
+    return success(res, { languages, plans: enabledPlans });
+  } catch (e) {
+    console.error("Get public settings error:", e);
+    return error(res, "Failed to fetch settings");
+  }
+}
+
 // --- Analytics ---
 export async function getMostWatched(_req: Request, res: Response) {
   try {

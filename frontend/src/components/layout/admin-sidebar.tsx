@@ -2,14 +2,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/content", label: "Content", icon: FolderOpen },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminSidebar() {

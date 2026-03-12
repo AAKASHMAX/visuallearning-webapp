@@ -11,9 +11,18 @@ import {
   addNote, deleteNote, noteSchema,
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   getMostWatched, getRevenueByMonth,
+  getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
+  grantSubscriptionSchema, updateSubscriptionSchema,
+  getSettings, updateLanguageSettings, updatePlanSettings,
+  getPublicSettings,
 } from "../controllers/admin.controller";
 
 const router = Router();
+
+// Public settings endpoint (no auth)
+router.get("/public-settings", getPublicSettings);
+
+// All other routes require admin auth
 router.use(authenticate, requireAdmin);
 
 // Dashboard
@@ -22,6 +31,17 @@ router.get("/stats", getStats);
 // Users
 router.get("/users", getAllUsers);
 router.patch("/users/:id/block", toggleBlockUser);
+
+// Subscriptions
+router.get("/subscriptions", getAllSubscriptions);
+router.post("/subscriptions", validate(grantSubscriptionSchema), grantSubscription);
+router.put("/subscriptions/:id", updateSubscription);
+router.delete("/subscriptions/:id", cancelSubscription);
+
+// Settings
+router.get("/settings", getSettings);
+router.put("/settings/languages", updateLanguageSettings);
+router.put("/settings/plans", updatePlanSettings);
 
 // Classes
 router.post("/classes", validate(classSchema), addClass);

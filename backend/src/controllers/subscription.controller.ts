@@ -20,60 +20,66 @@ export const verifyPaymentSchema = z.object({
   classesAccess: z.array(z.string()).optional(),
 });
 
+// Helper: get plan config from settings DB, fallback to hardcoded config
+async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+  const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  if (setting) {
+    const plans = JSON.parse(setting.value);
+    if (plans[planKey]) {
+      return plans[planKey];
+    }
+  }
+  // Fallback to hardcoded config
+  const fallback = config.plans[planKey as keyof typeof config.plans];
+  return { amount: fallback.amount, duration: fallback.duration, label: fallback.label, classSelection: 0 };
+}
+
 export async function getPlans(_req: Request, res: Response) {
-  // Fetch classes for dynamic plan display
   const classes = await prisma.class.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } });
 
-  const plans = [
-    {
-      id: "SINGLE_CLASS",
-      name: "Single Class Plan",
-      price: config.plans.SINGLE_CLASS.amount / 100,
-      duration: "365 days",
-      features: ["Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-      classSelection: 1,
-    },
-    {
-      id: "MULTI_CLASS",
-      name: "Multi Class Pack",
-      price: config.plans.MULTI_CLASS.amount / 100,
-      duration: "365 days",
-      features: ["Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-      popular: true,
-      classSelection: 2,
-    },
-    {
-      id: "FULL_ACCESS",
-      name: "Full Access Plan",
-      price: config.plans.FULL_ACCESS.amount / 100,
-      duration: "365 days",
-      features: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Best value"],
-      classSelection: 0,
-    },
-    {
-      id: "MONTHLY",
-      name: "Monthly Plan",
-      price: config.plans.MONTHLY.amount / 100,
-      duration: "30 days",
-      features: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-      classSelection: 0,
-    },
-    {
-      id: "YEARLY",
-      name: "Yearly Plan",
-      price: config.plans.YEARLY.amount / 100,
-      duration: "365 days",
-      features: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Save 33%"],
-      classSelection: 0,
-    },
-  ];
+  // Get plans from settings
+  const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  let plansConfig: Record<string, any> = {};
+  if (setting) {
+    plansConfig = JSON.parse(setting.value);
+  } else {
+    // Fallback to hardcoded defaults
+    plansConfig = {
+      SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1 },
+      MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2 },
+      FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0 },
+      MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0 },
+      YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0 },
+    };
+  }
+
+  const featureMap: Record<string, string[]> = {
+    SINGLE_CLASS: ["Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
+    MULTI_CLASS: ["Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
+    FULL_ACCESS: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Best value"],
+    MONTHLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
+    YEARLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Save 33%"],
+  };
+
+  const plans = Object.entries(plansConfig)
+    .filter(([_, v]: [string, any]) => v.enabled)
+    .map(([key, v]: [string, any]) => ({
+      id: key,
+      name: v.label,
+      price: v.amount / 100,
+      duration: `${v.duration} days`,
+      features: featureMap[key] || [],
+      classSelection: v.classSelection || 0,
+      popular: key === "MULTI_CLASS",
+    }));
+
   return success(res, { plans, classes });
 }
 
 export async function createSubscriptionOrder(req: Request, res: Response) {
   try {
     const { plan, classesAccess } = req.body;
-    const planConfig = config.plans[plan as keyof typeof config.plans];
+    const planConfig = await getPlanConfig(plan);
 
     // Validate classesAccess for class-based plans
     if (plan === "SINGLE_CLASS" && (!classesAccess || classesAccess.length !== 1)) {
@@ -112,7 +118,7 @@ export async function verifyPayment(req: Request, res: Response) {
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
 
-    const planConfig = config.plans[plan as keyof typeof config.plans];
+    const planConfig = await getPlanConfig(plan);
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
 
@@ -121,7 +127,6 @@ export async function verifyPayment(req: Request, res: Response) {
     if (plan === "SINGLE_CLASS" || plan === "MULTI_CLASS") {
       resolvedClassesAccess = classesAccess || [];
     } else {
-      // Full access plans: store all class IDs
       const allClasses = await prisma.class.findMany({ select: { id: true } });
       resolvedClassesAccess = allClasses.map((c) => c.id);
     }
