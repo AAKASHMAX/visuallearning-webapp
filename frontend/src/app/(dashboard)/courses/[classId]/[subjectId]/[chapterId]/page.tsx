@@ -1,19 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import { VideoPlayer } from "@/components/video/video-player";
+import { useLanguage, LANGUAGES } from "@/lib/language";
 import api from "@/lib/api";
-import type { Video, Note, Question } from "@/types";
-import { PlayCircle, Lock, FileText, CheckCircle, XCircle } from "lucide-react";
+import type { Video, Note, Question, Language } from "@/types";
+import { PlayCircle, Lock, FileText, CheckCircle, XCircle, Globe, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function ChapterDetailPage() {
   const { chapterId } = useParams();
+  const { language } = useLanguage();
   const [videos, setVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,27 +24,62 @@ export default function ChapterDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"videos" | "notes" | "questions">("videos");
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
+
+  const loadVideos = useCallback(async () => {
+    try {
+      const { data } = await api.get(`/courses/chapters/${chapterId}/videos?language=${language}`);
+      setVideos(data.data.videos || []);
+      setChapterName(data.data.chapter?.name || "");
+      setUsingFallback(data.data.usingFallback || false);
+      setAvailableLanguages(data.data.availableLanguages || []);
+      const firstPlayable = (data.data.videos || []).find((v: Video) => !v.locked);
+      setSelectedVideo(firstPlayable || null);
+    } catch {
+      setVideos([]);
+    }
+  }, [chapterId, language]);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
-      api.get(`/courses/chapters/${chapterId}/videos`),
-      api.get(`/courses/chapters/${chapterId}/notes`),
-      api.get(`/courses/chapters/${chapterId}/questions`),
-    ]).then(([vRes, nRes, qRes]) => {
-      setVideos(vRes.data.data.videos || []);
-      setChapterName(vRes.data.data.chapter?.name || "");
-      setNotes(nRes.data.data || []);
-      setQuestions(qRes.data.data || []);
-      const firstPlayable = (vRes.data.data.videos || []).find((v: Video) => !v.locked);
-      if (firstPlayable) setSelectedVideo(firstPlayable);
-    }).finally(() => setLoading(false));
-  }, [chapterId]);
+      loadVideos(),
+      api.get(`/courses/chapters/${chapterId}/notes`).then(({ data }) => setNotes(data.data || [])),
+      api.get(`/courses/chapters/${chapterId}/questions`).then(({ data }) => setQuestions(data.data || [])),
+    ]).finally(() => setLoading(false));
+  }, [chapterId, loadVideos]);
+
+  // Re-fetch videos when language changes (without full page reload)
+  useEffect(() => {
+    if (!loading) {
+      loadVideos();
+    }
+  }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <PageLoader />;
 
+  const currentLangLabel = LANGUAGES.find((l) => l.value === language)?.label || language;
+
   return (
     <div className="max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">{chapterName}</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">{chapterName}</h1>
+        {availableLanguages.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Globe className="w-4 h-4" />
+            <span>Available in: {availableLanguages.map((l) => LANGUAGES.find((x) => x.value === l)?.label || l).join(", ")}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Fallback notice */}
+      {usingFallback && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>Videos not available in {currentLangLabel}. Showing English version instead.</span>
+        </div>
+      )}
 
       {/* Video Player */}
       {selectedVideo && selectedVideo.youtubeVideoId && (
@@ -64,7 +101,9 @@ export default function ChapterDetailPage() {
       {/* Videos Tab */}
       {tab === "videos" && (
         <div className="space-y-2">
-          {videos.map((v) => (
+          {videos.length === 0 ? (
+            <p className="text-gray-400">No videos available for this chapter.</p>
+          ) : videos.map((v) => (
             <Card key={v.id} className={`cursor-pointer transition-shadow ${selectedVideo?.id === v.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
               onClick={() => {
                 if (v.locked) { toast.error("Subscribe to unlock this video"); return; }

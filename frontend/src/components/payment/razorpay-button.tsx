@@ -6,9 +6,10 @@ import { useAuth } from "@/lib/auth";
 import toast from "react-hot-toast";
 
 interface RazorpayButtonProps {
-  plan: "MONTHLY" | "YEARLY";
+  plan: string;
   amount: number;
   label: string;
+  classesAccess?: string[];
   onSuccess?: () => void;
 }
 
@@ -29,7 +30,7 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, onSuccess }: RazorpayButtonProps) {
+export function RazorpayButton({ plan, amount, label, classesAccess, onSuccess }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -39,7 +40,7 @@ export function RazorpayButton({ plan, amount, label, onSuccess }: RazorpayButto
       const loaded = await loadRazorpayScript();
       if (!loaded) { toast.error("Failed to load payment gateway"); return; }
 
-      const { data } = await api.post("/subscription/create-order", { plan });
+      const { data } = await api.post("/subscription/create-order", { plan, classesAccess });
       const order = data.data;
 
       const options = {
@@ -58,6 +59,7 @@ export function RazorpayButton({ plan, amount, label, onSuccess }: RazorpayButto
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               plan,
+              classesAccess,
             });
             toast.success("Subscription activated!");
             onSuccess?.();

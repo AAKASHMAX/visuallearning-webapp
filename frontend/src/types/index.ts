@@ -8,9 +8,12 @@ export interface User {
   subscription?: Subscription | null;
 }
 
+export type Language = "ENGLISH" | "HINDI" | "MARATHI" | "TAMIL" | "TELUGU";
+
 export interface Subscription {
   id: string;
-  plan: "MONTHLY" | "YEARLY";
+  plan: "MONTHLY" | "YEARLY" | "SINGLE_CLASS" | "MULTI_CLASS" | "FULL_ACCESS";
+  classesAccess: string[];
   startDate: string;
   expiryDate: string;
   status: "ACTIVE" | "EXPIRED" | "CANCELLED";
@@ -45,6 +48,7 @@ export interface Video {
   chapterId: string;
   title: string;
   youtubeVideoId: string | null;
+  language: Language;
   duration?: string;
   order: number;
   isFree: boolean;
@@ -77,6 +81,7 @@ export interface Plan {
   duration: string;
   features: string[];
   popular?: boolean;
+  classSelection?: number;
 }
 
 export interface ApiResponse<T> {

@@ -15,6 +15,17 @@ enum Role {
 enum PlanType {
   MONTHLY
   YEARLY
+  SINGLE_CLASS
+  MULTI_CLASS
+  FULL_ACCESS
+}
+
+enum Language {
+  ENGLISH
+  HINDI
+  MARATHI
+  TAMIL
+  TELUGU
 }
 
 enum SubscriptionStatus {
@@ -48,6 +59,7 @@ model Subscription {
   id                 String             @id @default(cuid())
   userId             String
   plan               PlanType
+  classesAccess      String[]           @default([])
   startDate          DateTime           @default(now())
   expiryDate         DateTime
   paymentId          String?
@@ -107,6 +119,7 @@ model Video {
   chapterId      String
   title          String
   youtubeVideoId String
+  language       Language        @default(ENGLISH)
   duration       String?
   order          Int             @default(0)
   isFree         Boolean         @default(false)
@@ -116,6 +129,7 @@ model Video {
   watchProgress  WatchProgress[]
 
   @@index([chapterId])
+  @@index([chapterId, language])
   @@index([order])
 }
 

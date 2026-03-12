@@ -55,38 +55,79 @@ export async function getChapters(req: Request, res: Response) {
   }
 }
 
+// Helper: check if user has access to a specific class
+async function checkClassAccess(userId: string, classId: string): Promise<{ hasAccess: boolean; subscription: any }> {
+  const sub = await prisma.subscription.findFirst({
+    where: { userId, status: "ACTIVE", expiryDate: { gt: new Date() } },
+  });
+  if (!sub) return { hasAccess: false, subscription: null };
+
+  // MONTHLY, YEARLY, FULL_ACCESS or empty classesAccess = full access
+  if (sub.classesAccess.length === 0 || sub.classesAccess.includes(classId)) {
+    return { hasAccess: true, subscription: sub };
+  }
+  return { hasAccess: false, subscription: sub };
+}
+
 export async function getVideos(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const language = (req.query.language as string) || "ENGLISH";
+
     const chapter = await prisma.chapter.findUnique({
       where: { id },
       include: { subject: { include: { class: true } } },
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    const videos = await prisma.video.findMany({
-      where: { chapterId: id },
+    // Fetch videos for requested language
+    let videos = await prisma.video.findMany({
+      where: { chapterId: id, language: language as any },
       orderBy: { order: "asc" },
     });
 
-    // Check if user is admin or has subscription
-    const isAdmin = req.user?.role === "ADMIN";
-    let hasSubscription = false;
-    if (req.user && !isAdmin) {
-      const sub = await prisma.subscription.findFirst({
-        where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+    // Fallback to ENGLISH if no videos found for requested language
+    let usingFallback = false;
+    if (videos.length === 0 && language !== "ENGLISH") {
+      videos = await prisma.video.findMany({
+        where: { chapterId: id, language: "ENGLISH" },
+        orderBy: { order: "asc" },
       });
-      hasSubscription = !!sub;
+      usingFallback = true;
     }
 
-    // Hide youtubeVideoId for non-free videos if no subscription (admins always see all)
+    // Check access
+    const isAdmin = req.user?.role === "ADMIN";
+    let hasAccess = false;
+    if (isAdmin) {
+      hasAccess = true;
+    } else if (req.user) {
+      const classId = chapter.subject.class.id;
+      const result = await checkClassAccess(req.user.id, classId);
+      hasAccess = result.hasAccess;
+    }
+
+    // Hide youtubeVideoId for non-free videos if no access
     const videosWithAccess = videos.map((v) => ({
       ...v,
-      youtubeVideoId: v.isFree || hasSubscription || isAdmin ? v.youtubeVideoId : null,
-      locked: !v.isFree && !hasSubscription && !isAdmin,
+      youtubeVideoId: v.isFree || hasAccess ? v.youtubeVideoId : null,
+      locked: !v.isFree && !hasAccess,
     }));
 
-    return success(res, { chapter, videos: videosWithAccess });
+    // Get available languages for this chapter
+    const availableLanguages = await prisma.video.findMany({
+      where: { chapterId: id },
+      select: { language: true },
+      distinct: ["language"],
+    });
+
+    return success(res, {
+      chapter,
+      videos: videosWithAccess,
+      language,
+      usingFallback,
+      availableLanguages: availableLanguages.map((l) => l.language),
+    });
   } catch (e) {
     console.error("Get videos error:", e);
     return error(res, "Failed to fetch videos");
@@ -104,10 +145,12 @@ export async function getVideoById(req: Request, res: Response) {
 
     if (!video.isFree) {
       if (!req.user) return error(res, "Login required", 401);
-      const sub = await prisma.subscription.findFirst({
-        where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
-      });
-      if (!sub) return error(res, "Active subscription required", 403);
+      const isAdmin = req.user.role === "ADMIN";
+      if (!isAdmin) {
+        const classId = video.chapter.subject.class.id;
+        const { hasAccess } = await checkClassAccess(req.user.id, classId);
+        if (!hasAccess) return error(res, "Active subscription required for this class", 403);
+      }
     }
 
     let progress = null;

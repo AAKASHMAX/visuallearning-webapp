@@ -60,7 +60,7 @@ export default function AdminContentPage() {
     if (tab === "classes") return { name: formData.name, order: formData.order };
     if (tab === "subjects") return { name: formData.name, icon: formData.icon, classId: formData.classId || selectedClass };
     if (tab === "chapters") return { name: formData.name, order: formData.order, subjectId: formData.subjectId || selectedSubject };
-    if (tab === "videos") return { title: formData.title, youtubeVideoId: formData.youtubeVideoId, duration: formData.duration, order: formData.order, isFree: formData.isFree, chapterId: formData.chapterId || selectedChapter };
+    if (tab === "videos") return { title: formData.title, youtubeVideoId: formData.youtubeVideoId, language: formData.language || "ENGLISH", duration: formData.duration, order: formData.order, isFree: formData.isFree, chapterId: formData.chapterId || selectedChapter };
     return formData;
   };
 
@@ -169,6 +169,20 @@ export default function AdminContentPage() {
             {tab === "videos" && (
               <>
                 <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                  <select
+                    value={formData.language || "ENGLISH"}
+                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                    className="border rounded-lg px-3 py-2 text-sm w-full"
+                  >
+                    <option value="ENGLISH">English</option>
+                    <option value="HINDI">Hindi</option>
+                    <option value="MARATHI">Marathi</option>
+                    <option value="TAMIL">Tamil</option>
+                    <option value="TELUGU">Telugu</option>
+                  </select>
+                </div>
                 <Input label="YouTube Link or Video ID" value={formData.youtubeVideoId || ""} onChange={(e) => {
                   let value = e.target.value.trim();
                   try {
@@ -206,6 +220,7 @@ export default function AdminContentPage() {
               <thead>
                 <tr className="border-b bg-gray-50 text-left">
                   <th className="p-4">Name/Title</th>
+                  {tab === "videos" && <th className="p-4">Language</th>}
                   {tab === "videos" && <th className="p-4">YouTube ID</th>}
                   {tab === "videos" && <th className="p-4">Duration</th>}
                   <th className="p-4">Actions</th>
@@ -215,6 +230,7 @@ export default function AdminContentPage() {
                 {data.map((item: any) => (
                   <tr key={item.id} className="border-b last:border-0">
                     <td className="p-4 font-medium">{item.name || item.title}</td>
+                    {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.language || "ENGLISH"}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500 font-mono text-xs">{item.youtubeVideoId}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500">{item.duration}</td>}
                     <td className="p-4 flex gap-2">

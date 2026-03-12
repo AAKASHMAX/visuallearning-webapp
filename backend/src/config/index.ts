@@ -23,5 +23,8 @@ export const config = {
   plans: {
     MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30 },
     YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365 },
+    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365 },
+    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365 },
+    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365 },
   },
 };

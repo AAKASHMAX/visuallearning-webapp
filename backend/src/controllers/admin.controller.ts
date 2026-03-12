@@ -9,6 +9,7 @@ export const subjectSchema = z.object({ classId: z.string(), name: z.string().mi
 export const chapterSchema = z.object({ subjectId: z.string(), name: z.string().min(1), order: z.number().int().optional() });
 export const videoSchema = z.object({
   chapterId: z.string(), title: z.string().min(1), youtubeVideoId: z.string().min(1),
+  language: z.enum(["ENGLISH", "HINDI", "MARATHI", "TAMIL", "TELUGU"]).optional(),
   duration: z.string().optional(), order: z.number().int().optional(), isFree: z.boolean().optional(),
 });
 export const noteSchema = z.object({ chapterId: z.string(), title: z.string().min(1), pdfUrl: z.string().min(1) });
