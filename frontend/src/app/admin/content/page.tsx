@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { useLanguage, type LangOption } from "@/lib/language";
 
-type Tab = "classes" | "subjects" | "chapters" | "videos" | "board-papers";
+type Tab = "classes" | "subjects" | "chapters" | "videos" | "notes" | "questions" | "board-papers";
 
 export default function AdminContentPage() {
   const [tab, setTab] = useState<Tab>("classes");
@@ -43,9 +43,9 @@ export default function AdminContentPage() {
     }
   }, [selectedClass]);
 
-  // Load chapters when subject is selected (needed for videos tab)
+  // Load chapters when subject is selected (needed for videos/notes/questions tabs)
   useEffect(() => {
-    if (selectedSubject && (tab === "videos" || tab === "chapters")) {
+    if (selectedSubject && (tab === "videos" || tab === "chapters" || tab === "notes" || tab === "questions")) {
       api.get(`/courses/subjects/${selectedSubject}/chapters`).then(({ data }) => {
         setChapters(data.data.chapters);
       });
@@ -71,6 +71,12 @@ export default function AdminContentPage() {
       } else if (tab === "videos" && selectedChapter) {
         const { data } = await api.get(`/courses/chapters/${selectedChapter}/videos`);
         setData(data.data.videos || []);
+      } else if (tab === "notes" && selectedChapter) {
+        const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
+        setData(data.data || []);
+      } else if (tab === "questions" && selectedChapter) {
+        const { data } = await api.get(`/courses/chapters/${selectedChapter}/questions`);
+        setData(data.data || []);
       } else if (tab === "board-papers" && selectedSubject) {
         const { data } = await api.get(`/courses/subjects/${selectedSubject}/board-papers`);
         const allPapers: any[] = Object.values(data.data.papers || {}).flat();
@@ -91,6 +97,16 @@ export default function AdminContentPage() {
       language: formData.language || "ENGLISH", duration: formData.duration,
       order: formData.order, isFree: formData.isFree,
       type: formData.type || "ANIMATED_VIDEO",
+      chapterId: formData.chapterId || selectedChapter,
+    };
+    if (tab === "notes") return {
+      title: formData.title, pdfUrl: formData.pdfUrl,
+      chapterId: formData.chapterId || selectedChapter,
+    };
+    if (tab === "questions") return {
+      questionText: formData.questionText, optionA: formData.optionA, optionB: formData.optionB,
+      optionC: formData.optionC, optionD: formData.optionD, correctOption: formData.correctOption,
+      solution: formData.solution,
       chapterId: formData.chapterId || selectedChapter,
     };
     if (tab === "board-papers") return {
@@ -142,7 +158,7 @@ export default function AdminContentPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {(["classes", "subjects", "chapters", "videos", "board-papers"] as Tab[]).map((t) => (
+        {(["classes", "subjects", "chapters", "videos", "notes", "questions", "board-papers"] as Tab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); setShowForm(false); }}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${tab === t ? "bg-primary text-white" : "bg-white text-gray-600 border"}`}>
             {t === "board-papers" ? "Board Papers" : t}
@@ -152,21 +168,21 @@ export default function AdminContentPage() {
 
       {/* Parent Selectors */}
       <div className="flex gap-3 mb-4 flex-wrap">
-        {(tab === "subjects" || tab === "chapters" || tab === "videos" || tab === "board-papers") && (
+        {tab !== "classes" && (
           <select value={selectedClass} onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(""); setSelectedChapter(""); }}
             className="border rounded-lg px-3 py-2 text-sm">
             <option value="">Select Class</option>
             {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         )}
-        {(tab === "chapters" || tab === "videos" || tab === "board-papers") && selectedClass && (
+        {tab !== "classes" && tab !== "subjects" && selectedClass && (
           <select value={selectedSubject} onChange={(e) => { setSelectedSubject(e.target.value); setSelectedChapter(""); }}
             className="border rounded-lg px-3 py-2 text-sm">
             <option value="">Select Subject</option>
             {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         )}
-        {tab === "videos" && selectedSubject && (
+        {(tab === "videos" || tab === "notes" || tab === "questions") && selectedSubject && (
           <select value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm">
             <option value="">Select Chapter</option>
@@ -177,7 +193,7 @@ export default function AdminContentPage() {
 
       <div className="flex justify-end mb-4">
         <Button onClick={() => { setShowForm(!showForm); setEditing(null); setFormData({}); }}>
-          {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "board-papers" ? "Board Paper" : tab.slice(0, -1)}</>}
+          {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "board-papers" ? "Board Paper" : tab === "questions" ? "Question" : tab === "notes" ? "Note" : tab.slice(0, -1)}</>}
         </Button>
       </div>
 
@@ -253,6 +269,52 @@ export default function AdminContentPage() {
                 </label>
               </>
             )}
+            {tab === "notes" && (
+              <>
+                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Chapter 1 Notes" />
+                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
+              </>
+            )}
+            {tab === "questions" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                  <textarea
+                    value={formData.questionText || ""}
+                    onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                    className="border rounded-lg px-3 py-2 text-sm w-full min-h-[80px]"
+                    placeholder="Enter the question..."
+                  />
+                </div>
+                <Input label="Option A" value={formData.optionA || ""} onChange={(e) => setFormData({ ...formData, optionA: e.target.value })} />
+                <Input label="Option B" value={formData.optionB || ""} onChange={(e) => setFormData({ ...formData, optionB: e.target.value })} />
+                <Input label="Option C" value={formData.optionC || ""} onChange={(e) => setFormData({ ...formData, optionC: e.target.value })} />
+                <Input label="Option D" value={formData.optionD || ""} onChange={(e) => setFormData({ ...formData, optionD: e.target.value })} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Correct Option</label>
+                  <select
+                    value={formData.correctOption || ""}
+                    onChange={(e) => setFormData({ ...formData, correctOption: e.target.value })}
+                    className="border rounded-lg px-3 py-2 text-sm w-full"
+                  >
+                    <option value="">Select correct answer</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Solution (optional)</label>
+                  <textarea
+                    value={formData.solution || ""}
+                    onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
+                    className="border rounded-lg px-3 py-2 text-sm w-full min-h-[60px]"
+                    placeholder="Explain the answer..."
+                  />
+                </div>
+              </>
+            )}
             {tab === "board-papers" && (
               <>
                 <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Physics 2024 Solved" />
@@ -273,11 +335,13 @@ export default function AdminContentPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50 text-left">
-                  <th className="p-4">Name/Title</th>
+                  <th className="p-4">{tab === "questions" ? "Question" : "Name/Title"}</th>
                   {tab === "videos" && <th className="p-4">Type</th>}
                   {tab === "videos" && <th className="p-4">Language</th>}
                   {tab === "videos" && <th className="p-4">YouTube ID</th>}
                   {tab === "videos" && <th className="p-4">Duration</th>}
+                  {tab === "notes" && <th className="p-4">PDF URL</th>}
+                  {tab === "questions" && <th className="p-4">Correct</th>}
                   {tab === "board-papers" && <th className="p-4">Year</th>}
                   {tab === "board-papers" && <th className="p-4">PDF URL</th>}
                   <th className="p-4">Actions</th>
@@ -286,11 +350,13 @@ export default function AdminContentPage() {
               <tbody>
                 {data.map((item: any) => (
                   <tr key={item.id} className="border-b last:border-0">
-                    <td className="p-4 font-medium">{item.name || item.title}</td>
+                    <td className="p-4 font-medium max-w-[300px] truncate">{tab === "questions" ? item.questionText : (item.name || item.title)}</td>
                     {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.type === "LECTURE_VIDEO" ? "Lecture" : "Animated"}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.language || "ENGLISH"}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500 font-mono text-xs">{item.youtubeVideoId}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500">{item.duration}</td>}
+                    {tab === "notes" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
+                    {tab === "questions" && <td className="p-4 text-gray-500 font-medium">{item.correctOption}</td>}
                     {tab === "board-papers" && <td className="p-4 text-gray-500">{item.year}</td>}
                     {tab === "board-papers" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
                     <td className="p-4 flex gap-2">
