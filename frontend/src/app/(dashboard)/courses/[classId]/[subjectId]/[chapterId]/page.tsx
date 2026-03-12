@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,12 @@ import { VideoPlayer } from "@/components/video/video-player";
 import { useLanguage } from "@/lib/language";
 import api from "@/lib/api";
 import type { Video, Note, Question } from "@/types";
-import { PlayCircle, Lock, FileText, CheckCircle, XCircle, Globe, AlertTriangle } from "lucide-react";
+import { PlayCircle, Lock, FileText, CheckCircle, XCircle, Globe, AlertTriangle, Crown } from "lucide-react";
 import Link from "next/link";
-import toast from "react-hot-toast";
 
 export default function ChapterDetailPage() {
   const { chapterId } = useParams();
+  const router = useRouter();
   const { language, enabledLanguages } = useLanguage();
   const [videos, setVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -26,6 +26,7 @@ export default function ChapterDetailPage() {
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
   const [usingFallback, setUsingFallback] = useState(false);
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
+  const [showLockedModal, setShowLockedModal] = useState(false);
 
   const loadVideos = useCallback(async () => {
     try {
@@ -106,7 +107,7 @@ export default function ChapterDetailPage() {
           ) : videos.map((v) => (
             <Card key={v.id} className={`cursor-pointer transition-shadow ${selectedVideo?.id === v.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
               onClick={() => {
-                if (v.locked) { toast.error("Subscribe to unlock this video"); return; }
+                if (v.locked) { setShowLockedModal(true); return; }
                 setSelectedVideo(v);
               }}>
               <CardContent className="p-4 flex items-center justify-between">
@@ -166,6 +167,35 @@ export default function ChapterDetailPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Subscription Required Modal */}
+      {showLockedModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowLockedModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+              <Crown className="w-7 h-7 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold mb-2">Subscription Required</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              This video is locked. Subscribe to a plan to unlock all premium content.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLockedModal(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowLockedModal(false); router.push("/subscription"); }}
+                className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                View Plans
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
