@@ -35,20 +35,60 @@ export async function getSubjects(req: Request, res: Response) {
 export async function getChapters(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const contentType = req.query.contentType as string | undefined;
+
     const subject = await prisma.subject.findUnique({
       where: { id },
       include: { class: true },
     });
     if (!subject) return error(res, "Subject not found", 404);
 
+    // Build where clause based on content type filter
+    const chapterWhere: any = { subjectId: id };
+    if (contentType === "animated_videos") {
+      chapterWhere.videos = { some: { type: "ANIMATED_VIDEO" } };
+    } else if (contentType === "lecture_videos") {
+      chapterWhere.videos = { some: { type: "LECTURE_VIDEO" } };
+    } else if (contentType === "notes") {
+      chapterWhere.notes = { some: {} };
+    } else if (contentType === "quiz") {
+      chapterWhere.questions = { some: {} };
+    }
+
     const chapters = await prisma.chapter.findMany({
-      where: { subjectId: id },
+      where: chapterWhere,
       orderBy: { order: "asc" },
       include: {
         _count: { select: { videos: true, notes: true, questions: true } },
       },
     });
-    return success(res, { subject, chapters });
+
+    // If filtering by content type, add specific content count
+    let chaptersWithCount = chapters;
+    if (contentType === "animated_videos" || contentType === "lecture_videos") {
+      const videoType = contentType === "animated_videos" ? "ANIMATED_VIDEO" : "LECTURE_VIDEO";
+      const videoCounts = await Promise.all(
+        chapters.map((ch) =>
+          prisma.video.count({ where: { chapterId: ch.id, type: videoType } })
+        )
+      );
+      chaptersWithCount = chapters.map((ch, i) => ({
+        ...ch,
+        contentCount: videoCounts[i],
+      }));
+    } else if (contentType === "notes") {
+      chaptersWithCount = chapters.map((ch) => ({
+        ...ch,
+        contentCount: ch._count.notes,
+      }));
+    } else if (contentType === "quiz") {
+      chaptersWithCount = chapters.map((ch) => ({
+        ...ch,
+        contentCount: ch._count.questions,
+      }));
+    }
+
+    return success(res, { subject, chapters: chaptersWithCount });
   } catch (e) {
     console.error("Get chapters error:", e);
     return error(res, "Failed to fetch chapters");
@@ -73,6 +113,7 @@ export async function getVideos(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const language = (req.query.language as string) || "ENGLISH";
+    const type = req.query.type as string | undefined;
 
     const chapter = await prisma.chapter.findUnique({
       where: { id },
@@ -80,17 +121,23 @@ export async function getVideos(req: Request, res: Response) {
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
+    // Build video filter
+    const videoWhere: any = { chapterId: id, language };
+    if (type) videoWhere.type = type;
+
     // Fetch videos for requested language
     let videos = await prisma.video.findMany({
-      where: { chapterId: id, language },
+      where: videoWhere,
       orderBy: { order: "asc" },
     });
 
     // Fallback to ENGLISH if no videos found for requested language
     let usingFallback = false;
     if (videos.length === 0 && language !== "ENGLISH") {
+      const fallbackWhere: any = { chapterId: id, language: "ENGLISH" };
+      if (type) fallbackWhere.type = type;
       videos = await prisma.video.findMany({
-        where: { chapterId: id, language: "ENGLISH" },
+        where: fallbackWhere,
         orderBy: { order: "asc" },
       });
       usingFallback = true;
@@ -186,5 +233,54 @@ export async function getQuestions(req: Request, res: Response) {
   } catch (e) {
     console.error("Get questions error:", e);
     return error(res, "Failed to fetch questions");
+  }
+}
+
+export async function getSubjectContentCounts(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const subject = await prisma.subject.findUnique({ where: { id } });
+    if (!subject) return error(res, "Subject not found", 404);
+
+    const [animatedVideos, lectureVideos, notes, quiz, boardPapers] = await Promise.all([
+      prisma.video.count({ where: { chapter: { subjectId: id }, type: "ANIMATED_VIDEO" } }),
+      prisma.video.count({ where: { chapter: { subjectId: id }, type: "LECTURE_VIDEO" } }),
+      prisma.note.count({ where: { chapter: { subjectId: id } } }),
+      prisma.question.count({ where: { chapter: { subjectId: id } } }),
+      prisma.boardPaper.count({ where: { subjectId: id } }),
+    ]);
+
+    return success(res, { animatedVideos, lectureVideos, notes, quiz, boardPapers });
+  } catch (e) {
+    console.error("Get content counts error:", e);
+    return error(res, "Failed to fetch content counts");
+  }
+}
+
+export async function getBoardPapers(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const subject = await prisma.subject.findUnique({
+      where: { id },
+      include: { class: true },
+    });
+    if (!subject) return error(res, "Subject not found", 404);
+
+    const papers = await prisma.boardPaper.findMany({
+      where: { subjectId: id },
+      orderBy: [{ year: "desc" }, { order: "asc" }],
+    });
+
+    // Group by year
+    const grouped: Record<number, typeof papers> = {};
+    papers.forEach((p) => {
+      if (!grouped[p.year]) grouped[p.year] = [];
+      grouped[p.year].push(p);
+    });
+
+    return success(res, { subject, papers: grouped });
+  } catch (e) {
+    console.error("Get board papers error:", e);
+    return error(res, "Failed to fetch board papers");
   }
 }

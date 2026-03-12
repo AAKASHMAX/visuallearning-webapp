@@ -41,6 +41,7 @@ export interface Chapter {
   name: string;
   order: number;
   _count?: { videos: number; notes: number; questions: number };
+  contentCount?: number;
 }
 
 export interface Video {
@@ -53,6 +54,16 @@ export interface Video {
   order: number;
   isFree: boolean;
   locked?: boolean;
+  type?: string;
+}
+
+export interface BoardPaper {
+  id: string;
+  subjectId: string;
+  year: number;
+  title: string;
+  pdfUrl: string;
+  order?: number;
 }
 
 export interface Note {

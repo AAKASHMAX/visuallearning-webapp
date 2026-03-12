@@ -11,8 +11,12 @@ export const videoSchema = z.object({
   chapterId: z.string(), title: z.string().min(1), youtubeVideoId: z.string().min(1),
   language: z.string().optional(),
   duration: z.string().optional(), order: z.number().int().optional(), isFree: z.boolean().optional(),
+  type: z.string().optional(),
 });
 export const noteSchema = z.object({ chapterId: z.string(), title: z.string().min(1), pdfUrl: z.string().min(1) });
+export const boardPaperSchema = z.object({
+  subjectId: z.string(), year: z.number().int(), title: z.string().min(1), pdfUrl: z.string().min(1), order: z.number().int().optional(),
+});
 export const questionSchema = z.object({
   chapterId: z.string(), questionText: z.string().min(1),
   optionA: z.string(), optionB: z.string(), optionC: z.string(), optionD: z.string(),
@@ -168,6 +172,11 @@ export async function deleteNote(req: Request, res: Response) { return crudDelet
 export async function addQuestion(req: Request, res: Response) { return crudCreate(prisma.question, req.body, res); }
 export async function updateQuestion(req: Request, res: Response) { return crudUpdate(prisma.question, req.params.id, req.body, res); }
 export async function deleteQuestion(req: Request, res: Response) { return crudDelete(prisma.question, req.params.id, res); }
+
+// --- Board Papers ---
+export async function addBoardPaper(req: Request, res: Response) { return crudCreate(prisma.boardPaper, req.body, res); }
+export async function updateBoardPaper(req: Request, res: Response) { return crudUpdate(prisma.boardPaper, req.params.id, req.body, res); }
+export async function deleteBoardPaper(req: Request, res: Response) { return crudDelete(prisma.boardPaper, req.params.id, res); }
 
 // --- Subscriptions Management ---
 export const grantSubscriptionSchema = z.object({

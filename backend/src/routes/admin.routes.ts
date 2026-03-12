@@ -10,6 +10,7 @@ import {
   addVideo, updateVideo, deleteVideo, videoSchema,
   addNote, deleteNote, noteSchema,
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
+  addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
@@ -72,6 +73,11 @@ router.delete("/notes/:id", deleteNote);
 router.post("/questions", validate(questionSchema), addQuestion);
 router.put("/questions/:id", updateQuestion);
 router.delete("/questions/:id", deleteQuestion);
+
+// Board Papers
+router.post("/board-papers", validate(boardPaperSchema), addBoardPaper);
+router.put("/board-papers/:id", updateBoardPaper);
+router.delete("/board-papers/:id", deleteBoardPaper);
 
 // Analytics
 router.get("/analytics/most-watched", getMostWatched);

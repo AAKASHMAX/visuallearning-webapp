@@ -76,8 +76,9 @@ model Subject {
   name     String
   icon     String?
 
-  class    Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
-  chapters Chapter[]
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  chapters    Chapter[]
+  boardPapers BoardPaper[]
 
   @@unique([classId, name])
   @@index([classId])
@@ -107,6 +108,7 @@ model Video {
   duration       String?
   order          Int             @default(0)
   isFree         Boolean         @default(false)
+  type           String          @default("ANIMATED_VIDEO")
   createdAt      DateTime        @default(now())
 
   chapter        Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -114,6 +116,7 @@ model Video {
 
   @@index([chapterId])
   @@index([chapterId, language])
+  @@index([chapterId, type])
   @@index([order])
 }
 
@@ -166,4 +169,19 @@ model WatchProgress {
   @@unique([userId, videoId])
   @@index([userId])
   @@index([videoId])
+}
+
+model BoardPaper {
+  id        String   @id @default(cuid())
+  subjectId String
+  year      Int
+  title     String
+  pdfUrl    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@index([subjectId])
+  @@unique([subjectId, year, title])
 }
