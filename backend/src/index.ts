@@ -17,7 +17,7 @@ const app = express();
 // Security & parsing
 app.use(helmet());
 app.use(cors({
-  origin: [config.frontendUrl, "https://visuallearning-webapp.vercel.app"],
+  origin: [config.frontendUrl, "https://visuallearning-webapp.vercel.app", "https://visuallearning.in", "https://www.visuallearning.in"],
   credentials: true,
 }));
 app.use(compression());
