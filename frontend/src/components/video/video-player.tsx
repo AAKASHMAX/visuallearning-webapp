@@ -43,13 +43,20 @@ export function VideoPlayer({ youtubeVideoId, videoId, title }: VideoPlayerProps
 
   return (
     <div ref={containerRef} className="video-container w-full">
-      <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+      <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom: "56.25%" }}>
         <iframe
-          src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`}
+          src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=0&fs=1&controls=1&cc_load_policy=0`}
           title={title}
-          className="absolute inset-0 w-full h-full rounded-lg"
+          className="absolute inset-0 w-full h-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+        />
+        {/* Cover YouTube logo in bottom-right */}
+        <div className="absolute bottom-0 right-0 w-36 h-10 bg-black/90 pointer-events-none z-10" />
+        {/* Cover share/watch later buttons in top-right */}
+        <div className="absolute top-0 right-0 w-28 h-12 bg-transparent pointer-events-auto z-10"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
         />
       </div>
     </div>
