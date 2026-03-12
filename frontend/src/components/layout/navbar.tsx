@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/language";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, X, User, LogOut, Globe } from "lucide-react";
+import { Menu, X, User, LogOut, Globe } from "lucide-react";
 
 export function Navbar() {
   const { user, isAuthenticated, logout, hydrate } = useAuth();
@@ -34,8 +35,8 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <BookOpen className="w-7 h-7 text-accent" />
-            <span>Visual<span className="text-accent">Learning</span></span>
+            <Image src="/images/logo.png" alt="VL" width={36} height={36} className="rounded-md" />
+            <span className="text-white">VisualLearning</span>
           </Link>
 
           {/* Desktop nav */}
