@@ -16,7 +16,10 @@ const app = express();
 
 // Security & parsing
 app.use(helmet());
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+app.use(cors({
+  origin: [config.frontendUrl, "https://visuallearning-webapp.vercel.app"],
+  credentials: true,
+}));
 app.use(compression());
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));
