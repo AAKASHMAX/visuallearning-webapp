@@ -22,9 +22,11 @@ export function Footer() {
             </div>
           </div>
           <div>
-            <h3 className="font-semibold text-white mb-3">Classes</h3>
+            <h3 className="font-semibold text-white mb-3">Legal</h3>
             <div className="space-y-2 text-sm">
-              <p>Class 9</p><p>Class 10</p><p>Class 11</p><p>Class 12</p>
+              <Link href="/privacy-policy" className="block hover:text-accent">Privacy Policy</Link>
+              <Link href="/refund-policy" className="block hover:text-accent">Refund Policy</Link>
+              <Link href="/contact" className="block hover:text-accent">Contact Us</Link>
             </div>
           </div>
           <div>

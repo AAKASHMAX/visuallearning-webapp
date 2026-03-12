@@ -310,6 +310,12 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0 },
     YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0 },
   }),
+  contact_info: JSON.stringify({
+    companyName: "VISUALLEARNING AI PRIVATE LIMITED",
+    address: "4th floor, Balaji Business center, Pune-Mumbai Highway, National Highway 4, next to hotel Spice Court, Baner, Pune, Maharashtra 411045",
+    phone: "9718154204",
+    email: "visuallearning247@gmail.com",
+  }),
 };
 
 async function getSetting(key: string): Promise<string> {
@@ -319,14 +325,16 @@ async function getSetting(key: string): Promise<string> {
 
 export async function getSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
+      getSetting("contact_info"),
     ]);
 
     return success(res, {
       enabledLanguages: JSON.parse(enabledLanguages),
       plansConfig: JSON.parse(plansConfig),
+      contactInfo: JSON.parse(contactInfo),
     });
   } catch (e) {
     console.error("Get settings error:", e);
@@ -379,12 +387,33 @@ export async function updatePlanSettings(req: Request, res: Response) {
   }
 }
 
+export async function updateContactInfo(req: Request, res: Response) {
+  try {
+    const { contactInfo } = req.body;
+    if (!contactInfo || typeof contactInfo !== "object") {
+      return error(res, "Invalid contact info", 400);
+    }
+
+    await prisma.setting.upsert({
+      where: { key: "contact_info" },
+      update: { value: JSON.stringify(contactInfo) },
+      create: { key: "contact_info", value: JSON.stringify(contactInfo) },
+    });
+
+    return success(res, { contactInfo }, "Contact info updated");
+  } catch (e) {
+    console.error("Update contact info error:", e);
+    return error(res, "Failed to update contact info");
+  }
+}
+
 // --- Public settings (no auth needed) ---
 export async function getPublicSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
+      getSetting("contact_info"),
     ]);
 
     const rawLanguages = JSON.parse(enabledLanguages);
@@ -407,7 +436,7 @@ export async function getPublicSettings(_req: Request, res: Response) {
         enabled: v.enabled,
       }));
 
-    return success(res, { languages, plans: enabledPlans });
+    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo) });
   } catch (e) {
     console.error("Get public settings error:", e);
     return error(res, "Failed to fetch settings");

@@ -13,7 +13,7 @@ import {
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
-  getSettings, updateLanguageSettings, updatePlanSettings,
+  getSettings, updateLanguageSettings, updatePlanSettings, updateContactInfo,
   getPublicSettings,
 } from "../controllers/admin.controller";
 
@@ -42,6 +42,7 @@ router.delete("/subscriptions/:id", cancelSubscription);
 router.get("/settings", getSettings);
 router.put("/settings/languages", updateLanguageSettings);
 router.put("/settings/plans", updatePlanSettings);
+router.put("/settings/contact", updateContactInfo);
 
 // Classes
 router.post("/classes", validate(classSchema), addClass);

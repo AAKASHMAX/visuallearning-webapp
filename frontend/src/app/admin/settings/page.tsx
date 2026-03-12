@@ -7,7 +7,7 @@ import { PageLoader } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Globe, CreditCard, Save, Plus, Trash2, X } from "lucide-react";
+import { Globe, CreditCard, Save, Plus, Trash2, X, MapPin } from "lucide-react";
 
 interface LangItem {
   key: string;
@@ -20,6 +20,13 @@ interface PlanConfig {
   duration: number;
   enabled: boolean;
   classSelection: number;
+}
+
+interface ContactInfo {
+  companyName: string;
+  address: string;
+  phone: string;
+  email: string;
 }
 
 export default function AdminSettingsPage() {
@@ -41,6 +48,14 @@ export default function AdminSettingsPage() {
   const [newPlanDuration, setNewPlanDuration] = useState(365);
   const [newPlanClassSelection, setNewPlanClassSelection] = useState(0);
 
+  // Contact Info
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    companyName: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
+
   useEffect(() => {
     api.get("/admin/settings").then(({ data }) => {
       // Normalize languages: handle both old (string[]) and new ({key,label}[]) format
@@ -50,6 +65,9 @@ export default function AdminSettingsPage() {
       );
       setLanguages(normalized);
       setPlansConfig(data.data.plansConfig);
+      if (data.data.contactInfo) {
+        setContactInfo(data.data.contactInfo);
+      }
     }).finally(() => setLoading(false));
   }, []);
 
@@ -135,6 +153,19 @@ export default function AdminSettingsPage() {
     try {
       await api.put("/admin/settings/plans", { plansConfig });
       toast.success("Plan settings saved");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // --- Contact handlers ---
+  const saveContact = async () => {
+    setSaving(true);
+    try {
+      await api.put("/admin/settings/contact", { contactInfo });
+      toast.success("Contact info saved");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save");
     } finally {
@@ -346,6 +377,54 @@ export default function AdminSettingsPage() {
           </div>
           <Button onClick={savePlans} disabled={saving}>
             <Save className="w-4 h-4 mr-1" />{saving ? "Saving..." : "Save Plan Settings"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* ========== Contact Info ========== */}
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold">Contact Information</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            These details appear on the Contact Us page and footer.
+          </p>
+
+          <div className="space-y-4 mb-6">
+            <Input
+              label="Company Name"
+              value={contactInfo.companyName}
+              onChange={(e) => setContactInfo({ ...contactInfo, companyName: e.target.value })}
+              placeholder="Company name"
+            />
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
+              <textarea
+                value={contactInfo.address}
+                onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
+                className="border rounded-lg px-3 py-2 text-sm w-full"
+                rows={3}
+                placeholder="Full address"
+              />
+            </div>
+            <Input
+              label="Phone Number"
+              value={contactInfo.phone}
+              onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
+              placeholder="9718154204"
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={contactInfo.email}
+              onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+              placeholder="contact@example.com"
+            />
+          </div>
+          <Button onClick={saveContact} disabled={saving}>
+            <Save className="w-4 h-4 mr-1" />{saving ? "Saving..." : "Save Contact Info"}
           </Button>
         </CardContent>
       </Card>
