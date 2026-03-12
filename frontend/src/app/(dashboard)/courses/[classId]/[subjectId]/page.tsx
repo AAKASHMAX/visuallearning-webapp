@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { Play, Video, FileText, Brain, ClipboardList } from "lucide-react";
+import { Play, Video, FileText, Brain, ClipboardList, ArrowLeft } from "lucide-react";
 
 interface ContentCounts {
   animatedVideos: number;
@@ -59,6 +59,9 @@ export default function SubjectContentPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <Link href={`/courses/${classId}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
+        <ArrowLeft className="w-3 h-3" /> Back to subjects
+      </Link>
       <div className="mb-8">
         <p className="text-sm text-gray-400">{className}</p>
         <h1 className="text-2xl font-bold">{subjectName}</h1>
