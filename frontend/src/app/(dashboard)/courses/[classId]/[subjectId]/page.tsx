@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { Play, Video, FileText, Brain, ClipboardList, ArrowLeft } from "lucide-react";
+import { Play, Video, FileText, Brain, ClipboardList, ArrowLeft, Radio } from "lucide-react";
 
 interface ContentCounts {
   animatedVideos: number;
@@ -37,7 +37,11 @@ function getCount(counts: ContentCounts | null, slug: string): number {
 }
 
 export default function SubjectContentPage() {
-  const { classId, subjectId } = useParams();
+  const params = useParams();
+  // Extract only first segment if params contain extra path segments
+  const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
+  const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
+  const subjectBase = `/courses/${classId}/${subjectId}`;
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
   const [counts, setCounts] = useState<ContentCounts | null>(null);
@@ -59,7 +63,7 @@ export default function SubjectContentPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Link href={`/courses/${classId}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
+      <Link href={`/courses/${classId}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline" replace>
         <ArrowLeft className="w-3 h-3" /> Back to subjects
       </Link>
       <div className="mb-8">
@@ -72,7 +76,7 @@ export default function SubjectContentPage() {
           const count = getCount(counts, ct.slug);
           const Icon = ct.icon;
           return (
-            <Link key={ct.slug} href={`/courses/${classId}/${subjectId}/${ct.slug}`}>
+            <Link key={ct.slug} href={`${subjectBase}/${ct.slug}`}>
               <Card className="hover:shadow-lg transition-all cursor-pointer h-full group">
                 <CardContent className="p-6 flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${ct.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
@@ -93,6 +97,26 @@ export default function SubjectContentPage() {
             </Link>
           );
         })}
+
+        {/* Live Classes */}
+        <Link href="/courses/live-classes">
+          <Card className="hover:shadow-lg transition-all cursor-pointer h-full group">
+            <CardContent className="p-6 flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <Radio className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-base">Live Classes</h3>
+                  <Badge variant="danger" className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-500">Join small group doubt-clearing sessions with live teachers</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

@@ -90,6 +90,7 @@ export interface Plan {
   name: string;
   price: number;
   duration: string;
+  billingCycle?: "monthly" | "yearly";
   features: string[];
   popular?: boolean;
   classSelection?: number;

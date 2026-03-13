@@ -143,6 +143,25 @@ export async function getVideos(req: Request, res: Response) {
       usingFallback = true;
     }
 
+    // Include "Coming Soon" placeholder videos (empty youtubeVideoId) from English
+    // so they appear regardless of selected language
+    if (language !== "ENGLISH" && !usingFallback) {
+      const comingSoonWhere: any = { chapterId: id, language: "ENGLISH", youtubeVideoId: "" };
+      if (type) comingSoonWhere.type = type;
+      const comingSoonVideos = await prisma.video.findMany({
+        where: comingSoonWhere,
+        orderBy: { order: "asc" },
+      });
+      if (comingSoonVideos.length > 0) {
+        // Only add English Coming Soon videos whose order doesn't already exist
+        const existingOrders = new Set(videos.map((v) => v.order));
+        const newComingSoon = comingSoonVideos.filter((v) => !existingOrders.has(v.order));
+        if (newComingSoon.length > 0) {
+          videos = [...videos, ...newComingSoon].sort((a, b) => a.order - b.order);
+        }
+      }
+    }
+
     // Check access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
@@ -217,8 +236,25 @@ export async function getVideoById(req: Request, res: Response) {
 export async function getNotes(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const chapter = await prisma.chapter.findUnique({
+      where: { id },
+      include: { subject: { include: { class: true } } },
+    });
+    if (!chapter) return error(res, "Chapter not found", 404);
+
     const notes = await prisma.note.findMany({ where: { chapterId: id } });
-    return success(res, notes);
+
+    // Check subscription for download access
+    const isAdmin = req.user?.role === "ADMIN";
+    let hasAccess = false;
+    if (isAdmin) {
+      hasAccess = true;
+    } else if (req.user) {
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id);
+      hasAccess = result.hasAccess;
+    }
+
+    return success(res, { notes, hasAccess });
   } catch (e) {
     console.error("Get notes error:", e);
     return error(res, "Failed to fetch notes");

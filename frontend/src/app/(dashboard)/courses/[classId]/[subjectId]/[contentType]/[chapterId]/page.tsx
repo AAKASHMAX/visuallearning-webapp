@@ -10,7 +10,7 @@ import { VideoPlayer } from "@/components/video/video-player";
 import { useLanguage } from "@/lib/language";
 import api from "@/lib/api";
 import type { Video, Note, Question, BoardPaper } from "@/types";
-import { PlayCircle, Lock, FileText, Globe, AlertTriangle, Crown, ArrowLeft, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { PlayCircle, Lock, FileText, Globe, AlertTriangle, Crown, ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Maximize2, Minimize2, X, Clock } from "lucide-react";
 
 const VIDEO_TYPE_MAP: Record<string, string> = {
   "animated-videos": "ANIMATED_VIDEO",
@@ -100,6 +100,12 @@ function VideoViewer() {
 
       {selectedVideo && selectedVideo.youtubeVideoId && (
         <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">
+              {enabledLanguages.find((l) => l.value === selectedVideo.language)?.label || selectedVideo.language}
+            </span>
+          </div>
           <VideoPlayer youtubeVideoId={selectedVideo.youtubeVideoId} videoId={selectedVideo.id} title={selectedVideo.title} />
           <h2 className="text-lg font-semibold mt-3">{selectedVideo.title}</h2>
         </div>
@@ -108,27 +114,40 @@ function VideoViewer() {
       <div className="space-y-2">
         {videos.length === 0 ? (
           <p className="text-gray-400">No videos available.</p>
-        ) : videos.map((v) => (
-          <Card key={v.id} className={`cursor-pointer transition-shadow ${selectedVideo?.id === v.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
+        ) : videos.map((v) => {
+          const isComingSoon = !v.youtubeVideoId;
+          return (
+          <Card key={v.id} className={`transition-shadow ${isComingSoon ? "opacity-70" : "cursor-pointer"} ${selectedVideo?.id === v.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
             onClick={() => {
+              if (isComingSoon) return;
               if (v.locked) { setShowLockedModal(true); return; }
               setSelectedVideo(v);
             }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {v.locked ? <Lock className="w-5 h-5 text-gray-400" /> : <PlayCircle className="w-5 h-5 text-primary" />}
+                {isComingSoon ? <Clock className="w-5 h-5 text-gray-400" /> : v.locked ? <Lock className="w-5 h-5 text-gray-400" /> : <PlayCircle className="w-5 h-5 text-primary" />}
                 <div>
-                  <p className="font-medium text-sm">{v.title}</p>
+                  <p className={`font-medium text-sm ${isComingSoon ? "text-gray-400" : ""}`}>{v.title}</p>
                   {v.duration && <p className="text-xs text-gray-400">{v.duration}</p>}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {v.isFree && <Badge variant="success">Free</Badge>}
-                {v.locked && <Link href="/subscription"><Badge variant="warning">Unlock</Badge></Link>}
+                {isComingSoon ? (
+                  <Badge variant="default" className="text-xs">Coming Soon</Badge>
+                ) : (
+                  <>
+                    <Badge variant="info" className="text-xs">
+                      {enabledLanguages.find((l) => l.value === v.language)?.label || v.language}
+                    </Badge>
+                    {v.isFree && <Badge variant="success">Free</Badge>}
+                    {v.locked && <Link href="/subscription"><Badge variant="warning">Unlock</Badge></Link>}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {showLockedModal && (
@@ -153,13 +172,23 @@ function VideoViewer() {
 // ─── Notes Viewer ──────────────────────────────────────────────
 function NotesViewer() {
   const { classId, subjectId, contentType, chapterId } = useParams();
+  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [chapterName, setChapterName] = useState("");
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      api.get(`/courses/chapters/${chapterId}/notes`).then(({ data }) => setNotes(data.data || [])),
+      api.get(`/courses/chapters/${chapterId}/notes`).then(({ data }) => {
+        const notesData = data.data?.notes || data.data || [];
+        setNotes(notesData);
+        setHasAccess(data.data?.hasAccess || false);
+        if (notesData.length > 0) setSelectedNote(notesData[0]);
+      }),
       api.get(`/courses/chapters/${chapterId}/videos`).then(({ data }) => setChapterName(data.data.chapter?.name || "")),
     ]).finally(() => setLoading(false));
   }, [chapterId]);
@@ -167,32 +196,88 @@ function NotesViewer() {
   if (loading) return <PageLoader />;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <Link href={`/courses/${classId}/${subjectId}/${contentType}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
         <ArrowLeft className="w-3 h-3" /> Back to chapters
       </Link>
       <h1 className="text-2xl font-bold mb-6">{chapterName} - Notes</h1>
-      <div className="space-y-2">
-        {notes.length === 0 ? <p className="text-gray-400">No notes available yet.</p> : notes.map((n) => (
-          <Card key={n.id}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-primary" />
-                <span className="font-medium text-sm">{n.title}</span>
+
+      {notes.length === 0 ? (
+        <p className="text-gray-400">No notes available yet.</p>
+      ) : (
+        <>
+          {/* Notes list */}
+          <div className="space-y-2 mb-6">
+            {notes.map((n) => (
+              <Card key={n.id} className={`cursor-pointer transition-shadow ${selectedNote?.id === n.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
+                onClick={() => setSelectedNote(n)}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className={`w-5 h-5 ${selectedNote?.id === n.id ? "text-primary" : "text-gray-400"}`} />
+                    <span className="font-medium text-sm">{n.title}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {hasAccess ? (
+                      <Button variant="outline" size="sm" onClick={(e) => {
+                        e.stopPropagation();
+                        const a = document.createElement("a");
+                        a.href = n.pdfUrl;
+                        a.download = n.title;
+                        a.click();
+                      }}>Download</Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={(e) => {
+                        e.stopPropagation();
+                        setShowSubscribeModal(true);
+                      }}>
+                        <Lock className="w-3 h-3 mr-1" /> Download
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Inline PDF viewer */}
+          {selectedNote && (
+            <div className={isFullscreen ? "fixed inset-0 z-50 bg-white flex flex-col" : "border rounded-lg overflow-hidden"}>
+              <div className="bg-gray-50 px-4 py-2 border-b flex items-center justify-between shrink-0">
+                <span className="text-sm font-medium text-gray-700">{selectedNote.title}</span>
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-1.5 rounded-md hover:bg-gray-200 transition-colors"
+                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 className="w-4 h-4 text-gray-600" /> : <Maximize2 className="w-4 h-4 text-gray-600" />}
+                </button>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => window.open(n.pdfUrl, "_blank")}>View PDF</Button>
-                <Button variant="outline" size="sm" onClick={() => {
-                  const a = document.createElement("a");
-                  a.href = n.pdfUrl;
-                  a.download = n.title;
-                  a.click();
-                }}>Download</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <iframe
+                src={`${selectedNote.pdfUrl}#toolbar=0`}
+                className={isFullscreen ? "w-full flex-1" : "w-full h-[75vh]"}
+                title={selectedNote.title}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Subscribe modal */}
+      {showSubscribeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowSubscribeModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+              <Crown className="w-7 h-7 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold mb-2">Subscription Required</h3>
+            <p className="text-gray-500 text-sm mb-6">Subscribe to download notes and access all premium content.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowSubscribeModal(false)} className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+              <button onClick={() => { setShowSubscribeModal(false); router.push("/subscription"); }} className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">View Plans</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -374,13 +459,21 @@ function BoardPaperViewer() {
       {paper ? (
         <>
           <h1 className="text-xl font-bold mb-4">{paper.title} ({paper.year})</h1>
-          <div className="w-full h-[80vh] rounded-lg overflow-hidden border">
-            <iframe
-              src={paper.pdfUrl}
-              className="w-full h-full"
-              title={paper.title}
-            />
-          </div>
+          {!paper.pdfUrl || paper.pdfUrl === "pending" ? (
+            <div className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center py-20">
+              <Clock className="w-12 h-12 text-gray-300 mb-4" />
+              <h2 className="text-lg font-semibold text-gray-500 mb-2">Coming Soon</h2>
+              <p className="text-sm text-gray-400">This paper will be uploaded shortly.</p>
+            </div>
+          ) : (
+            <div className="w-full h-[80vh] rounded-lg overflow-hidden border">
+              <iframe
+                src={paper.pdfUrl}
+                className="w-full h-full"
+                title={paper.title}
+              />
+            </div>
+          )}
         </>
       ) : (
         <p className="text-gray-400">Board paper not found.</p>

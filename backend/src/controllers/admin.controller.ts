@@ -313,11 +313,11 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     { key: "TELUGU", label: "Telugu" },
   ]),
   plans_config: JSON.stringify({
-    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1 },
-    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2 },
-    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0 },
-    MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0 },
-    YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0 },
+    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1, billingCycle: "yearly" },
+    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2, billingCycle: "yearly" },
+    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+    MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0, billingCycle: "monthly" },
+    YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
   }),
   contact_info: JSON.stringify({
     companyName: "VISUALLEARNING AI PRIVATE LIMITED",

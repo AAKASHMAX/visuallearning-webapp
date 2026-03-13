@@ -43,11 +43,12 @@ export async function getPlans(_req: Request, res: Response) {
   } else {
     // Fallback to hardcoded defaults
     plansConfig = {
-      SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1 },
-      MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2 },
-      FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0 },
-      MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0 },
-      YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0 },
+      SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1, billingCycle: "yearly" },
+      MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2, billingCycle: "yearly" },
+      FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0, billingCycle: "monthly" },
+      YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      LIVE_CLASS: { amount: config.plans.LIVE_CLASS.amount, label: "Live Classes", duration: 30, enabled: true, classSelection: 1, billingCycle: "monthly" },
     };
   }
 
@@ -57,6 +58,7 @@ export async function getPlans(_req: Request, res: Response) {
     FULL_ACCESS: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Best value"],
     MONTHLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
     YEARLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Save 33%"],
+    LIVE_CLASS: ["1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "All video content included"],
   };
 
   const plans = Object.entries(plansConfig)
@@ -66,6 +68,7 @@ export async function getPlans(_req: Request, res: Response) {
       name: v.label,
       price: v.amount / 100,
       duration: `${v.duration} days`,
+      billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
       features: featureMap[key] || [],
       classSelection: v.classSelection || 0,
       popular: key === "MULTI_CLASS",

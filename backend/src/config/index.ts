@@ -21,10 +21,11 @@ export const config = {
   },
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
   plans: {
-    MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30 },
-    YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365 },
-    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365 },
-    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365 },
-    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365 },
+    MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, billingCycle: "monthly" },
+    YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, billingCycle: "yearly" },
+    SINGLE_CLASS: { amount: 29900, label: "Single Class Plan", duration: 365, billingCycle: "yearly" },
+    MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, billingCycle: "yearly" },
+    FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365, billingCycle: "yearly" },
+    LIVE_CLASS: { amount: 99900, label: "Live Classes", duration: 30, billingCycle: "monthly" },
   },
 };

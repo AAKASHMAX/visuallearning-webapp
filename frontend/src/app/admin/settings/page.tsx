@@ -20,6 +20,7 @@ interface PlanConfig {
   duration: number;
   enabled: boolean;
   classSelection: number;
+  billingCycle: "monthly" | "yearly";
 }
 
 interface ContactInfo {
@@ -47,6 +48,7 @@ export default function AdminSettingsPage() {
   const [newPlanAmount, setNewPlanAmount] = useState(29900);
   const [newPlanDuration, setNewPlanDuration] = useState(365);
   const [newPlanClassSelection, setNewPlanClassSelection] = useState(0);
+  const [newPlanBillingCycle, setNewPlanBillingCycle] = useState<"monthly" | "yearly">("yearly");
 
   // Contact Info
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
@@ -131,6 +133,7 @@ export default function AdminSettingsPage() {
         duration: newPlanDuration,
         enabled: true,
         classSelection: newPlanClassSelection,
+        billingCycle: newPlanBillingCycle,
       },
     });
     setNewPlanKey("");
@@ -138,6 +141,7 @@ export default function AdminSettingsPage() {
     setNewPlanAmount(29900);
     setNewPlanDuration(365);
     setNewPlanClassSelection(0);
+    setNewPlanBillingCycle("yearly");
     setShowAddPlan(false);
   };
 
@@ -299,6 +303,18 @@ export default function AdminSettingsPage() {
                   />
                   <p className="text-xs text-gray-400 mt-1">0 = full access, 1 = single class, 2 = two classes, etc.</p>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Billing Tab</label>
+                  <select
+                    value={newPlanBillingCycle}
+                    onChange={(e) => setNewPlanBillingCycle(e.target.value as "monthly" | "yearly")}
+                    className="border rounded-lg px-3 py-2 text-sm w-full"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">Which tab this plan appears under on the subscription page</p>
+                </div>
               </div>
               <Button size="sm" onClick={addPlan}>Add Plan</Button>
             </div>
@@ -330,7 +346,7 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Plan Name</label>
                     <input
@@ -367,6 +383,17 @@ export default function AdminSettingsPage() {
                       className="border rounded-lg px-3 py-2 text-sm w-full"
                       min={0}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Billing Tab</label>
+                    <select
+                      value={plan.billingCycle || "yearly"}
+                      onChange={(e) => updatePlan(key, "billingCycle", e.target.value)}
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
                   </div>
                 </div>
               </div>
