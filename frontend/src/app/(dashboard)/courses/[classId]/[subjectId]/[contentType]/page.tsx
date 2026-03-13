@@ -270,9 +270,6 @@ function LiveClassesPage() {
 export default function ContentTypeChapterListPage() {
   const { contentType } = useParams();
 
-  // DEBUG: check in browser console what contentType is
-  console.log("DEBUG contentType:", contentType);
-
   if (contentType === "live-classes") {
     return <LiveClassesPage />;
   }
