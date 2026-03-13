@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Play, FileText, Brain, Star, CheckCircle } from "lucide-react";
@@ -31,23 +32,8 @@ export default function HomePage() {
     <>
       <Navbar />
       <main>
-        {/* Hero */}
-        <section className="bg-gradient-to-br from-primary via-primary-light to-primary-dark text-white py-20 lg:py-28">
-          <div className="max-w-7xl mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Learn Visually,<br />
-              <span className="text-accent">Score Brilliantly</span>
-            </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8">
-              Animated educational videos for Class 9 to 12. Master Physics, Chemistry, Biology & Mathematics with engaging visual content.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/signup"><Button variant="accent" size="lg">Start Learning Free</Button></Link>
-              <Link href="/courses"><Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">Browse Courses</Button></Link>
-            </div>
-            <p className="text-white/60 mt-4 text-sm">Free videos available. No credit card required.</p>
-          </div>
-        </section>
+        {/* Hero Slideshow */}
+        <HeroSlideshow />
 
         {/* Features */}
         <section className="py-16 bg-white">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -7,9 +7,9 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-2 font-bold text-xl text-white mb-4">
-              <BookOpen className="w-6 h-6 text-accent" />
-              VisualLearning
+            <div className="flex items-center gap-0 font-bold text-white mb-4">
+              <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
+              <span className="leading-none text-base text-center">Visual<br />Learning</span>
             </div>
             <p className="text-sm">Animated educational videos for Class 9-12 students. Learn visually, learn better.</p>
           </div>

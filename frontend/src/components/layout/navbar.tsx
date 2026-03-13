@@ -34,9 +34,9 @@ export function Navbar() {
     <nav className="bg-primary text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <Image src="/images/logo.png" alt="VL" width={36} height={36} className="rounded-md" />
-            <span className="text-white">VisualLearning</span>
+          <Link href="/" className="flex items-center gap-0 font-bold">
+            <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
+            <span className="text-white leading-none text-base text-center">Visual<br />Learning</span>
           </Link>
 
           {/* Desktop nav */}
