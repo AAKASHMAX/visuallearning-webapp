@@ -1,0 +1,451 @@
+[
+  {
+    "name": "Chemical Reactions and Equations",
+    "chapterNo": 1,
+    "sequence": 1,
+    "classId": "10th",
+    "subjectId": 2,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F1.Chemical%20Reactions%20and%20Equations%2Fchemical%20reaction%20and%20equation.pdf?alt=media&token=68742473-dc5d-46e0-9924-00f917d80bbf",
+    "dbSubjectId": "cmmkpxm55003puu34onbmpfc6",
+    "topics": [
+      {
+        "topicName": "1.Chemical reactions",
+        "videoIdEnglish": "-cW5jUcbrWc",
+        "videoIdHindi": "rpYn6Wp2jqY"
+      },
+      {
+        "topicName": "2.Types of chemical reactions",
+        "videoIdEnglish": "mquDAOS9ubQ",
+        "videoIdHindi": "F1F5_qo9TaE"
+      },
+      {
+        "topicName": "4.Corrosion an rancidity",
+        "videoIdEnglish": "1a2kI04ny-o",
+        "videoIdHindi": "VqDKdspwtE0"
+      }
+    ]
+  },
+  {
+    "name": "Acids Bases and Salts",
+    "chapterNo": 2,
+    "sequence": 2,
+    "classId": "10th",
+    "subjectId": 2,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F2.Acids%20Bases%20and%20Salts%2Facid%2C%20base%20and%20salt.pdf?alt=media&token=8fbf4282-cb82-4504-bf1e-016b31fdb6f9",
+    "dbSubjectId": "cmmkpxm55003puu34onbmpfc6",
+    "topics": [
+      {
+        "topicName": "1. Acid , base and salts",
+        "videoIdEnglish": "Seh0JLRfN_k",
+        "videoIdHindi": "hIrbzDVg8z8"
+      },
+      {
+        "topicName": "2.How do Acids and Bases React with Metals",
+        "videoIdEnglish": "ShWCKXs3-h4",
+        "videoIdHindi": "icnwcdE0M5s"
+      },
+      {
+        "topicName": "3.How do Acids and Bases React with each other?",
+        "videoIdEnglish": "n1UDimopLjI",
+        "videoIdHindi": "OsAVt1lcBjc"
+      },
+      {
+        "topicName": "4.pH scale and indicators",
+        "videoIdEnglish": "a64N67UY71A",
+        "videoIdHindi": "fLTC8NZP1nY"
+      }
+    ]
+  },
+  {
+    "name": "Metals and Non-metals",
+    "chapterNo": 3,
+    "sequence": 3,
+    "classId": "10th",
+    "subjectId": 2,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F3.Metals%20and%20Non-metals%2Fmetals%20and%20non%20metals.pdf?alt=media&token=f17aa4a2-7dc6-43b6-a995-80e88ca781b4",
+    "dbSubjectId": "cmmkpxm55003puu34onbmpfc6",
+    "topics": [
+      {
+        "topicName": "1. What are metals and non metals",
+        "videoIdEnglish": "TizGfZIs5YE",
+        "videoIdHindi": "eqxeg4BOTq8"
+      },
+      {
+        "topicName": "2. Chemical properties of metals and non metals",
+        "videoIdEnglish": "cWdfrpXrBLo",
+        "videoIdHindi": "XvFgGmXZfE0"
+      },
+      {
+        "topicName": "3. How do metals and non metals reacts",
+        "videoIdEnglish": "NIuc314etvg",
+        "videoIdHindi": "cWhNTrk75s4"
+      },
+      {
+        "topicName": "4.Occurrence of metals",
+        "videoIdEnglish": "3jrAZo_aCGo",
+        "videoIdHindi": "BJhXNBULk7g"
+      },
+      {
+        "topicName": "5.Corrosion",
+        "videoIdEnglish": "Ryvaa_oEOHk",
+        "videoIdHindi": "fpx0Botj4g4"
+      }
+    ]
+  },
+  {
+    "name": "Carbon and its Compounds",
+    "chapterNo": 4,
+    "sequence": 4,
+    "classId": "10th",
+    "subjectId": 2,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F4.Carbon%20and%20its%20Compounds%2Fcarbon%20and%20its%20compound.pdf?alt=media&token=0388b8dc-9d81-4e4d-a457-c929870f0960",
+    "dbSubjectId": "cmmkpxm55003puu34onbmpfc6",
+    "topics": [
+      {
+        "topicName": "1. Bonding in carbon -the covalent bond",
+        "videoIdEnglish": "ZSklumee6K4",
+        "videoIdHindi": "pStKff0PpMM"
+      },
+      {
+        "topicName": "2. Versatile nature of carbon",
+        "videoIdEnglish": "QaVxEqPGiI4",
+        "videoIdHindi": "Xl4d95FOL6E"
+      },
+      {
+        "topicName": "3. Saturated and unsaturated carbon compound",
+        "videoIdEnglish": "sbr8Q6cCRQI",
+        "videoIdHindi": "jTbtGkXdnaI"
+      },
+      {
+        "topicName": "5. Soap and detergents",
+        "videoIdEnglish": "g5rfeBiIv6k",
+        "videoIdHindi": "0EiXetPZ7uE"
+      }
+    ]
+  },
+  {
+    "name": "Periodic Classification of Elements",
+    "chapterNo": 5,
+    "sequence": 5,
+    "classId": "10th",
+    "subjectId": 2,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F5.Periodic%20Classification%20of%20Elements%2Fperiodic%20classification%20of%20element.pdf?alt=media&token=16a74120-fece-42a3-98ea-4124e701705f",
+    "dbSubjectId": "cmmkpxm55003puu34onbmpfc6",
+    "topics": [
+      {
+        "topicName": "1. Classification if elements",
+        "videoIdEnglish": "CNLnpxLnMoc",
+        "videoIdHindi": "OQ0L7aaIdac"
+      },
+      {
+        "topicName": "2. Newlands law of octaves",
+        "videoIdEnglish": "PkZkZdPDugo",
+        "videoIdHindi": "kJK8RMcS1JU"
+      },
+      {
+        "topicName": "3. Mendeleeves periodic table",
+        "videoIdEnglish": "VB6oNmdJ7CI",
+        "videoIdHindi": "1BRwFigqDmQ"
+      },
+      {
+        "topicName": "4. Modern periodic table",
+        "videoIdEnglish": "3M1jqPGJ7XM",
+        "videoIdHindi": "QnpLGVKbrPs"
+      }
+    ]
+  },
+  {
+    "name": "Life Processes",
+    "chapterNo": 6,
+    "sequence": 1,
+    "classId": "10th",
+    "subjectId": 3,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F6.Life%20Processes%2Flife%20process.pdf?alt=media&token=546bd9a5-bd64-48fe-a3a6-a286890d911f",
+    "dbSubjectId": "cmmkpxm5l004fuu344b84qxin",
+    "topics": [
+      {
+        "topicName": "1. Nutritions in human beings",
+        "videoIdEnglish": "JnM3nGYVDVs",
+        "videoIdHindi": "LO6JwvlQraE"
+      },
+      {
+        "topicName": "2.Respiration",
+        "videoIdEnglish": "GvaQE74smp0",
+        "videoIdHindi": "4s307U7kIbA"
+      },
+      {
+        "topicName": "3. Transportation in plants",
+        "videoIdEnglish": "e3JmvJOkzTU",
+        "videoIdHindi": "6LoEyoj1F2Y"
+      },
+      {
+        "topicName": "5. Excertion",
+        "videoIdEnglish": "orjUgy9PAj0",
+        "videoIdHindi": "70tFVj7pxAw"
+      }
+    ]
+  },
+  {
+    "name": "Control and Coordination",
+    "chapterNo": 7,
+    "sequence": 2,
+    "classId": "10th",
+    "subjectId": 3,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F7.Control%20and%20Coordination%2Fcontrol%20and%20coordination.pdf?alt=media&token=2923981b-42af-4b9d-8383-e4ee8e3b99c8",
+    "dbSubjectId": "cmmkpxm5l004fuu344b84qxin",
+    "topics": [
+      {
+        "topicName": "1.Nervous system",
+        "videoIdEnglish": "4FqJgP98OQU",
+        "videoIdHindi": "E9rLH6paf-4"
+      },
+      {
+        "topicName": "2.Human brain",
+        "videoIdEnglish": "uwRHY_cSVMY",
+        "videoIdHindi": "k15dYEs-b-k"
+      },
+      {
+        "topicName": "3.Reflex action",
+        "videoIdEnglish": "M3Iw_S2p2lw",
+        "videoIdHindi": "LNB_--l1vik"
+      },
+      {
+        "topicName": "4. Hormones in animals",
+        "videoIdEnglish": "fmzG10pvs-c",
+        "videoIdHindi": "yYycbw3JbLU"
+      }
+    ]
+  },
+  {
+    "name": "How do Organisms Reproduce",
+    "chapterNo": 8,
+    "sequence": 3,
+    "classId": "10th",
+    "subjectId": 3,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F8.How%20do%20Organisms%20Reproduce%2FHow%20do%20organisms%20reproduce.pdf?alt=media&token=92f7faa1-63b1-4499-a2eb-ede1c16b4b0c",
+    "dbSubjectId": "cmmkpxm5l004fuu344b84qxin",
+    "topics": [
+      {
+        "topicName": "1. Modes of reproduction",
+        "videoIdEnglish": "zSYPV0veZ2s",
+        "videoIdHindi": "xp6_VXzOF1I"
+      },
+      {
+        "topicName": "2. Sexual reproduction in plants",
+        "videoIdEnglish": "X3_6IaZFwBU",
+        "videoIdHindi": "B1JwF8ghDkA"
+      },
+      {
+        "topicName": "3. Sexual reproduction in humans",
+        "videoIdEnglish": "fucbfUY0YAM",
+        "videoIdHindi": "FFmTslUETNA"
+      }
+    ]
+  },
+  {
+    "name": "Heredity",
+    "chapterNo": 9,
+    "sequence": 4,
+    "classId": "10th",
+    "subjectId": 3,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F9.Heredity%2Fheridity.pdf?alt=media&token=2bce959b-2bf8-4dd7-af29-fbea0c4ef155",
+    "dbSubjectId": "cmmkpxm5l004fuu344b84qxin",
+    "topics": [
+      {
+        "topicName": "1. Evolution",
+        "videoIdEnglish": "oyV_ozT4Owk",
+        "videoIdHindi": "7koAQHK0Mgw"
+      },
+      {
+        "topicName": "2. Heridity",
+        "videoIdEnglish": "q_BVWeOHCa8",
+        "videoIdHindi": "sXyeQ0H3H50"
+      },
+      {
+        "topicName": "3. Human evolution",
+        "videoIdEnglish": "jIy3bj-jNtA",
+        "videoIdHindi": "n0eE1Oii1r8"
+      },
+      {
+        "topicName": "4. Sex determination",
+        "videoIdEnglish": "Fgdr2SH6X2s",
+        "videoIdHindi": "fZG81JuJ9bY"
+      }
+    ]
+  },
+  {
+    "name": "Light-Reflection and Refraction",
+    "chapterNo": 10,
+    "sequence": 1,
+    "classId": "10th",
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F10.Light-Reflection%20and%20Refraction%2Flight%20%20reflection%20and%20refraction.pdf?alt=media&token=02f43e7d-6ada-45bf-b388-8ae02def4225",
+    "dbSubjectId": "cmmkpxm4m002zuu3446yy664y",
+    "topics": [
+      {
+        "topicName": "1.Reflection of light",
+        "videoIdEnglish": "usQlMPyQ9n0",
+        "videoIdHindi": "72vOSImbjJk"
+      },
+      {
+        "topicName": "2.Spherical mirror",
+        "videoIdEnglish": "g_LhgncR19I",
+        "videoIdHindi": "Z0YCyZwMRo0"
+      },
+      {
+        "topicName": "3.Refraction of light",
+        "videoIdEnglish": "xbtWgSR5l5g",
+        "videoIdHindi": "6qdkpXoqugw"
+      },
+      {
+        "topicName": "4.Refraction through lense",
+        "videoIdEnglish": "d4PaUgZ5zyQ",
+        "videoIdHindi": "-twuYDLFERc"
+      }
+    ]
+  },
+  {
+    "name": "The Human Eye and the Colourful World",
+    "chapterNo": 11,
+    "sequence": 2,
+    "classId": "10th",
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F11.The%20Human%20Eye%20and%20the%20Colourful%20World%2Fthe%20human%20eye%20and%20colour%20ful%20world.pdf?alt=media&token=bde1b49a-d398-47d9-8417-60b823925783",
+    "dbSubjectId": "cmmkpxm4m002zuu3446yy664y",
+    "topics": [
+      {
+        "topicName": "1.The  human eye",
+        "videoIdEnglish": "T_aQGjEN2tg",
+        "videoIdHindi": "JeYgmeWhHKo"
+      },
+      {
+        "topicName": "3.Refraction of light through a prism ",
+        "videoIdEnglish": "4ozoEgg_5EU",
+        "videoIdHindi": "u4UQMpUWyfg"
+      },
+      {
+        "topicName": "4. Dispersion of white light by a glass prism",
+        "videoIdEnglish": "DuXYrwoFkJA",
+        "videoIdHindi": "QU-iPSnAjc8"
+      },
+      {
+        "topicName": "5.Scattering of light",
+        "videoIdEnglish": "WmwxvlHA2aI",
+        "videoIdHindi": "PDMRPPv1siE"
+      }
+    ]
+  },
+  {
+    "name": "Electricity",
+    "chapterNo": 12,
+    "sequence": 3,
+    "classId": "10th",
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F12.Electricity%2Felectricity.pdf?alt=media&token=d21b94d2-db5a-4f23-a42e-2990d8a6ca7a",
+    "dbSubjectId": "cmmkpxm4m002zuu3446yy664y",
+    "topics": [
+      {
+        "topicName": "1.Electric current",
+        "videoIdEnglish": "35UYlYi-BcY",
+        "videoIdHindi": "tMXHygt4BC4"
+      },
+      {
+        "topicName": "2.Electric potential and potential difference",
+        "videoIdEnglish": "M7juU3Icj8U",
+        "videoIdHindi": "JHwk8T_aafk"
+      },
+      {
+        "topicName": "3.Ohms law",
+        "videoIdEnglish": "WQjGeCGuC1o",
+        "videoIdHindi": "U5nmOJtSFx0"
+      },
+      {
+        "topicName": "4.Resistance",
+        "videoIdEnglish": "ikFSUa4GmFI",
+        "videoIdHindi": "7UAlXqj1CG8"
+      },
+      {
+        "topicName": "5. Heating effect of current",
+        "videoIdEnglish": "StU_6OLPy48",
+        "videoIdHindi": "oQ4Z2fPLe58"
+      }
+    ]
+  },
+  {
+    "name": "Magnetic Effects of Electric   Current",
+    "chapterNo": 13,
+    "sequence": 4,
+    "classId": "10th",
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F13.Magnetic%20Effects%20of%20Electric%20%20%20Current%2Fmagnetic%20effect%20of%20electric%20current.pdf?alt=media&token=3f65e8a4-ce3b-4956-b31e-41b32c450b3c",
+    "dbSubjectId": "cmmkpxm4m002zuu3446yy664y",
+    "topics": [
+      {
+        "topicName": "1.Magnetic field and magnetic field lines",
+        "videoIdEnglish": "GBfUuntrczo",
+        "videoIdHindi": "HBuLttgPezI"
+      },
+      {
+        "topicName": "2.Magnetic field due to current",
+        "videoIdEnglish": "Bb9x-WRo2L8",
+        "videoIdHindi": "vUDJYZx_XZI"
+      },
+      {
+        "topicName": "3.Solenoid",
+        "videoIdEnglish": "ZCRrsyl3iSk",
+        "videoIdHindi": "V96UXqi_p5c"
+      },
+      {
+        "topicName": "4.Magnetic field due to circular loop",
+        "videoIdEnglish": "QyqR4zkXbZo",
+        "videoIdHindi": "1YFyN9vgrB4"
+      },
+      {
+        "topicName": "5.Force on a conductor",
+        "videoIdEnglish": "gnpa9Hadk_A",
+        "videoIdHindi": "ATHrAT_c6WU"
+      },
+      {
+        "topicName": "6.Electric motor",
+        "videoIdEnglish": "DK8XkfyiVXA",
+        "videoIdHindi": "itfMRu_P1kw"
+      },
+      {
+        "topicName": "7.Electric generator",
+        "videoIdEnglish": "izD3BMDy6g8",
+        "videoIdHindi": "FCnKnDX7AVA"
+      },
+      {
+        "topicName": "8.Electromagnetic induction",
+        "videoIdEnglish": "TCTyYLaYSv0",
+        "videoIdHindi": "ASn2docqxmk"
+      }
+    ]
+  },
+  {
+    "name": "Our Environment",
+    "chapterNo": 14,
+    "sequence": 5,
+    "classId": "10th",
+    "subjectId": 3,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/10th%20class%2F10th_NotesPDF%2F14.Our%20Environment%2Four%20environments.pdf?alt=media&token=df23aa06-4b01-416a-86b2-67bba2e76a6a",
+    "dbSubjectId": "cmmkpxm5l004fuu344b84qxin",
+    "topics": [
+      {
+        "topicName": "1.Eco system",
+        "videoIdEnglish": "twMr5HtbO8w",
+        "videoIdHindi": "ZrJ_3Ym8VMU"
+      },
+      {
+        "topicName": "2.Food chain",
+        "videoIdEnglish": "uFWAYd5i6eA",
+        "videoIdHindi": "dEcj3lF46ug"
+      },
+      {
+        "topicName": "3. Ozone layer",
+        "videoIdEnglish": "B_5Y334j2LI",
+        "videoIdHindi": "Ca1D0rM-S7o"
+      }
+    ]
+  }
+]
