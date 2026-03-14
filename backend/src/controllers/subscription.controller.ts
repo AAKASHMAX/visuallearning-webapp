@@ -105,9 +105,10 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       plan,
       classesAccess,
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("Create order error:", e);
-    return error(res, "Failed to create payment order");
+    const detail = e?.error?.description || e?.message || "Unknown error";
+    return error(res, `Failed to create payment order: ${detail}`);
   }
 }
 
