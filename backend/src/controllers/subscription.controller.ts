@@ -95,7 +95,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     });
     if (existing) return error(res, "You already have an active subscription", 400);
 
-    const receipt = `vl_${req.user!.id}_${Date.now()}`;
+    const receipt = `vl_${req.user!.id.slice(-8)}_${Date.now()}`;
     const order = await createOrder(planConfig.amount, "INR", receipt);
 
     return success(res, {
