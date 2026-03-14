@@ -317,10 +317,11 @@ export default function AdminContentPage() {
             )}
             {tab === "board-papers" && (
               <>
-                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Physics 2024 Solved" />
+                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Physics 2024 Question Paper" />
                 <Input label="Year" type="number" value={formData.year || ""} onChange={(e) => setFormData({ ...formData, year: e.target.value })} placeholder="e.g. 2024" />
-                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
-                <Input label="Order" type="number" value={formData.order || ""} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} />
+                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://... or 'pending'" />
+                <Input label="Order" type="number" value={formData.order || ""} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} placeholder="1 = Question Paper, 2 = Solution" />
+                <p className="text-xs text-gray-400">Tip: Use &quot;pending&quot; as PDF URL for papers not yet uploaded (shows as Coming Soon)</p>
               </>
             )}
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
@@ -343,6 +344,7 @@ export default function AdminContentPage() {
                   {tab === "notes" && <th className="p-4">PDF URL</th>}
                   {tab === "questions" && <th className="p-4">Correct</th>}
                   {tab === "board-papers" && <th className="p-4">Year</th>}
+                  {tab === "board-papers" && <th className="p-4">Status</th>}
                   {tab === "board-papers" && <th className="p-4">PDF URL</th>}
                   <th className="p-4">Actions</th>
                 </tr>
@@ -358,7 +360,8 @@ export default function AdminContentPage() {
                     {tab === "notes" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
                     {tab === "questions" && <td className="p-4 text-gray-500 font-medium">{item.correctOption}</td>}
                     {tab === "board-papers" && <td className="p-4 text-gray-500">{item.year}</td>}
-                    {tab === "board-papers" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
+                    {tab === "board-papers" && <td className="p-4">{!item.pdfUrl || item.pdfUrl === "pending" ? <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Pending</span> : <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Uploaded</span>}</td>}
+                    {tab === "board-papers" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl === "pending" ? "—" : item.pdfUrl}</td>}
                     <td className="p-4 flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => startEdit(item)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button>

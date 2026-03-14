@@ -66,48 +66,105 @@ function ChapterListPage() {
       </div>
 
       {contentType === "board-papers" ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {years.length === 0 && <p className="text-gray-400">No board papers available yet.</p>}
-          {years.map((year) => (
-            <div key={year}>
-              <h2 className="text-lg font-semibold mb-3">{year}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {boardPapers[year].map((paper) => {
-                  const isPending = !paper.pdfUrl || paper.pdfUrl === "pending";
-                  const isSolution = paper.title.toLowerCase().includes("solution");
-                  return isPending ? (
-                    <Card key={paper.id} className="opacity-60 mb-0">
-                      <CardContent className="p-5 flex items-center gap-4">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isSolution ? "bg-emerald-100" : "bg-blue-100"}`}>
-                          {isSolution ? <FileText className="w-5 h-5 text-emerald-600" /> : <FileText className="w-5 h-5 text-blue-600" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-gray-400">{paper.title}</p>
-                        </div>
-                        <Badge variant="warning" className="shrink-0 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Coming Soon
-                        </Badge>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Link key={paper.id} href={`/courses/${classId}/${subjectId}/board-papers/${paper.id}`}>
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer mb-0 h-full">
-                        <CardContent className="p-5 flex items-center gap-4">
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isSolution ? "bg-emerald-100" : "bg-blue-100"}`}>
-                            {isSolution ? <FileText className="w-5 h-5 text-emerald-600" /> : <FileText className="w-5 h-5 text-blue-600" />}
+          {years.map((year) => {
+            const papers = boardPapers[year];
+            const questionPaper = papers.find((p) => !p.title.toLowerCase().includes("solution"));
+            const solution = papers.find((p) => p.title.toLowerCase().includes("solution"));
+
+            return (
+              <Card key={year} className="mb-0 overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Year header */}
+                  <div className="bg-gray-50 px-5 py-3 border-b flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-sm">
+                      {year.toString().slice(-2)}
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-sm">CBSE {year}</h2>
+                      <p className="text-xs text-gray-400">Board Examination</p>
+                    </div>
+                  </div>
+                  {/* Two cards row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x">
+                    {/* Question Paper */}
+                    {questionPaper ? (() => {
+                      const isPending = !questionPaper.pdfUrl || questionPaper.pdfUrl === "pending";
+                      return isPending ? (
+                        <div className="p-4 flex items-center gap-3 opacity-50">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{paper.title}</p>
+                            <p className="font-medium text-sm text-gray-400">Question Paper</p>
+                            <p className="text-xs text-gray-300">Unsolved</p>
                           </div>
-                          <Badge variant="info" className="shrink-0">View PDF</Badge>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                          <Badge variant="warning" className="shrink-0 flex items-center gap-1 text-xs">
+                            <Clock className="w-3 h-3" /> Soon
+                          </Badge>
+                        </div>
+                      ) : (
+                        <Link href={`/courses/${classId}/${subjectId}/board-papers/${questionPaper.id}`} className="p-4 flex items-center gap-3 hover:bg-blue-50 transition-colors">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">Question Paper</p>
+                            <p className="text-xs text-gray-400">Unsolved</p>
+                          </div>
+                          <Badge variant="info" className="shrink-0 text-xs">View</Badge>
+                        </Link>
+                      );
+                    })() : (
+                      <div className="p-4 flex items-center gap-3 opacity-40">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-300">Question Paper</p>
+                      </div>
+                    )}
+                    {/* Solution */}
+                    {solution ? (() => {
+                      const isPending = !solution.pdfUrl || solution.pdfUrl === "pending";
+                      return isPending ? (
+                        <div className="p-4 flex items-center gap-3 opacity-50">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-gray-400">Solution</p>
+                            <p className="text-xs text-gray-300">Solved</p>
+                          </div>
+                          <Badge variant="warning" className="shrink-0 flex items-center gap-1 text-xs">
+                            <Clock className="w-3 h-3" /> Soon
+                          </Badge>
+                        </div>
+                      ) : (
+                        <Link href={`/courses/${classId}/${subjectId}/board-papers/${solution.id}`} className="p-4 flex items-center gap-3 hover:bg-emerald-50 transition-colors">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">Solution</p>
+                            <p className="text-xs text-gray-400">Solved</p>
+                          </div>
+                          <Badge variant="info" className="shrink-0 text-xs">View</Badge>
+                        </Link>
+                      );
+                    })() : (
+                      <div className="p-4 flex items-center gap-3 opacity-40">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-300">Solution</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-3">
