@@ -58,6 +58,7 @@ model Subscription {
   @@index([userId])
   @@index([status])
   @@index([expiryDate])
+  @@index([userId, status, expiryDate])
 }
 
 model Class {
@@ -117,6 +118,7 @@ model Video {
   @@index([chapterId])
   @@index([chapterId, language])
   @@index([chapterId, type])
+  @@index([chapterId, language, type])
   @@index([order])
 }
 

@@ -4,6 +4,7 @@ import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { createOrder, verifySignature } from "../services/razorpay";
 import { success, error } from "../utils/apiResponse";
+import { cacheGet, cacheSet } from "../utils/cache";
 
 export const createOrderSchema = z.object({
   plan: z.string().min(1),
@@ -33,6 +34,9 @@ async function getPlanConfig(planKey: string): Promise<{ amount: number; duratio
 }
 
 export async function getPlans(_req: Request, res: Response) {
+  const cached = cacheGet("plans");
+  if (cached) return success(res, cached);
+
   const classes = await prisma.class.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } });
 
   // Get plans from settings
@@ -74,7 +78,9 @@ export async function getPlans(_req: Request, res: Response) {
       popular: key === "MULTI_CLASS",
     }));
 
-  return success(res, { plans, classes });
+  const result = { plans, classes };
+  cacheSet("plans", result, 600); // 10 min cache
+  return success(res, result);
 }
 
 export async function createSubscriptionOrder(req: Request, res: Response) {

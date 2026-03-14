@@ -1,13 +1,20 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { success, error } from "../utils/apiResponse";
+import { cacheGet, cacheSet } from "../utils/cache";
+
+const CACHE_TTL = 300; // 5 minutes for static content
 
 export async function getClasses(_req: Request, res: Response) {
   try {
+    const cached = cacheGet("classes");
+    if (cached) return success(res, cached);
+
     const classes = await prisma.class.findMany({
       orderBy: { order: "asc" },
       include: { _count: { select: { subjects: true } } },
     });
+    cacheSet("classes", classes, CACHE_TTL);
     return success(res, classes);
   } catch (e) {
     console.error("Get classes error:", e);
@@ -18,6 +25,10 @@ export async function getClasses(_req: Request, res: Response) {
 export async function getSubjects(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const cacheKey = `subjects:${id}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return success(res, cached);
+
     const classData = await prisma.class.findUnique({ where: { id } });
     if (!classData) return error(res, "Class not found", 404);
 
@@ -25,7 +36,9 @@ export async function getSubjects(req: Request, res: Response) {
       where: { classId: id },
       include: { _count: { select: { chapters: true } } },
     });
-    return success(res, { class: classData, subjects });
+    const result = { class: classData, subjects };
+    cacheSet(cacheKey, result, CACHE_TTL);
+    return success(res, result);
   } catch (e) {
     console.error("Get subjects error:", e);
     return error(res, "Failed to fetch subjects");
@@ -63,18 +76,20 @@ export async function getChapters(req: Request, res: Response) {
       },
     });
 
-    // If filtering by content type, add specific content count
+    // If filtering by content type, add specific content count (single query instead of N+1)
     let chaptersWithCount = chapters;
     if (contentType === "animated_videos" || contentType === "lecture_videos") {
       const videoType = contentType === "animated_videos" ? "ANIMATED_VIDEO" : "LECTURE_VIDEO";
-      const videoCounts = await Promise.all(
-        chapters.map((ch) =>
-          prisma.video.count({ where: { chapterId: ch.id, type: videoType } })
-        )
-      );
-      chaptersWithCount = chapters.map((ch, i) => ({
+      const chapterIds = chapters.map((ch) => ch.id);
+      const counts = await prisma.video.groupBy({
+        by: ["chapterId"],
+        where: { chapterId: { in: chapterIds }, type: videoType },
+        _count: true,
+      });
+      const countMap = new Map(counts.map((c) => [c.chapterId, c._count]));
+      chaptersWithCount = chapters.map((ch) => ({
         ...ch,
-        contentCount: videoCounts[i],
+        contentCount: countMap.get(ch.id) || 0,
       }));
     } else if (contentType === "notes") {
       chaptersWithCount = chapters.map((ch) => ({
@@ -115,50 +130,36 @@ export async function getVideos(req: Request, res: Response) {
     const language = (req.query.language as string) || "ENGLISH";
     const type = req.query.type as string | undefined;
 
+    // Single query: fetch chapter + ALL videos for this chapter (filter in memory)
     const chapter = await prisma.chapter.findUnique({
       where: { id },
       include: { subject: { include: { class: true } } },
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    // Build video filter
-    const videoWhere: any = { chapterId: id, language };
-    if (type) videoWhere.type = type;
-
-    // Fetch videos for requested language
-    let videos = await prisma.video.findMany({
-      where: videoWhere,
+    // Fetch all videos for this chapter in one query (avoids 3-4 separate queries)
+    const allChapterVideos = await prisma.video.findMany({
+      where: { chapterId: id, ...(type ? { type } : {}) },
       orderBy: { order: "asc" },
     });
 
-    // Fallback to ENGLISH if no videos found for requested language
+    // Filter in memory instead of multiple DB calls
+    let videos = allChapterVideos.filter((v) => v.language === language);
     let usingFallback = false;
+
     if (videos.length === 0 && language !== "ENGLISH") {
-      const fallbackWhere: any = { chapterId: id, language: "ENGLISH" };
-      if (type) fallbackWhere.type = type;
-      videos = await prisma.video.findMany({
-        where: fallbackWhere,
-        orderBy: { order: "asc" },
-      });
+      videos = allChapterVideos.filter((v) => v.language === "ENGLISH");
       usingFallback = true;
     }
 
-    // Include "Coming Soon" placeholder videos (empty youtubeVideoId) from English
-    // so they appear regardless of selected language
+    // Include Coming Soon placeholders from English
     if (language !== "ENGLISH" && !usingFallback) {
-      const comingSoonWhere: any = { chapterId: id, language: "ENGLISH", youtubeVideoId: "" };
-      if (type) comingSoonWhere.type = type;
-      const comingSoonVideos = await prisma.video.findMany({
-        where: comingSoonWhere,
-        orderBy: { order: "asc" },
-      });
-      if (comingSoonVideos.length > 0) {
-        // Only add English Coming Soon videos whose order doesn't already exist
-        const existingOrders = new Set(videos.map((v) => v.order));
-        const newComingSoon = comingSoonVideos.filter((v) => !existingOrders.has(v.order));
-        if (newComingSoon.length > 0) {
-          videos = [...videos, ...newComingSoon].sort((a, b) => a.order - b.order);
-        }
+      const existingOrders = new Set(videos.map((v) => v.order));
+      const comingSoon = allChapterVideos.filter(
+        (v) => v.language === "ENGLISH" && v.youtubeVideoId === "" && !existingOrders.has(v.order)
+      );
+      if (comingSoon.length > 0) {
+        videos = [...videos, ...comingSoon].sort((a, b) => a.order - b.order);
       }
     }
 
@@ -181,19 +182,15 @@ export async function getVideos(req: Request, res: Response) {
       locked: !v.isFree && !hasAccess,
     }));
 
-    // Get available languages for this chapter
-    const availableLanguages = await prisma.video.findMany({
-      where: { chapterId: id },
-      select: { language: true },
-      distinct: ["language"],
-    });
+    // Extract available languages from the already-fetched data (no extra query)
+    const availableLanguages = [...new Set(allChapterVideos.map((v) => v.language))];
 
     return success(res, {
       chapter,
       videos: videosWithAccess,
       language,
       usingFallback,
-      availableLanguages: availableLanguages.map((l) => l.language),
+      availableLanguages,
     });
   } catch (e) {
     console.error("Get videos error:", e);
@@ -276,6 +273,10 @@ export async function getQuestions(req: Request, res: Response) {
 export async function getSubjectContentCounts(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const cacheKey = `content-counts:${id}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return success(res, cached);
+
     const subject = await prisma.subject.findUnique({ where: { id } });
     if (!subject) return error(res, "Subject not found", 404);
 
@@ -287,7 +288,9 @@ export async function getSubjectContentCounts(req: Request, res: Response) {
       prisma.boardPaper.count({ where: { subjectId: id } }),
     ]);
 
-    return success(res, { animatedVideos, lectureVideos, notes, quiz, boardPapers });
+    const result = { animatedVideos, lectureVideos, notes, quiz, boardPapers };
+    cacheSet(cacheKey, result, CACHE_TTL);
+    return success(res, result);
   } catch (e) {
     console.error("Get content counts error:", e);
     return error(res, "Failed to fetch content counts");
@@ -297,6 +300,10 @@ export async function getSubjectContentCounts(req: Request, res: Response) {
 export async function getBoardPapers(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const cacheKey = `board-papers:${id}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return success(res, cached);
+
     const subject = await prisma.subject.findUnique({
       where: { id },
       include: { class: true },
@@ -315,7 +322,9 @@ export async function getBoardPapers(req: Request, res: Response) {
       grouped[p.year].push(p);
     });
 
-    return success(res, { subject, papers: grouped });
+    const result = { subject, papers: grouped };
+    cacheSet(cacheKey, result, CACHE_TTL);
+    return success(res, result);
   } catch (e) {
     console.error("Get board papers error:", e);
     return error(res, "Failed to fetch board papers");
