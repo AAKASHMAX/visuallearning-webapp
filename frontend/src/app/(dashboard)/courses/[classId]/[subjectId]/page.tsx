@@ -16,13 +16,19 @@ interface ContentCounts {
   boardPapers: number;
 }
 
-const CONTENT_TYPES = [
-  { slug: "animated-videos", label: "3D Animated Videos", description: "Animated concept explanations", icon: Play, color: "from-violet-500 to-purple-600" },
-  { slug: "lecture-videos", label: "Lecture Videos", description: "Detailed lecture recordings", icon: Video, color: "from-blue-500 to-cyan-600" },
-  { slug: "notes", label: "Notes", description: "Chapter-wise PDF notes", icon: FileText, color: "from-emerald-500 to-green-600" },
-  { slug: "quiz", label: "Quiz", description: "MCQ practice with scoring", icon: Brain, color: "from-orange-500 to-amber-600" },
-  { slug: "board-papers", label: "Board Papers (Solved)", description: "Previous year solved papers", icon: ClipboardList, color: "from-rose-500 to-pink-600" },
-];
+// Board exam classes show "Board Papers", others show "Important Questions"
+const BOARD_CLASSES = ["10", "12", "class 10", "class 12"];
+
+function getContentTypes(className: string) {
+  const isBoard = BOARD_CLASSES.some((b) => className.toLowerCase().includes(b));
+  return [
+    { slug: "animated-videos", label: "3D Animated Videos", description: "Animated concept explanations", icon: Play, color: "from-violet-500 to-purple-600" },
+    { slug: "lecture-videos", label: "Lecture Videos", description: "Detailed lecture recordings", icon: Video, color: "from-blue-500 to-cyan-600" },
+    { slug: "notes", label: "Notes", description: "Chapter-wise PDF notes", icon: FileText, color: "from-emerald-500 to-green-600" },
+    { slug: "quiz", label: "Quiz", description: "MCQ practice with scoring", icon: Brain, color: "from-orange-500 to-amber-600" },
+    { slug: "board-papers", label: isBoard ? "Board Papers" : "Important Questions", description: isBoard ? "Previous year solved papers" : "Important questions & sample papers", icon: ClipboardList, color: "from-rose-500 to-pink-600" },
+  ];
+}
 
 function getCount(counts: ContentCounts | null, slug: string): number {
   if (!counts) return 0;
@@ -72,7 +78,7 @@ export default function SubjectContentPage() {
         <p className="text-gray-500">Choose a content type to explore</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {CONTENT_TYPES.map((ct) => {
+        {getContentTypes(className).map((ct) => {
           const count = getCount(counts, ct.slug);
           const Icon = ct.icon;
           return (

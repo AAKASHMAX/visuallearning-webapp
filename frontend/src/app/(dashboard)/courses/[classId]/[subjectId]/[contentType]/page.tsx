@@ -13,13 +13,15 @@ import {
   Video, ShieldCheck, Star, CheckCircle, Radio, Calendar, Headphones, Target,
 } from "lucide-react";
 
-const CONTENT_TYPE_MAP: Record<string, { apiParam: string; label: string; countLabel: string }> = {
+const CONTENT_TYPE_MAP: Record<string, { apiParam: string; label: string; altLabel?: string; countLabel: string }> = {
   "animated-videos": { apiParam: "animated_videos", label: "3D Animated Videos", countLabel: "videos" },
   "lecture-videos": { apiParam: "lecture_videos", label: "Lecture Videos", countLabel: "videos" },
   "notes": { apiParam: "notes", label: "Notes", countLabel: "notes" },
   "quiz": { apiParam: "quiz", label: "Quiz", countLabel: "questions" },
-  "board-papers": { apiParam: "board_papers", label: "Board Papers (Solved)", countLabel: "papers" },
+  "board-papers": { apiParam: "board_papers", label: "Board Papers", altLabel: "Important Questions", countLabel: "papers" },
 };
+
+const BOARD_CLASSES = ["10", "12", "class 10", "class 12"];
 
 // ─── Chapter List Page ──────────────────────────────────────────
 function ChapterListPage() {
@@ -62,16 +64,17 @@ function ChapterListPage() {
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
         <p className="text-sm text-gray-400">{className} &middot; {subjectName}</p>
-        <h1 className="text-2xl font-bold">{ct.label}</h1>
+        <h1 className="text-2xl font-bold">{contentType === "board-papers" && ct.altLabel && !BOARD_CLASSES.some((b) => className.toLowerCase().includes(b)) ? ct.altLabel : ct.label}</h1>
       </div>
 
       {contentType === "board-papers" ? (
         <div className="space-y-4">
-          {years.length === 0 && <p className="text-gray-400">No board papers available yet.</p>}
+          {years.length === 0 && <p className="text-gray-400">No papers available yet.</p>}
           {years.map((year) => {
             const papers = boardPapers[year];
             const questionPaper = papers.find((p) => !p.title.toLowerCase().includes("solution"));
             const solution = papers.find((p) => p.title.toLowerCase().includes("solution"));
+            const isBoardClass = BOARD_CLASSES.some((b) => className.toLowerCase().includes(b));
 
             return (
               <Card key={year} className="mb-0 overflow-hidden">
@@ -82,8 +85,8 @@ function ChapterListPage() {
                       {year.toString().slice(-2)}
                     </div>
                     <div>
-                      <h2 className="font-semibold text-sm">CBSE {year}</h2>
-                      <p className="text-xs text-gray-400">Board Examination</p>
+                      <h2 className="font-semibold text-sm">{isBoardClass ? `CBSE ${year}` : `Year ${year}`}</h2>
+                      <p className="text-xs text-gray-400">{isBoardClass ? "Board Examination" : "Important Questions"}</p>
                     </div>
                   </div>
                   {/* Two cards row */}
