@@ -54,6 +54,7 @@ export interface Video {
   order: number;
   isFree: boolean;
   locked?: boolean;
+  hasVideo?: boolean;
   type?: string;
 }
 
