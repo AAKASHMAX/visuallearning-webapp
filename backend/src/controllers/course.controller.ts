@@ -177,6 +177,7 @@ export async function getVideos(req: Request, res: Response) {
     const videosWithAccess = videos.map((v) => ({
       ...v,
       youtubeVideoId: v.isFree || hasAccess ? v.youtubeVideoId : null,
+      hasVideo: !!v.youtubeVideoId,
       locked: !v.isFree && !hasAccess,
     }));
 

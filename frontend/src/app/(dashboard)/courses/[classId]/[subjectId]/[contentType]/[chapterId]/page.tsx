@@ -115,7 +115,7 @@ function VideoViewer() {
         {videos.length === 0 ? (
           <p className="text-gray-400">No videos available.</p>
         ) : videos.map((v) => {
-          const isComingSoon = !v.youtubeVideoId;
+          const isComingSoon = v.hasVideo === false;
           return (
           <Card key={v.id} className={`transition-shadow ${isComingSoon ? "opacity-70" : "cursor-pointer"} ${selectedVideo?.id === v.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
             onClick={() => {
