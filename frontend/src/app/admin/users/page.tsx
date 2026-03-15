@@ -49,11 +49,20 @@ export default function AdminUsersPage() {
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b text-left bg-gray-50">
-                <th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Subscription</th><th className="p-4">Status</th><th className="p-4">Actions</th>
+                <th className="p-4">User ID</th><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Subscription</th><th className="p-4">Status</th><th className="p-4">Actions</th>
               </tr></thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id} className="border-b last:border-0">
+                    <td className="p-4">
+                      <button
+                        className="text-xs font-mono text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                        title="Click to copy"
+                        onClick={() => { navigator.clipboard.writeText(u.id); toast.success("User ID copied!"); }}
+                      >
+                        {u.id.slice(0, 8)}...
+                      </button>
+                    </td>
                     <td className="p-4 font-medium">{u.name}</td>
                     <td className="p-4 text-gray-500">{u.email}</td>
                     <td className="p-4">{u.subscription ? <Badge variant="success">{u.subscription.plan}</Badge> : <Badge variant="default">None</Badge>}</td>
