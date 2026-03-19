@@ -105,11 +105,11 @@ function VideoViewer() {
     if (!loading) loadVideos();
   }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const breadcrumb = useBreadcrumbData();
+
   if (loading) return <PageLoader />;
 
   const currentLangLabel = enabledLanguages.find((l) => l.value === language)?.label || language;
-
-  const breadcrumb = useBreadcrumbData();
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -227,9 +227,9 @@ function NotesViewer() {
     ]).finally(() => setLoading(false));
   }, [chapterId]);
 
-  if (loading) return <PageLoader />;
-
   const breadcrumb = useBreadcrumbData();
+
+  if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-6xl mx-auto">
