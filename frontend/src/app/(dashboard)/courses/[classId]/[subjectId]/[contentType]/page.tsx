@@ -9,9 +9,10 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { Chapter, BoardPaper } from "@/types";
 import {
-  ArrowLeft, FileText, Clock, Users, MessageCircle, GraduationCap,
+  FileText, Clock, Users, MessageCircle, GraduationCap,
   Video, ShieldCheck, Star, CheckCircle, Radio, Calendar, Headphones, Target,
 } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const CONTENT_TYPE_MAP: Record<string, { apiParam: string; label: string; altLabel?: string; countLabel: string }> = {
   "animated-videos": { apiParam: "animated_videos", label: "3D Animated Videos", countLabel: "videos" },
@@ -60,10 +61,11 @@ function ChapterListPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <Link href={`/courses/${classId}/${subjectId}`} className="text-sm text-primary flex items-center gap-1 mb-2 hover:underline">
-          <ArrowLeft className="w-3 h-3" /> Back
-        </Link>
-        <p className="text-sm text-gray-400">{className} &middot; {subjectName}</p>
+        <Breadcrumb items={[
+          { label: className, href: `/courses/${classId}` },
+          { label: subjectName, href: `/courses/${classId}/${subjectId}` },
+          { label: contentType === "board-papers" && ct.altLabel && !BOARD_CLASSES.some((b) => className.toLowerCase().includes(b)) ? ct.altLabel : ct.label },
+        ]} />
         <h1 className="text-2xl font-bold">{contentType === "board-papers" && ct.altLabel && !BOARD_CLASSES.some((b) => className.toLowerCase().includes(b)) ? ct.altLabel : ct.label}</h1>
       </div>
 
@@ -220,9 +222,9 @@ function LiveClassesPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Link href={`/courses/${classId}/${subjectId}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back
-      </Link>
+      <Breadcrumb items={[
+        { label: "Live Classes" },
+      ]} />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 p-8 mb-8">

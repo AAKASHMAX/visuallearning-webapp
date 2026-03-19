@@ -44,6 +44,18 @@ export const useLanguage = create<LanguageState>((set, get) => ({
       set({ language: stored });
     }
     if (!get().loaded) {
+      // Try localStorage cache first (avoids API call on every page)
+      const cached = localStorage.getItem("vl_enabled_languages");
+      if (cached) {
+        try {
+          const { langs, ts } = JSON.parse(cached);
+          // Use cache if less than 10 minutes old
+          if (Date.now() - ts < 10 * 60 * 1000 && langs.length > 0) {
+            set({ enabledLanguages: langs, loaded: true });
+            return;
+          }
+        } catch { /* ignore bad cache */ }
+      }
       get().fetchEnabledLanguages();
     }
   },
@@ -52,12 +64,15 @@ export const useLanguage = create<LanguageState>((set, get) => ({
     try {
       const { data } = await api.get("/admin/public-settings");
       const rawLangs: any[] = data.data.languages || [];
-      // API returns {key, label} objects
       const langs: LangOption[] = rawLangs.map((l: any) => ({
         value: typeof l === "string" ? l : l.key,
         label: typeof l === "string" ? l.charAt(0) + l.slice(1).toLowerCase() : l.label,
       }));
-      set({ enabledLanguages: langs.length > 0 ? langs : DEFAULT_LANGUAGES, loaded: true });
+      const finalLangs = langs.length > 0 ? langs : DEFAULT_LANGUAGES;
+      set({ enabledLanguages: finalLangs, loaded: true });
+
+      // Cache in localStorage to avoid API call on next page load
+      localStorage.setItem("vl_enabled_languages", JSON.stringify({ langs: finalLangs, ts: Date.now() }));
 
       // If current language is no longer enabled, reset to ENGLISH
       const current = get().language;

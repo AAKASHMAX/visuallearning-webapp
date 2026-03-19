@@ -1,11 +1,13 @@
 "use client";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Play, FileText, Brain, Star, CheckCircle } from "lucide-react";
+
+const Footer = dynamic(() => import("@/components/layout/footer").then((m) => m.Footer), { ssr: false });
 
 const features = [
   { icon: Play, title: "Animated Videos", desc: "Crystal-clear animated explanations for every concept" },

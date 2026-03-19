@@ -50,6 +50,10 @@ export async function getChapters(req: Request, res: Response) {
     const { id } = req.params;
     const contentType = req.query.contentType as string | undefined;
 
+    const chapterCacheKey = `chapters:${id}:${contentType || "all"}`;
+    const cachedChapters = cacheGet(chapterCacheKey);
+    if (cachedChapters) return success(res, cachedChapters);
+
     const subject = await prisma.subject.findUnique({
       where: { id },
       include: { class: true },
@@ -103,25 +107,35 @@ export async function getChapters(req: Request, res: Response) {
       }));
     }
 
-    return success(res, { subject, chapters: chaptersWithCount });
+    const chapterResult = { subject, chapters: chaptersWithCount };
+    cacheSet(chapterCacheKey, chapterResult, CACHE_TTL);
+    return success(res, chapterResult);
   } catch (e) {
     console.error("Get chapters error:", e);
     return error(res, "Failed to fetch chapters");
   }
 }
 
-// Helper: check if user has access to a specific class
+// Helper: check if user has access to a specific class (cached for 60s)
 async function checkClassAccess(userId: string, classId: string): Promise<{ hasAccess: boolean; subscription: any }> {
+  const cacheKey = `access:${userId}:${classId}`;
+  const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
+  if (cached) return cached;
+
   const sub = await prisma.subscription.findFirst({
     where: { userId, status: "ACTIVE", expiryDate: { gt: new Date() } },
   });
-  if (!sub) return { hasAccess: false, subscription: null };
+  if (!sub) {
+    const result = { hasAccess: false, subscription: null };
+    cacheSet(cacheKey, result, 60);
+    return result;
+  }
 
   // MONTHLY, YEARLY, FULL_ACCESS or empty classesAccess = full access
-  if (sub.classesAccess.length === 0 || sub.classesAccess.includes(classId)) {
-    return { hasAccess: true, subscription: sub };
-  }
-  return { hasAccess: false, subscription: sub };
+  const hasAccess = sub.classesAccess.length === 0 || sub.classesAccess.includes(classId);
+  const result = { hasAccess, subscription: sub };
+  cacheSet(cacheKey, result, 60);
+  return result;
 }
 
 export async function getVideos(req: Request, res: Response) {

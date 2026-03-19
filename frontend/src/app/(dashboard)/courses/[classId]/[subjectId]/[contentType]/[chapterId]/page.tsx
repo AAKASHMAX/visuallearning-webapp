@@ -10,12 +10,46 @@ import { VideoPlayer } from "@/components/video/video-player";
 import { useLanguage } from "@/lib/language";
 import api from "@/lib/api";
 import type { Video, Note, Question, BoardPaper } from "@/types";
-import { PlayCircle, Lock, FileText, Globe, AlertTriangle, Crown, ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Maximize2, Minimize2, X, Clock } from "lucide-react";
+import { PlayCircle, Lock, FileText, Globe, AlertTriangle, Crown, CheckCircle, ChevronLeft, ChevronRight, Maximize2, Minimize2, Clock } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const VIDEO_TYPE_MAP: Record<string, string> = {
   "animated-videos": "ANIMATED_VIDEO",
   "lecture-videos": "LECTURE_VIDEO",
 };
+
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  "animated-videos": "3D Animated Videos",
+  "lecture-videos": "Lecture Videos",
+  "notes": "Notes",
+  "quiz": "Quiz",
+  "board-papers": "Board Papers",
+};
+
+function useBreadcrumbData() {
+  const { classId, subjectId, contentType } = useParams();
+  const [className, setClassName] = useState("");
+  const [subjectName, setSubjectName] = useState("");
+
+  useEffect(() => {
+    api.get(`/courses/subjects/${subjectId}/chapters`).then(({ data }) => {
+      setSubjectName(data.data.subject.name);
+      setClassName(data.data.subject.class?.name || "");
+    }).catch(() => {});
+  }, [subjectId]);
+
+  const contentLabel = CONTENT_TYPE_LABELS[contentType as string] || (contentType as string);
+
+  return {
+    items: [
+      { label: className || "...", href: `/courses/${classId}` },
+      { label: subjectName || "...", href: `/courses/${classId}/${subjectId}` },
+      { label: contentLabel, href: `/courses/${classId}/${subjectId}/${contentType}` },
+    ],
+    className,
+    subjectName,
+  };
+}
 
 export default function ContentViewerPage() {
   const { classId, subjectId, contentType, chapterId } = useParams();
@@ -75,11 +109,11 @@ function VideoViewer() {
 
   const currentLangLabel = enabledLanguages.find((l) => l.value === language)?.label || language;
 
+  const breadcrumb = useBreadcrumbData();
+
   return (
     <div className="max-w-6xl mx-auto">
-      <Link href={`/courses/${classId}/${subjectId}/${contentType}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back to chapters
-      </Link>
+      <Breadcrumb items={[...breadcrumb.items, { label: chapterName || "..." }]} />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{chapterName}</h1>
@@ -195,11 +229,11 @@ function NotesViewer() {
 
   if (loading) return <PageLoader />;
 
+  const breadcrumb = useBreadcrumbData();
+
   return (
     <div className="max-w-6xl mx-auto">
-      <Link href={`/courses/${classId}/${subjectId}/${contentType}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back to chapters
-      </Link>
+      <Breadcrumb items={[...breadcrumb.items, { label: chapterName ? `${chapterName} - Notes` : "..." }]} />
       <h1 className="text-2xl font-bold mb-6">{chapterName} - Notes</h1>
 
       {notes.length === 0 ? (
@@ -300,13 +334,13 @@ function QuizViewer() {
     ]).finally(() => setLoading(false));
   }, [chapterId]);
 
+  const breadcrumb = useBreadcrumbData();
+
   if (loading) return <PageLoader />;
   if (questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto">
-        <Link href={`/courses/${classId}/${subjectId}/${contentType}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-          <ArrowLeft className="w-3 h-3" /> Back to chapters
-        </Link>
+        <Breadcrumb items={[...breadcrumb.items, { label: "Quiz" }]} />
         <p className="text-gray-400">No questions available yet.</p>
       </div>
     );
@@ -333,9 +367,7 @@ function QuizViewer() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Link href={`/courses/${classId}/${subjectId}/${contentType}`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back to chapters
-      </Link>
+      <Breadcrumb items={[...breadcrumb.items, { label: chapterName ? `${chapterName} - Quiz` : "..." }]} />
       <h1 className="text-2xl font-bold mb-2">{chapterName} - Quiz</h1>
       <p className="text-sm text-gray-500 mb-6">{questions.length} questions &middot; {answeredCount} answered</p>
 
@@ -449,13 +481,13 @@ function BoardPaperViewer() {
     }).finally(() => setLoading(false));
   }, [subjectId, paperId]);
 
+  const breadcrumb = useBreadcrumbData();
+
   if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Link href={`/courses/${classId}/${subjectId}/board-papers`} className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back to board papers
-      </Link>
+      <Breadcrumb items={[...breadcrumb.items, { label: paper ? `${paper.title} (${paper.year})` : "..." }]} />
       {paper ? (
         <>
           <h1 className="text-xl font-bold mb-4">{paper.title} ({paper.year})</h1>

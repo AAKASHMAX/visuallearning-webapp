@@ -11,7 +11,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     hydrate();
-    setChecked(true);
+    // Use microtask to let zustand state propagate before checking
+    queueMicrotask(() => setChecked(true));
   }, [hydrate]);
 
   useEffect(() => {

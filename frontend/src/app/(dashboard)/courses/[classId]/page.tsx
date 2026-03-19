@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { Subject } from "@/types";
-import { Atom, FlaskConical, Dna, Calculator, ArrowLeft } from "lucide-react";
+import { Atom, FlaskConical, Dna, Calculator } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const iconMap: Record<string, any> = { atom: Atom, "flask-conical": FlaskConical, dna: Dna, calculator: Calculator };
 
@@ -27,9 +28,7 @@ export default function ClassSubjectsPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Link href="/courses" className="text-sm text-primary flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-3 h-3" /> Back to classes
-      </Link>
+      <Breadcrumb items={[{ label: className }]} />
       <h1 className="text-2xl font-bold mb-2">{className}</h1>
       <p className="text-gray-500 mb-6">Choose a subject to start learning</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

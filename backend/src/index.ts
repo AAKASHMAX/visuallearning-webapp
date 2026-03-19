@@ -20,7 +20,7 @@ app.use(cors({
   origin: [config.frontendUrl, "https://visuallearning-webapp.vercel.app", "https://visuallearning.in", "https://www.visuallearning.in"],
   credentials: true,
 }));
-app.use(compression());
+app.use(compression({ level: 6 }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));

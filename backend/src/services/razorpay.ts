@@ -33,3 +33,11 @@ export function verifySignature(orderId: string, paymentId: string, signature: s
     .digest("hex");
   return expectedSignature === signature;
 }
+
+export function verifyWebhookSignature(body: string, signature: string): boolean {
+  const expectedSignature = crypto
+    .createHmac("sha256", config.razorpay.webhookSecret)
+    .update(body)
+    .digest("hex");
+  return expectedSignature === signature;
+}

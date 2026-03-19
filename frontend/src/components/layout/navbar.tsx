@@ -13,7 +13,6 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     hydrate();
     hydrateLanguage();
@@ -35,15 +34,15 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-0 font-bold">
-            <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
+            <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" priority />
             <span className="text-white leading-none text-base text-center">Visual<br />Learning</span>
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="hover:text-accent transition-colors">Home</Link>
-            <Link href="/courses" className="hover:text-accent transition-colors">Courses</Link>
-            <Link href="/subscription" className="hover:text-accent transition-colors">Pricing</Link>
+            <Link href="/" className="hover:text-accent transition-colors" prefetch>Home</Link>
+            <Link href="/courses" className="hover:text-accent transition-colors" prefetch>Courses</Link>
+            <Link href="/subscription" className="hover:text-accent transition-colors" prefetch>Pricing</Link>
 
             {/* Language Switcher */}
             {mounted && (

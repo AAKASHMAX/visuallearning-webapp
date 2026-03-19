@@ -14,7 +14,21 @@ export default function DashboardPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   useEffect(() => {
-    api.get("/subscription/my-subscription").then(({ data }) => setSubscription(data.data)).catch(() => {});
+    // Use sessionStorage cache to avoid re-fetching on every dashboard visit
+    const cached = sessionStorage.getItem("vl_my_sub");
+    if (cached) {
+      try {
+        const { data: sub, ts } = JSON.parse(cached);
+        if (Date.now() - ts < 5 * 60 * 1000) {
+          setSubscription(sub);
+          return;
+        }
+      } catch { /* ignore */ }
+    }
+    api.get("/subscription/my-subscription").then(({ data }) => {
+      setSubscription(data.data);
+      sessionStorage.setItem("vl_my_sub", JSON.stringify({ data: data.data, ts: Date.now() }));
+    }).catch(() => {});
   }, []);
 
   const isActive = subscription?.status === "ACTIVE" && new Date(subscription.expiryDate) > new Date();
