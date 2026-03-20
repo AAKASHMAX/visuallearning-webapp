@@ -124,9 +124,10 @@ export async function forgotPassword(req: Request, res: Response) {
 
     try {
       await sendResetPasswordEmail(email, resetToken);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to send reset email:", e);
-      return error(res, "Failed to send reset email. Please try again later.");
+      const detail = e?.message || "Unknown error";
+      return error(res, `Failed to send reset email: ${detail}`);
     }
 
     return success(res, null, "If the email exists, a reset link has been sent");
