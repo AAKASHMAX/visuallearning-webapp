@@ -49,6 +49,7 @@ export async function signup(req: Request, res: Response) {
       await sendVerificationEmail(email, verificationToken);
     } catch (e) {
       console.error("Failed to send verification email:", e);
+      // Don't block signup, just log it
     }
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role, name: user.name });
@@ -125,6 +126,7 @@ export async function forgotPassword(req: Request, res: Response) {
       await sendResetPasswordEmail(email, resetToken);
     } catch (e) {
       console.error("Failed to send reset email:", e);
+      return error(res, "Failed to send reset email. Please try again later.");
     }
 
     return success(res, null, "If the email exists, a reset link has been sent");
