@@ -452,6 +452,111 @@ export async function getPublicSettings(_req: Request, res: Response) {
   }
 }
 
+// --- Subscription Settings ---
+export async function getSubscriptionSettings(_req: Request, res: Response) {
+  try {
+    const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
+    const data = setting ? JSON.parse(setting.value) : { upgradeDiscountPercent: 0 };
+    return success(res, data);
+  } catch (e) {
+    console.error("Get subscription settings error:", e);
+    return error(res, "Failed to fetch subscription settings");
+  }
+}
+
+export async function updateSubscriptionSettings(req: Request, res: Response) {
+  try {
+    const { upgradeDiscountPercent } = req.body;
+    if (typeof upgradeDiscountPercent !== "number" || upgradeDiscountPercent < 0 || upgradeDiscountPercent > 100) {
+      return error(res, "Upgrade discount must be between 0 and 100", 400);
+    }
+    const value = JSON.stringify({ upgradeDiscountPercent });
+    await prisma.setting.upsert({
+      where: { key: "subscription_settings" },
+      update: { value },
+      create: { key: "subscription_settings", value },
+    });
+    return success(res, { upgradeDiscountPercent }, "Subscription settings updated");
+  } catch (e) {
+    console.error("Update subscription settings error:", e);
+    return error(res, "Failed to update subscription settings");
+  }
+}
+
+// --- Coupon Management ---
+export const couponSchema = z.object({
+  code: z.string().min(3).max(30),
+  discountPercent: z.number().int().min(1).max(100),
+  maxUses: z.number().int().min(0).optional(),
+  validUntil: z.string(),
+});
+
+export async function getAllCoupons(req: Request, res: Response) {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const [coupons, total] = await Promise.all([
+      prisma.coupon.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.coupon.count(),
+    ]);
+
+    return success(res, { coupons, total, page, totalPages: Math.ceil(total / limit) });
+  } catch (e) {
+    console.error("Get coupons error:", e);
+    return error(res, "Failed to fetch coupons");
+  }
+}
+
+export async function createCoupon(req: Request, res: Response) {
+  try {
+    const { code, discountPercent, maxUses, validUntil } = req.body;
+    const coupon = await prisma.coupon.create({
+      data: {
+        code: code.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+        discountPercent,
+        maxUses: maxUses || 0,
+        validUntil: new Date(validUntil),
+      },
+    });
+    return success(res, coupon, "Coupon created successfully", 201);
+  } catch (e: any) {
+    console.error("Create coupon error:", e);
+    return error(res, e.code === "P2002" ? "Coupon code already exists" : "Failed to create coupon");
+  }
+}
+
+export async function toggleCoupon(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const coupon = await prisma.coupon.findUnique({ where: { id } });
+    if (!coupon) return error(res, "Coupon not found", 404);
+    const updated = await prisma.coupon.update({
+      where: { id },
+      data: { active: !coupon.active },
+    });
+    return success(res, updated, updated.active ? "Coupon activated" : "Coupon deactivated");
+  } catch (e) {
+    console.error("Toggle coupon error:", e);
+    return error(res, "Failed to update coupon");
+  }
+}
+
+export async function deleteCoupon(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    await prisma.coupon.delete({ where: { id } });
+    return success(res, null, "Coupon deleted");
+  } catch (e: any) {
+    console.error("Delete coupon error:", e);
+    return error(res, e.code === "P2025" ? "Coupon not found" : "Failed to delete coupon");
+  }
+}
+
 // --- Analytics ---
 export async function getMostWatched(_req: Request, res: Response) {
   try {

@@ -10,6 +10,7 @@ interface RazorpayButtonProps {
   amount: number;
   label: string;
   classesAccess?: string[];
+  couponCode?: string;
   onSuccess?: () => void;
 }
 
@@ -30,7 +31,7 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, classesAccess, onSuccess }: RazorpayButtonProps) {
+export function RazorpayButton({ plan, amount, label, classesAccess, couponCode, onSuccess }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -40,7 +41,11 @@ export function RazorpayButton({ plan, amount, label, classesAccess, onSuccess }
       const loaded = await loadRazorpayScript();
       if (!loaded) { toast.error("Failed to load payment gateway"); return; }
 
-      const { data } = await api.post("/subscription/create-order", { plan, classesAccess });
+      const { data } = await api.post("/subscription/create-order", {
+        plan,
+        classesAccess,
+        couponCode: couponCode || undefined,
+      });
       const order = data.data;
 
       const options = {
@@ -60,6 +65,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, onSuccess }
               razorpay_signature: response.razorpay_signature,
               plan,
               classesAccess,
+              couponCode: couponCode || undefined,
             });
             toast.success("Subscription activated!");
             onSuccess?.();

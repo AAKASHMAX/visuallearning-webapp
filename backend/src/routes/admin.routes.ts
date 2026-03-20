@@ -16,6 +16,8 @@ import {
   grantSubscriptionSchema, updateSubscriptionSchema,
   getSettings, updateLanguageSettings, updatePlanSettings, updateContactInfo,
   getPublicSettings,
+  getSubscriptionSettings, updateSubscriptionSettings,
+  getAllCoupons, createCoupon, toggleCoupon, deleteCoupon, couponSchema,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -44,6 +46,16 @@ router.get("/settings", getSettings);
 router.put("/settings/languages", updateLanguageSettings);
 router.put("/settings/plans", updatePlanSettings);
 router.put("/settings/contact", updateContactInfo);
+
+// Subscription Settings (upgrade discount)
+router.get("/settings/subscription", getSubscriptionSettings);
+router.put("/settings/subscription", updateSubscriptionSettings);
+
+// Coupons
+router.get("/coupons", getAllCoupons);
+router.post("/coupons", validate(couponSchema), createCoupon);
+router.patch("/coupons/:id/toggle", toggleCoupon);
+router.delete("/coupons/:id", deleteCoupon);
 
 // Classes
 router.post("/classes", validate(classSchema), addClass);

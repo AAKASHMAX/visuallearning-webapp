@@ -9,6 +9,7 @@ import { cacheGet, cacheSet } from "../utils/cache";
 export const createOrderSchema = z.object({
   plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
+  couponCode: z.string().optional(),
 });
 
 export const verifyPaymentSchema = z.object({
@@ -17,6 +18,7 @@ export const verifyPaymentSchema = z.object({
   razorpay_signature: z.string(),
   plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
+  couponCode: z.string().optional(),
 });
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
@@ -33,7 +35,29 @@ async function getPlanConfig(planKey: string): Promise<{ amount: number; duratio
   return { amount: fallback.amount, duration: fallback.duration, label: fallback.label, classSelection: 0 };
 }
 
-export async function getPlans(_req: Request, res: Response) {
+// Helper: get upgrade discount config
+async function getUpgradeDiscount(): Promise<number> {
+  const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
+  if (setting) {
+    const config = JSON.parse(setting.value);
+    return config.upgradeDiscountPercent || 0;
+  }
+  return 0;
+}
+
+// Helper: validate and get coupon
+async function validateCoupon(code: string): Promise<{ valid: boolean; discountPercent: number; message: string }> {
+  const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
+  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code" };
+  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active" };
+  const now = new Date();
+  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid" };
+  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired" };
+  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit" };
+  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied" };
+}
+
+export async function getPlans(req: Request, res: Response) {
   const cached = cacheGet("plans");
   if (cached) return success(res, cached);
 
@@ -78,14 +102,30 @@ export async function getPlans(_req: Request, res: Response) {
       popular: key === "MULTI_CLASS",
     }));
 
-  const result = { plans, classes };
+  // Get upgrade discount
+  const upgradeDiscountPercent = await getUpgradeDiscount();
+
+  const result = { plans, classes, upgradeDiscountPercent };
   cacheSet("plans", result, 600); // 10 min cache
   return success(res, result);
 }
 
+// Validate coupon endpoint
+export async function validateCouponCode(req: Request, res: Response) {
+  try {
+    const { code } = req.query;
+    if (!code || typeof code !== "string") return error(res, "Coupon code is required", 400);
+    const result = await validateCoupon(code);
+    return success(res, result);
+  } catch (e) {
+    console.error("Validate coupon error:", e);
+    return error(res, "Failed to validate coupon");
+  }
+}
+
 export async function createSubscriptionOrder(req: Request, res: Response) {
   try {
-    const { plan, classesAccess } = req.body;
+    const { plan, classesAccess, couponCode } = req.body;
     const planConfig = await getPlanConfig(plan);
 
     // Validate classesAccess based on plan's classSelection setting
@@ -95,14 +135,37 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       }
     }
 
-    // Check existing active subscription
+    let amount = planConfig.amount;
+    let couponDiscount = 0;
+    let upgradeDiscount = 0;
+
+    // Check for existing active subscription (upgrade flow)
     const existing = await prisma.subscription.findFirst({
       where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
     });
-    if (existing) return error(res, "You already have an active subscription", 400);
+
+    if (existing) {
+      // Apply upgrade discount
+      const upgradeDiscountPercent = await getUpgradeDiscount();
+      if (upgradeDiscountPercent > 0) {
+        upgradeDiscount = Math.round(amount * upgradeDiscountPercent / 100);
+        amount -= upgradeDiscount;
+      }
+    }
+
+    // Apply coupon if provided
+    if (couponCode) {
+      const couponResult = await validateCoupon(couponCode);
+      if (!couponResult.valid) return error(res, couponResult.message, 400);
+      couponDiscount = Math.round(amount * couponResult.discountPercent / 100);
+      amount -= couponDiscount;
+    }
+
+    // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
+    if (amount < 100) amount = 100;
 
     const receipt = `vl_${req.user!.id.slice(-8)}_${Date.now()}`;
-    const order = await createOrder(planConfig.amount, "INR", receipt);
+    const order = await createOrder(amount, "INR", receipt);
 
     return success(res, {
       orderId: order.id,
@@ -110,6 +173,11 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       currency: order.currency,
       plan,
       classesAccess,
+      couponCode,
+      originalAmount: planConfig.amount,
+      upgradeDiscount,
+      couponDiscount,
+      isUpgrade: !!existing,
     });
   } catch (e: any) {
     console.error("Create order error:", e);
@@ -120,7 +188,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
 export async function verifyPayment(req: Request, res: Response) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, couponCode } = req.body;
 
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
@@ -128,6 +196,39 @@ export async function verifyPayment(req: Request, res: Response) {
     const planConfig = await getPlanConfig(plan);
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
+
+    // Calculate actual amount paid
+    let amount = planConfig.amount;
+    let discountAmount = 0;
+
+    const existing = await prisma.subscription.findFirst({
+      where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+    });
+
+    if (existing) {
+      const upgradeDiscountPercent = await getUpgradeDiscount();
+      if (upgradeDiscountPercent > 0) {
+        discountAmount += Math.round(amount * upgradeDiscountPercent / 100);
+        amount -= Math.round(planConfig.amount * upgradeDiscountPercent / 100);
+      }
+    }
+
+    if (couponCode) {
+      const couponResult = await validateCoupon(couponCode);
+      if (couponResult.valid) {
+        const couponDisc = Math.round(amount * couponResult.discountPercent / 100);
+        discountAmount += couponDisc;
+        amount -= couponDisc;
+
+        // Increment coupon usage
+        await prisma.coupon.update({
+          where: { code: couponCode.toUpperCase() },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+    }
+
+    if (amount < 100) amount = 100;
 
     // If plan has classSelection > 0, use provided classesAccess; otherwise grant all
     let resolvedClassesAccess: string[] = [];
@@ -154,7 +255,9 @@ export async function verifyPayment(req: Request, res: Response) {
         razorpayOrderId: razorpay_order_id,
         razorpaySignature: razorpay_signature,
         status: "ACTIVE",
-        amount: planConfig.amount,
+        amount,
+        couponCode: couponCode ? couponCode.toUpperCase() : null,
+        discountAmount,
       },
     });
 
