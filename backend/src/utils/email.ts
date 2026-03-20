@@ -3,7 +3,7 @@ import { config } from "../config";
 
 const resend = new Resend(config.resendApiKey);
 
-const FROM_EMAIL = "VisualLearning <onboarding@resend.dev>";
+const FROM_EMAIL = "VisualLearning <noreply@visuallearning.in>";
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${config.frontendUrl}/auth/verify-email?token=${token}`;
