@@ -3,11 +3,11 @@ import { config } from "../config";
 
 const resend = new Resend(config.resendApiKey);
 
-const FROM_EMAIL = "VisualLearning <noreply@visuallearning.in>";
+const FROM_EMAIL = "VisualLearning <onboarding@resend.dev>";
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${config.frontendUrl}/auth/verify-email?token=${token}`;
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Verify your email - VisualLearning",
@@ -21,11 +21,15 @@ export async function sendVerificationEmail(email: string, token: string) {
       </div>
     `,
   });
+  console.log("Resend verification email result:", JSON.stringify(result));
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
 }
 
 export async function sendResetPasswordEmail(email: string, token: string) {
   const resetUrl = `${config.frontendUrl}/auth/forgot-password?token=${token}`;
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Reset your password - VisualLearning",
@@ -39,4 +43,8 @@ export async function sendResetPasswordEmail(email: string, token: string) {
       </div>
     `,
   });
+  console.log("Resend reset email result:", JSON.stringify(result));
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
 }
