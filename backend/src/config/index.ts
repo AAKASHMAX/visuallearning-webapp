@@ -13,6 +13,7 @@ export const config = {
     keySecret: process.env.RAZORPAY_KEY_SECRET || "",
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
   },
+  resendApiKey: process.env.RESEND_API_KEY || "",
   smtp: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: parseInt(process.env.SMTP_PORT || "587"),

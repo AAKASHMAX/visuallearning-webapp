@@ -1,21 +1,14 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { config } from "../config";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: config.smtp.user,
-    pass: config.smtp.pass,
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-});
+const resend = new Resend(config.resendApiKey);
+
+const FROM_EMAIL = "VisualLearning <noreply@visuallearning.in>";
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${config.frontendUrl}/auth/verify-email?token=${token}`;
-  await transporter.sendMail({
-    from: `"VisualLearning" <${config.smtp.user}>`,
+  await resend.emails.send({
+    from: FROM_EMAIL,
     to: email,
     subject: "Verify your email - VisualLearning",
     html: `
@@ -32,8 +25,8 @@ export async function sendVerificationEmail(email: string, token: string) {
 
 export async function sendResetPasswordEmail(email: string, token: string) {
   const resetUrl = `${config.frontendUrl}/auth/forgot-password?token=${token}`;
-  await transporter.sendMail({
-    from: `"VisualLearning" <${config.smtp.user}>`,
+  await resend.emails.send({
+    from: FROM_EMAIL,
     to: email,
     subject: "Reset your password - VisualLearning",
     html: `
