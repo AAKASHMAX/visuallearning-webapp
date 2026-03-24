@@ -305,6 +305,7 @@ export async function cancelSubscription(req: Request, res: Response) {
 
 // --- Settings Management ---
 const DEFAULT_SETTINGS: Record<string, string> = {
+  live_classes_enabled: "true",
   enabled_languages: JSON.stringify([
     { key: "ENGLISH", label: "English" },
     { key: "HINDI", label: "Hindi" },
@@ -334,16 +335,18 @@ async function getSetting(key: string): Promise<string> {
 
 export async function getSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo, liveClassesEnabled] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
       getSetting("contact_info"),
+      getSetting("live_classes_enabled"),
     ]);
 
     return success(res, {
       enabledLanguages: JSON.parse(enabledLanguages),
       plansConfig: JSON.parse(plansConfig),
       contactInfo: JSON.parse(contactInfo),
+      liveClassesEnabled: liveClassesEnabled === "true",
     });
   } catch (e) {
     console.error("Get settings error:", e);
@@ -416,13 +419,32 @@ export async function updateContactInfo(req: Request, res: Response) {
   }
 }
 
+export async function updateFeatureSettings(req: Request, res: Response) {
+  try {
+    const { liveClassesEnabled } = req.body;
+    if (typeof liveClassesEnabled !== "boolean") {
+      return error(res, "liveClassesEnabled must be a boolean", 400);
+    }
+    await prisma.setting.upsert({
+      where: { key: "live_classes_enabled" },
+      update: { value: String(liveClassesEnabled) },
+      create: { key: "live_classes_enabled", value: String(liveClassesEnabled) },
+    });
+    return success(res, { liveClassesEnabled }, "Feature settings updated");
+  } catch (e) {
+    console.error("Update feature settings error:", e);
+    return error(res, "Failed to update feature settings");
+  }
+}
+
 // --- Public settings (no auth needed) ---
 export async function getPublicSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo, liveClassesEnabled] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
       getSetting("contact_info"),
+      getSetting("live_classes_enabled"),
     ]);
 
     const rawLanguages = JSON.parse(enabledLanguages);
@@ -445,7 +467,7 @@ export async function getPublicSettings(_req: Request, res: Response) {
         enabled: v.enabled,
       }));
 
-    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo) });
+    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo), liveClassesEnabled: liveClassesEnabled === "true" });
   } catch (e) {
     console.error("Get public settings error:", e);
     return error(res, "Failed to fetch settings");

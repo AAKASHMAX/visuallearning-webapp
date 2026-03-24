@@ -53,6 +53,7 @@ export default function SubjectContentPage() {
   const [className, setClassName] = useState("");
   const [counts, setCounts] = useState<ContentCounts | null>(null);
   const [loading, setLoading] = useState(true);
+  const [liveClassesEnabled, setLiveClassesEnabled] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -62,6 +63,9 @@ export default function SubjectContentPage() {
       }),
       api.get(`/courses/subjects/${subjectId}/content-counts`).then(({ data }) => {
         setCounts(data.data);
+      }),
+      api.get("/admin/public-settings").then(({ data }) => {
+        setLiveClassesEnabled(data.data.liveClassesEnabled ?? true);
       }),
     ]).finally(() => setLoading(false));
   }, [subjectId]);
@@ -106,24 +110,42 @@ export default function SubjectContentPage() {
         })}
 
         {/* Live Classes */}
-        <Link href="/courses/live-classes">
-          <Card className="hover:shadow-lg transition-all cursor-pointer h-full group">
-            <CardContent className="p-6 flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+        {liveClassesEnabled ? (
+          <Link href="/courses/live-classes">
+            <Card className="hover:shadow-lg transition-all cursor-pointer h-full group">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Radio className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-base">Live Classes</h3>
+                    <Badge variant="danger" className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-500">Join small group doubt-clearing sessions with live teachers</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : (
+          <Card className="h-full opacity-60 cursor-not-allowed relative overflow-hidden">
+            <div className="absolute inset-0 bg-gray-900/30 z-10 rounded-xl" />
+            <CardContent className="p-6 flex items-start gap-4 relative z-20">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shrink-0">
                 <Radio className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-base">Live Classes</h3>
-                  <Badge variant="danger" className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
-                  </Badge>
+                  <Badge variant="warning">Coming Soon</Badge>
                 </div>
                 <p className="text-sm text-gray-500">Join small group doubt-clearing sessions with live teachers</p>
               </div>
             </CardContent>
           </Card>
-        </Link>
+        )}
       </div>
     </div>
   );

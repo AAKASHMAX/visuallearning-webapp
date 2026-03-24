@@ -15,7 +15,7 @@ import {
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
   getSettings, updateLanguageSettings, updatePlanSettings, updateContactInfo,
-  getPublicSettings,
+  getPublicSettings, updateFeatureSettings,
   getSubscriptionSettings, updateSubscriptionSettings,
   getAllCoupons, createCoupon, toggleCoupon, deleteCoupon, couponSchema,
 } from "../controllers/admin.controller";
@@ -46,6 +46,7 @@ router.get("/settings", getSettings);
 router.put("/settings/languages", updateLanguageSettings);
 router.put("/settings/plans", updatePlanSettings);
 router.put("/settings/contact", updateContactInfo);
+router.put("/settings/features", updateFeatureSettings);
 
 // Subscription Settings (upgrade discount)
 router.get("/settings/subscription", getSubscriptionSettings);

@@ -12,9 +12,15 @@ const classColors = ["from-blue-500 to-blue-700", "from-green-500 to-green-700",
 export default function CoursesPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [liveClassesEnabled, setLiveClassesEnabled] = useState(true);
 
   useEffect(() => {
-    api.get("/courses/classes").then(({ data }) => setClasses(data.data)).finally(() => setLoading(false));
+    Promise.all([
+      api.get("/courses/classes").then(({ data }) => setClasses(data.data)),
+      api.get("/admin/public-settings").then(({ data }) => {
+        setLiveClassesEnabled(data.data.liveClassesEnabled ?? true);
+      }),
+    ]).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <PageLoader />;
@@ -37,17 +43,29 @@ export default function CoursesPage() {
 
       {/* Live Classes Card */}
       <div className="mt-8">
-        <Link href="/courses/live-classes">
-          <div className="relative bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer shadow-lg max-w-xs overflow-hidden">
-            <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-medium">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
+        {liveClassesEnabled ? (
+          <Link href="/courses/live-classes">
+            <div className="relative bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer shadow-lg max-w-xs overflow-hidden">
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-medium">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
+              </div>
+              <Radio className="w-10 h-10 mb-4 opacity-80" />
+              <h3 className="text-xl font-bold mb-1">Live Classes</h3>
+              <p className="text-white/70">Doubt-clearing sessions with expert teachers</p>
+              <div className="mt-4 text-sm font-medium">Explore &rarr;</div>
             </div>
-            <Radio className="w-10 h-10 mb-4 opacity-80" />
-            <h3 className="text-xl font-bold mb-1">Live Classes</h3>
-            <p className="text-white/70">Doubt-clearing sessions with expert teachers</p>
-            <div className="mt-4 text-sm font-medium">Explore &rarr;</div>
+          </Link>
+        ) : (
+          <div className="relative bg-gradient-to-br from-gray-400 to-gray-600 text-white rounded-xl p-6 shadow-lg max-w-xs overflow-hidden cursor-not-allowed opacity-70">
+            <div className="absolute inset-0 bg-black/40 rounded-xl" />
+            <div className="relative z-10">
+              <Radio className="w-10 h-10 mb-4 opacity-50" />
+              <h3 className="text-xl font-bold mb-1">Live Classes</h3>
+              <p className="text-white/60">Doubt-clearing sessions with expert teachers</p>
+              <div className="mt-4 text-sm font-bold text-yellow-300">Coming Soon</div>
+            </div>
           </div>
-        </Link>
+        )}
       </div>
     </div>
   );

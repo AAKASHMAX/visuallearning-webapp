@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket, Radio } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const mainLinks = [
@@ -19,6 +19,7 @@ const settingsSubLinks = [
   { href: "/admin/settings/subscription", label: "Subscription Plans", icon: CreditCard },
   { href: "/admin/settings/coupons", label: "Coupon Codes", icon: Ticket },
   { href: "/admin/settings/contact", label: "Contact Us", icon: MapPin },
+  { href: "/admin/settings/features", label: "Features", icon: Radio },
 ];
 
 export function AdminSidebar() {
