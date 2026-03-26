@@ -30,7 +30,7 @@ export async function sendVerificationEmail(email: string, token: string) {
 export async function sendFeedbackEmail(name: string, email: string, subject: string, message: string) {
   const result = await resend.emails.send({
     from: FROM_EMAIL,
-    to: "visuallearing247@gmail.com",
+    to: "visuallearning247@gmail.com",
     subject: `Feedback: ${subject}`,
     replyTo: email,
     html: `
