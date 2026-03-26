@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { success, error } from "../utils/apiResponse";
+import { cacheInvalidate } from "../utils/cache";
 
 // --- Schemas ---
 export const classSchema = z.object({ name: z.string().min(1), order: z.number().int().optional() });
@@ -153,6 +154,43 @@ export async function deleteClass(req: Request, res: Response) { return crudDele
 export async function addSubject(req: Request, res: Response) { return crudCreate(prisma.subject, req.body, res); }
 export async function updateSubject(req: Request, res: Response) { return crudUpdate(prisma.subject, req.params.id, req.body, res); }
 export async function deleteSubject(req: Request, res: Response) { return crudDelete(prisma.subject, req.params.id, res); }
+
+export async function toggleSubjectAccess(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const subject = await prisma.subject.findUnique({ where: { id } });
+    if (!subject) return error(res, "Subject not found", 404);
+
+    const updated = await prisma.subject.update({
+      where: { id },
+      data: { enabled: !subject.enabled },
+      include: { class: true },
+    });
+    // Invalidate cached subjects for this class
+    cacheInvalidate(`subjects:${subject.classId}`);
+    return success(res, updated, `${updated.name} ${updated.enabled ? "enabled" : "disabled"}`);
+  } catch (e) {
+    console.error("Toggle subject access error:", e);
+    return error(res, "Failed to toggle subject access");
+  }
+}
+
+export async function getSubjectAccessList(_req: Request, res: Response) {
+  try {
+    const classes = await prisma.class.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        subjects: {
+          select: { id: true, name: true, icon: true, enabled: true },
+        },
+      },
+    });
+    return success(res, classes);
+  } catch (e) {
+    console.error("Get subject access list error:", e);
+    return error(res, "Failed to fetch subject access list");
+  }
+}
 
 // --- Chapters ---
 export async function addChapter(req: Request, res: Response) { return crudCreate(prisma.chapter, req.body, res); }

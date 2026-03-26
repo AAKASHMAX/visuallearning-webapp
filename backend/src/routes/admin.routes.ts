@@ -5,7 +5,7 @@ import { validate } from "../middleware/validate";
 import {
   getStats, getAllUsers, toggleBlockUser,
   addClass, updateClass, deleteClass, classSchema,
-  addSubject, updateSubject, deleteSubject, subjectSchema,
+  addSubject, updateSubject, deleteSubject, subjectSchema, toggleSubjectAccess, getSubjectAccessList,
   addChapter, updateChapter, deleteChapter, chapterSchema,
   addVideo, updateVideo, deleteVideo, videoSchema,
   addNote, deleteNote, noteSchema,
@@ -64,8 +64,10 @@ router.put("/classes/:id", updateClass);
 router.delete("/classes/:id", deleteClass);
 
 // Subjects
+router.get("/subjects/access", getSubjectAccessList);
 router.post("/subjects", validate(subjectSchema), addSubject);
 router.put("/subjects/:id", updateSubject);
+router.patch("/subjects/:id/toggle-access", toggleSubjectAccess);
 router.delete("/subjects/:id", deleteSubject);
 
 // Chapters

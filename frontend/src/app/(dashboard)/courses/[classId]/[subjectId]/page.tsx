@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { Play, Video, FileText, Brain, ClipboardList, Radio } from "lucide-react";
+import { Play, Video, FileText, Brain, ClipboardList, Radio, Lock } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface ContentCounts {
@@ -44,6 +44,7 @@ function getCount(counts: ContentCounts | null, slug: string): number {
 }
 
 export default function SubjectContentPage() {
+  const router = useRouter();
   const params = useParams();
   // Extract only first segment if params contain extra path segments
   const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
@@ -54,12 +55,17 @@ export default function SubjectContentPage() {
   const [counts, setCounts] = useState<ContentCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [liveClassesEnabled, setLiveClassesEnabled] = useState(true);
+  const [subjectDisabled, setSubjectDisabled] = useState(false);
 
   useEffect(() => {
     Promise.all([
       api.get(`/courses/subjects/${subjectId}/chapters`).then(({ data }) => {
-        setSubjectName(data.data.subject.name);
-        setClassName(data.data.subject.class?.name || "");
+        const subject = data.data.subject;
+        setSubjectName(subject.name);
+        setClassName(subject.class?.name || "");
+        if (subject.enabled === false) {
+          setSubjectDisabled(true);
+        }
       }),
       api.get(`/courses/subjects/${subjectId}/content-counts`).then(({ data }) => {
         setCounts(data.data);
@@ -71,6 +77,31 @@ export default function SubjectContentPage() {
   }, [subjectId]);
 
   if (loading) return <PageLoader />;
+
+  if (subjectDisabled) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Breadcrumb items={[
+          { label: className, href: `/courses/${classId}` },
+          { label: subjectName },
+        ]} />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-6">
+            <Lock className="w-10 h-10 text-gray-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-700 mb-2">{subjectName}</h1>
+          <p className="text-lg text-yellow-600 font-semibold mb-2">Coming Soon</p>
+          <p className="text-gray-500 mb-6">This subject is not yet available. Stay tuned!</p>
+          <Link
+            href={`/courses/${classId}`}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">

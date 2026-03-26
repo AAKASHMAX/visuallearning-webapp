@@ -93,6 +93,7 @@ model Subject {
   classId  String
   name     String
   icon     String?
+  enabled  Boolean   @default(true)
 
   class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   chapters    Chapter[]

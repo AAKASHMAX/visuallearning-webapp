@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { Subject } from "@/types";
-import { Atom, FlaskConical, Dna, Calculator } from "lucide-react";
+import { Atom, FlaskConical, Dna, Calculator, Lock } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const iconMap: Record<string, any> = { atom: Atom, "flask-conical": FlaskConical, dna: Dna, calculator: Calculator };
@@ -49,6 +50,25 @@ export default function ClassSubjectsPage() {
         {subjects.map((s, i) => {
           const Icon = iconMap[s.icon || ""] || Atom;
           const gradient = getGradient(s.name, i);
+          const isDisabled = s.enabled === false;
+
+          if (isDisabled) {
+            return (
+              <div key={s.id} className="relative pointer-events-none select-none">
+                <div className="bg-gradient-to-br from-gray-400 to-gray-500 text-white rounded-xl p-6 text-center shadow-lg h-full opacity-70">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                    <Icon className="w-8 h-8 text-white/60" />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                      <Lock className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-lg">{s.name}</h3>
+                  <p className="text-sm text-white/80 font-medium mt-2">Coming Soon</p>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <Link key={s.id} href={`/courses/${classId}/${s.id}`}>
               <div className={`bg-gradient-to-br ${gradient} text-white rounded-xl p-6 text-center hover:scale-105 transition-transform cursor-pointer shadow-lg h-full`}>

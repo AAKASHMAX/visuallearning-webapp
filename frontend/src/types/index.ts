@@ -32,6 +32,7 @@ export interface Subject {
   classId: string;
   name: string;
   icon?: string;
+  enabled?: boolean;
   _count?: { chapters: number };
 }
 
