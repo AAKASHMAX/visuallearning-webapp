@@ -7,7 +7,7 @@ import api from "@/lib/api";
 import type { ClassItem } from "@/types";
 import { BookOpen, Radio } from "lucide-react";
 
-const classColors = ["from-blue-500 to-blue-700", "from-green-500 to-green-700", "from-purple-500 to-purple-700", "from-orange-500 to-orange-700"];
+const classColors = ["from-blue-500 to-blue-700", "from-orange-500 to-orange-700", "from-[#f59e0b] to-[#d97706]", "from-purple-500 to-purple-700"];
 
 export default function CoursesPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);

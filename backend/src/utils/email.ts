@@ -1,11 +1,12 @@
 import { Resend } from "resend";
 import { config } from "../config";
 
-const resend = new Resend(config.resendApiKey);
+const resend = config.resendApiKey ? new Resend(config.resendApiKey) : null;
 
 const FROM_EMAIL = "VisualLearning <noreply@visuallearning.in>";
 
 export async function sendVerificationEmail(email: string, token: string) {
+  if (!resend) { console.log("Resend not configured, skipping email"); return; }
   const verifyUrl = `${config.frontendUrl}/auth/verify-email?token=${token}`;
   const result = await resend.emails.send({
     from: FROM_EMAIL,
@@ -28,6 +29,7 @@ export async function sendVerificationEmail(email: string, token: string) {
 }
 
 export async function sendFeedbackEmail(name: string, email: string, subject: string, message: string) {
+  if (!resend) { console.log("Resend not configured, skipping email"); return; }
   const result = await resend.emails.send({
     from: FROM_EMAIL,
     to: "visuallearning247@gmail.com",
@@ -56,6 +58,7 @@ export async function sendFeedbackEmail(name: string, email: string, subject: st
 }
 
 export async function sendResetPasswordEmail(email: string, token: string) {
+  if (!resend) { console.log("Resend not configured, skipping email"); return; }
   const resetUrl = `${config.frontendUrl}/auth/forgot-password?token=${token}`;
   const result = await resend.emails.send({
     from: FROM_EMAIL,

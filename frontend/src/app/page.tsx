@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Play, FileText, Brain, Star, CheckCircle } from "lucide-react";
+import { BookOpen, Play, FileText, Brain, Star } from "lucide-react";
 
 const Footer = dynamic(() => import("@/components/layout/footer").then((m) => m.Footer), { ssr: false });
 
@@ -72,44 +72,6 @@ export default function HomePage() {
                   </div>
                 </Link>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section className="py-16 bg-white" id="pricing">
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-4 text-primary">Simple Pricing</h2>
-            <p className="text-center text-gray-500 mb-12">Get unlimited access to all classes and subjects</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Monthly */}
-              <Card className="relative">
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-bold mb-2">Monthly Plan</h3>
-                  <div className="text-4xl font-bold text-primary mb-1">&#8377;499<span className="text-lg text-gray-400 font-normal">/month</span></div>
-                  <ul className="mt-6 space-y-3">
-                    {["All classes (9-12)", "All subjects", "Video lectures", "Notes & PDFs", "Practice questions"].map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle className="w-4 h-4 text-green-500" />{f}</li>
-                    ))}
-                  </ul>
-                  <Link href="/auth/signup" className="block mt-8"><Button variant="outline" className="w-full">Get Started</Button></Link>
-                </CardContent>
-              </Card>
-              {/* Yearly */}
-              <Card className="relative border-accent border-2">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-primary-dark px-4 py-1 rounded-full text-sm font-bold">Most Popular</div>
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-bold mb-2">Yearly Plan</h3>
-                  <div className="text-4xl font-bold text-primary mb-1">&#8377;3,999<span className="text-lg text-gray-400 font-normal">/year</span></div>
-                  <p className="text-green-600 text-sm font-medium">Save 33% compared to monthly</p>
-                  <ul className="mt-6 space-y-3">
-                    {["All classes (9-12)", "All subjects", "Video lectures", "Notes & PDFs", "Practice questions", "Priority support"].map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle className="w-4 h-4 text-green-500" />{f}</li>
-                    ))}
-                  </ul>
-                  <Link href="/auth/signup" className="block mt-8"><Button variant="accent" className="w-full">Get Started</Button></Link>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </section>
