@@ -43,6 +43,8 @@ export function Navbar() {
             <Link href="/" className="hover:text-accent transition-colors" prefetch>Home</Link>
             <Link href="/courses" className="hover:text-accent transition-colors" prefetch>Courses</Link>
             <Link href="/subscription" className="hover:text-accent transition-colors" prefetch>Pricing</Link>
+            <Link href="/feedback" className="hover:text-accent transition-colors" prefetch>Feedback</Link>
+            <Link href="/contact" className="hover:text-accent transition-colors" prefetch>Contact Us</Link>
 
             {/* Language Switcher */}
             {mounted && (
@@ -111,6 +113,8 @@ export function Navbar() {
             <Link href="/" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Home</Link>
             <Link href="/courses" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Courses</Link>
             <Link href="/subscription" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Pricing</Link>
+            <Link href="/feedback" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Feedback</Link>
+            <Link href="/contact" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Contact Us</Link>
 
             {/* Mobile Language Switcher */}
             {mounted && (

@@ -2,13 +2,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, BookOpen, CreditCard, User } from "lucide-react";
+import { LayoutDashboard, BookOpen, CreditCard, User, MessageSquare, Phone } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/courses", label: "My Courses", icon: BookOpen },
   { href: "/subscription", label: "Subscription", icon: CreditCard },
   { href: "/profile", label: "Profile", icon: User },
+  { href: "/feedback", label: "Feedback", icon: MessageSquare },
+  { href: "/contact", label: "Contact Us", icon: Phone },
 ];
 
 export function Sidebar() {

@@ -11,6 +11,7 @@ import courseRoutes from "./routes/course.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import progressRoutes from "./routes/progress.routes";
 import adminRoutes from "./routes/admin.routes";
+import feedbackRoutes from "./routes/feedback.routes";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
