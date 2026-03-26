@@ -33,7 +33,7 @@ export default function SubscriptionPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClasses, setSelectedClasses] = useState<Record<string, string[]>>({});
-  const [tab, setTab] = useState<BillingTab>("yearly");
+  const [tab, setTab] = useState<BillingTab>("monthly");
   const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
   const [showUpgradePlans, setShowUpgradePlans] = useState(false);
 

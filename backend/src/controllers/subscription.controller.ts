@@ -81,12 +81,12 @@ export async function getPlans(req: Request, res: Response) {
   }
 
   const featureMap: Record<string, string[]> = {
-    SINGLE_CLASS: ["Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-    MULTI_CLASS: ["Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-    FULL_ACCESS: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Best value"],
-    MONTHLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions"],
-    YEARLY: ["All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Practice questions", "Save 33%"],
-    LIVE_CLASS: ["1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "All video content included"],
+    SINGLE_CLASS: ["3D Animated Videos", "Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+    MULTI_CLASS: ["3D Animated Videos", "Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+    FULL_ACCESS: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Best value", "Quiz", "Solved Board Question Papers"],
+    MONTHLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+    YEARLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Save 33%", "Quiz", "Solved Board Question Papers"],
+    LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
   };
 
   const plans = Object.entries(plansConfig)
