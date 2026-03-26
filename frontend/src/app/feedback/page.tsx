@@ -29,7 +29,9 @@ export default function FeedbackPage() {
       toast.success(data.message || "Feedback submitted successfully!");
       setForm({ name: "", email: "", subject: "", message: "" });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to submit feedback. Please try again.");
+      const errData = error.response?.data;
+      const msg = errData?.errors?.length ? errData.errors.join(", ") : errData?.message || "Failed to submit feedback. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
