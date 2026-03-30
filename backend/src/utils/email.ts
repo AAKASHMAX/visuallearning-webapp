@@ -57,6 +57,61 @@ export async function sendFeedbackEmail(name: string, email: string, subject: st
   }
 }
 
+export async function sendLiveClassNotificationEmail(email: string, name: string, classTitle: string, teacherName: string) {
+  if (!resend) { console.log("Resend not configured, skipping email"); return; }
+  const classUrl = `${config.frontendUrl}/courses/live-classes`;
+  const result = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Live Now: ${classTitle} - VisualLearning`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #ef4444, #e11d48); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Live Class Started!</h1>
+        </div>
+        <div style="padding: 24px; background: #f8fafc; border-radius: 0 0 12px 12px;">
+          <p style="color: #333;">Hi ${name},</p>
+          <p style="color: #333; font-size: 16px;"><strong>${teacherName}</strong> has started a live class:</p>
+          <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 16px 0;">
+            <h2 style="color: #1e3a5f; margin: 0 0 8px 0;">${classTitle}</h2>
+          </div>
+          <a href="${classUrl}" style="display: inline-block; padding: 14px 28px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Join Live Class Now</a>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">Join now and learn with your peers!</p>
+        </div>
+      </div>
+    `,
+  });
+  if (result.error) console.error("Live notification email error:", result.error.message);
+}
+
+export async function sendLiveClassScheduledEmail(email: string, name: string, classTitle: string, scheduledAt: Date, teacherName: string) {
+  if (!resend) { console.log("Resend not configured, skipping email"); return; }
+  const dateStr = scheduledAt.toLocaleString("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" });
+  const result = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Upcoming Live Class: ${classTitle} - VisualLearning`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e3a5f, #2563eb); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Live Class Scheduled</h1>
+        </div>
+        <div style="padding: 24px; background: #f8fafc; border-radius: 0 0 12px 12px;">
+          <p style="color: #333;">Hi ${name},</p>
+          <p style="color: #333;"><strong>${teacherName}</strong> has scheduled a live class:</p>
+          <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 16px 0;">
+            <h2 style="color: #1e3a5f; margin: 0 0 8px 0;">${classTitle}</h2>
+            <p style="color: #666; margin: 0;">${dateStr}</p>
+          </div>
+          <p style="color: #666;">Mark your calendar and be ready to join when the class goes live!</p>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">You'll receive another notification when the class starts.</p>
+        </div>
+      </div>
+    `,
+  });
+  if (result.error) console.error("Schedule notification email error:", result.error.message);
+}
+
 export async function sendResetPasswordEmail(email: string, token: string) {
   if (!resend) { console.log("Resend not configured, skipping email"); return; }
   const resetUrl = `${config.frontendUrl}/auth/forgot-password?token=${token}`;

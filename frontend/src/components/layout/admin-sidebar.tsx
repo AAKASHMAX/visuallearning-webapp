@@ -3,15 +3,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket, Radio } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket, Radio, Video } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
-const mainLinks = [
+const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/content", label: "Content", icon: FolderOpen },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  { href: "/admin/live-classes", label: "Live Classes", icon: Video },
+  { href: "/admin/teachers", label: "Teachers", icon: Users },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+];
+
+const teacherLinks = [
+  { href: "/admin/live-classes", label: "My Live Classes", icon: Video },
+  { href: "/admin/live-classes/create", label: "Create Class", icon: Radio },
 ];
 
 const settingsSubLinks = [
@@ -24,9 +31,12 @@ const settingsSubLinks = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const isSettingsActive = pathname.startsWith("/admin/settings");
   const [settingsOpen, setSettingsOpen] = useState(isSettingsActive);
+
+  const isTeacher = user?.role === "TEACHER";
+  const mainLinks = isTeacher ? teacherLinks : adminLinks;
 
   return (
     <aside className="w-64 bg-primary-dark text-white min-h-[calc(100vh-4rem)] hidden lg:flex flex-col">
@@ -47,39 +57,43 @@ export function AdminSidebar() {
           </Link>
         ))}
 
-        {/* Settings with submenu */}
-        <button
-          onClick={() => setSettingsOpen(!settingsOpen)}
-          className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors w-full",
-            isSettingsActive
-              ? "bg-white/15 text-white"
-              : "text-white/70 hover:bg-white/10 hover:text-white"
-          )}
-        >
-          <Settings className="w-5 h-5" />
-          <span className="flex-1 text-left">Settings</span>
-          <ChevronDown className={cn("w-4 h-4 transition-transform", settingsOpen && "rotate-180")} />
-        </button>
+        {/* Settings with submenu - admin only */}
+        {!isTeacher && (
+          <>
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors w-full",
+                isSettingsActive
+                  ? "bg-white/15 text-white"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              )}
+            >
+              <Settings className="w-5 h-5" />
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronDown className={cn("w-4 h-4 transition-transform", settingsOpen && "rotate-180")} />
+            </button>
 
-        {settingsOpen && (
-          <div className="ml-4 space-y-1">
-            {settingsSubLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors",
-                  pathname === link.href
-                    ? "bg-accent text-primary-dark font-medium"
-                    : "text-white/60 hover:bg-white/10 hover:text-white"
-                )}
-              >
-                <link.icon className="w-4 h-4" />
-                {link.label}
-              </Link>
-            ))}
-          </div>
+            {settingsOpen && (
+              <div className="ml-4 space-y-1">
+                {settingsSubLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors",
+                      pathname === link.href
+                        ? "bg-accent text-primary-dark font-medium"
+                        : "text-white/60 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <link.icon className="w-4 h-4" />
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </nav>
       <div className="p-4 border-t border-white/10">

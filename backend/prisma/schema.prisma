@@ -10,6 +10,18 @@ datasource db {
 enum Role {
   STUDENT
   ADMIN
+  TEACHER
+}
+
+enum LiveClassStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum NotificationTarget {
+  ALL
+  SUBSCRIBED
 }
 
 enum SubscriptionStatus {
@@ -34,6 +46,8 @@ model User {
 
   subscriptions     Subscription[]
   watchProgress     WatchProgress[]
+  liveClasses       LiveClass[]        @relation("TeacherLiveClasses")
+  liveClassAccess   LiveClassAccess[]
 
   @@index([email])
   @@index([role])
@@ -204,4 +218,40 @@ model BoardPaper {
 
   @@index([subjectId])
   @@unique([subjectId, year, title])
+}
+
+model LiveClass {
+  id               String             @id @default(cuid())
+  title            String
+  description      String?
+  teacherId        String
+  hmsRoomId        String?
+  status           LiveClassStatus    @default(SCHEDULED)
+  notifyTarget     NotificationTarget @default(ALL)
+  scheduledAt      DateTime?
+  startedAt        DateTime?
+  endedAt          DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  teacher          User               @relation("TeacherLiveClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  accessList       LiveClassAccess[]
+
+  @@index([teacherId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model LiveClassAccess {
+  id          String   @id @default(cuid())
+  liveClassId String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([liveClassId, userId])
+  @@index([liveClassId])
+  @@index([userId])
 }

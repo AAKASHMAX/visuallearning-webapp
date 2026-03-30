@@ -17,10 +17,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (checked) {
       if (!isAuthenticated) router.push("/admin/login");
-      else if (user?.role !== "ADMIN") router.push("/");
+      else if (user?.role !== "ADMIN" && user?.role !== "TEACHER") router.push("/");
     }
   }, [checked, isAuthenticated, user, router]);
 
-  if (!checked || !isAuthenticated || user?.role !== "ADMIN") return <PageLoader />;
+  if (!checked || !isAuthenticated || (user?.role !== "ADMIN" && user?.role !== "TEACHER")) return <PageLoader />;
   return <>{children}</>;
 }

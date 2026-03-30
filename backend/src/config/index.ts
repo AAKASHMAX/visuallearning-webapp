@@ -21,6 +21,11 @@ export const config = {
     pass: process.env.SMTP_PASS || "",
   },
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+  hms: {
+    accessKey: process.env.HMS_ACCESS_KEY || "",
+    secret: process.env.HMS_SECRET || "",
+    templateId: process.env.HMS_TEMPLATE_ID || "",
+  },
   plans: {
     MONTHLY: { amount: 49900, label: "Monthly Plan", duration: 30, billingCycle: "monthly" },
     YEARLY: { amount: 399900, label: "Yearly Plan", duration: 365, billingCycle: "yearly" },

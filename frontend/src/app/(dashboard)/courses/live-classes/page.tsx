@@ -1,74 +1,61 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/loading";
+import { useAuth } from "@/lib/auth";
+import api from "@/lib/api";
 import {
-  ArrowLeft,
-  Radio,
-  Users,
-  MessageCircle,
-  Clock,
-  GraduationCap,
-  ShieldCheck,
-  Star,
-  CheckCircle,
-  Calendar,
-  Headphones,
-  Target,
-  Zap,
-  ArrowRight,
+  ArrowLeft, Radio, Clock, Calendar, Play, Lock, ArrowRight,
+  Users, MessageCircle, GraduationCap, Target, Headphones,
+  Star, CheckCircle, Zap,
 } from "lucide-react";
 
-const BENEFITS = [
-  {
-    icon: Users,
-    title: "Small Batch Size",
-    description: "Only 10-15 students per session so every student gets personal attention from the teacher.",
-    color: "bg-blue-100 text-blue-600",
-  },
-  {
-    icon: MessageCircle,
-    title: "Live Doubt Clearing",
-    description: "Ask your doubts in real-time and get instant, clear explanations from expert teachers.",
-    color: "bg-emerald-100 text-emerald-600",
-  },
-  {
-    icon: GraduationCap,
-    title: "Expert Teachers",
-    description: "Learn from educators with 5+ years of experience in board exam coaching and preparation.",
-    color: "bg-violet-100 text-violet-600",
-  },
-  {
-    icon: Target,
-    title: "Exam-Focused Sessions",
-    description: "Sessions built around important topics, common mistakes, and high-scoring strategies for boards.",
-    color: "bg-orange-100 text-orange-600",
-  },
-  {
-    icon: Calendar,
-    title: "Flexible Scheduling",
-    description: "Multiple time slots available throughout the week — pick what fits your routine best.",
-    color: "bg-pink-100 text-pink-600",
-  },
-  {
-    icon: Headphones,
-    title: "Session Recordings",
-    description: "Missed a class? Every live session is recorded so you can rewatch it anytime you want.",
-    color: "bg-amber-100 text-amber-600",
-  },
-];
+interface LiveClassItem {
+  id: string;
+  title: string;
+  description: string | null;
+  status: "SCHEDULED" | "LIVE";
+  scheduledAt: string | null;
+  startedAt: string | null;
+  teacher: { id: string; name: string };
+  hasAccess: boolean;
+}
 
-const HOW_IT_WORKS = [
-  { step: 1, title: "Subscribe to a plan", description: "Choose a subscription plan that suits your needs" },
-  { step: 2, title: "Pick your subjects", description: "Select the subjects you want live help with" },
-  { step: 3, title: "Book a time slot", description: "Choose a convenient session time from available slots" },
-  { step: 4, title: "Join & Learn", description: "Get the link, join the live class, ask doubts, and learn" },
+const BENEFITS = [
+  { icon: Users, title: "Small Batch Size", description: "Only 10-15 students per session so every student gets personal attention.", color: "bg-blue-100 text-blue-600" },
+  { icon: MessageCircle, title: "Live Doubt Clearing", description: "Ask your doubts in real-time and get instant, clear explanations.", color: "bg-emerald-100 text-emerald-600" },
+  { icon: GraduationCap, title: "Expert Teachers", description: "Learn from educators with 5+ years of board exam coaching experience.", color: "bg-violet-100 text-violet-600" },
+  { icon: Target, title: "Exam-Focused Sessions", description: "Sessions built around important topics and high-scoring strategies.", color: "bg-orange-100 text-orange-600" },
+  { icon: Calendar, title: "Flexible Scheduling", description: "Multiple time slots available throughout the week.", color: "bg-pink-100 text-pink-600" },
+  { icon: Headphones, title: "Session Recordings", description: "Missed a class? Every session is recorded so you can rewatch anytime.", color: "bg-amber-100 text-amber-600" },
 ];
 
 export default function LiveClassesPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const [classes, setClasses] = useState<LiveClassItem[]>([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setLoading(false); return; }
+    api.get("/live-classes/active")
+      .then(({ data }) => {
+        setClasses(data.data.classes);
+        setIsSubscribed(data.data.isSubscribed);
+        setLoaded(true);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
+
+  const liveClasses = classes.filter((c) => c.status === "LIVE");
+  const scheduledClasses = classes.filter((c) => c.status === "SCHEDULED");
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -85,23 +72,130 @@ export default function LiveClassesPage() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white">Live Classes</h1>
-              <p className="text-red-100">Interactive doubt-clearing sessions with expert teachers</p>
+              <p className="text-red-100">Face-to-face interactive sessions with expert teachers</p>
             </div>
           </div>
+          {liveClasses.length > 0 && (
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <span className="text-white font-medium text-sm">{liveClasses.length} class{liveClasses.length > 1 ? "es" : ""} live now!</span>
+            </div>
+          )}
           <p className="text-white/90 text-base sm:text-lg max-w-xl leading-relaxed mb-6">
-            Struggling with tough concepts? Join our small-group live sessions where expert teachers
-            break down difficult topics, solve your doubts in real-time, and help you score better in exams.
+            Join live video sessions where you can see your teacher, ask doubts face-to-face,
+            and interact with classmates in real-time.
           </p>
-          <Link href="/subscription">
-            <Button className="bg-white text-red-600 hover:bg-red-50 font-semibold px-6 py-2.5 rounded-lg text-base shadow-lg">
-              Join Live Classes <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+          {!isSubscribed && (
+            <Link href="/subscription">
+              <Button className="bg-white text-red-600 hover:bg-red-50 font-semibold px-6 py-2.5 rounded-lg text-base shadow-lg">
+                Subscribe for Access <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          )}
         </div>
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
         <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-        <div className="absolute top-1/2 -left-8 w-20 h-20 bg-white/5 rounded-full" />
       </div>
+
+      {/* Live Now Section */}
+      {loading ? (
+        <PageLoader />
+      ) : (
+        <>
+          {liveClasses.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                Live Now
+              </h2>
+              <div className="grid gap-4">
+                {liveClasses.map((lc) => (
+                  <Card key={lc.id} className="border-red-200 bg-red-50/50 hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Radio className="w-4 h-4 text-red-500" />
+                            <h3 className="font-semibold text-lg">{lc.title}</h3>
+                            <Badge variant="success">LIVE</Badge>
+                          </div>
+                          {lc.description && <p className="text-sm text-gray-500 mb-1">{lc.description}</p>}
+                          <p className="text-xs text-gray-400">by {lc.teacher.name}</p>
+                        </div>
+                        {lc.hasAccess ? (
+                          <Link href={`/live-class/${lc.id}`}>
+                            <Button className="bg-red-500 hover:bg-red-600 text-white">
+                              <Play className="w-4 h-4 mr-2" /> Join Now
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Link href="/subscription">
+                            <Button variant="outline" className="border-red-300 text-red-600">
+                              <Lock className="w-4 h-4 mr-2" /> Subscribe to Join
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming Classes */}
+          {scheduledClasses.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-500" />
+                Upcoming Classes
+              </h2>
+              <div className="grid gap-3">
+                {scheduledClasses.map((lc) => (
+                  <Card key={lc.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            <h3 className="font-semibold">{lc.title}</h3>
+                            <Badge variant="default">Scheduled</Badge>
+                          </div>
+                          {lc.description && <p className="text-sm text-gray-500 mb-1">{lc.description}</p>}
+                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                            <span>by {lc.teacher.name}</span>
+                            {lc.scheduledAt && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(lc.scheduledAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {!lc.hasAccess && (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Lock className="w-3 h-3" /> Subscription Required
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {loaded && classes.length === 0 && (
+            <Card className="mb-8">
+              <CardContent className="p-8 text-center text-gray-500">
+                <Clock className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                <p className="font-medium mb-1">No live classes right now</p>
+                <p className="text-sm">Check back later or wait for a notification when a class is scheduled.</p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Benefits Grid */}
       <div className="mb-10">
@@ -123,24 +217,6 @@ export default function LiveClassesPage() {
               </Card>
             );
           })}
-        </div>
-      </div>
-
-      {/* How It Works */}
-      <div className="mb-10">
-        <h2 className="text-xl font-bold mb-5">How It Works</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {HOW_IT_WORKS.map((item) => (
-            <div key={item.step} className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md">
-                {item.step}
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.description}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -168,22 +244,24 @@ export default function LiveClassesPage() {
         </CardContent>
       </Card>
 
-      {/* CTA Section */}
-      <Card className="bg-gradient-to-r from-red-50 to-rose-50 border-red-100 mb-4">
-        <CardContent className="p-8 text-center">
-          <Zap className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="font-bold text-xl mb-2">Ready to Boost Your Learning?</h3>
-          <p className="text-sm text-gray-500 mb-5 max-w-md mx-auto">
-            Subscribe now to get access to live classes, doubt-clearing sessions,
-            and all our premium content.
-          </p>
-          <Link href="/subscription">
-            <Button className="bg-red-500 hover:bg-red-600 text-white font-semibold px-8 py-3 rounded-lg text-base shadow-md">
-              View Subscription Plans <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      {/* CTA */}
+      {!isSubscribed && (
+        <Card className="bg-gradient-to-r from-red-50 to-rose-50 border-red-100 mb-4">
+          <CardContent className="p-8 text-center">
+            <Zap className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-xl mb-2">Ready to Boost Your Learning?</h3>
+            <p className="text-sm text-gray-500 mb-5 max-w-md mx-auto">
+              Subscribe now to get access to live classes, doubt-clearing sessions,
+              and all our premium content.
+            </p>
+            <Link href="/subscription">
+              <Button className="bg-red-500 hover:bg-red-600 text-white font-semibold px-8 py-3 rounded-lg text-base shadow-md">
+                View Subscription Plans <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
