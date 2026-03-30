@@ -62,7 +62,7 @@ export async function createRoom(name: string): Promise<string> {
     throw new Error("Failed to create 100ms room");
   }
 
-  const data = await response.json();
+  const data = await response.json() as { id: string };
   return data.id;
 }
 
