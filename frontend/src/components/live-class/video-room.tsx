@@ -378,12 +378,12 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
       } else {
         // No individual track, try muting all guest audio
-        await hmsActions.setRemoteTracksEnabled(false, "audio", "guest");
+        await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
       }
     } catch (e) {
       console.error("Remote mute error:", e);
       try {
-        await hmsActions.setRemoteTracksEnabled(false, "audio", "guest");
+        await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
       } catch (e2) {
         console.error("Remote mute by role also failed:", e2);
       }
