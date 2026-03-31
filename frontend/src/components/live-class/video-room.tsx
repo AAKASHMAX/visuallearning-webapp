@@ -271,10 +271,26 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       await new Promise((r) => setTimeout(r, 100));
       if (cancelled) return;
       try {
+        // Find available devices to pass explicit IDs (fixes laptop built-in mic detection)
+        let audioDeviceId: string | undefined;
+        let videoDeviceId: string | undefined;
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const mic = devices.find((d) => d.kind === "audioinput" && d.deviceId);
+          const cam = devices.find((d) => d.kind === "videoinput" && d.deviceId);
+          audioDeviceId = mic?.deviceId;
+          videoDeviceId = cam?.deviceId;
+        } catch {}
+
         await hmsActions.join({
           userName,
           authToken: token,
-          settings: { isAudioMuted: false, isVideoMuted: false },
+          settings: {
+            isAudioMuted: false,
+            isVideoMuted: false,
+            ...(audioDeviceId ? { audioInputDeviceId: audioDeviceId } : {}),
+            ...(videoDeviceId ? { videoDeviceId: videoDeviceId } : {}),
+          },
         });
       } catch (e: any) {
         if (!cancelled) {
@@ -328,15 +344,20 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       }
     } catch (e: any) {
       console.error("[HMS] Toggle audio error:", e);
-      // If enabling failed, the SDK may not have a mic track yet — re-join audio
+      // If enabling failed, try to find any available mic and use it
       if (!isLocalAudioEnabled) {
         try {
-          // Force the SDK to acquire mic by setting device settings
-          await hmsActions.setAudioSettings({ deviceId: "default" });
-          await hmsActions.setLocalAudioEnabled(true);
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const mic = devices.find((d) => d.kind === "audioinput" && d.deviceId);
+          if (mic) {
+            await hmsActions.setAudioSettings({ deviceId: mic.deviceId });
+            await hmsActions.setLocalAudioEnabled(true);
+          } else {
+            alert("No microphone found on this device.");
+          }
         } catch (e2: any) {
           console.error("[HMS] Retry audio enable error:", e2);
-          alert("Could not enable microphone. Please check browser permissions and reload the page.");
+          alert("Could not enable microphone. Please reload the page and allow mic access when prompted.");
         }
       }
     }
@@ -349,11 +370,17 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       console.error("[HMS] Toggle video error:", e);
       if (!isLocalVideoEnabled) {
         try {
-          await hmsActions.setVideoSettings({ deviceId: "default" });
-          await hmsActions.setLocalVideoEnabled(true);
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const cam = devices.find((d) => d.kind === "videoinput" && d.deviceId);
+          if (cam) {
+            await hmsActions.setVideoSettings({ deviceId: cam.deviceId });
+            await hmsActions.setLocalVideoEnabled(true);
+          } else {
+            alert("No camera found on this device.");
+          }
         } catch (e2: any) {
           console.error("[HMS] Retry video enable error:", e2);
-          alert("Could not enable camera. Please check browser permissions and reload the page.");
+          alert("Could not enable camera. Please reload the page and allow camera access when prompted.");
         }
       }
     }
