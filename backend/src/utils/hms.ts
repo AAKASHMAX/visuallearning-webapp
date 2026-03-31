@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import https from "https";
 import { config } from "../config";
 
 function generateManagementToken(): string {
@@ -41,67 +42,80 @@ export function generateAuthToken(roomId: string, userId: string, role: "host" |
   );
 }
 
-// Helper: fetch with timeout and retry
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+// Use Node https module for more reliable connections from Render
+function httpsRequest(url: string, method: string, headers: Record<string, string>, body?: string): Promise<{ status: number; data: string }> {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      port: 443,
+      path: urlObj.pathname + urlObj.search,
+      method,
+      headers,
+      timeout: 30000,
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode || 0, data }));
+    });
+
+    req.on("timeout", () => { req.destroy(); reject(new Error("Request timeout (30s)")); });
+    req.on("error", (e) => reject(e));
+
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+async function hmsRequest(url: string, method: string, body?: object, retries = 3): Promise<{ status: number; data: any }> {
+  const token = generateManagementToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  const bodyStr = body ? JSON.stringify(body) : undefined;
+
   for (let i = 0; i < retries; i++) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(timeout);
-      return response;
+      const res = await httpsRequest(url, method, headers, bodyStr);
+      let parsed;
+      try { parsed = JSON.parse(res.data); } catch { parsed = res.data; }
+      return { status: res.status, data: parsed };
     } catch (e: any) {
-      console.error(`[HMS] Fetch attempt ${i + 1}/${retries} failed:`, e.message || e);
+      console.error(`[HMS] Attempt ${i + 1}/${retries} failed for ${method} ${url}:`, e.message);
       if (i === retries - 1) throw e;
-      // Wait before retry
-      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
     }
   }
-  throw new Error("All fetch retries failed");
+  throw new Error("All retries failed");
 }
 
 export async function createRoom(name: string): Promise<string> {
-  const token = generateManagementToken();
-
-  const response = await fetchWithRetry("https://api.100ms.live/v2/rooms", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name: name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 100),
-      template_id: config.hms.templateId,
-    }),
+  const res = await hmsRequest("https://api.100ms.live/v2/rooms", "POST", {
+    name: name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 100),
+    template_id: config.hms.templateId,
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    console.error("100ms create room error:", err);
+  if (res.status < 200 || res.status >= 300) {
+    console.error("100ms create room error:", res.data);
     throw new Error("Failed to create 100ms room");
   }
 
-  const data = await response.json() as { id: string };
-  return data.id;
+  return res.data.id;
 }
 
 export async function endActiveSession(roomId: string): Promise<void> {
-  const token = generateManagementToken();
-
   try {
-    const sessionRes = await fetchWithRetry(`https://api.100ms.live/v2/active-rooms/${roomId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }, 2);
-
-    if (sessionRes.ok) {
-      await fetchWithRetry(`https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ reason: "Live class ended by teacher" }),
-      }, 2);
+    const sessionRes = await hmsRequest(
+      `https://api.100ms.live/v2/active-rooms/${roomId}`, "GET", undefined, 2
+    );
+    if (sessionRes.status === 200) {
+      await hmsRequest(
+        `https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, "POST",
+        { reason: "Live class ended by teacher" }, 2
+      );
     }
   } catch (e) {
     console.error("[HMS] End session failed:", e);
@@ -109,17 +123,11 @@ export async function endActiveSession(roomId: string): Promise<void> {
 }
 
 export async function disableRoom(roomId: string): Promise<void> {
-  const token = generateManagementToken();
-
   try {
-    await fetchWithRetry(`https://api.100ms.live/v2/rooms/${roomId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ enabled: false }),
-    }, 2);
+    await hmsRequest(
+      `https://api.100ms.live/v2/rooms/${roomId}`, "POST",
+      { enabled: false }, 2
+    );
   } catch (e) {
     console.error("[HMS] Disable room failed:", e);
   }
