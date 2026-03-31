@@ -368,11 +368,9 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
         status: { in: ["LIVE", "SCHEDULED"] },
         OR: [
           { notifyTarget: "ALL" },
-          ...(isSubscribed ? [{ notifyTarget: "SUBSCRIBED" as const }] : []),
+          { notifyTarget: "SUBSCRIBED" },
+          { notifyTarget: "GROUP" },
           { accessList: { some: { userId } } },
-          ...(userGroupIds.length > 0
-            ? [{ notifyTarget: "GROUP" as const, studentGroupId: { in: userGroupIds } }]
-            : []),
         ],
       },
       include: {
@@ -390,7 +388,11 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
       scheduledAt: c.scheduledAt,
       startedAt: c.startedAt,
       teacher: c.teacher,
-      hasAccess: isSubscribed || c.accessList.length > 0 || c.notifyTarget === "ALL" || (c.notifyTarget === "GROUP" && userGroupIds.includes(c.studentGroupId || "")),
+      hasAccess:
+        isSubscribed ||
+        c.accessList.length > 0 ||
+        c.notifyTarget === "ALL" ||
+        (c.notifyTarget === "GROUP" && userGroupIds.includes(c.studentGroupId || "")),
     }));
 
     return success(res, { classes: result, isSubscribed });
