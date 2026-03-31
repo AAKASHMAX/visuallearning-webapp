@@ -13,7 +13,7 @@ interface LiveClass {
   id: string;
   title: string;
   description?: string;
-  teacherName: string;
+  teacher: { id: string; name: string };
   status: "LIVE" | "SCHEDULED";
   scheduledAt?: string;
   hasAccess: boolean;
@@ -44,7 +44,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.get("/live-classes/active")
-      .then(({ data }) => setLiveClasses(data.data || []))
+      .then(({ data }) => setLiveClasses(data.data?.classes || []))
       .catch(() => {})
       .finally(() => setLoadingLive(false));
   }, []);
@@ -144,7 +144,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-1 text-gray-400 text-xs">
                       <Users className="w-3.5 h-3.5" />
-                      <span>{lc.teacherName}</span>
+                      <span>{lc.teacher?.name}</span>
                     </div>
                   </div>
                   <h3 className="font-bold text-gray-900 mb-1">{lc.title}</h3>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                   </div>
                   <h3 className="font-bold text-gray-900 mb-1">{lc.title}</h3>
                   {lc.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{lc.description}</p>}
-                  <div className="text-xs text-gray-400">By {lc.teacherName}</div>
+                  <div className="text-xs text-gray-400">By {lc.teacher?.name}</div>
                 </CardContent>
               </Card>
             ))}
