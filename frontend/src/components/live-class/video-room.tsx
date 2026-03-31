@@ -321,21 +321,46 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       return;
     }
     try {
+      // If trying to unmute, first ensure browser mic permission is granted
+      if (!isLocalAudioEnabled) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((t) => t.stop()); // release immediately
+        } catch (permErr) {
+          alert("Microphone access is blocked. Please allow microphone permission in your browser settings and try again.");
+          return;
+        }
+      }
       await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
       // If student unmutes themselves, clear force-muted state
       if (!isLocalAudioEnabled && !isHost) {
         setForceMutedByHost(false);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[HMS] Toggle audio error:", e);
+      if (!isLocalAudioEnabled) {
+        alert("Could not enable microphone. Please check your browser permissions.");
+      }
     }
   }, [hmsActions, isLocalAudioEnabled, forceMutedByHost, isHost]);
 
   const toggleVideo = useCallback(async () => {
     try {
+      if (!isLocalVideoEnabled) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach((t) => t.stop());
+        } catch {
+          alert("Camera access is blocked. Please allow camera permission in your browser settings.");
+          return;
+        }
+      }
       await hmsActions.setLocalVideoEnabled(!isLocalVideoEnabled);
     } catch (e) {
       console.error("[HMS] Toggle video error:", e);
+      if (!isLocalVideoEnabled) {
+        alert("Could not enable camera. Please check your browser permissions.");
+      }
     }
   }, [hmsActions, isLocalVideoEnabled]);
 
