@@ -456,7 +456,7 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
 
           {isHost && (
             <button
-              onClick={() => toggleScreenShare?.()}
+              onClick={() => { toggleScreenShare?.(); }}
               className={`p-3 rounded-full transition-colors ${amIScreenSharing ? "bg-blue-500 text-white" : "bg-gray-700 hover:bg-gray-600 text-white"}`}
               title={amIScreenSharing ? "Stop sharing" : "Share screen"}
             >
