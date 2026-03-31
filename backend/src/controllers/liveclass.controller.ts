@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { success, error } from "../utils/apiResponse";
-import { createRoom, disableRoom, generateAuthToken } from "../utils/hms";
+import { createRoom, disableRoom, endActiveSession, generateAuthToken } from "../utils/hms";
 import { sendLiveClassNotificationEmail, sendLiveClassScheduledEmail } from "../utils/email";
 
 // --- Schemas ---
@@ -128,8 +128,9 @@ export async function endLiveClass(req: Request, res: Response) {
     if (!liveClass) return error(res, "Live class not found", 404);
     if (liveClass.status !== "LIVE") return error(res, "Class is not live", 400);
 
-    // Disable the 100ms room
+    // End active session (kicks all peers) then disable the room
     if (liveClass.hmsRoomId) {
+      try { await endActiveSession(liveClass.hmsRoomId); } catch (e) { console.error("Failed to end session:", e); }
       try { await disableRoom(liveClass.hmsRoomId); } catch (e) { console.error("Failed to disable room:", e); }
     }
 

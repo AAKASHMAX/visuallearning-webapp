@@ -4,6 +4,7 @@ import {
   HMSRoomProvider,
   useHMSActions,
   useHMSStore,
+  useHMSNotifications,
   useVideo,
   selectPeers,
   selectIsConnectedToRoom,
@@ -11,6 +12,7 @@ import {
   selectIsLocalVideoEnabled,
   selectLocalPeer,
   selectPeerCount,
+  HMSNotificationTypes,
 } from "@100mslive/react-sdk";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, MonitorUp, Users, Maximize2, Minimize2 } from "lucide-react";
 
@@ -64,8 +66,22 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [roomEnded, setRoomEnded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const joinAttemptRef = useRef(false);
+  const notification = useHMSNotifications();
+
+  // Listen for room end / peer leave events
+  useEffect(() => {
+    if (!notification) return;
+    switch (notification.type) {
+      case HMSNotificationTypes.ROOM_ENDED:
+      case HMSNotificationTypes.REMOVED_FROM_ROOM:
+        setRoomEnded(true);
+        hmsActions.leave().catch(() => {});
+        break;
+    }
+  }, [notification, hmsActions]);
 
   useEffect(() => {
     // Prevent double-join from React Strict Mode
@@ -88,6 +104,17 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
             isVideoMuted: false,
           },
         });
+        // Explicitly enable audio/video after join for host
+        if (isHost) {
+          setTimeout(async () => {
+            try {
+              await hmsActions.setLocalAudioEnabled(true);
+              await hmsActions.setLocalVideoEnabled(true);
+            } catch (e) {
+              console.error("[HMS] Failed to enable media:", e);
+            }
+          }, 1000);
+        }
       } catch (e: any) {
         if (!cancelled) {
           console.error("[HMS] Failed to join:", e);
@@ -136,6 +163,18 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       setIsFullscreen(false);
     }
   }, []);
+
+  if (roomEnded) {
+    return (
+      <div className="bg-gray-900 rounded-xl p-12 text-center">
+        <p className="text-white mb-2 font-medium text-lg">Live class has ended</p>
+        <p className="text-gray-400 text-sm mb-4">The teacher has ended this session.</p>
+        <button onClick={onLeave} className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   if (joinError) {
     return (

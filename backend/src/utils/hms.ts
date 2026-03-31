@@ -66,6 +66,27 @@ export async function createRoom(name: string): Promise<string> {
   return data.id;
 }
 
+export async function endActiveSession(roomId: string): Promise<void> {
+  const token = generateManagementToken();
+
+  // First get the active session
+  const sessionRes = await fetch(`https://api.100ms.live/v2/active-rooms/${roomId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (sessionRes.ok) {
+    // End the active session - this kicks all peers and triggers ROOM_ENDED notification
+    await fetch(`https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ reason: "Live class ended by teacher" }),
+    });
+  }
+}
+
 export async function disableRoom(roomId: string): Promise<void> {
   const token = generateManagementToken();
 
