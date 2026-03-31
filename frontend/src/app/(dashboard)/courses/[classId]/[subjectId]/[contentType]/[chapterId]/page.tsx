@@ -319,7 +319,7 @@ function NotesViewer() {
 // ─── Quiz Viewer ───────────────────────────────────────────────
 type QuizPhase = "start" | "active" | "result" | "review";
 
-const QUIZ_DURATION = 5 * 60; // 5 minutes in seconds
+const QUIZ_DURATION = 30 * 60; // 30 minutes in seconds
 
 function QuizViewer() {
   const { classId, subjectId, contentType, chapterId } = useParams();
@@ -446,7 +446,7 @@ function QuizViewer() {
               <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                 <Timer className="w-5 h-5 text-amber-600 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">Time Limit: 5 minutes</p>
+                  <p className="text-sm font-medium text-amber-800">Time Limit: 30 minutes</p>
                   <p className="text-xs text-amber-600">Quiz auto-submits when time runs out</p>
                 </div>
               </div>
