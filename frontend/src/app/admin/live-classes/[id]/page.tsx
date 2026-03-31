@@ -30,8 +30,12 @@ export default function ManageLiveClassPage() {
   const [accessList, setAccessList] = useState<AccessUser[]>([]);
 
   // Go Live state
-  const [notifyTarget, setNotifyTarget] = useState<"ALL" | "SUBSCRIBED">("ALL");
+  const [notifyTarget, setNotifyTarget] = useState<"ALL" | "SUBSCRIBED" | "GROUP">("ALL");
   const [goingLive, setGoingLive] = useState(false);
+
+  // Student groups
+  const [groups, setGroups] = useState<{id: string; name: string; _count: {members: number}}[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
 
   // Active video session
   const [hmsToken, setHmsToken] = useState<string | null>(null);
@@ -65,12 +69,18 @@ export default function ManageLiveClassPage() {
     }
   }, [id, router]);
 
-  useEffect(() => { loadClass(); }, [loadClass]);
+  useEffect(() => {
+    loadClass();
+    api.get("/student-groups").then(({ data }) => setGroups(data.data)).catch(() => {});
+  }, [loadClass]);
 
   const handleGoLive = async () => {
+    if (notifyTarget === "GROUP" && !selectedGroupId) return toast.error("Please select a student group");
     setGoingLive(true);
     try {
-      const { data } = await api.post(`/live-classes/${id}/go-live`, { notifyTarget });
+      const payload: any = { notifyTarget };
+      if (notifyTarget === "GROUP") payload.studentGroupId = selectedGroupId;
+      const { data } = await api.post(`/live-classes/${id}/go-live`, payload);
       toast.success("You are now live!");
       setHmsToken(data.data.token);
       setLiveClass({ ...liveClass, status: "LIVE", hmsRoomId: data.data.hmsRoomId });
@@ -184,7 +194,27 @@ export default function ManageLiveClassPage() {
                     <input type="radio" checked={notifyTarget === "SUBSCRIBED"} onChange={() => setNotifyTarget("SUBSCRIBED")} className="accent-primary" />
                     <span className="text-sm">Subscribed Only</span>
                   </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={notifyTarget === "GROUP"} onChange={() => setNotifyTarget("GROUP")} className="accent-primary" />
+                    <span className="text-sm">Student Group</span>
+                  </label>
                 </div>
+                {notifyTarget === "GROUP" && (
+                  <div className="mt-3">
+                    <select
+                      value={selectedGroupId}
+                      onChange={(e) => setSelectedGroupId(e.target.value)}
+                      className="w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+                    >
+                      <option value="">Select a group...</option>
+                      {groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name} ({g._count.members} members)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <p className="text-xs text-gray-400">
                 Clicking "Go Live" will create a video room and notify users. Your camera and microphone will be requested.

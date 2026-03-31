@@ -15,7 +15,8 @@ interface LiveClass {
   title: string;
   description: string | null;
   status: "SCHEDULED" | "LIVE" | "ENDED";
-  notifyTarget: "ALL" | "SUBSCRIBED";
+  notifyTarget: "ALL" | "SUBSCRIBED" | "GROUP";
+  studentGroup?: { id: string; name: string } | null;
   scheduledAt: string | null;
   startedAt: string | null;
   endedAt: string | null;
@@ -100,7 +101,9 @@ export default function LiveClassesPage() {
                         <StatusIcon className={`w-5 h-5 ${sc.color}`} />
                         <h3 className="font-semibold text-lg">{lc.title}</h3>
                         <Badge variant={sc.variant}>{sc.label}</Badge>
-                        <Badge variant="default">{lc.notifyTarget === "ALL" ? "All Users" : "Subscribed Only"}</Badge>
+                        <Badge variant="default">
+                          {lc.notifyTarget === "ALL" ? "All Users" : lc.notifyTarget === "GROUP" ? `Group: ${lc.studentGroup?.name || "Unknown"}` : "Subscribed Only"}
+                        </Badge>
                       </div>
                       {lc.description && <p className="text-sm text-gray-500 mb-2">{lc.description}</p>}
                       <div className="flex items-center gap-4 text-xs text-gray-400">

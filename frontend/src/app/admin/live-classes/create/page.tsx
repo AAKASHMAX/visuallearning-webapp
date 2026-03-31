@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,19 +8,32 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
 
+interface StudentGroup {
+  id: string;
+  name: string;
+  _count: { members: number };
+}
+
 export default function CreateLiveClassPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
     scheduledAt: "",
-    notifyTarget: "ALL" as "ALL" | "SUBSCRIBED",
+    notifyTarget: "ALL" as "ALL" | "SUBSCRIBED" | "GROUP",
+    studentGroupId: "",
   });
+
+  useEffect(() => {
+    api.get("/student-groups").then(({ data }) => setGroups(data.data)).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return toast.error("Title is required");
+    if (form.notifyTarget === "GROUP" && !form.studentGroupId) return toast.error("Please select a student group");
 
     setLoading(true);
     try {
@@ -30,6 +43,7 @@ export default function CreateLiveClassPage() {
       };
       if (form.description.trim()) payload.description = form.description.trim();
       if (form.scheduledAt) payload.scheduledAt = new Date(form.scheduledAt).toISOString();
+      if (form.notifyTarget === "GROUP") payload.studentGroupId = form.studentGroupId;
 
       await api.post("/live-classes", payload);
       toast.success("Live class created!");
@@ -83,16 +97,39 @@ export default function CreateLiveClassPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1.5">Send Notification To</label>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={form.notifyTarget === "ALL"} onChange={() => setForm({ ...form, notifyTarget: "ALL" })} className="accent-primary" />
+                  <input type="radio" checked={form.notifyTarget === "ALL"} onChange={() => setForm({ ...form, notifyTarget: "ALL", studentGroupId: "" })} className="accent-primary" />
                   <span className="text-sm">All Users</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={form.notifyTarget === "SUBSCRIBED"} onChange={() => setForm({ ...form, notifyTarget: "SUBSCRIBED" })} className="accent-primary" />
+                  <input type="radio" checked={form.notifyTarget === "SUBSCRIBED"} onChange={() => setForm({ ...form, notifyTarget: "SUBSCRIBED", studentGroupId: "" })} className="accent-primary" />
                   <span className="text-sm">Subscribed Users Only</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.notifyTarget === "GROUP"} onChange={() => setForm({ ...form, notifyTarget: "GROUP" })} className="accent-primary" />
+                  <span className="text-sm">Student Group</span>
+                </label>
               </div>
+              {form.notifyTarget === "GROUP" && (
+                <div className="mt-3">
+                  <select
+                    value={form.studentGroupId}
+                    onChange={(e) => setForm({ ...form, studentGroupId: e.target.value })}
+                    className="w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+                  >
+                    <option value="">Select a group...</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({g._count.members} members)
+                      </option>
+                    ))}
+                  </select>
+                  {groups.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1">No groups found. Create one in the Students tab first.</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-2">

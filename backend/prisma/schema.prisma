@@ -22,6 +22,7 @@ enum LiveClassStatus {
 enum NotificationTarget {
   ALL
   SUBSCRIBED
+  GROUP
 }
 
 enum SubscriptionStatus {
@@ -48,6 +49,8 @@ model User {
   watchProgress     WatchProgress[]
   liveClasses       LiveClass[]        @relation("TeacherLiveClasses")
   liveClassAccess   LiveClassAccess[]
+  createdGroups     StudentGroup[]     @relation("CreatedGroups")
+  groupMemberships  StudentGroupMember[]
 
   @@index([email])
   @@index([role])
@@ -234,10 +237,14 @@ model LiveClass {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
+  studentGroupId   String?
+
   teacher          User               @relation("TeacherLiveClasses", fields: [teacherId], references: [id], onDelete: Cascade)
   accessList       LiveClassAccess[]
+  studentGroup     StudentGroup?      @relation("GroupLiveClasses", fields: [studentGroupId], references: [id], onDelete: SetNull)
 
   @@index([teacherId])
+  @@index([studentGroupId])
   @@index([status])
   @@index([scheduledAt])
 }
@@ -253,5 +260,33 @@ model LiveClassAccess {
 
   @@unique([liveClassId, userId])
   @@index([liveClassId])
+  @@index([userId])
+}
+
+model StudentGroup {
+  id        String               @id @default(cuid())
+  name      String
+  createdBy String
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  creator     User                 @relation("CreatedGroups", fields: [createdBy], references: [id], onDelete: Cascade)
+  members     StudentGroupMember[]
+  liveClasses LiveClass[]          @relation("GroupLiveClasses")
+
+  @@index([createdBy])
+}
+
+model StudentGroupMember {
+  id        String       @id @default(cuid())
+  groupId   String
+  userId    String
+  createdAt DateTime     @default(now())
+
+  group     StudentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
   @@index([userId])
 }

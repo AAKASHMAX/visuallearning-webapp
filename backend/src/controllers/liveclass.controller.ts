@@ -11,18 +11,25 @@ export const createLiveClassSchema = z.object({
   title: z.string().min(2).max(200),
   description: z.string().max(1000).optional(),
   scheduledAt: z.string().datetime().optional(),
-  notifyTarget: z.enum(["ALL", "SUBSCRIBED"]).default("ALL"),
+  notifyTarget: z.enum(["ALL", "SUBSCRIBED", "GROUP"]).default("ALL"),
+  studentGroupId: z.string().optional(),
+}).refine((data) => data.notifyTarget !== "GROUP" || data.studentGroupId, {
+  message: "studentGroupId is required when notifyTarget is GROUP",
 });
 
 export const updateLiveClassSchema = z.object({
   title: z.string().min(2).max(200).optional(),
   description: z.string().max(1000).optional(),
   scheduledAt: z.string().datetime().optional(),
-  notifyTarget: z.enum(["ALL", "SUBSCRIBED"]).optional(),
+  notifyTarget: z.enum(["ALL", "SUBSCRIBED", "GROUP"]).optional(),
+  studentGroupId: z.string().optional(),
 });
 
 export const goLiveSchema = z.object({
-  notifyTarget: z.enum(["ALL", "SUBSCRIBED"]).default("ALL"),
+  notifyTarget: z.enum(["ALL", "SUBSCRIBED", "GROUP"]).default("ALL"),
+  studentGroupId: z.string().optional(),
+}).refine((data) => data.notifyTarget !== "GROUP" || data.studentGroupId, {
+  message: "studentGroupId is required when notifyTarget is GROUP",
 });
 
 export const addAccessSchema = z.object({
@@ -39,7 +46,7 @@ export const addTeacherSchema = z.object({
 
 export async function createLiveClass(req: Request, res: Response) {
   try {
-    const { title, description, scheduledAt, notifyTarget } = req.body;
+    const { title, description, scheduledAt, notifyTarget, studentGroupId } = req.body;
 
     const liveClass = await prisma.liveClass.create({
       data: {
@@ -48,13 +55,14 @@ export async function createLiveClass(req: Request, res: Response) {
         teacherId: req.user!.id,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         notifyTarget,
+        studentGroupId: notifyTarget === "GROUP" ? studentGroupId : null,
       },
       include: { teacher: { select: { id: true, name: true, email: true } } },
     });
 
     // Send scheduled notification emails if scheduledAt is provided
     if (scheduledAt) {
-      sendScheduleNotifications(notifyTarget, liveClass.title, new Date(scheduledAt), liveClass.teacher.name);
+      sendScheduleNotifications(notifyTarget, liveClass.title, new Date(scheduledAt), liveClass.teacher.name, studentGroupId);
     }
 
     return success(res, liveClass, "Live class created", 201);
@@ -69,7 +77,7 @@ export async function createLiveClass(req: Request, res: Response) {
 export async function goLive(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { notifyTarget } = req.body;
+    const { notifyTarget, studentGroupId } = req.body;
 
     const liveClass = await prisma.liveClass.findFirst({
       where: { id, teacherId: req.user!.id },
@@ -89,6 +97,7 @@ export async function goLive(req: Request, res: Response) {
         hmsRoomId,
         startedAt: new Date(),
         notifyTarget,
+        studentGroupId: notifyTarget === "GROUP" ? studentGroupId : null,
       },
       include: { teacher: { select: { id: true, name: true, email: true } } },
     });
@@ -97,7 +106,7 @@ export async function goLive(req: Request, res: Response) {
     const teacherToken = generateAuthToken(hmsRoomId, req.user!.id, "host");
 
     // Send live notifications in background
-    sendLiveNotifications(id, notifyTarget, updated.title, updated.teacher.name);
+    sendLiveNotifications(id, notifyTarget, updated.title, updated.teacher.name, studentGroupId);
 
     return success(res, { ...updated, token: teacherToken }, "You are now live!");
   } catch (e) {
@@ -213,6 +222,7 @@ export async function getMyLiveClasses(req: Request, res: Response) {
       where: { teacherId: req.user!.id },
       include: {
         teacher: { select: { id: true, name: true } },
+        studentGroup: { select: { id: true, name: true } },
         _count: { select: { accessList: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -353,6 +363,7 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
           { notifyTarget: "ALL" },
           ...(isSubscribed ? [{ notifyTarget: "SUBSCRIBED" as const }] : []),
           { accessList: { some: { userId } } },
+          { notifyTarget: "GROUP", studentGroup: { members: { some: { userId } } } },
         ],
       },
       include: {
@@ -370,7 +381,7 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
       scheduledAt: c.scheduledAt,
       startedAt: c.startedAt,
       teacher: c.teacher,
-      hasAccess: isSubscribed || c.accessList.length > 0 || c.notifyTarget === "ALL",
+      hasAccess: isSubscribed || c.accessList.length > 0 || c.notifyTarget === "ALL" || c.notifyTarget === "GROUP",
     }));
 
     return success(res, { classes: result, isSubscribed });
@@ -404,7 +415,15 @@ export async function joinLiveClass(req: Request, res: Response) {
       where: { userId, status: "ACTIVE", expiryDate: { gt: new Date() } },
     });
 
-    const hasAccess = !!activeSubscription || liveClass.accessList.length > 0 || liveClass.notifyTarget === "ALL";
+    let hasAccess = !!activeSubscription || liveClass.accessList.length > 0 || liveClass.notifyTarget === "ALL";
+
+    // Check group access
+    if (!hasAccess && liveClass.notifyTarget === "GROUP" && liveClass.studentGroupId) {
+      const groupMember = await prisma.studentGroupMember.findFirst({
+        where: { groupId: liveClass.studentGroupId, userId },
+      });
+      if (groupMember) hasAccess = true;
+    }
 
     if (!hasAccess) {
       return error(res, "You don't have access to this live class. Please subscribe or contact your teacher.", 403);
@@ -431,6 +450,7 @@ export async function getAllLiveClasses(req: Request, res: Response) {
     const classes = await prisma.liveClass.findMany({
       include: {
         teacher: { select: { id: true, name: true, email: true } },
+        studentGroup: { select: { id: true, name: true } },
         _count: { select: { accessList: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -535,10 +555,16 @@ export async function adminDeleteLiveClass(req: Request, res: Response) {
 
 // --- Notification helpers ---
 
-async function sendLiveNotifications(liveClassId: string, target: string, title: string, teacherName: string) {
+async function sendLiveNotifications(liveClassId: string, target: string, title: string, teacherName: string, studentGroupId?: string) {
   try {
     let users;
-    if (target === "SUBSCRIBED") {
+    if (target === "GROUP" && studentGroupId) {
+      const members = await prisma.studentGroupMember.findMany({
+        where: { groupId: studentGroupId },
+        include: { user: { select: { email: true, name: true } } },
+      });
+      users = members.map((m) => m.user);
+    } else if (target === "SUBSCRIBED") {
       const subscriptions = await prisma.subscription.findMany({
         where: { status: "ACTIVE", expiryDate: { gt: new Date() } },
         select: { userId: true },
@@ -584,10 +610,16 @@ async function sendLiveNotifications(liveClassId: string, target: string, title:
   }
 }
 
-async function sendScheduleNotifications(target: string, title: string, scheduledAt: Date, teacherName: string) {
+async function sendScheduleNotifications(target: string, title: string, scheduledAt: Date, teacherName: string, studentGroupId?: string) {
   try {
     let users;
-    if (target === "SUBSCRIBED") {
+    if (target === "GROUP" && studentGroupId) {
+      const members = await prisma.studentGroupMember.findMany({
+        where: { groupId: studentGroupId },
+        include: { user: { select: { email: true, name: true } } },
+      });
+      users = members.map((m) => m.user);
+    } else if (target === "SUBSCRIBED") {
       const subscriptions = await prisma.subscription.findMany({
         where: { status: "ACTIVE", expiryDate: { gt: new Date() } },
         select: { userId: true },
