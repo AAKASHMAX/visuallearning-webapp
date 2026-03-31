@@ -6,15 +6,18 @@ import {
   useHMSStore,
   useHMSNotifications,
   useVideo,
+  useScreenShare,
   selectPeers,
   selectIsConnectedToRoom,
   selectIsLocalAudioEnabled,
   selectIsLocalVideoEnabled,
   selectLocalPeer,
   selectPeerCount,
+  selectPeersScreenSharing,
+  selectScreenShareByPeerID,
   HMSNotificationTypes,
 } from "@100mslive/react-sdk";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, MonitorUp, Users, Maximize2, Minimize2 } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, MonitorUp, MonitorOff, Users, Maximize2, Minimize2, Hand } from "lucide-react";
 
 interface VideoRoomProps {
   token: string;
@@ -23,12 +26,52 @@ interface VideoRoomProps {
   onLeave?: () => void;
 }
 
-function VideoTile({ peer, isLocal, isLarge }: { peer: any; isLocal: boolean; isLarge?: boolean }) {
-  const trackId = peer.videoTrack;
-  const { videoRef } = useVideo({ trackId });
+// Parse hand raise from peer metadata
+function isHandRaised(peer: any): boolean {
+  try {
+    const meta = typeof peer.metadata === "string" ? JSON.parse(peer.metadata) : peer.metadata;
+    return !!meta?.isHandRaised;
+  } catch {
+    return false;
+  }
+}
+
+function ScreenShareTile({ peerId }: { peerId: string }) {
+  const screenShareTrack = useHMSStore(selectScreenShareByPeerID(peerId));
+  const { videoRef } = useVideo({ trackId: screenShareTrack?.id });
+
+  if (!screenShareTrack) return null;
 
   return (
-    <div className={`relative bg-gray-900 rounded-xl overflow-hidden aspect-video`}>
+    <div className="relative bg-black rounded-xl overflow-hidden aspect-video mb-3 border-2 border-blue-500">
+      <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+      <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5">
+        <MonitorUp className="w-3 h-3" />
+        Screen Share
+      </div>
+    </div>
+  );
+}
+
+function VideoTile({
+  peer,
+  isLocal,
+  isHost,
+  isLarge,
+  onToggleMute,
+}: {
+  peer: any;
+  isLocal: boolean;
+  isHost?: boolean;
+  isLarge?: boolean;
+  onToggleMute?: (peer: any) => void;
+}) {
+  const trackId = peer.videoTrack;
+  const { videoRef } = useVideo({ trackId });
+  const handUp = isHandRaised(peer);
+
+  return (
+    <div className={`relative bg-gray-900 rounded-xl overflow-hidden aspect-video group`}>
       {trackId ? (
         <video
           ref={videoRef}
@@ -44,6 +87,15 @@ function VideoTile({ peer, isLocal, isLarge }: { peer: any; isLocal: boolean; is
           </div>
         </div>
       )}
+
+      {/* Hand raise indicator */}
+      {handUp && (
+        <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 rounded-full p-1.5 animate-bounce shadow-lg">
+          <Hand className="w-4 h-4" />
+        </div>
+      )}
+
+      {/* Name & mic badge */}
       <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5">
         {!peer.audioTrack && <MicOff className="w-3 h-3 text-red-400" />}
         <span>{isLocal ? `${peer.name} (You)` : peer.name}</span>
@@ -51,6 +103,17 @@ function VideoTile({ peer, isLocal, isLarge }: { peer: any; isLocal: boolean; is
           <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded font-medium ml-1">Teacher</span>
         )}
       </div>
+
+      {/* Host: mute/unmute button on guest tiles */}
+      {isHost && !isLocal && peer.roleName !== "host" && onToggleMute && (
+        <button
+          onClick={() => onToggleMute(peer)}
+          className="absolute top-2 left-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          title={peer.audioTrack ? "Mute student" : "Request unmute"}
+        >
+          {peer.audioTrack ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5 text-red-400" />}
+        </button>
+      )}
     </div>
   );
 }
@@ -63,13 +126,16 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
   const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
   const peerCount = useHMSStore(selectPeerCount);
+  const peersScreenSharing = useHMSStore(selectPeersScreenSharing);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [roomEnded, setRoomEnded] = useState(false);
+  const [handRaised, setHandRaised] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const joinAttemptRef = useRef(false);
   const notification = useHMSNotifications();
+
+  const { amIScreenSharing, toggleScreenShare } = useScreenShare();
 
   // Listen for room end / peer leave events
   useEffect(() => {
@@ -84,14 +150,12 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   }, [notification, hmsActions]);
 
   useEffect(() => {
-    // Prevent double-join from React Strict Mode
     if (joinAttemptRef.current) return;
     joinAttemptRef.current = true;
 
     let cancelled = false;
 
     const join = async () => {
-      // Small delay to let React Strict Mode's unmount pass
       await new Promise((r) => setTimeout(r, 100));
       if (cancelled) return;
 
@@ -100,11 +164,10 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
           userName,
           authToken: token,
           settings: {
-            isAudioMuted: false,
+            isAudioMuted: !isHost,
             isVideoMuted: false,
           },
         });
-        // Explicitly enable audio/video after join for host
         if (isHost) {
           setTimeout(async () => {
             try {
@@ -140,15 +203,6 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
     hmsActions.setLocalVideoEnabled(!isLocalVideoEnabled);
   }, [hmsActions, isLocalVideoEnabled]);
 
-  const toggleScreenShare = useCallback(async () => {
-    try {
-      await hmsActions.setScreenShareEnabled(!isScreenSharing);
-      setIsScreenSharing(!isScreenSharing);
-    } catch (e) {
-      console.error("Screen share error:", e);
-    }
-  }, [hmsActions, isScreenSharing]);
-
   const handleLeave = useCallback(async () => {
     await hmsActions.leave();
     onLeave?.();
@@ -163,6 +217,27 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       setIsFullscreen(false);
     }
   }, []);
+
+  // Hand raise toggle (students)
+  const toggleHandRaise = useCallback(async () => {
+    const newState = !handRaised;
+    try {
+      await hmsActions.changeMetadata({ isHandRaised: newState });
+      setHandRaised(newState);
+    } catch (e) {
+      console.error("Hand raise error:", e);
+    }
+  }, [hmsActions, handRaised]);
+
+  // Host: mute/unmute a remote peer
+  const toggleRemoteMute = useCallback(async (peer: any) => {
+    if (!peer.audioTrack) return; // can't force unmute per 100ms policy, only mute
+    try {
+      await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
+    } catch (e) {
+      console.error("Remote mute error:", e);
+    }
+  }, [hmsActions]);
 
   if (roomEnded) {
     return (
@@ -202,6 +277,16 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   const hostPeer = peers.find((p) => p.roleName === "host");
   const guestPeers = peers.filter((p) => p.roleName !== "host");
 
+  // Sort guests: hand raised first
+  const sortedGuests = [...guestPeers].sort((a, b) => {
+    const aRaised = isHandRaised(a) ? 1 : 0;
+    const bRaised = isHandRaised(b) ? 1 : 0;
+    return bRaised - aRaised;
+  });
+
+  // Count raised hands (for host header)
+  const raisedCount = guestPeers.filter(isHandRaised).length;
+
   return (
     <div ref={containerRef} className="bg-gray-950 rounded-xl overflow-hidden">
       {/* Header */}
@@ -210,30 +295,49 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
           <span>LIVE</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
-          <Users className="w-4 h-4" />
-          <span>{peerCount} participant{peerCount !== 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-4 text-gray-400 text-sm">
+          {isHost && raisedCount > 0 && (
+            <div className="flex items-center gap-1 text-yellow-400">
+              <Hand className="w-4 h-4" />
+              <span>{raisedCount} hand{raisedCount !== 1 ? "s" : ""} raised</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            <span>{peerCount} participant{peerCount !== 1 ? "s" : ""}</span>
+          </div>
         </div>
       </div>
 
       {/* Video Grid */}
       <div className="p-3">
+        {/* Screen share - full width on top */}
+        {peersScreenSharing.length > 0 && (
+          <ScreenShareTile peerId={peersScreenSharing[0].id} />
+        )}
+
         {/* Host (teacher) - large view */}
         {hostPeer && (
           <div className="mb-3">
-            <VideoTile peer={hostPeer} isLocal={hostPeer.id === localPeer?.id} isLarge />
+            <VideoTile peer={hostPeer} isLocal={hostPeer.id === localPeer?.id} isHost={isHost} isLarge />
           </div>
         )}
 
         {/* Guests - smaller grid */}
-        {guestPeers.length > 0 && (
+        {sortedGuests.length > 0 && (
           <div className={`grid gap-2 ${
-            guestPeers.length === 1 ? "grid-cols-1 max-w-md" :
-            guestPeers.length <= 4 ? "grid-cols-2" :
-            guestPeers.length <= 9 ? "grid-cols-3" : "grid-cols-4"
+            sortedGuests.length === 1 ? "grid-cols-1 max-w-md" :
+            sortedGuests.length <= 4 ? "grid-cols-2" :
+            sortedGuests.length <= 9 ? "grid-cols-3" : "grid-cols-4"
           }`}>
-            {guestPeers.map((peer) => (
-              <VideoTile key={peer.id} peer={peer} isLocal={peer.id === localPeer?.id} />
+            {sortedGuests.map((peer) => (
+              <VideoTile
+                key={peer.id}
+                peer={peer}
+                isLocal={peer.id === localPeer?.id}
+                isHost={isHost}
+                onToggleMute={isHost ? toggleRemoteMute : undefined}
+              />
             ))}
           </div>
         )}
@@ -262,13 +366,25 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
           {isLocalVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </button>
 
+        {/* Hand raise - students only */}
+        {!isHost && (
+          <button
+            onClick={toggleHandRaise}
+            className={`p-3 rounded-full transition-colors ${handRaised ? "bg-yellow-400 text-yellow-900" : "bg-gray-700 hover:bg-gray-600 text-white"}`}
+            title={handRaised ? "Lower hand" : "Raise hand"}
+          >
+            <Hand className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Screen share - host only */}
         {isHost && (
           <button
             onClick={toggleScreenShare}
-            className={`p-3 rounded-full transition-colors ${isScreenSharing ? "bg-blue-500 text-white" : "bg-gray-700 hover:bg-gray-600 text-white"}`}
-            title="Share screen"
+            className={`p-3 rounded-full transition-colors ${amIScreenSharing ? "bg-blue-500 text-white" : "bg-gray-700 hover:bg-gray-600 text-white"}`}
+            title={amIScreenSharing ? "Stop sharing" : "Share screen"}
           >
-            <MonitorUp className="w-5 h-5" />
+            {amIScreenSharing ? <MonitorOff className="w-5 h-5" /> : <MonitorUp className="w-5 h-5" />}
           </button>
         )}
 
