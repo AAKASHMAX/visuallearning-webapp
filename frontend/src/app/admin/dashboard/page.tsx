@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { Users, CreditCard, PlayCircle, TrendingUp } from "lucide-react";
+import { Users, CreditCard, PlayCircle, TrendingUp, Eye, EyeOff } from "lucide-react";
 
 interface Stats {
   totalUsers: number;
@@ -16,6 +16,7 @@ interface Stats {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     api.get("/admin/stats").then(({ data }) => setStats(data.data)).finally(() => setLoading(false));
@@ -25,15 +26,24 @@ export default function AdminDashboardPage() {
   if (!stats) return <p>Failed to load stats</p>;
 
   const cards = [
-    { label: "Total Students", value: stats.totalUsers, icon: Users, color: "bg-blue-500" },
-    { label: "Active Subscriptions", value: stats.activeSubscriptions, icon: CreditCard, color: "bg-green-500" },
-    { label: "Total Revenue", value: `Rs ${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "bg-amber-500" },
-    { label: "Total Videos", value: stats.totalVideos, icon: PlayCircle, color: "bg-purple-500" },
+    { label: "Total Students", value: stats.totalUsers, icon: Users, color: "bg-blue-500", sensitive: true },
+    { label: "Active Subscriptions", value: stats.activeSubscriptions, icon: CreditCard, color: "bg-green-500", sensitive: true },
+    { label: "Total Revenue", value: `Rs ${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "bg-amber-500", sensitive: true },
+    { label: "Total Videos", value: stats.totalVideos, icon: PlayCircle, color: "bg-purple-500", sensitive: false },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <button
+          onClick={() => setShowStats(!showStats)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          {showStats ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showStats ? "Hide Stats" : "Show Stats"}
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {cards.map((c) => (
           <Card key={c.label}>
@@ -43,7 +53,9 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">{c.label}</p>
-                <p className="text-2xl font-bold">{c.value}</p>
+                <p className="text-2xl font-bold">
+                  {c.sensitive && !showStats ? "••••" : c.value}
+                </p>
               </div>
             </CardContent>
           </Card>
