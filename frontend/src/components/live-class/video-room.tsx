@@ -336,53 +336,71 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
       alert("You have been muted by the teacher.");
       return;
     }
-    try {
-      await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
-      // If student unmutes themselves, clear force-muted state
-      if (!isLocalAudioEnabled && !isHost) {
-        setForceMutedByHost(false);
-      }
-    } catch (e: any) {
-      console.error("[HMS] Toggle audio error:", e);
-      // If enabling failed, try to find any available mic and use it
-      if (!isLocalAudioEnabled) {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const mic = devices.find((d) => d.kind === "audioinput" && d.deviceId);
-          if (mic) {
-            await hmsActions.setAudioSettings({ deviceId: mic.deviceId });
-            await hmsActions.setLocalAudioEnabled(true);
-          } else {
-            alert("No microphone found on this device.");
-          }
-        } catch (e2: any) {
-          console.error("[HMS] Retry audio enable error:", e2);
-          alert("Could not enable microphone. Please reload the page and allow mic access when prompted.");
+
+    // If trying to enable audio, ensure we have mic permission first
+    if (!isLocalAudioEnabled) {
+      try {
+        // This triggers the browser permission prompt (needs user gesture = button click)
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Get the device ID from the granted stream
+        const audioTrack = stream.getAudioTracks()[0];
+        const deviceId = audioTrack?.getSettings()?.deviceId;
+        // Stop the raw stream - HMS will manage its own
+        stream.getTracks().forEach((t) => t.stop());
+
+        // Set the discovered device in HMS, then enable
+        if (deviceId) {
+          await hmsActions.setAudioSettings({ deviceId });
+        }
+        await hmsActions.setLocalAudioEnabled(true);
+      } catch (e: any) {
+        console.error("[HMS] Enable audio error:", e);
+        if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+          alert("Microphone permission denied. Please allow microphone access in browser settings and reload.");
+        } else if (e.name === "NotFoundError") {
+          alert("No microphone found on this device.");
+        } else {
+          alert("Could not enable microphone. Please reload the page.");
         }
       }
+      return;
+    }
+
+    // Muting - straightforward
+    try {
+      await hmsActions.setLocalAudioEnabled(false);
+    } catch (e) {
+      console.error("[HMS] Mute audio error:", e);
     }
   }, [hmsActions, isLocalAudioEnabled, forceMutedByHost, isHost]);
 
   const toggleVideo = useCallback(async () => {
-    try {
-      await hmsActions.setLocalVideoEnabled(!isLocalVideoEnabled);
-    } catch (e: any) {
-      console.error("[HMS] Toggle video error:", e);
-      if (!isLocalVideoEnabled) {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const cam = devices.find((d) => d.kind === "videoinput" && d.deviceId);
-          if (cam) {
-            await hmsActions.setVideoSettings({ deviceId: cam.deviceId });
-            await hmsActions.setLocalVideoEnabled(true);
-          } else {
-            alert("No camera found on this device.");
-          }
-        } catch (e2: any) {
-          console.error("[HMS] Retry video enable error:", e2);
-          alert("Could not enable camera. Please reload the page and allow camera access when prompted.");
+    if (!isLocalVideoEnabled) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const videoTrack = stream.getVideoTracks()[0];
+        const deviceId = videoTrack?.getSettings()?.deviceId;
+        stream.getTracks().forEach((t) => t.stop());
+        if (deviceId) {
+          await hmsActions.setVideoSettings({ deviceId });
+        }
+        await hmsActions.setLocalVideoEnabled(true);
+      } catch (e: any) {
+        console.error("[HMS] Enable video error:", e);
+        if (e.name === "NotAllowedError") {
+          alert("Camera permission denied. Please allow camera access in browser settings and reload.");
+        } else if (e.name === "NotFoundError") {
+          alert("No camera found on this device.");
+        } else {
+          alert("Could not enable camera. Please reload the page.");
         }
       }
+      return;
+    }
+    try {
+      await hmsActions.setLocalVideoEnabled(false);
+    } catch (e) {
+      console.error("[HMS] Disable video error:", e);
     }
   }, [hmsActions, isLocalVideoEnabled]);
 
