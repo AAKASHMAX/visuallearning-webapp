@@ -16,6 +16,8 @@ import {
   selectPeersScreenSharing,
   selectScreenShareByPeerID,
   selectHMSMessages,
+  selectIsPeerAudioEnabled,
+  selectAudioTrackByPeerID,
   HMSNotificationTypes,
 } from "@100mslive/react-sdk";
 import {
@@ -64,6 +66,7 @@ function VideoTile({
   const trackId = peer.videoTrack;
   const { videoRef } = useVideo({ trackId });
   const handUp = isHandRaised(peer);
+  const isAudioEnabled = useHMSStore(selectIsPeerAudioEnabled(peer.id));
 
   return (
     <div className="relative bg-gray-900 rounded-xl overflow-hidden aspect-video group">
@@ -82,19 +85,24 @@ function VideoTile({
         </div>
       )}
       <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5">
-        {!peer.audioTrack && <MicOff className="w-3 h-3 text-red-400" />}
+        {!isAudioEnabled && <MicOff className="w-3 h-3 text-red-400" />}
         <span>{isLocal ? `${peer.name} (You)` : peer.name}</span>
         {peer.roleName === "host" && (
           <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded font-medium ml-1">Teacher</span>
         )}
       </div>
+      {/* Host: mute button on student tiles - always visible */}
       {isHost && !isLocal && peer.roleName !== "host" && onToggleMute && (
         <button
           onClick={() => onToggleMute(peer)}
-          className="absolute top-2 left-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-          title={peer.audioTrack ? "Mute student" : "Request unmute"}
+          className={`absolute top-2 left-2 text-white rounded-full p-1.5 transition-all ${
+            isAudioEnabled
+              ? "bg-black/60 hover:bg-red-500/80 opacity-0 group-hover:opacity-100"
+              : "bg-red-500/80"
+          }`}
+          title={isAudioEnabled ? "Mute student" : "Student is muted"}
         >
-          {peer.audioTrack ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5 text-red-400" />}
+          {isAudioEnabled ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
         </button>
       )}
     </div>
@@ -108,7 +116,6 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -130,7 +137,6 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
 
   return (
     <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col h-full">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
         <h3 className="text-white text-sm font-semibold flex items-center gap-2">
           <MessageSquare className="w-4 h-4" /> Chat
@@ -139,8 +145,6 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
           <X className="w-4 h-4" />
         </button>
       </div>
-
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
         {messages.length === 0 ? (
           <p className="text-gray-500 text-xs text-center mt-8">No messages yet. Say hello!</p>
@@ -177,8 +181,6 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
           })
         )}
       </div>
-
-      {/* Input */}
       <div className="p-3 border-t border-gray-800">
         <div className="flex gap-2">
           <input
@@ -225,7 +227,6 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
 
   const { amIScreenSharing, toggleScreenShare } = useScreenShare();
 
-  // Track unread messages when chat is closed
   useEffect(() => {
     if (chatOpen) {
       setUnreadCount(0);
@@ -258,18 +259,8 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         await hmsActions.join({
           userName,
           authToken: token,
-          settings: { isAudioMuted: !isHost, isVideoMuted: false },
+          settings: { isAudioMuted: false, isVideoMuted: false },
         });
-        if (isHost) {
-          setTimeout(async () => {
-            try {
-              await hmsActions.setLocalAudioEnabled(true);
-              await hmsActions.setLocalVideoEnabled(true);
-            } catch (e) {
-              console.error("[HMS] Failed to enable media:", e);
-            }
-          }, 1000);
-        }
       } catch (e: any) {
         if (!cancelled) {
           console.error("[HMS] Failed to join:", e);
@@ -287,12 +278,37 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const toggleAudio = useCallback(() => {
-    hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
+  // Force enable audio/video for host after connection is established
+  useEffect(() => {
+    if (!isConnected || !isHost) return;
+    const enableMedia = async () => {
+      try {
+        await hmsActions.setLocalAudioEnabled(true);
+        await hmsActions.setLocalVideoEnabled(true);
+      } catch (e) {
+        console.error("[HMS] Failed to enable media:", e);
+      }
+    };
+    // Try immediately and again after a delay
+    enableMedia();
+    const timer = setTimeout(enableMedia, 2000);
+    return () => clearTimeout(timer);
+  }, [isConnected, isHost, hmsActions]);
+
+  const toggleAudio = useCallback(async () => {
+    try {
+      await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
+    } catch (e) {
+      console.error("[HMS] Toggle audio error:", e);
+    }
   }, [hmsActions, isLocalAudioEnabled]);
 
-  const toggleVideo = useCallback(() => {
-    hmsActions.setLocalVideoEnabled(!isLocalVideoEnabled);
+  const toggleVideo = useCallback(async () => {
+    try {
+      await hmsActions.setLocalVideoEnabled(!isLocalVideoEnabled);
+    } catch (e) {
+      console.error("[HMS] Toggle video error:", e);
+    }
   }, [hmsActions, isLocalVideoEnabled]);
 
   const handleLeave = useCallback(async () => {
@@ -320,12 +336,21 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
     }
   }, [hmsActions, handRaised]);
 
+  // Host: mute a remote peer's audio track
   const toggleRemoteMute = useCallback(async (peer: any) => {
-    if (!peer.audioTrack) return;
     try {
-      await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
+      if (peer.audioTrack) {
+        // Mute by disabling the remote track
+        await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
+      }
     } catch (e) {
       console.error("Remote mute error:", e);
+      // Fallback: try muting by role
+      try {
+        await hmsActions.setRemoteTracksEnabled(false, "audio", "guest");
+      } catch (e2) {
+        console.error("Remote mute by role also failed:", e2);
+      }
     }
   }, [hmsActions]);
 
@@ -464,7 +489,6 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
             </button>
           )}
 
-          {/* Chat toggle */}
           <button
             onClick={() => setChatOpen(!chatOpen)}
             className={`p-3 rounded-full transition-colors relative ${chatOpen ? "bg-primary text-white" : "bg-gray-700 hover:bg-gray-600 text-white"}`}
@@ -496,7 +520,6 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         </div>
       </div>
 
-      {/* Chat Panel */}
       <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
