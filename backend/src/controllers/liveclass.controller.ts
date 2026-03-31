@@ -13,8 +13,6 @@ export const createLiveClassSchema = z.object({
   scheduledAt: z.string().datetime().optional(),
   notifyTarget: z.enum(["ALL", "SUBSCRIBED", "GROUP"]).default("ALL"),
   studentGroupId: z.string().optional(),
-}).refine((data) => data.notifyTarget !== "GROUP" || data.studentGroupId, {
-  message: "studentGroupId is required when notifyTarget is GROUP",
 });
 
 export const updateLiveClassSchema = z.object({
@@ -28,8 +26,6 @@ export const updateLiveClassSchema = z.object({
 export const goLiveSchema = z.object({
   notifyTarget: z.enum(["ALL", "SUBSCRIBED", "GROUP"]).default("ALL"),
   studentGroupId: z.string().optional(),
-}).refine((data) => data.notifyTarget !== "GROUP" || data.studentGroupId, {
-  message: "studentGroupId is required when notifyTarget is GROUP",
 });
 
 export const addAccessSchema = z.object({
