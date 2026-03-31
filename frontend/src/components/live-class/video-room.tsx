@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, createContext, useContext } from "react";
 import {
   HMSRoomProvider,
   useHMSActions,
@@ -17,7 +17,6 @@ import {
   selectScreenShareByPeerID,
   selectHMSMessages,
   selectIsPeerAudioEnabled,
-  selectAudioTrackByPeerID,
   HMSNotificationTypes,
 } from "@100mslive/react-sdk";
 import {
@@ -57,6 +56,9 @@ function ScreenShareTile({ peerId }: { peerId: string }) {
   );
 }
 
+// Context for host-muted peers (for immediate UI feedback on teacher side)
+const HostMutedContext = createContext<Set<string>>(new Set());
+
 function VideoTile({
   peer, isLocal, isHost, isLarge, onToggleMute,
 }: {
@@ -66,7 +68,10 @@ function VideoTile({
   const trackId = peer.videoTrack;
   const { videoRef } = useVideo({ trackId });
   const handUp = isHandRaised(peer);
-  const isAudioEnabled = useHMSStore(selectIsPeerAudioEnabled(peer.id));
+  const hmsAudioEnabled = useHMSStore(selectIsPeerAudioEnabled(peer.id));
+  const hostMutedPeers = useContext(HostMutedContext);
+  // Show as muted if HMS says muted OR if host just muted them (local tracking)
+  const isAudioEnabled = hmsAudioEnabled && !hostMutedPeers.has(peer.id);
 
   return (
     <div className="relative bg-gray-900 rounded-xl overflow-hidden aspect-video group">
@@ -220,6 +225,8 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   const [handRaised, setHandRaised] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [forceMutedByHost, setForceMutedByHost] = useState(false);
+  const [hostMutedPeers, setHostMutedPeers] = useState<Set<string>>(new Set());
   const lastSeenMsgCount = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const joinAttemptRef = useRef(false);
@@ -244,8 +251,16 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         setRoomEnded(true);
         hmsActions.leave().catch(() => {});
         break;
+      case HMSNotificationTypes.CHANGE_TRACK_STATE_REQUEST:
+        // When host mutes a student, the student gets this notification
+        // If enabled=false, the host is forcing mute - block self-unmute
+        if (notification.data?.enabled === false && !isHost) {
+          setForceMutedByHost(true);
+          hmsActions.setLocalAudioEnabled(false).catch(() => {});
+        }
+        break;
     }
-  }, [notification, hmsActions]);
+  }, [notification, hmsActions, isHost]);
 
   useEffect(() => {
     if (joinAttemptRef.current) return;
@@ -279,29 +294,42 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   }, [token]);
 
   // Force enable audio/video for host after connection is established
+  // Multiple retries to handle browser autoplay policy delays
   useEffect(() => {
     if (!isConnected || !isHost) return;
+    const timers: NodeJS.Timeout[] = [];
     const enableMedia = async () => {
       try {
         await hmsActions.setLocalAudioEnabled(true);
         await hmsActions.setLocalVideoEnabled(true);
+        console.log("[HMS] Host media enabled successfully");
       } catch (e) {
         console.error("[HMS] Failed to enable media:", e);
       }
     };
-    // Try immediately and again after a delay
-    enableMedia();
-    const timer = setTimeout(enableMedia, 2000);
-    return () => clearTimeout(timer);
+    // Retry at 0ms, 500ms, 1500ms, 3000ms, 5000ms
+    [0, 500, 1500, 3000, 5000].forEach((delay) => {
+      timers.push(setTimeout(enableMedia, delay));
+    });
+    return () => timers.forEach(clearTimeout);
   }, [isConnected, isHost, hmsActions]);
 
   const toggleAudio = useCallback(async () => {
+    // If student was force-muted by host, prevent unmute
+    if (forceMutedByHost && !isLocalAudioEnabled && !isHost) {
+      alert("You have been muted by the teacher.");
+      return;
+    }
     try {
       await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
+      // If student unmutes themselves, clear force-muted state
+      if (!isLocalAudioEnabled && !isHost) {
+        setForceMutedByHost(false);
+      }
     } catch (e) {
       console.error("[HMS] Toggle audio error:", e);
     }
-  }, [hmsActions, isLocalAudioEnabled]);
+  }, [hmsActions, isLocalAudioEnabled, forceMutedByHost, isHost]);
 
   const toggleVideo = useCallback(async () => {
     try {
@@ -338,20 +366,37 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
 
   // Host: mute a remote peer's audio track
   const toggleRemoteMute = useCallback(async (peer: any) => {
+    // Immediately show as muted on teacher side
+    setHostMutedPeers((prev) => {
+      const next = new Set(prev);
+      next.add(peer.id);
+      return next;
+    });
+
     try {
       if (peer.audioTrack) {
-        // Mute by disabling the remote track
         await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
+      } else {
+        // No individual track, try muting all guest audio
+        await hmsActions.setRemoteTracksEnabled(false, "audio", "guest");
       }
     } catch (e) {
       console.error("Remote mute error:", e);
-      // Fallback: try muting by role
       try {
         await hmsActions.setRemoteTracksEnabled(false, "audio", "guest");
       } catch (e2) {
         console.error("Remote mute by role also failed:", e2);
       }
     }
+
+    // Clear the local override after HMS state should have synced
+    setTimeout(() => {
+      setHostMutedPeers((prev) => {
+        const next = new Set(prev);
+        next.delete(peer.id);
+        return next;
+      });
+    }, 5000);
   }, [hmsActions]);
 
   if (roomEnded) {
@@ -396,6 +441,7 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
   const raisedCount = guestPeers.filter(isHandRaised).length;
 
   return (
+    <HostMutedContext.Provider value={hostMutedPeers}>
     <div ref={containerRef} className="bg-gray-950 rounded-xl overflow-hidden flex" style={{ height: "calc(100vh - 8rem)" }}>
       {/* Main video area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -455,8 +501,14 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         <div className="flex items-center justify-center gap-3 px-4 py-3 bg-gray-900/80 border-t border-gray-800">
           <button
             onClick={toggleAudio}
-            className={`p-3 rounded-full transition-colors ${isLocalAudioEnabled ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"}`}
-            title={isLocalAudioEnabled ? "Mute" : "Unmute"}
+            className={`p-3 rounded-full transition-colors ${
+              forceMutedByHost && !isHost
+                ? "bg-red-800 text-red-300 cursor-not-allowed"
+                : isLocalAudioEnabled
+                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                  : "bg-red-500 hover:bg-red-600 text-white"
+            }`}
+            title={forceMutedByHost && !isHost ? "Muted by teacher" : isLocalAudioEnabled ? "Mute" : "Unmute"}
           >
             {isLocalAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
           </button>
@@ -522,6 +574,7 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
 
       <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
+    </HostMutedContext.Provider>
   );
 }
 
