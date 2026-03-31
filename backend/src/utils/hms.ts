@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import https from "https";
 import { config } from "../config";
 
 function generateManagementToken(): string {
@@ -42,93 +41,73 @@ export function generateAuthToken(roomId: string, userId: string, role: "host" |
   );
 }
 
-// Use Node https module for more reliable connections from Render
-function httpsRequest(url: string, method: string, headers: Record<string, string>, body?: string): Promise<{ status: number; data: string }> {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const options = {
-      hostname: urlObj.hostname,
-      port: 443,
-      path: urlObj.pathname + urlObj.search,
-      method,
-      headers,
-      timeout: 30000,
-    };
+// Proxy 100ms API calls through Vercel to avoid Render network issues
+const HMS_PROXY_URL = config.frontendUrl + "/api/hms";
+const HMS_API_SECRET = process.env.HMS_API_SECRET || "";
 
-    const req = https.request(options, (res) => {
-      let data = "";
-      res.on("data", (chunk) => { data += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode || 0, data }));
-    });
-
-    req.on("timeout", () => { req.destroy(); reject(new Error("Request timeout (30s)")); });
-    req.on("error", (e) => reject(e));
-
-    if (body) req.write(body);
-    req.end();
+async function hmsProxy(body: object): Promise<any> {
+  const response = await fetch(HMS_PROXY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hms-api-secret": HMS_API_SECRET,
+    },
+    body: JSON.stringify(body),
   });
-}
 
-async function hmsRequest(url: string, method: string, body?: object, retries = 3): Promise<{ status: number; data: any }> {
-  const token = generateManagementToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-  const bodyStr = body ? JSON.stringify(body) : undefined;
-
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await httpsRequest(url, method, headers, bodyStr);
-      let parsed;
-      try { parsed = JSON.parse(res.data); } catch { parsed = res.data; }
-      return { status: res.status, data: parsed };
-    } catch (e: any) {
-      console.error(`[HMS] Attempt ${i + 1}/${retries} failed for ${method} ${url}:`, e.message);
-      if (i === retries - 1) throw e;
-      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
-    }
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`HMS proxy error (${response.status}): ${err}`);
   }
-  throw new Error("All retries failed");
+
+  return response.json();
 }
 
 export async function createRoom(name: string): Promise<string> {
-  const res = await hmsRequest("https://api.100ms.live/v2/rooms", "POST", {
-    name: name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 100),
-    template_id: config.hms.templateId,
+  // Try proxy first (Vercel), fall back to direct call
+  try {
+    const data = await hmsProxy({ action: "create-room", roomName: name });
+    return data.roomId;
+  } catch (proxyErr: any) {
+    console.error("[HMS] Proxy failed, trying direct:", proxyErr.message);
+  }
+
+  // Direct fallback
+  const token = generateManagementToken();
+  const response = await fetch("https://api.100ms.live/v2/rooms", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name: name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 100),
+      template_id: config.hms.templateId,
+    }),
   });
 
-  if (res.status < 200 || res.status >= 300) {
-    console.error("100ms create room error:", res.data);
+  if (!response.ok) {
+    const err = await response.text();
+    console.error("100ms create room error:", err);
     throw new Error("Failed to create 100ms room");
   }
 
-  return res.data.id;
+  const data = await response.json() as { id: string };
+  return data.id;
 }
 
 export async function endActiveSession(roomId: string): Promise<void> {
   try {
-    const sessionRes = await hmsRequest(
-      `https://api.100ms.live/v2/active-rooms/${roomId}`, "GET", undefined, 2
-    );
-    if (sessionRes.status === 200) {
-      await hmsRequest(
-        `https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, "POST",
-        { reason: "Live class ended by teacher" }, 2
-      );
-    }
-  } catch (e) {
-    console.error("[HMS] End session failed:", e);
+    await hmsProxy({ action: "end-session", roomId });
+  } catch (e: any) {
+    console.error("[HMS] End session failed:", e.message);
   }
 }
 
 export async function disableRoom(roomId: string): Promise<void> {
   try {
-    await hmsRequest(
-      `https://api.100ms.live/v2/rooms/${roomId}`, "POST",
-      { enabled: false }, 2
-    );
-  } catch (e) {
-    console.error("[HMS] Disable room failed:", e);
+    await hmsProxy({ action: "disable-room", roomId });
+  } catch (e: any) {
+    console.error("[HMS] Disable room failed:", e.message);
   }
 }
