@@ -41,10 +41,29 @@ export function generateAuthToken(roomId: string, userId: string, role: "host" |
   );
 }
 
+// Helper: fetch with timeout and retry
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeout);
+      return response;
+    } catch (e: any) {
+      console.error(`[HMS] Fetch attempt ${i + 1}/${retries} failed:`, e.message || e);
+      if (i === retries - 1) throw e;
+      // Wait before retry
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("All fetch retries failed");
+}
+
 export async function createRoom(name: string): Promise<string> {
   const token = generateManagementToken();
 
-  const response = await fetch("https://api.100ms.live/v2/rooms", {
+  const response = await fetchWithRetry("https://api.100ms.live/v2/rooms", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,33 +88,39 @@ export async function createRoom(name: string): Promise<string> {
 export async function endActiveSession(roomId: string): Promise<void> {
   const token = generateManagementToken();
 
-  // First get the active session
-  const sessionRes = await fetch(`https://api.100ms.live/v2/active-rooms/${roomId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const sessionRes = await fetchWithRetry(`https://api.100ms.live/v2/active-rooms/${roomId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }, 2);
 
-  if (sessionRes.ok) {
-    // End the active session - this kicks all peers and triggers ROOM_ENDED notification
-    await fetch(`https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ reason: "Live class ended by teacher" }),
-    });
+    if (sessionRes.ok) {
+      await fetchWithRetry(`https://api.100ms.live/v2/active-rooms/${roomId}/end-room`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: "Live class ended by teacher" }),
+      }, 2);
+    }
+  } catch (e) {
+    console.error("[HMS] End session failed:", e);
   }
 }
 
 export async function disableRoom(roomId: string): Promise<void> {
   const token = generateManagementToken();
 
-  await fetch(`https://api.100ms.live/v2/rooms/${roomId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ enabled: false }),
-  });
+  try {
+    await fetchWithRetry(`https://api.100ms.live/v2/rooms/${roomId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ enabled: false }),
+    }, 2);
+  } catch (e) {
+    console.error("[HMS] Disable room failed:", e);
+  }
 }
