@@ -356,6 +356,13 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
 
     const isSubscribed = !!activeSubscription;
 
+    // Get groups user belongs to
+    const userGroups = await prisma.studentGroupMember.findMany({
+      where: { userId },
+      select: { groupId: true },
+    });
+    const userGroupIds = userGroups.map((g) => g.groupId);
+
     const classes = await prisma.liveClass.findMany({
       where: {
         status: { in: ["LIVE", "SCHEDULED"] },
@@ -363,7 +370,9 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
           { notifyTarget: "ALL" },
           ...(isSubscribed ? [{ notifyTarget: "SUBSCRIBED" as const }] : []),
           { accessList: { some: { userId } } },
-          { notifyTarget: "GROUP", studentGroup: { members: { some: { userId } } } },
+          ...(userGroupIds.length > 0
+            ? [{ notifyTarget: "GROUP" as const, studentGroupId: { in: userGroupIds } }]
+            : []),
         ],
       },
       include: {
@@ -381,7 +390,7 @@ export async function getActiveLiveClasses(req: Request, res: Response) {
       scheduledAt: c.scheduledAt,
       startedAt: c.startedAt,
       teacher: c.teacher,
-      hasAccess: isSubscribed || c.accessList.length > 0 || c.notifyTarget === "ALL" || c.notifyTarget === "GROUP",
+      hasAccess: isSubscribed || c.accessList.length > 0 || c.notifyTarget === "ALL" || (c.notifyTarget === "GROUP" && userGroupIds.includes(c.studentGroupId || "")),
     }));
 
     return success(res, { classes: result, isSubscribed });
