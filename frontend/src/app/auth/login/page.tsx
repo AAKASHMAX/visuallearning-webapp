@@ -24,7 +24,7 @@ export default function LoginPage() {
       const { data } = await api.post("/auth/login", { email, password });
       login(data.data.user, data.data.token);
       toast.success("Welcome back!");
-      router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : data.data.user.role === "TEACHER" ? "/admin/live-classes" : "/dashboard");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {

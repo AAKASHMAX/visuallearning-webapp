@@ -82,8 +82,8 @@ export function Navbar() {
 
             {mounted && isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <Link href="/dashboard">
-                  <Button variant="accent" size="sm">Dashboard</Button>
+                <Link href={user?.role === "ADMIN" ? "/admin/dashboard" : user?.role === "TEACHER" ? "/admin/live-classes" : "/dashboard"}>
+                  <Button variant="accent" size="sm">{user?.role === "TEACHER" ? "My Classes" : "Dashboard"}</Button>
                 </Link>
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4" />
@@ -140,7 +140,7 @@ export function Navbar() {
 
             {mounted && isAuthenticated ? (
               <>
-                <Link href="/dashboard" className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                <Link href={user?.role === "ADMIN" ? "/admin/dashboard" : user?.role === "TEACHER" ? "/admin/live-classes" : "/dashboard"} className="block py-2 hover:text-accent" onClick={() => setMenuOpen(false)}>{user?.role === "TEACHER" ? "My Classes" : "Dashboard"}</Link>
                 <button onClick={() => { logout(); window.location.href = "/"; }} className="block py-2 text-red-300">Logout</button>
               </>
             ) : mounted ? (
