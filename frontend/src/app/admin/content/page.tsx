@@ -69,8 +69,8 @@ export default function AdminContentPage() {
         setData(data.data.chapters);
         setChapters(data.data.chapters);
       } else if (tab === "videos" && selectedChapter) {
-        const { data } = await api.get(`/courses/chapters/${selectedChapter}/videos`);
-        setData(data.data.videos || []);
+        const { data } = await api.get(`/admin/videos/chapter/${selectedChapter}`);
+        setData(data.data || []);
       } else if (tab === "notes" && selectedChapter) {
         const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
         setData(data.data || []);

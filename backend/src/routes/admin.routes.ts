@@ -7,7 +7,7 @@ import {
   addClass, updateClass, deleteClass, classSchema,
   addSubject, updateSubject, deleteSubject, subjectSchema, toggleSubjectAccess, getSubjectAccessList,
   addChapter, updateChapter, deleteChapter, chapterSchema,
-  addVideo, updateVideo, deleteVideo, videoSchema,
+  getChapterVideos, addVideo, updateVideo, deleteVideo, videoSchema,
   addNote, deleteNote, noteSchema,
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
@@ -76,6 +76,7 @@ router.put("/chapters/:id", updateChapter);
 router.delete("/chapters/:id", deleteChapter);
 
 // Videos
+router.get("/videos/chapter/:chapterId", getChapterVideos);
 router.post("/videos", validate(videoSchema), addVideo);
 router.put("/videos/:id", updateVideo);
 router.delete("/videos/:id", deleteVideo);

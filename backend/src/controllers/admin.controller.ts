@@ -198,6 +198,18 @@ export async function updateChapter(req: Request, res: Response) { return crudUp
 export async function deleteChapter(req: Request, res: Response) { return crudDelete(prisma.chapter, req.params.id, res); }
 
 // --- Videos ---
+export async function getChapterVideos(req: Request, res: Response) {
+  try {
+    const videos = await prisma.video.findMany({
+      where: { chapterId: req.params.chapterId },
+      orderBy: { order: "asc" },
+    });
+    return success(res, videos);
+  } catch (e) {
+    return error(res, "Failed to fetch videos");
+  }
+}
+
 export async function addVideo(req: Request, res: Response) { return crudCreate(prisma.video, req.body, res); }
 export async function updateVideo(req: Request, res: Response) { return crudUpdate(prisma.video, req.params.id, req.body, res); }
 export async function deleteVideo(req: Request, res: Response) { return crudDelete(prisma.video, req.params.id, res); }
