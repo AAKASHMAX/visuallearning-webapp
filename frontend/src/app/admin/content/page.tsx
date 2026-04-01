@@ -29,6 +29,8 @@ export default function AdminContentPage() {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
+  const [videoTypeFilter, setVideoTypeFilter] = useState<"ALL" | "ANIMATED_VIDEO" | "LECTURE_VIDEO">("ALL");
+  const [videoLangFilter, setVideoLangFilter] = useState<string>("ALL");
 
   useEffect(() => {
     api.get("/courses/classes").then(({ data }) => setClasses(data.data));
@@ -188,6 +190,23 @@ export default function AdminContentPage() {
             <option value="">Select Chapter</option>
             {chapters.map((ch: any) => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
           </select>
+        )}
+        {tab === "videos" && selectedChapter && (
+          <>
+            <select value={videoTypeFilter} onChange={(e) => setVideoTypeFilter(e.target.value as any)}
+              className="border rounded-lg px-3 py-2 text-sm">
+              <option value="ALL">All Types</option>
+              <option value="ANIMATED_VIDEO">3D Animated</option>
+              <option value="LECTURE_VIDEO">Lecture</option>
+            </select>
+            <select value={videoLangFilter} onChange={(e) => setVideoLangFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm">
+              <option value="ALL">All Languages</option>
+              {enabledLanguages.map((lang) => (
+                <option key={lang.value} value={lang.value}>{lang.label}</option>
+              ))}
+            </select>
+          </>
         )}
       </div>
 
@@ -350,7 +369,10 @@ export default function AdminContentPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item: any) => (
+                {(tab === "videos" ? data.filter((item: any) =>
+                  (videoTypeFilter === "ALL" || item.type === videoTypeFilter) &&
+                  (videoLangFilter === "ALL" || (item.language || "ENGLISH") === videoLangFilter)
+                ) : data).map((item: any) => (
                   <tr key={item.id} className="border-b last:border-0">
                     <td className="p-4 font-medium max-w-[300px] truncate">{tab === "questions" ? item.questionText : (item.name || item.title)}</td>
                     {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.type === "LECTURE_VIDEO" ? "Lecture" : "Animated"}</td>}
