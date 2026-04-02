@@ -105,7 +105,7 @@ function VideoTile({
               ? "bg-black/60 hover:bg-red-500/80 opacity-0 group-hover:opacity-100"
               : "bg-red-500/80"
           }`}
-          title={isAudioEnabled ? "Mute student" : "Student is muted"}
+          title={isAudioEnabled ? "Mute student" : "Unmute student"}
         >
           {isAudioEnabled ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
         </button>
@@ -252,11 +252,16 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         hmsActions.leave().catch(() => {});
         break;
       case HMSNotificationTypes.CHANGE_TRACK_STATE_REQUEST:
-        // When host mutes a student, the student gets this notification
-        // If enabled=false, the host is forcing mute - block self-unmute
-        if (notification.data?.enabled === false && !isHost) {
-          setForceMutedByHost(true);
-          hmsActions.setLocalAudioEnabled(false).catch(() => {});
+        if (!isHost) {
+          if (notification.data?.enabled === false) {
+            // Host is forcing mute - block self-unmute
+            setForceMutedByHost(true);
+            hmsActions.setLocalAudioEnabled(false).catch(() => {});
+          } else if (notification.data?.enabled === true) {
+            // Host is requesting unmute - allow student to unmute
+            setForceMutedByHost(false);
+            hmsActions.setLocalAudioEnabled(true).catch(() => {});
+          }
         }
         break;
     }
@@ -429,39 +434,63 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
     }
   }, [hmsActions, handRaised]);
 
-  // Host: mute a remote peer's audio track
-  const toggleRemoteMute = useCallback(async (peer: any) => {
-    // Immediately show as muted on teacher side
-    setHostMutedPeers((prev) => {
-      const next = new Set(prev);
-      next.add(peer.id);
-      return next;
+  // Track which peers the host considers muted (for toggle logic)
+  const peerAudioRef = useRef<Map<string, boolean>>(new Map());
+
+  // Keep peerAudioRef in sync with peers' audio state
+  useEffect(() => {
+    peers.forEach((peer: any) => {
+      // A peer is "on" if they have an audio track and are not in hostMutedPeers
+      const isOn = !!peer.audioTrack && !hostMutedPeers.has(peer.id);
+      peerAudioRef.current.set(peer.id, isOn);
     });
+  }, [peers, hostMutedPeers]);
 
-    try {
-      if (peer.audioTrack) {
-        await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
-      } else {
-        // No individual track, try muting all guest audio
-        await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
-      }
-    } catch (e) {
-      console.error("Remote mute error:", e);
-      try {
-        await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
-      } catch (e2) {
-        console.error("Remote mute by role also failed:", e2);
-      }
-    }
+  // Host: toggle mute/unmute a remote peer's audio track
+  const toggleRemoteMute = useCallback(async (peer: any) => {
+    const isPeerAudioOn = peerAudioRef.current.get(peer.id) ?? false;
 
-    // Clear the local override after HMS state should have synced
-    setTimeout(() => {
+    if (isPeerAudioOn) {
+      // MUTE the student
       setHostMutedPeers((prev) => {
         const next = new Set(prev);
-        next.delete(peer.id);
+        next.add(peer.id);
         return next;
       });
-    }, 5000);
+
+      try {
+        if (peer.audioTrack) {
+          await hmsActions.setRemoteTrackEnabled(peer.audioTrack, false);
+        } else {
+          await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
+        }
+      } catch (e) {
+        console.error("Remote mute error:", e);
+        try {
+          await hmsActions.setRemoteTracksEnabled({ enabled: false, type: "audio" });
+        } catch (e2) {
+          console.error("Remote mute by role also failed:", e2);
+        }
+      }
+
+      // Clear the local override after HMS state should have synced
+      setTimeout(() => {
+        setHostMutedPeers((prev) => {
+          const next = new Set(prev);
+          next.delete(peer.id);
+          return next;
+        });
+      }, 5000);
+    } else {
+      // UNMUTE the student - request them to enable audio
+      try {
+        if (peer.audioTrack) {
+          await hmsActions.setRemoteTrackEnabled(peer.audioTrack, true);
+        }
+      } catch (e) {
+        console.error("Remote unmute error:", e);
+      }
+    }
   }, [hmsActions]);
 
   if (roomEnded) {
