@@ -482,7 +482,13 @@ function RoomContent({ token, userName, isHost, onLeave }: VideoRoomProps) {
         });
       }, 5000);
     } else {
-      // UNMUTE the student - request them to enable audio
+      // UNMUTE the student - clear local override immediately so icon updates instantly
+      setHostMutedPeers((prev) => {
+        const next = new Set(prev);
+        next.delete(peer.id);
+        return next;
+      });
+
       try {
         if (peer.audioTrack) {
           await hmsActions.setRemoteTrackEnabled(peer.audioTrack, true);
