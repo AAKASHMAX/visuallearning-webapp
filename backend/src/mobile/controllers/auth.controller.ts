@@ -17,7 +17,7 @@ async function formatUserForMobile(user: any, token: string) {
     email: user.email,
     mobile: "",
     referral_code: null,
-    is_subscribe: sub ? 1 : 0,
+    is_subscribe: sub ? 2 : 1,
     expiry_date: sub ? sub.expiryDate.toISOString() : null,
     token,
     role: user.role,

@@ -126,8 +126,8 @@ export async function getVideoList(req: Request, res: Response) {
           video_type: 2, // All videos are YouTube
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
-          is_paid: v.isFree ? 0 : 1,
-          is_purchase: (v.isFree || hasAccess) ? 1 : 0,
+          is_paid: v.isFree ? 2 : 1,
+          is_purchase: (v.isFree || hasAccess) ? 2 : 1,
           thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
           duration: v.duration || "",
           created_at: v.createdAt.toISOString(),
@@ -161,8 +161,8 @@ export async function getVideoList(req: Request, res: Response) {
           video_type: 2, // All videos are YouTube
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
-          is_paid: v.isFree ? 0 : 1,
-          is_purchase: (v.isFree || hasAccess) ? 1 : 0,
+          is_paid: v.isFree ? 2 : 1,
+          is_purchase: (v.isFree || hasAccess) ? 2 : 1,
           thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
           duration: v.duration || "",
           created_at: v.createdAt.toISOString(),
@@ -327,8 +327,8 @@ export async function searchVideos(req: Request, res: Response) {
       video_type: 2, // All videos are YouTube
       content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
       description: "",
-      is_paid: v.isFree ? 0 : 1,
-      is_purchase: 0,
+      is_paid: v.isFree ? 2 : 1,
+      is_purchase: 1,
       thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
       duration: v.duration || "",
       created_at: v.createdAt.toISOString(),
