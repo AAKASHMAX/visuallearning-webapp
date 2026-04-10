@@ -2,16 +2,26 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { mobileSuccess, mobileError } from "../utils/response";
 
-// GET /api/category — return category list with banner images
+// GET /api/category — return feature categories for home screen grid
 export async function getCategory(_req: Request, res: Response) {
   try {
-    // Flutter model expects { status, message, Categories: [...], BannerImages: [...] }
+    // Flutter home screen uses these category names for navigation:
+    // "Animation" → ClassesScreen, "video" → ClassesScreen,
+    // "Notes" → NotesScreen, "Test Paper" → TestPaperScreen,
+    // "Quiz" → QuizMainScreen, "Favourite Videos" → FavoriteScreen
+    const categories = [
+      { category_id_PK: 1, category_name: "Animation", category_icon: "", created_at: "" },
+      { category_id_PK: 2, category_name: "video", category_icon: "", created_at: "" },
+      { category_id_PK: 3, category_name: "Notes", category_icon: "", created_at: "" },
+      { category_id_PK: 4, category_name: "Test Paper", category_icon: "", created_at: "" },
+      { category_id_PK: 5, category_name: "Quiz", category_icon: "", created_at: "" },
+      { category_id_PK: 6, category_name: "Favourite Videos", category_icon: "", created_at: "" },
+    ];
+
     return res.json({
       status: true,
       message: "Success",
-      Categories: [
-        { category_id_PK: 1, category_name: "CBSE", category_icon: "", created_at: "2024-01-01T00:00:00.000Z", updated_at: null },
-      ],
+      Categories: categories,
       BannerImages: [],
     });
   } catch (e) {
