@@ -20,6 +20,7 @@ async function formatUserForMobile(user: any, token: string) {
     is_subscribe: sub ? 1 : 0,
     expiry_date: sub ? sub.expiryDate.toISOString() : null,
     token,
+    role: user.role,
   };
 }
 
