@@ -2,13 +2,18 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { mobileSuccess, mobileError } from "../utils/response";
 
-// GET /api/category — return static category list
+// GET /api/category — return category list with banner images
 export async function getCategory(_req: Request, res: Response) {
   try {
-    const data = [
-      { category_id_PK: "cbse", category_name: "CBSE", created_at: "2024-01-01T00:00:00.000Z" },
-    ];
-    return mobileSuccess(res, data);
+    // Flutter model expects { status, message, Categories: [...], BannerImages: [...] }
+    return res.json({
+      status: true,
+      message: "Success",
+      Categories: [
+        { category_id_PK: 1, category_name: "CBSE", category_icon: "", created_at: "2024-01-01T00:00:00.000Z", updated_at: null },
+      ],
+      BannerImages: [],
+    });
   } catch (e) {
     console.error("Mobile getCategory error:", e);
     return mobileError(res, "Failed to fetch categories");
