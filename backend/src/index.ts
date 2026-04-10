@@ -14,6 +14,7 @@ import adminRoutes from "./routes/admin.routes";
 import feedbackRoutes from "./routes/feedback.routes";
 import liveclassRoutes from "./routes/liveclass.routes";
 import studentGroupRoutes from "./routes/studentgroup.routes";
+import mobileRoutes from "./mobile/routes";
 
 const app = express();
 
@@ -45,6 +46,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/live-classes", liveclassRoutes);
 app.use("/api/student-groups", studentGroupRoutes);
+
+// Mobile app compatibility routes (separate from web API)
+app.use("/api", mobileRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

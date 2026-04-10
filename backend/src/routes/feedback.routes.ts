@@ -16,10 +16,10 @@ router.post("/", validate(feedbackSchema), async (req: Request, res: Response) =
   try {
     const { name, email, subject, message } = req.body;
     await sendFeedbackEmail(name, email, subject, message);
-    res.json({ success: true, message: "Feedback submitted successfully! We'll get back to you soon." });
+    res.json({ success: true, status: true, message: "Feedback submitted successfully! We'll get back to you soon." });
   } catch (error) {
     console.error("Feedback email error:", error);
-    res.status(500).json({ success: false, message: "Failed to submit feedback. Please try again later." });
+    res.status(500).json({ success: false, status: false, message: "Failed to submit feedback. Please try again later." });
   }
 });
 
