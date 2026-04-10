@@ -123,7 +123,8 @@ export async function getVideoList(req: Request, res: Response) {
           video_title: v.title,
           video_url_hindi: "",
           video_url_english: "",
-          video_type: v.type === "LECTURE_VIDEO" ? 2 : 1,
+          video_type: 2, // All videos are YouTube
+          content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
           is_paid: v.isFree ? 0 : 1,
           is_purchase: (v.isFree || hasAccess) ? 1 : 0,
@@ -142,6 +143,7 @@ export async function getVideoList(req: Request, res: Response) {
         // Use English video's data as primary
         entry.video_id_PK = v.id;
         entry.video_title = v.title;
+        entry.content_type = v.type === "LECTURE_VIDEO" ? "lecture" : "animation";
         entry.thumbnail_url = v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : entry.thumbnail_url;
         entry.duration = v.duration || entry.duration;
       }
@@ -156,7 +158,8 @@ export async function getVideoList(req: Request, res: Response) {
           video_title: v.title,
           video_url_hindi: v.language === "HINDI" && (v.isFree || hasAccess) ? v.youtubeVideoId : "",
           video_url_english: v.language === "ENGLISH" && (v.isFree || hasAccess) ? v.youtubeVideoId : "",
-          video_type: v.type === "LECTURE_VIDEO" ? 2 : 1,
+          video_type: 2, // All videos are YouTube
+          content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
           is_paid: v.isFree ? 0 : 1,
           is_purchase: (v.isFree || hasAccess) ? 1 : 0,
@@ -321,7 +324,8 @@ export async function searchVideos(req: Request, res: Response) {
       video_title: v.title,
       video_url_hindi: "",
       video_url_english: v.youtubeVideoId,
-      video_type: v.type === "LECTURE_VIDEO" ? 2 : 1,
+      video_type: 2, // All videos are YouTube
+      content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
       description: "",
       is_paid: v.isFree ? 0 : 1,
       is_purchase: 0,
