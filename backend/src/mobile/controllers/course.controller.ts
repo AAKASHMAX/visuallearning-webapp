@@ -2,6 +2,25 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { mobileSuccess, mobileError } from "../utils/response";
 
+// In-memory cache for Vimeo thumbnails
+const vimeoThumbCache = new Map<string, string>();
+
+async function getVimeoThumbnail(vimeoId: string): Promise<string> {
+  if (vimeoThumbCache.has(vimeoId)) return vimeoThumbCache.get(vimeoId)!;
+  try {
+    const resp = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`);
+    if (resp.ok) {
+      const data: any = await resp.json();
+      const thumb = (data.thumbnail_url || "").replace(/_\d+x\d+/, "_640x360");
+      if (thumb) {
+        vimeoThumbCache.set(vimeoId, thumb);
+        return thumb;
+      }
+    }
+  } catch { /* fallback below */ }
+  return `https://vumbnail.com/${vimeoId}.jpg`;
+}
+
 // GET /api/category — return feature categories for home screen grid
 export async function getCategory(_req: Request, res: Response) {
   try {
@@ -115,11 +134,19 @@ export async function getVideoList(req: Request, res: Response) {
 
     // Group videos by language to create hindi/english pairs
     const videoMap = new Map<number, any>();
+    // Collect Vimeo IDs to fetch thumbnails in parallel
+    const vimeoIds = new Set<string>();
+    for (const v of videos) {
+      if (v.vimeoVideoId) vimeoIds.add(v.vimeoVideoId);
+    }
+    // Pre-fetch all Vimeo thumbnails in parallel
+    await Promise.all(Array.from(vimeoIds).map(id => getVimeoThumbnail(id)));
+
     for (const v of videos) {
       if (!videoMap.has(v.order)) {
         const isVimeo = !!v.vimeoVideoId;
         const thumbUrl = isVimeo
-          ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+          ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
           : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
         const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
 
@@ -156,7 +183,7 @@ export async function getVideoList(req: Request, res: Response) {
         entry.vimeo_video_id = v.vimeoVideoId || null;
         entry.content_type = v.type === "LECTURE_VIDEO" ? "lecture" : "animation";
         const thumbUrl = isVimeo
-          ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+          ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
           : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : entry.thumbnail_url;
         entry.thumbnail_url = thumbUrl;
         entry.duration = v.duration || entry.duration;
@@ -170,7 +197,7 @@ export async function getVideoList(req: Request, res: Response) {
           const isVimeo = !!v.vimeoVideoId;
           const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
           const thumbUrl = isVimeo
-            ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+            ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
             : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
           return {
             video_id_PK: v.id,
@@ -340,11 +367,15 @@ export async function searchVideos(req: Request, res: Response) {
       orderBy: { createdAt: "desc" },
     });
 
+    // Pre-fetch Vimeo thumbnails
+    const searchVimeoIds = videos.filter(v => v.vimeoVideoId).map(v => v.vimeoVideoId!);
+    await Promise.all(searchVimeoIds.map(id => getVimeoThumbnail(id)));
+
     const data = videos.map((v) => {
       const isVimeo = !!v.vimeoVideoId;
       const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
       const thumbUrl = isVimeo
-        ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+        ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
         : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
       return {
         video_id_PK: v.id,
