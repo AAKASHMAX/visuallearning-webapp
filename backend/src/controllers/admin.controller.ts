@@ -9,7 +9,9 @@ export const classSchema = z.object({ name: z.string().min(1), order: z.number()
 export const subjectSchema = z.object({ classId: z.string(), name: z.string().min(1), icon: z.string().optional() });
 export const chapterSchema = z.object({ subjectId: z.string(), name: z.string().min(1), order: z.number().int().optional() });
 export const videoSchema = z.object({
-  chapterId: z.string(), title: z.string().min(1), youtubeVideoId: z.string().min(1),
+  chapterId: z.string(), title: z.string().min(1),
+  youtubeVideoId: z.string().optional().default(""),
+  vimeoVideoId: z.string().optional().nullable(),
   language: z.string().optional(),
   duration: z.string().optional(), order: z.number().int().optional(), isFree: z.boolean().optional(),
   type: z.string().optional(),

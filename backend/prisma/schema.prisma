@@ -139,7 +139,8 @@ model Video {
   id             String          @id @default(cuid())
   chapterId      String
   title          String
-  youtubeVideoId String
+  youtubeVideoId String          @default("")
+  vimeoVideoId   String?
   language       String          @default("ENGLISH")
   duration       String?
   order          Int             @default(0)

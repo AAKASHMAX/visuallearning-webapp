@@ -170,7 +170,7 @@ export async function getVideos(req: Request, res: Response) {
     if (language !== "ENGLISH" && !usingFallback) {
       const existingOrders = new Set(videos.map((v) => v.order));
       const comingSoon = allChapterVideos.filter(
-        (v) => v.language === "ENGLISH" && v.youtubeVideoId === "" && !existingOrders.has(v.order)
+        (v) => v.language === "ENGLISH" && !v.youtubeVideoId && !v.vimeoVideoId && !existingOrders.has(v.order)
       );
       if (comingSoon.length > 0) {
         videos = [...videos, ...comingSoon].sort((a, b) => a.order - b.order);
@@ -188,11 +188,12 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Hide youtubeVideoId for non-free videos if no access
+    // Hide video IDs for non-free videos if no access
     const videosWithAccess = videos.map((v) => ({
       ...v,
       youtubeVideoId: v.isFree || hasAccess ? v.youtubeVideoId : null,
-      hasVideo: !!v.youtubeVideoId,
+      vimeoVideoId: v.isFree || hasAccess ? v.vimeoVideoId : null,
+      hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
       locked: !v.isFree && !hasAccess,
     }));
 

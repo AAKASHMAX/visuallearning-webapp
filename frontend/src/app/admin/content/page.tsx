@@ -95,7 +95,9 @@ export default function AdminContentPage() {
     if (tab === "subjects") return { name: formData.name, icon: formData.icon, classId: formData.classId || selectedClass };
     if (tab === "chapters") return { name: formData.name, order: formData.order, subjectId: formData.subjectId || selectedSubject };
     if (tab === "videos") return {
-      title: formData.title, youtubeVideoId: formData.youtubeVideoId,
+      title: formData.title,
+      youtubeVideoId: formData.youtubeVideoId || "",
+      vimeoVideoId: formData.vimeoVideoId || null,
       language: formData.language || "ENGLISH", duration: formData.duration,
       order: formData.order, isFree: formData.isFree,
       type: formData.type || "ANIMATED_VIDEO",
@@ -264,7 +266,17 @@ export default function AdminContentPage() {
                     ))}
                   </select>
                 </div>
-                <Input label="YouTube Link or Video ID" value={formData.youtubeVideoId || ""} onChange={(e) => {
+                <Input label="Vimeo Video ID (recommended - private)" value={formData.vimeoVideoId || ""} onChange={(e) => {
+                  let value = e.target.value.trim();
+                  try {
+                    if (value.includes("vimeo.com")) {
+                      const match = value.match(/vimeo\.com\/(\d+)/);
+                      if (match) value = match[1];
+                    }
+                  } catch {}
+                  setFormData({ ...formData, vimeoVideoId: value });
+                }} placeholder="Paste Vimeo link or Video ID (e.g. 123456789)" />
+                <Input label="YouTube Link or Video ID (legacy)" value={formData.youtubeVideoId || ""} onChange={(e) => {
                   let value = e.target.value.trim();
                   try {
                     if (value.includes("youtube.com") || value.includes("youtu.be")) {
@@ -377,7 +389,7 @@ export default function AdminContentPage() {
                     <td className="p-4 font-medium max-w-[300px] truncate">{tab === "questions" ? item.questionText : (item.name || item.title)}</td>
                     {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.type === "LECTURE_VIDEO" ? "Lecture" : "Animated"}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.language || "ENGLISH"}</td>}
-                    {tab === "videos" && <td className="p-4 text-gray-500 font-mono text-xs">{item.youtubeVideoId}</td>}
+                    {tab === "videos" && <td className="p-4 text-gray-500 font-mono text-xs">{item.vimeoVideoId ? `vimeo:${item.vimeoVideoId}` : item.youtubeVideoId}</td>}
                     {tab === "videos" && <td className="p-4 text-gray-500">{item.duration}</td>}
                     {tab === "notes" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
                     {tab === "questions" && <td className="p-4 text-gray-500 font-medium">{item.correctOption}</td>}

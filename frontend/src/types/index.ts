@@ -50,6 +50,7 @@ export interface Video {
   chapterId: string;
   title: string;
   youtubeVideoId: string | null;
+  vimeoVideoId?: string | null;
   language: Language;
   duration?: string;
   order: number;

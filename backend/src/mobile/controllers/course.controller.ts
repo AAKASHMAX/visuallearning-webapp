@@ -117,18 +117,25 @@ export async function getVideoList(req: Request, res: Response) {
     const videoMap = new Map<number, any>();
     for (const v of videos) {
       if (!videoMap.has(v.order)) {
+        const isVimeo = !!v.vimeoVideoId;
+        const thumbUrl = isVimeo
+          ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+          : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
+        const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
+
         videoMap.set(v.order, {
           video_id_PK: v.id,
           chapter_id_FK: v.chapterId,
           video_title: v.title,
           video_url_hindi: "",
           video_url_english: "",
-          video_type: 2, // All videos are YouTube
+          video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
+          vimeo_video_id: v.vimeoVideoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
           is_paid: v.isFree ? 2 : 1,
           is_purchase: (v.isFree || hasAccess) ? 2 : 1,
-          thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
+          thumbnail_url: thumbUrl,
           duration: v.duration || "",
           created_at: v.createdAt.toISOString(),
           updated_at: null,
@@ -136,15 +143,22 @@ export async function getVideoList(req: Request, res: Response) {
         });
       }
       const entry = videoMap.get(v.order)!;
+      const isVimeo = !!v.vimeoVideoId;
+      const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
       if (v.language === "HINDI") {
-        entry.video_url_hindi = (v.isFree || hasAccess) ? v.youtubeVideoId : "";
+        entry.video_url_hindi = (v.isFree || hasAccess) ? videoUrl : "";
       } else {
-        entry.video_url_english = (v.isFree || hasAccess) ? v.youtubeVideoId : "";
+        entry.video_url_english = (v.isFree || hasAccess) ? videoUrl : "";
         // Use English video's data as primary
         entry.video_id_PK = v.id;
         entry.video_title = v.title;
+        entry.video_type = isVimeo ? 3 : 2;
+        entry.vimeo_video_id = v.vimeoVideoId || null;
         entry.content_type = v.type === "LECTURE_VIDEO" ? "lecture" : "animation";
-        entry.thumbnail_url = v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : entry.thumbnail_url;
+        const thumbUrl = isVimeo
+          ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+          : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : entry.thumbnail_url;
+        entry.thumbnail_url = thumbUrl;
         entry.duration = v.duration || entry.duration;
       }
     }
@@ -152,23 +166,31 @@ export async function getVideoList(req: Request, res: Response) {
     // If videos aren't paired by order, fallback: each video as its own entry
     const data = videoMap.size > 0
       ? Array.from(videoMap.values())
-      : videos.map((v) => ({
-          video_id_PK: v.id,
-          chapter_id_FK: v.chapterId,
-          video_title: v.title,
-          video_url_hindi: v.language === "HINDI" && (v.isFree || hasAccess) ? v.youtubeVideoId : "",
-          video_url_english: v.language === "ENGLISH" && (v.isFree || hasAccess) ? v.youtubeVideoId : "",
-          video_type: 2, // All videos are YouTube
-          content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
-          description: "",
-          is_paid: v.isFree ? 2 : 1,
-          is_purchase: (v.isFree || hasAccess) ? 2 : 1,
-          thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
-          duration: v.duration || "",
-          created_at: v.createdAt.toISOString(),
-          updated_at: null,
-          is_favourite: 0,
-        }));
+      : videos.map((v) => {
+          const isVimeo = !!v.vimeoVideoId;
+          const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
+          const thumbUrl = isVimeo
+            ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+            : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
+          return {
+            video_id_PK: v.id,
+            chapter_id_FK: v.chapterId,
+            video_title: v.title,
+            video_url_hindi: v.language === "HINDI" && (v.isFree || hasAccess) ? videoUrl : "",
+            video_url_english: v.language === "ENGLISH" && (v.isFree || hasAccess) ? videoUrl : "",
+            video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
+            vimeo_video_id: v.vimeoVideoId || null,
+            content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
+            description: "",
+            is_paid: v.isFree ? 2 : 1,
+            is_purchase: (v.isFree || hasAccess) ? 2 : 1,
+            thumbnail_url: thumbUrl,
+            duration: v.duration || "",
+            created_at: v.createdAt.toISOString(),
+            updated_at: null,
+            is_favourite: 0,
+          };
+        });
 
     return mobileSuccess(res, data);
   } catch (e) {
@@ -318,23 +340,31 @@ export async function searchVideos(req: Request, res: Response) {
       orderBy: { createdAt: "desc" },
     });
 
-    const data = videos.map((v) => ({
-      video_id_PK: v.id,
-      chapter_id_FK: v.chapterId,
-      video_title: v.title,
-      video_url_hindi: "",
-      video_url_english: v.youtubeVideoId,
-      video_type: 2, // All videos are YouTube
-      content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
-      description: "",
-      is_paid: v.isFree ? 2 : 1,
-      is_purchase: 1,
-      thumbnail_url: v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "",
-      duration: v.duration || "",
-      created_at: v.createdAt.toISOString(),
-      updated_at: null,
-      is_favourite: 0,
-    }));
+    const data = videos.map((v) => {
+      const isVimeo = !!v.vimeoVideoId;
+      const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
+      const thumbUrl = isVimeo
+        ? `https://vumbnail.com/${v.vimeoVideoId}.jpg`
+        : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
+      return {
+        video_id_PK: v.id,
+        chapter_id_FK: v.chapterId,
+        video_title: v.title,
+        video_url_hindi: "",
+        video_url_english: videoUrl,
+        video_type: isVimeo ? 3 : 2,
+        vimeo_video_id: v.vimeoVideoId || null,
+        content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
+        description: "",
+        is_paid: v.isFree ? 2 : 1,
+        is_purchase: 1,
+        thumbnail_url: thumbUrl,
+        duration: v.duration || "",
+        created_at: v.createdAt.toISOString(),
+        updated_at: null,
+        is_favourite: 0,
+      };
+    });
 
     return mobileSuccess(res, data);
   } catch (e) {

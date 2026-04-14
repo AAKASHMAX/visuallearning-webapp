@@ -132,7 +132,7 @@ function VideoViewer() {
         </div>
       )}
 
-      {selectedVideo && selectedVideo.youtubeVideoId && (
+      {selectedVideo && (selectedVideo.vimeoVideoId || selectedVideo.youtubeVideoId) && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Globe className="w-4 h-4 text-primary" />
@@ -140,7 +140,7 @@ function VideoViewer() {
               {enabledLanguages.find((l) => l.value === selectedVideo.language)?.label || selectedVideo.language}
             </span>
           </div>
-          <VideoPlayer youtubeVideoId={selectedVideo.youtubeVideoId} videoId={selectedVideo.id} title={selectedVideo.title} />
+          <VideoPlayer vimeoVideoId={selectedVideo.vimeoVideoId} youtubeVideoId={selectedVideo.youtubeVideoId} videoId={selectedVideo.id} title={selectedVideo.title} />
           <h2 className="text-lg font-semibold mt-3">{selectedVideo.title}</h2>
         </div>
       )}
