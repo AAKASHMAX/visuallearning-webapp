@@ -27,9 +27,39 @@ export function Navbar() {
     return () => document.removeEventListener("click", handler);
   }, [langOpen]);
 
+  const [confirmLang, setConfirmLang] = useState<string | null>(null);
   const currentLang = enabledLanguages.find((l) => l.value === language);
 
+  const handleLanguageSwitch = (langValue: string) => {
+    if (langValue === language) return;
+    if (language === "HINDI" && langValue !== "HINDI") {
+      setConfirmLang(langValue);
+    } else {
+      setLanguage(langValue);
+    }
+    setLangOpen(false);
+  };
+
   return (
+    <>
+    {/* Language switch warning dialog */}
+    {confirmLang && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" onClick={() => setConfirmLang(null)}>
+        <div className="bg-white rounded-xl p-6 mx-4 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Switch Language?</h3>
+          </div>
+          <p className="text-gray-600 text-sm mb-5">All videos might not be available in other language than Hindi. Do you want to switch language?</p>
+          <div className="flex gap-3">
+            <button onClick={() => setConfirmLang(null)} className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
+            <button onClick={() => { setLanguage(confirmLang); setConfirmLang(null); }} className="flex-1 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors">Switch</button>
+          </div>
+        </div>
+      </div>
+    )}
     <nav className="bg-primary text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -63,8 +93,7 @@ export function Navbar() {
                         key={lang.value}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLanguage(lang.value);
-                          setLangOpen(false);
+                          handleLanguageSwitch(lang.value);
                         }}
                         className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                           language === lang.value
@@ -124,7 +153,7 @@ export function Navbar() {
                   {enabledLanguages.map((lang) => (
                     <button
                       key={lang.value}
-                      onClick={() => { setLanguage(lang.value); }}
+                      onClick={() => { handleLanguageSwitch(lang.value); }}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         language === lang.value
                           ? "bg-accent text-primary-dark"
@@ -153,5 +182,6 @@ export function Navbar() {
         )}
       </div>
     </nav>
+    </>
   );
 }

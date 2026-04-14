@@ -29,7 +29,7 @@ const DEFAULT_LANGUAGES: LangOption[] = [
 export const LANGUAGES = DEFAULT_LANGUAGES;
 
 export const useLanguage = create<LanguageState>((set, get) => ({
-  language: "ENGLISH",
+  language: "HINDI",
   enabledLanguages: DEFAULT_LANGUAGES,
   loaded: false,
 
@@ -42,6 +42,10 @@ export const useLanguage = create<LanguageState>((set, get) => ({
     const stored = localStorage.getItem("vl_language");
     if (stored) {
       set({ language: stored });
+    } else {
+      // First visit: set Hindi as default
+      localStorage.setItem("vl_language", "HINDI");
+      set({ language: "HINDI" });
     }
     if (!get().loaded) {
       // Try localStorage cache first (avoids API call on every page)
@@ -74,11 +78,11 @@ export const useLanguage = create<LanguageState>((set, get) => ({
       // Cache in localStorage to avoid API call on next page load
       localStorage.setItem("vl_enabled_languages", JSON.stringify({ langs: finalLangs, ts: Date.now() }));
 
-      // If current language is no longer enabled, reset to ENGLISH
+      // If current language is no longer enabled, reset to HINDI
       const current = get().language;
       if (!langs.some((l) => l.value === current)) {
-        localStorage.setItem("vl_language", "ENGLISH");
-        set({ language: "ENGLISH" });
+        localStorage.setItem("vl_language", "HINDI");
+        set({ language: "HINDI" });
       }
     } catch {
       set({ loaded: true });
