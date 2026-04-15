@@ -563,6 +563,7 @@ export const couponSchema = z.object({
   discountPercent: z.number().int().min(1).max(100),
   maxUses: z.number().int().min(0).optional(),
   validUntil: z.string(),
+  applicablePlans: z.array(z.string()).optional(),
 });
 
 export async function getAllCoupons(req: Request, res: Response) {
@@ -588,13 +589,14 @@ export async function getAllCoupons(req: Request, res: Response) {
 
 export async function createCoupon(req: Request, res: Response) {
   try {
-    const { code, discountPercent, maxUses, validUntil } = req.body;
+    const { code, discountPercent, maxUses, validUntil, applicablePlans } = req.body;
     const coupon = await prisma.coupon.create({
       data: {
         code: code.toUpperCase().replace(/[^A-Z0-9]/g, ""),
         discountPercent,
         maxUses: maxUses || 0,
         validUntil: new Date(validUntil),
+        applicablePlans: applicablePlans || [],
       },
     });
     return success(res, coupon, "Coupon created successfully", 201);

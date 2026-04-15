@@ -14,16 +14,21 @@ const featureMap: Record<string, string[]> = {
   LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
 };
 
-// Helper: validate coupon code (same logic as webapp)
-async function validateCoupon(code: string): Promise<{ valid: boolean; discountPercent: number; message: string }> {
+// Helper: validate coupon code, optionally checking if it applies to a specific plan
+async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
-  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code" };
-  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active" };
+  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code", applicablePlans: [] };
+  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active", applicablePlans: [] };
   const now = new Date();
-  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid" };
-  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired" };
-  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit" };
-  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied" };
+  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid", applicablePlans: [] };
+  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired", applicablePlans: [] };
+  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit", applicablePlans: [] };
+  // Check if coupon is restricted to specific plans
+  const plans = (coupon.applicablePlans as string[]) || [];
+  if (planKey && plans.length > 0 && !plans.includes(planKey)) {
+    return { valid: false, discountPercent: 0, message: "This coupon is not valid for the selected plan", applicablePlans: plans };
+  }
+  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied", applicablePlans: plans };
 }
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
@@ -77,12 +82,13 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
   }
 }
 
-// GET /api/subscription-plan/validate-coupon?code=XXX — validate coupon
+// GET /api/subscription-plan/validate-coupon?code=XXX&plan=PLAN_KEY — validate coupon
 export async function validateCouponCode(req: Request, res: Response) {
   try {
-    const { code } = req.query;
+    const { code, plan } = req.query;
     if (!code || typeof code !== "string") return mobileError(res, "Coupon code is required", 400);
-    const result = await validateCoupon(code);
+    const planKey = typeof plan === "string" ? plan : undefined;
+    const result = await validateCoupon(code, planKey);
     return mobileSuccess(res, result);
   } catch (e) {
     console.error("Mobile validateCoupon error:", e);
@@ -154,7 +160,7 @@ export async function generateOrderId(req: Request, res: Response) {
 
     // Apply coupon if provided
     if (couponCode) {
-      const couponResult = await validateCoupon(couponCode);
+      const couponResult = await validateCoupon(couponCode, planKey);
       if (!couponResult.valid) return mobileError(res, couponResult.message, 400);
       couponDiscount = Math.round(amount * couponResult.discountPercent / 100);
       amount -= couponDiscount;
@@ -204,7 +210,7 @@ export async function purchasePlan(req: Request, res: Response) {
 
     // Apply coupon discount
     if (couponCode) {
-      const couponResult = await validateCoupon(couponCode);
+      const couponResult = await validateCoupon(couponCode, planKey);
       if (couponResult.valid) {
         const couponDisc = Math.round(amount * couponResult.discountPercent / 100);
         discountAmount += couponDisc;

@@ -45,16 +45,20 @@ async function getUpgradeDiscount(): Promise<number> {
   return 0;
 }
 
-// Helper: validate and get coupon
-async function validateCoupon(code: string): Promise<{ valid: boolean; discountPercent: number; message: string }> {
+// Helper: validate and get coupon, optionally checking plan restriction
+async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
-  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code" };
-  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active" };
+  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code", applicablePlans: [] };
+  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active", applicablePlans: [] };
   const now = new Date();
-  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid" };
-  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired" };
-  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit" };
-  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied" };
+  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid", applicablePlans: [] };
+  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired", applicablePlans: [] };
+  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit", applicablePlans: [] };
+  const plans = (coupon.applicablePlans as string[]) || [];
+  if (planKey && plans.length > 0 && !plans.includes(planKey)) {
+    return { valid: false, discountPercent: 0, message: "This coupon is not valid for the selected plan", applicablePlans: plans };
+  }
+  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied", applicablePlans: plans };
 }
 
 export async function getPlans(req: Request, res: Response) {
@@ -113,9 +117,10 @@ export async function getPlans(req: Request, res: Response) {
 // Validate coupon endpoint
 export async function validateCouponCode(req: Request, res: Response) {
   try {
-    const { code } = req.query;
+    const { code, plan } = req.query;
     if (!code || typeof code !== "string") return error(res, "Coupon code is required", 400);
-    const result = await validateCoupon(code);
+    const planKey = typeof plan === "string" ? plan : undefined;
+    const result = await validateCoupon(code, planKey);
     return success(res, result);
   } catch (e) {
     console.error("Validate coupon error:", e);
@@ -155,7 +160,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
     // Apply coupon if provided
     if (couponCode) {
-      const couponResult = await validateCoupon(couponCode);
+      const couponResult = await validateCoupon(couponCode, plan);
       if (!couponResult.valid) return error(res, couponResult.message, 400);
       couponDiscount = Math.round(amount * couponResult.discountPercent / 100);
       amount -= couponDiscount;
@@ -214,7 +219,7 @@ export async function verifyPayment(req: Request, res: Response) {
     }
 
     if (couponCode) {
-      const couponResult = await validateCoupon(couponCode);
+      const couponResult = await validateCoupon(couponCode, plan);
       if (couponResult.valid) {
         const couponDisc = Math.round(amount * couponResult.discountPercent / 100);
         discountAmount += couponDisc;

@@ -9,6 +9,15 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { Ticket, Plus, Trash2, X, Copy } from "lucide-react";
 
+const ALL_PLANS = [
+  { key: "SINGLE_CLASS", label: "Single Class Plan" },
+  { key: "MULTI_CLASS", label: "Multi Class Pack" },
+  { key: "FULL_ACCESS", label: "Full Access Plan" },
+  { key: "MONTHLY", label: "Monthly Plan" },
+  { key: "YEARLY", label: "Yearly Plan" },
+  { key: "LIVE_CLASS", label: "Live Classes" },
+];
+
 interface Coupon {
   id: string;
   code: string;
@@ -18,6 +27,7 @@ interface Coupon {
   validFrom: string;
   validUntil: string;
   active: boolean;
+  applicablePlans: string[];
   createdAt: string;
 }
 
@@ -32,6 +42,7 @@ export default function CouponSettingsPage() {
   const [newDiscount, setNewDiscount] = useState(10);
   const [newMaxUses, setNewMaxUses] = useState(0);
   const [newValidUntil, setNewValidUntil] = useState("");
+  const [newApplicablePlans, setNewApplicablePlans] = useState<string[]>([]);
 
   const loadCoupons = () => {
     api.get("/admin/coupons").then(({ data }) => {
@@ -40,6 +51,12 @@ export default function CouponSettingsPage() {
   };
 
   useEffect(loadCoupons, []);
+
+  const togglePlanSelection = (planKey: string) => {
+    setNewApplicablePlans((prev) =>
+      prev.includes(planKey) ? prev.filter((p) => p !== planKey) : [...prev, planKey]
+    );
+  };
 
   const createCoupon = async () => {
     if (!newCode.trim()) { toast.error("Coupon code is required"); return; }
@@ -51,12 +68,14 @@ export default function CouponSettingsPage() {
         discountPercent: newDiscount,
         maxUses: newMaxUses,
         validUntil: newValidUntil,
+        applicablePlans: newApplicablePlans,
       });
       toast.success("Coupon created");
       setNewCode("");
       setNewDiscount(10);
       setNewMaxUses(0);
       setNewValidUntil("");
+      setNewApplicablePlans([]);
       setShowAdd(false);
       loadCoupons();
     } catch (err: any) {
@@ -154,6 +173,28 @@ export default function CouponSettingsPage() {
                   />
                 </div>
               </div>
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-500 mb-2">Applicable Plans (leave empty for all plans)</label>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_PLANS.map((plan) => (
+                    <button
+                      key={plan.key}
+                      type="button"
+                      onClick={() => togglePlanSelection(plan.key)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        newApplicablePlans.includes(plan.key)
+                          ? "bg-blue-100 border-blue-400 text-blue-700"
+                          : "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
+                      }`}
+                    >
+                      {newApplicablePlans.includes(plan.key) && "✓ "}{plan.label}
+                    </button>
+                  ))}
+                </div>
+                {newApplicablePlans.length === 0 && (
+                  <p className="text-xs text-gray-400 mt-1">No plans selected — coupon will apply to all plans</p>
+                )}
+              </div>
               <Button size="sm" onClick={createCoupon} disabled={saving}>
                 {saving ? "Creating..." : "Create Coupon"}
               </Button>
@@ -165,6 +206,9 @@ export default function CouponSettingsPage() {
             {coupons.map((coupon) => {
               const isExpired = new Date(coupon.validUntil) < new Date();
               const isLimitReached = coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses;
+              const planLabels = (coupon.applicablePlans || []).map(
+                (k) => ALL_PLANS.find((p) => p.key === k)?.label || k
+              );
               return (
                 <div
                   key={coupon.id}
@@ -219,6 +263,20 @@ export default function CouponSettingsPage() {
                       <p className="font-medium">{new Date(coupon.createdAt).toLocaleDateString("en-IN")}</p>
                     </div>
                   </div>
+                  {planLabels.length > 0 && (
+                    <div className="mt-2">
+                      <span className="text-xs text-gray-400">Applies to: </span>
+                      {planLabels.map((label, i) => (
+                        <Badge key={i} variant="default" className="mr-1 text-xs">{label}</Badge>
+                      ))}
+                    </div>
+                  )}
+                  {planLabels.length === 0 && (
+                    <div className="mt-2">
+                      <span className="text-xs text-gray-400">Applies to: </span>
+                      <span className="text-xs text-gray-500">All plans</span>
+                    </div>
+                  )}
                 </div>
               );
             })}

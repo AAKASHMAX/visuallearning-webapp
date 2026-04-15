@@ -89,6 +89,7 @@ model Coupon {
   validFrom       DateTime @default(now())
   validUntil      DateTime
   active          Boolean  @default(true)
+  applicablePlans String[] @default([])
   createdAt       DateTime @default(now())
 
   @@index([code])
