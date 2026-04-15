@@ -4,9 +4,32 @@ import { config } from "../../config";
 import { createOrder, verifySignature } from "../../services/razorpay";
 import { mobileSuccess, mobileError } from "../utils/response";
 
-// GET /api/subscription-plan — list plans in mobile format
+// Feature list per plan type (same as webapp)
+const featureMap: Record<string, string[]> = {
+  SINGLE_CLASS: ["3D Animated Videos", "Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+  MULTI_CLASS: ["3D Animated Videos", "Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+  FULL_ACCESS: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Best value", "Quiz", "Solved Board Question Papers"],
+  MONTHLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
+  YEARLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Save 33%", "Quiz", "Solved Board Question Papers"],
+  LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
+};
+
+// Helper: get plan config from settings DB, fallback to hardcoded config
+async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+  const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  if (setting) {
+    const plans = JSON.parse(setting.value);
+    if (plans[planKey]) return plans[planKey];
+  }
+  const fallback = config.plans[planKey as keyof typeof config.plans];
+  return { amount: fallback.amount, duration: fallback.duration, label: fallback.label, classSelection: 0 };
+}
+
+// GET /api/subscription-plan — list plans with features, classSelection, classes (matches webapp)
 export async function getSubscriptionPlans(_req: Request, res: Response) {
   try {
+    const classes = await prisma.class.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } });
+
     const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
     let plansConfig: Record<string, any> = {};
 
@@ -14,30 +37,28 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
       plansConfig = JSON.parse(setting.value);
     } else {
       plansConfig = {
-        SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true },
-        MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true },
-        FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true },
-        MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true },
-        YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true },
+        SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1, billingCycle: "yearly" },
+        MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2, billingCycle: "yearly" },
+        FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0, billingCycle: "monthly" },
+        YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
       };
     }
 
-    let counter = 1;
-    const data = Object.entries(plansConfig)
+    const plans = Object.entries(plansConfig)
       .filter(([_, v]: [string, any]) => v.enabled)
       .map(([key, v]: [string, any]) => ({
-        plan_id_PK: key,
-        plan_name: v.label,
-        price: String(v.amount / 100),
-        offer_price: null,
-        validity_unit: v.duration <= 30 ? 1 : 2, // 1=months, 2=years
-        validity_count: v.duration <= 30 ? 1 : Math.round(v.duration / 365),
-        is_active: 1,
-        created_at: "",
-        plan_key: key, // extra field for order creation
+        id: key,
+        name: v.label,
+        price: v.amount / 100,
+        duration: v.duration,
+        billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
+        features: featureMap[key] || [],
+        classSelection: v.classSelection || 0,
+        popular: key === "MULTI_CLASS",
       }));
 
-    return mobileSuccess(res, data);
+    return mobileSuccess(res, { plans, classes });
   } catch (e) {
     console.error("Mobile getSubscriptionPlans error:", e);
     return mobileError(res, "Failed to fetch plans");
@@ -74,6 +95,7 @@ export async function getUserSubscription(req: Request, res: Response) {
       expiry_date: sub.expiryDate.toISOString(),
       payment_id: sub.paymentId,
       created_at: sub.createdAt.toISOString(),
+      classesAccess: sub.classesAccess || [],
     };
 
     return mobileSuccess(res, data);
@@ -88,23 +110,21 @@ export async function generateOrderId(req: Request, res: Response) {
   try {
     if (!req.user) return mobileError(res, "Authentication required", 401);
 
-    const { plan_id, plan_key, plan } = req.body;
+    const { plan_id, plan_key, plan, classesAccess } = req.body;
     const planKey = plan_key || plan_id || plan;
     if (!planKey) return mobileError(res, "Plan is required", 400);
 
-    // Get plan config
-    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    let amount: number;
-    if (setting) {
-      const plans = JSON.parse(setting.value);
-      if (!plans[planKey]) return mobileError(res, "Invalid plan", 400);
-      amount = plans[planKey].amount;
-    } else {
-      const fallback = config.plans[planKey as keyof typeof config.plans];
-      if (!fallback) return mobileError(res, "Invalid plan", 400);
-      amount = fallback.amount;
+    const planConfig = await getPlanConfig(planKey);
+    if (!planConfig) return mobileError(res, "Invalid plan", 400);
+
+    // Validate classesAccess based on plan's classSelection
+    if (planConfig.classSelection > 0) {
+      if (!classesAccess || classesAccess.length !== planConfig.classSelection) {
+        return mobileError(res, `This plan requires exactly ${planConfig.classSelection} class(es)`, 400);
+      }
     }
 
+    const amount = planConfig.amount;
     const receipt = `vl_${req.user.id.slice(-8)}_${Date.now()}`;
     const order = await createOrder(amount, "INR", receipt);
 
@@ -114,6 +134,7 @@ export async function generateOrderId(req: Request, res: Response) {
       amount: order.amount,
       currency: order.currency,
       plan_key: planKey,
+      classesAccess,
     });
   } catch (e: any) {
     console.error("Mobile generateOrderId error:", e);
@@ -126,7 +147,7 @@ export async function purchasePlan(req: Request, res: Response) {
   try {
     if (!req.user) return mobileError(res, "Authentication required", 401);
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_key, plan } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_key, plan, classesAccess: reqClassesAccess } = req.body;
     const planKey = plan_key || plan;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -136,26 +157,19 @@ export async function purchasePlan(req: Request, res: Response) {
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
-    // Get plan config
-    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    let planAmount: number;
-    let planDuration: number;
-    if (setting) {
-      const plans = JSON.parse(setting.value);
-      planAmount = plans[planKey]?.amount || 0;
-      planDuration = plans[planKey]?.duration || 365;
-    } else {
-      const fallback = config.plans[planKey as keyof typeof config.plans];
-      planAmount = fallback?.amount || 0;
-      planDuration = fallback?.duration || 365;
-    }
+    const planConfig = await getPlanConfig(planKey);
 
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + planDuration);
+    expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
 
-    // Grant all classes access
-    const allClasses = await prisma.class.findMany({ select: { id: true } });
-    const classesAccess = allClasses.map((c) => c.id);
+    // Resolve classesAccess: if plan has classSelection > 0, use provided; otherwise grant all
+    let resolvedClassesAccess: string[] = [];
+    if (planConfig.classSelection > 0) {
+      resolvedClassesAccess = reqClassesAccess || [];
+    } else {
+      const allClasses = await prisma.class.findMany({ select: { id: true } });
+      resolvedClassesAccess = allClasses.map((c) => c.id);
+    }
 
     // Expire existing subscriptions
     await prisma.subscription.updateMany({
@@ -167,13 +181,13 @@ export async function purchasePlan(req: Request, res: Response) {
       data: {
         userId: req.user.id,
         plan: planKey,
-        classesAccess,
+        classesAccess: resolvedClassesAccess,
         expiryDate,
         paymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
         razorpaySignature: razorpay_signature,
         status: "ACTIVE",
-        amount: planAmount,
+        amount: planConfig.amount,
       },
     });
 
@@ -181,6 +195,8 @@ export async function purchasePlan(req: Request, res: Response) {
       subscription_id: subscription.id,
       status: 1,
       expiry_date: subscription.expiryDate.toISOString(),
+      plan: planKey,
+      classesAccess: resolvedClassesAccess,
     }, "Payment verified and subscription activated");
   } catch (e) {
     console.error("Mobile purchasePlan error:", e);
