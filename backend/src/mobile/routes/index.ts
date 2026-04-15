@@ -38,6 +38,7 @@ router.get("/organization", courseCtrl.getOrganization);
 
 // ============ SUBSCRIPTIONS ============
 router.get("/subscription-plan", subCtrl.getSubscriptionPlans);
+router.get("/subscription-plan/validate-coupon", subCtrl.validateCouponCode);
 router.get("/subscription-plan/user-subcription/:id", authenticate, subCtrl.getUserSubscription);
 router.post("/subscription-plan/generate-order-id", authenticate, subCtrl.generateOrderId);
 router.post("/subscription-plan/purchase-plan", authenticate, subCtrl.purchasePlan);

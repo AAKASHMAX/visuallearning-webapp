@@ -14,6 +14,18 @@ const featureMap: Record<string, string[]> = {
   LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
 };
 
+// Helper: validate coupon code (same logic as webapp)
+async function validateCoupon(code: string): Promise<{ valid: boolean; discountPercent: number; message: string }> {
+  const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
+  if (!coupon) return { valid: false, discountPercent: 0, message: "Invalid coupon code" };
+  if (!coupon.active) return { valid: false, discountPercent: 0, message: "This coupon is no longer active" };
+  const now = new Date();
+  if (now < coupon.validFrom) return { valid: false, discountPercent: 0, message: "This coupon is not yet valid" };
+  if (now > coupon.validUntil) return { valid: false, discountPercent: 0, message: "This coupon has expired" };
+  if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) return { valid: false, discountPercent: 0, message: "This coupon has reached its usage limit" };
+  return { valid: true, discountPercent: coupon.discountPercent, message: "Coupon applied" };
+}
+
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
@@ -65,6 +77,19 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
   }
 }
 
+// GET /api/subscription-plan/validate-coupon?code=XXX — validate coupon
+export async function validateCouponCode(req: Request, res: Response) {
+  try {
+    const { code } = req.query;
+    if (!code || typeof code !== "string") return mobileError(res, "Coupon code is required", 400);
+    const result = await validateCoupon(code);
+    return mobileSuccess(res, result);
+  } catch (e) {
+    console.error("Mobile validateCoupon error:", e);
+    return mobileError(res, "Failed to validate coupon");
+  }
+}
+
 // GET /api/subscription-plan/user-subcription/:userId — user's subscription
 export async function getUserSubscription(req: Request, res: Response) {
   try {
@@ -110,7 +135,7 @@ export async function generateOrderId(req: Request, res: Response) {
   try {
     if (!req.user) return mobileError(res, "Authentication required", 401);
 
-    const { plan_id, plan_key, plan, classesAccess } = req.body;
+    const { plan_id, plan_key, plan, classesAccess, couponCode } = req.body;
     const planKey = plan_key || plan_id || plan;
     if (!planKey) return mobileError(res, "Plan is required", 400);
 
@@ -124,7 +149,20 @@ export async function generateOrderId(req: Request, res: Response) {
       }
     }
 
-    const amount = planConfig.amount;
+    let amount = planConfig.amount;
+    let couponDiscount = 0;
+
+    // Apply coupon if provided
+    if (couponCode) {
+      const couponResult = await validateCoupon(couponCode);
+      if (!couponResult.valid) return mobileError(res, couponResult.message, 400);
+      couponDiscount = Math.round(amount * couponResult.discountPercent / 100);
+      amount -= couponDiscount;
+    }
+
+    // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
+    if (amount < 100) amount = 100;
+
     const receipt = `vl_${req.user.id.slice(-8)}_${Date.now()}`;
     const order = await createOrder(amount, "INR", receipt);
 
@@ -135,6 +173,9 @@ export async function generateOrderId(req: Request, res: Response) {
       currency: order.currency,
       plan_key: planKey,
       classesAccess,
+      originalAmount: planConfig.amount,
+      couponDiscount,
+      couponCode,
     });
   } catch (e: any) {
     console.error("Mobile generateOrderId error:", e);
@@ -147,7 +188,7 @@ export async function purchasePlan(req: Request, res: Response) {
   try {
     if (!req.user) return mobileError(res, "Authentication required", 401);
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_key, plan, classesAccess: reqClassesAccess } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_key, plan, classesAccess: reqClassesAccess, couponCode } = req.body;
     const planKey = plan_key || plan;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -158,6 +199,26 @@ export async function purchasePlan(req: Request, res: Response) {
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
     const planConfig = await getPlanConfig(planKey);
+    let amount = planConfig.amount;
+    let discountAmount = 0;
+
+    // Apply coupon discount
+    if (couponCode) {
+      const couponResult = await validateCoupon(couponCode);
+      if (couponResult.valid) {
+        const couponDisc = Math.round(amount * couponResult.discountPercent / 100);
+        discountAmount += couponDisc;
+        amount -= couponDisc;
+
+        // Increment coupon usage
+        await prisma.coupon.update({
+          where: { code: couponCode.toUpperCase() },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+    }
+
+    if (amount < 100) amount = 100;
 
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
@@ -187,7 +248,9 @@ export async function purchasePlan(req: Request, res: Response) {
         razorpayOrderId: razorpay_order_id,
         razorpaySignature: razorpay_signature,
         status: "ACTIVE",
-        amount: planConfig.amount,
+        amount,
+        couponCode: couponCode ? couponCode.toUpperCase() : null,
+        discountAmount,
       },
     });
 
