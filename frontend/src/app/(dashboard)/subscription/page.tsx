@@ -41,6 +41,7 @@ export default function SubscriptionPage() {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplicablePlans, setCouponApplicablePlans] = useState<string[]>([]);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   const load = () => {
@@ -74,13 +75,17 @@ export default function SubscriptionPage() {
     try {
       const { data } = await api.get(`/subscription/validate-coupon?code=${couponCode.trim()}`);
       if (data.data.valid) {
+        const applicablePlans = data.data.applicablePlans || [];
         setCouponApplied(true);
         setCouponDiscount(data.data.discountPercent);
-        toast.success(`Coupon applied! ${data.data.discountPercent}% discount`);
+        setCouponApplicablePlans(applicablePlans);
+        const planMsg = applicablePlans.length === 0 ? "all plans" : `${applicablePlans.length} plan${applicablePlans.length > 1 ? "s" : ""}`;
+        toast.success(`Coupon applied! ${data.data.discountPercent}% discount on ${planMsg}`);
       } else {
         toast.error(data.data.message);
         setCouponApplied(false);
         setCouponDiscount(0);
+        setCouponApplicablePlans([]);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to validate coupon");
@@ -95,14 +100,21 @@ export default function SubscriptionPage() {
     setCouponCode("");
     setCouponApplied(false);
     setCouponDiscount(0);
+    setCouponApplicablePlans([]);
   };
 
-  const getDiscountedPrice = (originalPrice: number) => {
+  const isCouponApplicable = (planId: string) => {
+    if (!couponApplied) return false;
+    if (couponApplicablePlans.length === 0) return true;
+    return couponApplicablePlans.includes(planId);
+  };
+
+  const getDiscountedPrice = (originalPrice: number, planId?: string) => {
     let price = originalPrice;
     if (isActive && upgradeDiscountPercent > 0) {
       price = price - (price * upgradeDiscountPercent / 100);
     }
-    if (couponApplied && couponDiscount > 0) {
+    if (couponApplied && couponDiscount > 0 && (!planId || isCouponApplicable(planId))) {
       price = price - (price * couponDiscount / 100);
     }
     return Math.max(1, Math.round(price));
@@ -237,10 +249,17 @@ export default function SubscriptionPage() {
               )}
             </div>
             {couponApplied && (
-              <p className="text-sm text-emerald-600 mt-2 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" />
-                Coupon &quot;{couponCode}&quot; applied - {couponDiscount}% discount
-              </p>
+              <div className="mt-2">
+                <p className="text-sm text-emerald-600 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4" />
+                  Coupon &quot;{couponCode}&quot; applied - {couponDiscount}% discount
+                </p>
+                {couponApplicablePlans.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Applies to: {couponApplicablePlans.map((k) => planLabel[k] || k).join(", ")}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -252,7 +271,8 @@ export default function SubscriptionPage() {
                 const needsClassSelection = (plan.classSelection || 0) > 0;
                 const selected = selectedClasses[plan.id] || [];
                 const canSubscribe = !needsClassSelection || selected.length === plan.classSelection;
-                const discountedPrice = getDiscountedPrice(plan.price);
+                const couponAppliesHere = isCouponApplicable(plan.id);
+                const discountedPrice = getDiscountedPrice(plan.price, plan.id);
                 const hasDiscount = discountedPrice < plan.price;
 
                 return (
@@ -279,6 +299,13 @@ export default function SubscriptionPage() {
                           <div className="mt-1">
                             <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
                               You save &#8377;{plan.price - discountedPrice}
+                            </span>
+                          </div>
+                        )}
+                        {couponApplied && !couponAppliesHere && (
+                          <div className="mt-1">
+                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                              Coupon not applicable for this plan
                             </span>
                           </div>
                         )}
@@ -325,7 +352,7 @@ export default function SubscriptionPage() {
                           amount={discountedPrice}
                           label={plan.name}
                           classesAccess={needsClassSelection ? selected : undefined}
-                          couponCode={couponApplied ? couponCode : undefined}
+                          couponCode={couponApplied && couponAppliesHere ? couponCode : undefined}
                           onSuccess={load}
                         />
                       </div>
