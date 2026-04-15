@@ -76,7 +76,7 @@ export async function getClassDetail(req: Request, res: Response) {
     if (!classData) return mobileError(res, "Class not found", 404);
 
     const subjects = await prisma.subject.findMany({
-      where: { classId: id, enabled: true },
+      where: { classId: id },
       include: {
         chapters: { orderBy: { order: "asc" } },
       },
@@ -87,10 +87,11 @@ export async function getClassDetail(req: Request, res: Response) {
       subjects: subjects.map((s) => ({
         subject_id: s.id,
         subject_name: s.name,
-        chapters: s.chapters.map((ch) => ({
+        enabled: s.enabled,
+        chapters: s.enabled ? s.chapters.map((ch) => ({
           chapter_id: ch.id,
           chapter_name: ch.name,
-        })),
+        })) : [],
       })),
     };
 
