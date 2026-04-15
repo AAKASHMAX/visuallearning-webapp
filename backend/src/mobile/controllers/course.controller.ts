@@ -132,23 +132,37 @@ export async function getVideoList(req: Request, res: Response) {
       }
     }
 
+    // Helper: detect if a video ID is Vimeo (purely numeric) vs YouTube (alphanumeric)
+    function getEffectiveVimeoId(v: typeof videos[0]): string | null {
+      if (v.vimeoVideoId) return v.vimeoVideoId;
+      // Some Vimeo videos are stored in youtubeVideoId field — detect by numeric-only ID
+      if (v.youtubeVideoId && /^\d{7,}$/.test(v.youtubeVideoId)) return v.youtubeVideoId;
+      return null;
+    }
+
+    function getThumbUrl(v: typeof videos[0]): string {
+      const vimeoId = getEffectiveVimeoId(v);
+      if (vimeoId) return vimeoThumbCache.get(vimeoId) || `https://vumbnail.com/${vimeoId}.jpg`;
+      if (v.youtubeVideoId) return `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg`;
+      return "";
+    }
+
     // Group videos by language to create hindi/english pairs
     const videoMap = new Map<number, any>();
-    // Collect Vimeo IDs to fetch thumbnails in parallel
+    // Collect all Vimeo IDs (including misplaced ones) to fetch thumbnails in parallel
     const vimeoIds = new Set<string>();
     for (const v of videos) {
-      if (v.vimeoVideoId) vimeoIds.add(v.vimeoVideoId);
+      const vid = getEffectiveVimeoId(v);
+      if (vid) vimeoIds.add(vid);
     }
     // Pre-fetch all Vimeo thumbnails in parallel
     await Promise.all(Array.from(vimeoIds).map(id => getVimeoThumbnail(id)));
 
     for (const v of videos) {
+      const effectiveVimeoId = getEffectiveVimeoId(v);
+      const isVimeo = !!effectiveVimeoId;
       if (!videoMap.has(v.order)) {
-        const isVimeo = !!v.vimeoVideoId;
-        const thumbUrl = isVimeo
-          ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
-          : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
-        const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
+        const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
         videoMap.set(v.order, {
           video_id_PK: v.id,
@@ -157,12 +171,12 @@ export async function getVideoList(req: Request, res: Response) {
           video_url_hindi: "",
           video_url_english: "",
           video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
-          vimeo_video_id: v.vimeoVideoId || null,
+          vimeo_video_id: effectiveVimeoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
           is_paid: v.isFree ? 2 : 1,
           is_purchase: (v.isFree || hasAccess) ? 2 : 1,
-          thumbnail_url: thumbUrl,
+          thumbnail_url: getThumbUrl(v),
           duration: v.duration || "",
           created_at: v.createdAt.toISOString(),
           updated_at: null,
@@ -170,23 +184,27 @@ export async function getVideoList(req: Request, res: Response) {
         });
       }
       const entry = videoMap.get(v.order)!;
-      const isVimeo = !!v.vimeoVideoId;
-      const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
+      const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
       if (v.language === "HINDI") {
         entry.video_url_hindi = (v.isFree || hasAccess) ? videoUrl : "";
+        // If Hindi video has a Vimeo thumbnail and entry doesn't yet, use it
+        if (isVimeo && !entry.vimeo_video_id) {
+          entry.vimeo_video_id = effectiveVimeoId;
+          entry.thumbnail_url = getThumbUrl(v);
+        }
       } else {
         entry.video_url_english = (v.isFree || hasAccess) ? videoUrl : "";
         // Use English video's data as primary
         entry.video_id_PK = v.id;
         entry.video_title = v.title;
-        entry.video_type = isVimeo ? 3 : 2;
-        entry.vimeo_video_id = v.vimeoVideoId || null;
         entry.content_type = v.type === "LECTURE_VIDEO" ? "lecture" : "animation";
-        const thumbUrl = isVimeo
-          ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
-          : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : entry.thumbnail_url;
-        entry.thumbnail_url = thumbUrl;
         entry.duration = v.duration || entry.duration;
+        // Prefer Vimeo thumbnail over YouTube (Vimeo has custom thumbnails)
+        if (isVimeo || !entry.vimeo_video_id) {
+          entry.video_type = isVimeo ? 3 : 2;
+          entry.vimeo_video_id = effectiveVimeoId || entry.vimeo_video_id;
+          entry.thumbnail_url = getThumbUrl(v);
+        }
       }
     }
 
