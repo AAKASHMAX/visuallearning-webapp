@@ -147,8 +147,9 @@ export async function getVideoList(req: Request, res: Response) {
       return "";
     }
 
-    // Group videos by language to create hindi/english pairs
-    const videoMap = new Map<number, any>();
+    // Group videos by order+type to create hindi/english pairs
+    // Key = "order:type" so animation and lecture at the same order stay separate
+    const videoMap = new Map<string, any>();
     // Collect all Vimeo IDs (including misplaced ones) to fetch thumbnails in parallel
     const vimeoIds = new Set<string>();
     for (const v of videos) {
@@ -161,10 +162,11 @@ export async function getVideoList(req: Request, res: Response) {
     for (const v of videos) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
-      if (!videoMap.has(v.order)) {
+      const groupKey = `${v.order}:${v.type}`;
+      if (!videoMap.has(groupKey)) {
         const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
-        videoMap.set(v.order, {
+        videoMap.set(groupKey, {
           video_id_PK: v.id,
           chapter_id_FK: v.chapterId,
           video_title: v.title,
@@ -183,7 +185,7 @@ export async function getVideoList(req: Request, res: Response) {
           is_favourite: 0,
         });
       }
-      const entry = videoMap.get(v.order)!;
+      const entry = videoMap.get(groupKey)!;
       const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
       if (v.language === "HINDI") {
         entry.video_url_hindi = (v.isFree || hasAccess) ? videoUrl : "";
