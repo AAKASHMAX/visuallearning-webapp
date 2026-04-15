@@ -76,7 +76,7 @@ export async function getClassDetail(req: Request, res: Response) {
     if (!classData) return mobileError(res, "Class not found", 404);
 
     const subjects = await prisma.subject.findMany({
-      where: { classId: id },
+      where: { classId: id, enabled: true },
       include: {
         chapters: { orderBy: { order: "asc" } },
       },
@@ -309,7 +309,10 @@ export async function getTestPaper(req: Request, res: Response) {
 export async function getQuizList(req: Request, res: Response) {
   try {
     const chapterId = req.params.id;
-    const chapter = await prisma.chapter.findUnique({ where: { id: chapterId } });
+    const chapter = await prisma.chapter.findUnique({
+      where: { id: chapterId },
+      include: { subject: { include: { class: true } } },
+    });
     if (!chapter) return mobileError(res, "Chapter not found", 404);
 
     const questionCount = await prisma.question.count({ where: { chapterId } });
@@ -318,13 +321,33 @@ export async function getQuizList(req: Request, res: Response) {
       return mobileSuccess(res, []);
     }
 
+    // Check if any video in this chapter is free — if so, quiz is free too
+    const hasFreeVideo = await prisma.video.findFirst({ where: { chapterId, isFree: true } });
+    const isFree = !!hasFreeVideo;
+
+    // Check subscription access
+    let hasAccess = false;
+    if (req.user) {
+      if (req.user.role === "ADMIN") {
+        hasAccess = true;
+      } else {
+        const sub = await prisma.subscription.findFirst({
+          where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+        });
+        if (sub) {
+          hasAccess = sub.classesAccess.length === 0 || sub.classesAccess.includes(chapter.subject.class.id);
+        }
+      }
+    }
+
     // Create a virtual quiz entry for this chapter
     const data = [
       {
         quiz_id_PK: chapterId, // Use chapterId as quiz ID since it's 1:1
         chapter_id_FK: chapterId,
         title: `${chapter.name} - Quiz`,
-        is_paid: 0,
+        is_paid: isFree ? 2 : 1, // 1=paid, 2=free
+        is_purchase: (isFree || hasAccess) ? 2 : 1, // 1=need subscription, 2=has access
         question_count: questionCount,
         created_at: "",
         updated_at: null,
