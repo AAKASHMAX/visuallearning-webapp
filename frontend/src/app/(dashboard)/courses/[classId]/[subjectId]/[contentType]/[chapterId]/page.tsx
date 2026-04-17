@@ -240,16 +240,20 @@ function NotesViewer() {
         <>
           {/* Notes list */}
           <div className="space-y-2 mb-6">
-            {notes.map((n) => (
-              <Card key={n.id} className={`cursor-pointer transition-shadow ${selectedNote?.id === n.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
-                onClick={() => setSelectedNote(n)}>
+            {notes.map((n: any) => (
+              <Card key={n.id} className={`cursor-pointer transition-shadow ${n.locked ? "opacity-70" : ""} ${selectedNote?.id === n.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
+                onClick={() => n.locked ? setShowSubscribeModal(true) : setSelectedNote(n)}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className={`w-5 h-5 ${selectedNote?.id === n.id ? "text-primary" : "text-gray-400"}`} />
+                    {n.locked ? <Lock className="w-5 h-5 text-gray-400" /> : <FileText className={`w-5 h-5 ${selectedNote?.id === n.id ? "text-primary" : "text-gray-400"}`} />}
                     <span className="font-medium text-sm">{n.title}</span>
                   </div>
                   <div className="flex gap-2">
-                    {hasAccess ? (
+                    {n.locked ? (
+                      <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setShowSubscribeModal(true); }}>
+                        <Lock className="w-3 h-3 mr-1" /> Locked
+                      </Button>
+                    ) : hasAccess ? (
                       <Button variant="outline" size="sm" onClick={(e) => {
                         e.stopPropagation();
                         const a = document.createElement("a");
@@ -258,10 +262,7 @@ function NotesViewer() {
                         a.click();
                       }}>Download</Button>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={(e) => {
-                        e.stopPropagation();
-                        setShowSubscribeModal(true);
-                      }}>
+                      <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setShowSubscribeModal(true); }}>
                         <Lock className="w-3 h-3 mr-1" /> Download
                       </Button>
                     )}
@@ -272,7 +273,7 @@ function NotesViewer() {
           </div>
 
           {/* Inline PDF viewer */}
-          {selectedNote && (
+          {selectedNote && !(selectedNote as any).locked && (selectedNote as any).pdfUrl && (
             <div className={isFullscreen ? "fixed inset-0 z-50 bg-white flex flex-col" : "border rounded-lg overflow-hidden"}>
               <div className="bg-gray-50 px-4 py-2 border-b flex items-center justify-between shrink-0">
                 <span className="text-sm font-medium text-gray-700">{selectedNote.title}</span>
@@ -321,6 +322,7 @@ const QUIZ_DURATION = 30 * 60; // 30 minutes in seconds
 
 function QuizViewer() {
   const { classId, subjectId, contentType, chapterId } = useParams();
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [chapterName, setChapterName] = useState("");
   const [className, setClassName] = useState("");
@@ -334,9 +336,20 @@ function QuizViewer() {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION);
 
+  const [quizLocked, setQuizLocked] = useState(false);
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+
   useEffect(() => {
     Promise.all([
-      api.get(`/courses/chapters/${chapterId}/questions`).then(({ data }) => setQuestions(data.data || [])),
+      api.get(`/courses/chapters/${chapterId}/questions`).then(({ data }) => {
+        const d = data.data;
+        if (d?.locked) {
+          setQuizLocked(true);
+          setQuestions([]);
+        } else {
+          setQuestions(d?.questions || d || []);
+        }
+      }),
       api.get(`/courses/subjects/${subjectId}/chapters`).then(({ data }) => {
         const subject = data.data.subject;
         setSubjectName(subject.name || "");
@@ -344,7 +357,7 @@ function QuizViewer() {
         const chapter = (data.data.chapters || []).find((c: any) => c.id === chapterId);
         setChapterName(chapter?.name || "");
       }),
-    ]).finally(() => setLoading(false));
+    ]).catch(() => {}).finally(() => setLoading(false));
   }, [chapterId, subjectId]);
 
   // Timer
@@ -388,6 +401,22 @@ function QuizViewer() {
   };
 
   if (loading) return <PageLoader />;
+  if (quizLocked) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Breadcrumb items={[...breadcrumb.items, { label: "Quiz" }]} />
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Subscription Required</h2>
+          <p className="text-gray-500 text-sm mb-6 text-center max-w-md">This quiz is locked. Subscribe to a plan to unlock all quizzes and premium content.</p>
+          <Button onClick={() => router.push("/subscription")} className="bg-primary text-white px-6">View Plans</Button>
+        </div>
+        {showSubscribeModal && null}
+      </div>
+    );
+  }
   if (questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -737,16 +766,16 @@ function QuizViewer() {
 // ─── Board Paper Viewer ────────────────────────────────────────
 function BoardPaperViewer() {
   const { classId, subjectId, chapterId: paperId } = useParams();
-  const [paper, setPaper] = useState<BoardPaper | null>(null);
+  const router = useRouter();
+  const [paper, setPaper] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch all board papers and find the one matching paperId
     api.get(`/courses/subjects/${subjectId}/board-papers`).then(({ data }) => {
-      const allPapers: BoardPaper[] = Object.values(data.data.papers || {}).flat() as BoardPaper[];
+      const allPapers: any[] = Object.values(data.data.papers || {}).flat();
       const found = allPapers.find((p) => p.id === paperId);
       setPaper(found || null);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [subjectId, paperId]);
 
   const breadcrumb = useBreadcrumbData();
@@ -759,7 +788,16 @@ function BoardPaperViewer() {
       {paper ? (
         <>
           <h1 className="text-xl font-bold mb-4">{paper.title} ({paper.year})</h1>
-          {!paper.pdfUrl || paper.pdfUrl === "pending" ? (
+          {paper.locked ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">Subscription Required</h2>
+              <p className="text-gray-500 text-sm mb-6 text-center max-w-md">This paper is locked. Subscribe to a plan to unlock all papers and premium content.</p>
+              <Button onClick={() => router.push("/subscription")} className="bg-primary text-white px-6">View Plans</Button>
+            </div>
+          ) : !paper.pdfUrl || paper.pdfUrl === "pending" ? (
             <div className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center py-20">
               <Clock className="w-12 h-12 text-gray-300 mb-4" />
               <h2 className="text-lg font-semibold text-gray-500 mb-2">Coming Soon</h2>

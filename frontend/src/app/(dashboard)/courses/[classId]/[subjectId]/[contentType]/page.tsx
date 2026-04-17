@@ -9,7 +9,7 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { Chapter, BoardPaper } from "@/types";
 import {
-  FileText, Clock, Users, MessageCircle, GraduationCap,
+  FileText, Clock, Users, MessageCircle, GraduationCap, Lock,
   Video, ShieldCheck, Star, CheckCircle, Radio, Calendar, Headphones, Target,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -95,8 +95,22 @@ function ChapterListPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x">
                     {/* Question Paper */}
                     {questionPaper ? (() => {
-                      const isPending = !questionPaper.pdfUrl || questionPaper.pdfUrl === "pending";
-                      return isPending ? (
+                      const isLocked = (questionPaper as any).locked;
+                      const isPending = !isLocked && (!questionPaper.pdfUrl || questionPaper.pdfUrl === "pending");
+                      return isLocked ? (
+                        <Link href={`/courses/${classId}/${subjectId}/board-papers/${questionPaper.id}`} className="p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                            <Lock className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">Question Paper</p>
+                            <p className="text-xs text-gray-400">Unsolved</p>
+                          </div>
+                          <Badge variant="warning" className="shrink-0 flex items-center gap-1 text-xs">
+                            <Lock className="w-3 h-3" /> Locked
+                          </Badge>
+                        </Link>
+                      ) : isPending ? (
                         <div className="p-4 flex items-center gap-3 opacity-50">
                           <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                             <FileText className="w-5 h-5 text-blue-600" />
@@ -131,8 +145,22 @@ function ChapterListPage() {
                     )}
                     {/* Solution */}
                     {solution ? (() => {
-                      const isPending = !solution.pdfUrl || solution.pdfUrl === "pending";
-                      return isPending ? (
+                      const isLocked = (solution as any).locked;
+                      const isPending = !isLocked && (!solution.pdfUrl || solution.pdfUrl === "pending");
+                      return isLocked ? (
+                        <Link href={`/courses/${classId}/${subjectId}/board-papers/${solution.id}`} className="p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                            <Lock className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">Solution</p>
+                            <p className="text-xs text-gray-400">Solved</p>
+                          </div>
+                          <Badge variant="warning" className="shrink-0 flex items-center gap-1 text-xs">
+                            <Lock className="w-3 h-3" /> Locked
+                          </Badge>
+                        </Link>
+                      ) : isPending ? (
                         <div className="p-4 flex items-center gap-3 opacity-50">
                           <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
                             <FileText className="w-5 h-5 text-emerald-600" />

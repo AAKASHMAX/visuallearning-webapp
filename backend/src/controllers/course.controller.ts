@@ -268,7 +268,7 @@ export async function getNotes(req: Request, res: Response) {
 
     const notes = await prisma.note.findMany({ where: { chapterId: id } });
 
-    // Check subscription for download access
+    // Check subscription access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
@@ -278,7 +278,19 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    return success(res, { notes, hasAccess, chapter: { name: chapter.name } });
+    // Free preview: only 1st note of 1st chapter is viewable without subscription
+    const isFirstChapter = chapter.order === 1;
+    const notesWithAccess = notes.map((n, i) => {
+      const isFreePreview = isFirstChapter && i === 0;
+      const canView = hasAccess || isFreePreview;
+      return {
+        ...n,
+        pdfUrl: canView ? n.pdfUrl : null,
+        locked: !canView,
+      };
+    });
+
+    return success(res, { notes: notesWithAccess, hasAccess, chapter: { name: chapter.name } });
   } catch (e) {
     console.error("Get notes error:", e);
     return error(res, "Failed to fetch notes");
@@ -288,8 +300,30 @@ export async function getNotes(req: Request, res: Response) {
 export async function getQuestions(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const chapter = await prisma.chapter.findUnique({
+      where: { id },
+      include: { subject: { include: { class: true } } },
+    });
+    if (!chapter) return error(res, "Chapter not found", 404);
+
+    // Check subscription access
+    const isAdmin = req.user?.role === "ADMIN";
+    let hasAccess = false;
+    if (isAdmin) {
+      hasAccess = true;
+    } else if (req.user) {
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id);
+      hasAccess = result.hasAccess;
+    }
+
+    // Free preview: only 1st chapter quiz is free
+    const isFirstChapter = chapter.order === 1;
+    if (!hasAccess && !isFirstChapter) {
+      return success(res, { questions: [], hasAccess: false, locked: true });
+    }
+
     const questions = await prisma.question.findMany({ where: { chapterId: id } });
-    return success(res, questions);
+    return success(res, { questions, hasAccess: true, locked: false });
   } catch (e) {
     console.error("Get questions error:", e);
     return error(res, "Failed to fetch questions");
@@ -326,9 +360,6 @@ export async function getSubjectContentCounts(req: Request, res: Response) {
 export async function getBoardPapers(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const cacheKey = `board-papers:${id}`;
-    const cached = cacheGet(cacheKey);
-    if (cached) return success(res, cached);
 
     const subject = await prisma.subject.findUnique({
       where: { id },
@@ -336,21 +367,38 @@ export async function getBoardPapers(req: Request, res: Response) {
     });
     if (!subject) return error(res, "Subject not found", 404);
 
+    // Check subscription access
+    const isAdmin = req.user?.role === "ADMIN";
+    let hasAccess = false;
+    if (isAdmin) {
+      hasAccess = true;
+    } else if (req.user) {
+      const result = await checkClassAccess(req.user.id, subject.class.id);
+      hasAccess = result.hasAccess;
+    }
+
     const papers = await prisma.boardPaper.findMany({
       where: { subjectId: id },
       orderBy: [{ year: "desc" }, { order: "asc" }],
     });
 
     // Group by year
-    const grouped: Record<number, typeof papers> = {};
+    const grouped: Record<number, any[]> = {};
+    const years = [...new Set(papers.map((p) => p.year))].sort((a, b) => b - a);
+
     papers.forEach((p) => {
       if (!grouped[p.year]) grouped[p.year] = [];
-      grouped[p.year].push(p);
+      // Free preview: only the first year's papers are free
+      const isFirstYear = p.year === years[years.length - 1]; // oldest/first year
+      const canView = hasAccess || isFirstYear;
+      grouped[p.year].push({
+        ...p,
+        pdfUrl: canView ? p.pdfUrl : (p.pdfUrl ? "locked" : p.pdfUrl),
+        locked: !canView,
+      });
     });
 
-    const result = { subject, papers: grouped };
-    cacheSet(cacheKey, result, CACHE_TTL);
-    return success(res, result);
+    return success(res, { subject, papers: grouped, hasAccess });
   } catch (e) {
     console.error("Get board papers error:", e);
     return error(res, "Failed to fetch board papers");

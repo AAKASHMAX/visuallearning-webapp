@@ -20,10 +20,10 @@ router.get("/classes", getClasses);
 router.get("/classes/:id/subjects", getSubjects);
 router.get("/subjects/:id/chapters", getChapters);
 router.get("/subjects/:id/content-counts", getSubjectContentCounts);
-router.get("/subjects/:id/board-papers", getBoardPapers);
+router.get("/subjects/:id/board-papers", optionalAuth, getBoardPapers);
 router.get("/chapters/:id/videos", optionalAuth, getVideos);
 router.get("/videos/:id", optionalAuth, getVideoById);
 router.get("/chapters/:id/notes", optionalAuth, getNotes);
-router.get("/chapters/:id/questions", getQuestions);
+router.get("/chapters/:id/questions", optionalAuth, getQuestions);
 
 export default router;
