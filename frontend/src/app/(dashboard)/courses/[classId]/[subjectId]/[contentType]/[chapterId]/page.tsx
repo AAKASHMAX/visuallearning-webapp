@@ -216,15 +216,13 @@ function NotesViewer() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api.get(`/courses/chapters/${chapterId}/notes`).then(({ data }) => {
-        const notesData = data.data?.notes || data.data || [];
-        setNotes(notesData);
-        setHasAccess(data.data?.hasAccess || false);
-        if (notesData.length > 0) setSelectedNote(notesData[0]);
-      }),
-      api.get(`/courses/chapters/${chapterId}/videos`).then(({ data }) => setChapterName(data.data.chapter?.name || "")),
-    ]).finally(() => setLoading(false));
+    api.get(`/courses/chapters/${chapterId}/notes`).then(({ data }) => {
+      const notesData = data.data?.notes || data.data || [];
+      setNotes(notesData);
+      setHasAccess(data.data?.hasAccess || false);
+      setChapterName(data.data?.chapter?.name || "");
+      if (notesData.length > 0) setSelectedNote(notesData[0]);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [chapterId]);
 
   const breadcrumb = useBreadcrumbData();

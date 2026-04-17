@@ -188,14 +188,20 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Hide video IDs for non-free videos if no access
-    const videosWithAccess = videos.map((v) => ({
-      ...v,
-      youtubeVideoId: v.isFree || hasAccess ? v.youtubeVideoId : null,
-      vimeoVideoId: v.isFree || hasAccess ? v.vimeoVideoId : null,
-      hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
-      locked: !v.isFree && !hasAccess,
-    }));
+    // Free preview: only the first video of the first chapter is free for unsubscribed users
+    const isFirstChapter = chapter.order === 1;
+    const videosWithAccess = videos.map((v, i) => {
+      const isFreePreview = !hasAccess && isFirstChapter && i === 0;
+      const canWatch = hasAccess || isFreePreview;
+      return {
+        ...v,
+        youtubeVideoId: canWatch ? v.youtubeVideoId : null,
+        vimeoVideoId: canWatch ? v.vimeoVideoId : null,
+        hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
+        locked: !canWatch,
+        isFree: isFreePreview,
+      };
+    });
 
     // Extract available languages from the already-fetched data (no extra query)
     const availableLanguages = [...new Set(allChapterVideos.map((v) => v.language))];
@@ -222,7 +228,12 @@ export async function getVideoById(req: Request, res: Response) {
     });
     if (!video) return error(res, "Video not found", 404);
 
-    if (!video.isFree) {
+    // Free preview: only the first video (order=1) of the first chapter (order=1) is free
+    const isFirstChapter = video.chapter.order === 1;
+    const isFirstVideo = video.order === 1;
+    const isFreePreview = isFirstChapter && isFirstVideo;
+
+    if (!isFreePreview) {
       if (!req.user) return error(res, "Login required", 401);
       const isAdmin = req.user.role === "ADMIN";
       if (!isAdmin) {
@@ -267,7 +278,7 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    return success(res, { notes, hasAccess });
+    return success(res, { notes, hasAccess, chapter: { name: chapter.name } });
   } catch (e) {
     console.error("Get notes error:", e);
     return error(res, "Failed to fetch notes");

@@ -148,6 +148,9 @@ export async function getVideoList(req: Request, res: Response) {
       return "";
     }
 
+    // Free preview: only the first video of the first chapter is free
+    const isFirstChapter = chapter.order === 1;
+
     // Group videos by order+type to create hindi/english pairs
     // Key = "order:type" so animation and lecture at the same order stay separate
     const videoMap = new Map<string, any>();
@@ -164,6 +167,8 @@ export async function getVideoList(req: Request, res: Response) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
       const groupKey = `${v.order}:${v.type}`;
+      const isFreePreview = isFirstChapter && v.order === 1;
+      const canWatch = isFreePreview || hasAccess;
       if (!videoMap.has(groupKey)) {
         const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
@@ -177,8 +182,8 @@ export async function getVideoList(req: Request, res: Response) {
           vimeo_video_id: effectiveVimeoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
-          is_paid: v.isFree ? 2 : 1,
-          is_purchase: (v.isFree || hasAccess) ? 2 : 1,
+          is_paid: isFreePreview ? 2 : 1,
+          is_purchase: canWatch ? 2 : 1,
           thumbnail_url: getThumbUrl(v),
           duration: v.duration || "",
           created_at: v.createdAt.toISOString(),
@@ -189,14 +194,14 @@ export async function getVideoList(req: Request, res: Response) {
       const entry = videoMap.get(groupKey)!;
       const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
       if (v.language === "HINDI") {
-        entry.video_url_hindi = (v.isFree || hasAccess) ? videoUrl : "";
+        entry.video_url_hindi = canWatch ? videoUrl : "";
         // If Hindi video has a Vimeo thumbnail and entry doesn't yet, use it
         if (isVimeo && !entry.vimeo_video_id) {
           entry.vimeo_video_id = effectiveVimeoId;
           entry.thumbnail_url = getThumbUrl(v);
         }
       } else {
-        entry.video_url_english = (v.isFree || hasAccess) ? videoUrl : "";
+        entry.video_url_english = canWatch ? videoUrl : "";
         // Use English video's data as primary
         entry.video_id_PK = v.id;
         entry.video_title = v.title;
@@ -220,18 +225,20 @@ export async function getVideoList(req: Request, res: Response) {
           const thumbUrl = isVimeo
             ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
             : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
+          const isFreePreview = isFirstChapter && v.order === 1;
+          const canWatch = isFreePreview || hasAccess;
           return {
             video_id_PK: v.id,
             chapter_id_FK: v.chapterId,
             video_title: v.title,
-            video_url_hindi: v.language === "HINDI" && (v.isFree || hasAccess) ? videoUrl : "",
-            video_url_english: v.language === "ENGLISH" && (v.isFree || hasAccess) ? videoUrl : "",
+            video_url_hindi: v.language === "HINDI" && canWatch ? videoUrl : "",
+            video_url_english: v.language === "ENGLISH" && canWatch ? videoUrl : "",
             video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
             vimeo_video_id: v.vimeoVideoId || null,
             content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
             description: "",
-            is_paid: v.isFree ? 2 : 1,
-            is_purchase: (v.isFree || hasAccess) ? 2 : 1,
+            is_paid: isFreePreview ? 2 : 1,
+            is_purchase: canWatch ? 2 : 1,
             thumbnail_url: thumbUrl,
             duration: v.duration || "",
             created_at: v.createdAt.toISOString(),
@@ -322,9 +329,8 @@ export async function getQuizList(req: Request, res: Response) {
       return mobileSuccess(res, []);
     }
 
-    // Check if any video in this chapter is free — if so, quiz is free too
-    const hasFreeVideo = await prisma.video.findFirst({ where: { chapterId, isFree: true } });
-    const isFree = !!hasFreeVideo;
+    // Quiz is free only for the first chapter
+    const isFree = chapter.order === 1;
 
     // Check subscription access
     let hasAccess = false;
@@ -407,6 +413,7 @@ export async function searchVideos(req: Request, res: Response) {
       where: {
         title: { contains: searchTerm, mode: "insensitive" },
       },
+      include: { chapter: true },
       take: 20,
       orderBy: { createdAt: "desc" },
     });
@@ -421,6 +428,7 @@ export async function searchVideos(req: Request, res: Response) {
       const thumbUrl = isVimeo
         ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
         : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
+      const isFreePreview = v.chapter.order === 1 && v.order === 1;
       return {
         video_id_PK: v.id,
         chapter_id_FK: v.chapterId,
@@ -431,7 +439,7 @@ export async function searchVideos(req: Request, res: Response) {
         vimeo_video_id: v.vimeoVideoId || null,
         content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
         description: "",
-        is_paid: v.isFree ? 2 : 1,
+        is_paid: isFreePreview ? 2 : 1,
         is_purchase: 1,
         thumbnail_url: thumbUrl,
         duration: v.duration || "",
