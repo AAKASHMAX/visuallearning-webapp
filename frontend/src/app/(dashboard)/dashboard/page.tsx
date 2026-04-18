@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
-import { BookOpen, CreditCard, PlayCircle, Radio, Users, Clock } from "lucide-react";
+import { BookOpen, CreditCard, PlayCircle, Radio, Users, Clock, Beaker } from "lucide-react";
 import type { Subscription } from "@/types";
 
 interface LiveClass {
@@ -200,6 +200,22 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Virtual Lab Quick Access */}
+      <div className="mb-8">
+        <Link href="/courses/virtual-lab">
+          <div className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Beaker className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg">Virtual Lab</h3>
+              <p className="text-white/70 text-sm">64+ interactive 3D simulations &amp; experiments</p>
+            </div>
+            <span className="text-white/60 text-sm font-medium">Explore &rarr;</span>
+          </div>
+        </Link>
+      </div>
 
       <h2 className="text-xl font-bold mb-4">Start Learning</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

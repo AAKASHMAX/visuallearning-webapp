@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   BookOpen, Play, FileText, Brain, Star, Radio, MonitorPlay,
-  Sparkles, GraduationCap, Atom, PenTool, ClipboardList,
+  Sparkles, GraduationCap, Atom, PenTool, ClipboardList, Beaker,
 } from "lucide-react";
 
 const Footer = dynamic(() => import("@/components/layout/footer").then((m) => m.Footer), { ssr: false });
@@ -108,6 +108,22 @@ const contentSections = [
       { text: "Track your progress & improve", color: "bg-red-100 text-red-700" },
     ],
     image: "📋",
+  },
+  {
+    id: "virtual-lab",
+    icon: Beaker,
+    title: "Virtual Lab",
+    description: "Explore 64+ interactive 3D simulations — dissect organs, run experiments & visualize science like never before",
+    gradient: "from-teal-500 via-cyan-500 to-emerald-500",
+    bgLight: "bg-teal-50",
+    iconColor: "text-teal-600",
+    taglines: [
+      { text: "64+ interactive 3D experiments", color: "bg-teal-100 text-teal-700" },
+      { text: "Biology, Chemistry & Physics labs", color: "bg-cyan-100 text-cyan-700" },
+      { text: "Explore human anatomy in 3D", color: "bg-emerald-100 text-emerald-700" },
+      { text: "Learn by doing, not just watching", color: "bg-green-100 text-green-700" },
+    ],
+    image: "🔬",
   },
 ];
 

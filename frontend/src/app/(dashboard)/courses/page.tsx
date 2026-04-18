@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { ClassItem } from "@/types";
-import { BookOpen, Radio } from "lucide-react";
+import { BookOpen, Radio, Beaker } from "lucide-react";
 
 const classColors = ["from-blue-500 to-blue-700", "from-orange-500 to-orange-700", "from-[#f59e0b] to-[#d97706]", "from-purple-500 to-purple-700"];
 
@@ -41,8 +41,22 @@ export default function CoursesPage() {
         ))}
       </div>
 
-      {/* Live Classes Card */}
-      <div className="mt-8">
+      {/* Virtual Lab & Live Classes */}
+      <div className="mt-8 flex flex-wrap gap-6">
+        {/* Virtual Lab Card */}
+        <Link href="/courses/virtual-lab">
+          <div className="relative bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer shadow-lg max-w-xs overflow-hidden">
+            <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-medium">
+              64+ Labs
+            </div>
+            <Beaker className="w-10 h-10 mb-4 opacity-80" />
+            <h3 className="text-xl font-bold mb-1">Virtual Lab</h3>
+            <p className="text-white/70">Interactive 3D simulations &amp; experiments</p>
+            <div className="mt-4 text-sm font-medium">Explore &rarr;</div>
+          </div>
+        </Link>
+
+        {/* Live Classes Card */}
         {liveClassesEnabled ? (
           <Link href="/courses/live-classes">
             <div className="relative bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl p-6 hover:scale-105 transition-transform cursor-pointer shadow-lg max-w-xs overflow-hidden">
@@ -66,7 +80,7 @@ export default function CoursesPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 }
