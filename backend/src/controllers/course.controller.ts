@@ -188,18 +188,17 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Free preview: only the first video of the first chapter is free for unsubscribed users
+    // Free preview: all videos in the first chapter are free for unsubscribed users
     const isFirstChapter = chapter.order === 1;
-    const videosWithAccess = videos.map((v, i) => {
-      const isFreePreview = !hasAccess && isFirstChapter && i === 0;
-      const canWatch = hasAccess || isFreePreview;
+    const videosWithAccess = videos.map((v) => {
+      const canWatch = hasAccess || isFirstChapter;
       return {
         ...v,
         youtubeVideoId: canWatch ? v.youtubeVideoId : null,
         vimeoVideoId: canWatch ? v.vimeoVideoId : null,
         hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
         locked: !canWatch,
-        isFree: isFreePreview,
+        isFree: isFirstChapter,
       };
     });
 
@@ -229,11 +228,10 @@ export async function getVideoById(req: Request, res: Response) {
     if (!video) return error(res, "Video not found", 404);
 
     // Free preview: only the first video (order=1) of the first chapter (order=1) is free
+    // All videos in the first chapter are free
     const isFirstChapter = video.chapter.order === 1;
-    const isFirstVideo = video.order === 1;
-    const isFreePreview = isFirstChapter && isFirstVideo;
 
-    if (!isFreePreview) {
+    if (!isFirstChapter) {
       if (!req.user) return error(res, "Login required", 401);
       const isAdmin = req.user.role === "ADMIN";
       if (!isAdmin) {

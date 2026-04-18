@@ -167,8 +167,7 @@ export async function getVideoList(req: Request, res: Response) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
       const groupKey = `${v.order}:${v.type}`;
-      const isFreePreview = isFirstChapter && v.order === 1;
-      const canWatch = isFreePreview || hasAccess;
+      const canWatch = isFirstChapter || hasAccess;
       if (!videoMap.has(groupKey)) {
         const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
@@ -182,7 +181,7 @@ export async function getVideoList(req: Request, res: Response) {
           vimeo_video_id: effectiveVimeoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
-          is_paid: isFreePreview ? 2 : 1,
+          is_paid: isFirstChapter ? 2 : 1,
           is_purchase: canWatch ? 2 : 1,
           thumbnail_url: getThumbUrl(v),
           duration: v.duration || "",
@@ -225,8 +224,7 @@ export async function getVideoList(req: Request, res: Response) {
           const thumbUrl = isVimeo
             ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
             : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
-          const isFreePreview = isFirstChapter && v.order === 1;
-          const canWatch = isFreePreview || hasAccess;
+          const canWatch = isFirstChapter || hasAccess;
           return {
             video_id_PK: v.id,
             chapter_id_FK: v.chapterId,
@@ -237,7 +235,7 @@ export async function getVideoList(req: Request, res: Response) {
             vimeo_video_id: v.vimeoVideoId || null,
             content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
             description: "",
-            is_paid: isFreePreview ? 2 : 1,
+            is_paid: isFirstChapter ? 2 : 1,
             is_purchase: canWatch ? 2 : 1,
             thumbnail_url: thumbUrl,
             duration: v.duration || "",
@@ -428,7 +426,7 @@ export async function searchVideos(req: Request, res: Response) {
       const thumbUrl = isVimeo
         ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
         : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
-      const isFreePreview = v.chapter.order === 1 && v.order === 1;
+      const isFirstChapter = v.chapter.order === 1;
       return {
         video_id_PK: v.id,
         chapter_id_FK: v.chapterId,
@@ -439,7 +437,7 @@ export async function searchVideos(req: Request, res: Response) {
         vimeo_video_id: v.vimeoVideoId || null,
         content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
         description: "",
-        is_paid: isFreePreview ? 2 : 1,
+        is_paid: isFirstChapter ? 2 : 1,
         is_purchase: 1,
         thumbnail_url: thumbUrl,
         duration: v.duration || "",
