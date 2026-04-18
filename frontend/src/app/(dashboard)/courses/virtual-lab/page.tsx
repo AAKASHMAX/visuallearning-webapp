@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Beaker, Search } from "lucide-react";
+import { ArrowLeft, Beaker, ExternalLink, Search } from "lucide-react";
 import { virtualLabGames, categories } from "@/data/virtual-lab-games";
 
 const categoryColors: Record<string, string> = {
@@ -86,12 +86,14 @@ export default function VirtualLabPage() {
       {/* Game Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((game) => (
-          <Link key={game.slug} href={`/courses/virtual-lab/${game.slug}`}>
+          <a key={game.slug} href={game.gameUrl} target="_blank" rel="noopener noreferrer">
             <div className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-teal-300 transition-all cursor-pointer h-full">
               {/* Preview area */}
               <div className={`h-36 bg-gradient-to-br ${categoryBgColors[game.category]} flex items-center justify-center relative overflow-hidden`}>
                 <div className="absolute inset-0 bg-black/10" />
-                <div className="absolute top-3 right-3 w-16 h-16 bg-white/10 rounded-full blur-lg" />
+                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full p-1.5">
+                  <ExternalLink className="w-3.5 h-3.5 text-white" />
+                </div>
                 <span className="text-5xl relative z-10 group-hover:scale-110 transition-transform">
                   {categoryEmojis[game.category]}
                 </span>
@@ -106,7 +108,7 @@ export default function VirtualLabPage() {
                 </span>
               </div>
             </div>
-          </Link>
+          </a>
         ))}
       </div>
 
