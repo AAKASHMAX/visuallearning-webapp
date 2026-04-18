@@ -52,7 +52,7 @@ export default function VirtualLabGamePage() {
       <div className="relative bg-black rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: "56.25%" }}>
         <iframe
           id="game-iframe"
-          src={game.itchUrl}
+          src={game.embedUrl}
           className="absolute inset-0 w-full h-full"
           allowFullScreen
           allow="autoplay; fullscreen *; geolocation; microphone; camera; midi; monetization; xr-spatial-tracking; gamepad; gyroscope; accelerometer; xr; cross-origin-isolated"
