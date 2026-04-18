@@ -1,7 +1,7 @@
 "use client";
 import { useParams, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Maximize2, Beaker, ExternalLink } from "lucide-react";
+import { ArrowLeft, Maximize2, Beaker } from "lucide-react";
 import { virtualLabGames } from "@/data/virtual-lab-games";
 
 export default function VirtualLabGamePage() {
@@ -9,6 +9,10 @@ export default function VirtualLabGamePage() {
 
   const game = virtualLabGames.find((g) => g.slug === slug);
   if (!game) redirect("/courses/virtual-lab");
+
+  // Games with local files use /virtual-lab/SLUG/index.html
+  // Games without local files are not yet available
+  const embedSrc = game.hasLocalFiles ? `/virtual-lab/${game.slug}/index.html` : null;
 
   const handleFullscreen = () => {
     const container = document.getElementById("game-container");
@@ -31,16 +35,7 @@ export default function VirtualLabGamePage() {
             <p className="text-gray-400 text-sm capitalize">{game.category}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <a
-            href={game.gameUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-600 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Open in itch.io
-          </a>
+        {embedSrc && (
           <button
             onClick={handleFullscreen}
             className="flex items-center gap-2 px-3 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm text-white transition-colors"
@@ -48,19 +43,26 @@ export default function VirtualLabGamePage() {
             <Maximize2 className="w-4 h-4" />
             Fullscreen
           </button>
-        </div>
+        )}
       </div>
 
       {/* Game Embed */}
-      <div id="game-container" className="relative bg-gray-900 rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: "62.5%" }}>
-        <iframe
-          src={`https://html-classic.itch.zone/html/${game.uploadId}/index.html`}
-          className="absolute inset-0 w-full h-full"
-          allowFullScreen
-          allow="autoplay; fullscreen *; gamepad; gyroscope; accelerometer; pointer-lock"
-          loading="lazy"
-        />
-      </div>
+      {embedSrc ? (
+        <div id="game-container" className="relative bg-gray-900 rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: "62.5%" }}>
+          <iframe
+            src={embedSrc}
+            className="absolute inset-0 w-full h-full"
+            allowFullScreen
+            allow="autoplay; fullscreen *; gamepad; gyroscope; accelerometer; pointer-lock"
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Beaker className="w-16 h-16 mb-4 opacity-40" />
+          <p className="font-semibold text-lg text-gray-600">Coming Soon</p>
+          <p className="text-sm mt-1">This experiment is being set up</p>
+        </div>
+      )}
 
       <p className="text-center text-gray-400 text-sm mt-4">
         Click inside the simulation to interact. Use Fullscreen for best experience.
