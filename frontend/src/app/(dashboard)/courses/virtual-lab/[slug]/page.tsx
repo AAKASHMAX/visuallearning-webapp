@@ -1,14 +1,42 @@
 "use client";
 import { useParams, redirect } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Maximize2, Beaker } from "lucide-react";
 import { virtualLabGames, GAMES_BASE_URL } from "@/data/virtual-lab-games";
+import { useAuth } from "@/lib/auth";
+import api from "@/lib/api";
 
 export default function VirtualLabGamePage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
+  const [checked, setChecked] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const cached = sessionStorage.getItem("vl_my_sub");
+    if (cached) {
+      try {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < 5 * 60 * 1000 && data) {
+          setIsSubscribed(data.status === "ACTIVE" && new Date(data.expiryDate) > new Date());
+          setChecked(true);
+          return;
+        }
+      } catch {}
+    }
+    api.get("/subscription/my-subscription").then(({ data }) => {
+      sessionStorage.setItem("vl_my_sub", JSON.stringify({ data, ts: Date.now() }));
+      if (data) setIsSubscribed(data.status === "ACTIVE" && new Date(data.expiryDate) > new Date());
+      setChecked(true);
+    }).catch(() => setChecked(true));
+  }, [user]);
 
   const game = virtualLabGames.find((g) => g.slug === slug);
   if (!game) redirect("/courses/virtual-lab");
+  if (checked && !isSubscribed) redirect("/subscription");
+  if (!checked) return null;
 
   const handleFullscreen = () => {
     const container = document.getElementById("game-container");
