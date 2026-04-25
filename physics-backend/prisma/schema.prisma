@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String
+  role              Role      @default(STUDENT)
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  blocked           Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  subscription      Subscription?
+  watchProgress     WatchProgress[]
+
+  @@index([email])
+}
+
+model Subscription {
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id])
+  plan            String
+  status          SubscriptionStatus @default(ACTIVE)
+  startDate       DateTime           @default(now())
+  expiryDate      DateTime
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  couponCode      String?
+  discountAmount  Int                @default(0)
+  amount          Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  discountPercent Int
+  maxUses       Int      @default(100)
+  usedCount     Int      @default(0)
+  validFrom     DateTime @default(now())
+  validUntil    DateTime
+  isActive      Boolean  @default(true)
+  applicablePlans String[] @default([])
+  createdAt     DateTime @default(now())
+
+  @@index([code])
+}
+
+model Course {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  tier         String    @default("FREE")
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  chapters     Chapter[]
+
+  @@index([tier])
+}
+
+model Chapter {
+  id           String    @id @default(cuid())
+  name         String
+  displayOrder Int       @default(0)
+  courseId      String
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  videos       Video[]
+  notes        Note[]
+  questions    Question[]
+
+  @@index([courseId])
+}
+
+model Video {
+  id           String    @id @default(cuid())
+  title        String
+  youtubeUrl   String
+  videoType    String    @default("ANIMATED_VIDEO")
+  language     String    @default("HINDI")
+  isFree       Boolean   @default(false)
+  displayOrder Int       @default(0)
+  chapterId    String
+  chapter      Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  watchProgress WatchProgress[]
+
+  @@index([chapterId])
+}
+
+model Note {
+  id           String    @id @default(cuid())
+  title        String
+  fileUrl      String
+  isFree       Boolean   @default(false)
+  displayOrder Int       @default(0)
+  chapterId    String
+  chapter      Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+
+  @@index([chapterId])
+}
+
+model Question {
+  id           String    @id @default(cuid())
+  question     String
+  optionA      String
+  optionB      String
+  optionC      String
+  optionD      String
+  correctAnswer String
+  solution     String?
+  displayOrder Int       @default(0)
+  chapterId    String
+  chapter      Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+
+  @@index([chapterId])
+}
+
+model WatchProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  videoId     String
+  video       Video    @relation(fields: [videoId], references: [id])
+  progress    Float    @default(0)
+  completed   Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, videoId])
+  @@index([userId])
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@index([key])
+}
