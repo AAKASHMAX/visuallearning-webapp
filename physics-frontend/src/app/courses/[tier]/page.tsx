@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getChapterAnimation } from "@/components/chapter-animations";
 
 interface Course {
   id: string;
@@ -185,17 +186,23 @@ export default function TierCoursePage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {(course.chapters || []).map((chapter) => {
                     const ChapterIcon = getChapterIcon(chapter.name);
-                    const hasContent = chapter._count.videos > 0 || chapter._count.notes > 0 || chapter._count.questions > 0;
+                    const AnimationComponent = getChapterAnimation(chapter.name);
 
                     return (
                       <Link
                         key={chapter.id}
                         href={`/courses/${tier}/${chapter.id}`}
-                        className="group relative rounded-2xl border border-border bg-card p-6 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
+                        className="group relative rounded-2xl border border-border bg-card p-5 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
                       >
-                        {/* Icon */}
-                        <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-surface-light to-card-hover flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                          <ChapterIcon className="w-6 h-6 text-accent" />
+                        {/* Animated Visual */}
+                        <div className="w-full h-20 mx-auto rounded-xl bg-gradient-to-br from-surface-light/50 to-card-hover/50 mb-3 overflow-hidden relative">
+                          {AnimationComponent ? (
+                            <AnimationComponent />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ChapterIcon className="w-8 h-8 text-accent/60" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Name */}
