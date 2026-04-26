@@ -48,7 +48,7 @@ export function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/#courses"
+              href="/courses"
               className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
             >
               Courses
@@ -117,7 +117,7 @@ export function Navbar() {
           <div className="md:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
             <div className="flex flex-col gap-4">
               <Link
-                href="/#courses"
+                href="/courses"
                 className="text-text-muted hover:text-accent transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
