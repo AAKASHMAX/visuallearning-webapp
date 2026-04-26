@@ -30,7 +30,7 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", { email, password });
       login(res.data.user, res.data.token);
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      router.push("/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {
