@@ -15,10 +15,10 @@ export function Footer() {
               <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
               <div>
                 <span className="text-lg font-bold text-text-bright">
-                  Visual<span className="text-accent"> Learning</span>
+                  Physics<span className="text-accent">Lab</span>
                 </span>
-                <p className="text-[10px] text-text-muted tracking-wider uppercase -mt-0.5">
-                  PhysicsLab
+                <p className="text-[10px] text-text-bright tracking-wider uppercase -mt-0.5">
+                  Visual Learning
                 </p>
               </div>
             </Link>

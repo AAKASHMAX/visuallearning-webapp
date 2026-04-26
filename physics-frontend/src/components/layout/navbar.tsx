@@ -37,10 +37,10 @@ export function Navbar() {
             <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
             <div className="flex flex-col">
               <span className="text-lg font-bold text-text-bright tracking-tight">
-                Visual<span className="text-accent"> Learning</span>
+                Physics<span className="text-accent">Lab</span>
               </span>
-              <span className="text-[10px] text-text-muted -mt-1 tracking-wider uppercase">
-                PhysicsLab
+              <span className="text-[10px] text-text-bright -mt-1 tracking-wider uppercase">
+                Visual Learning
               </span>
             </div>
           </Link>

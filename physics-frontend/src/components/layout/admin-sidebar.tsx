@@ -38,8 +38,8 @@ export function AdminSidebar() {
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           <Image src="/images/logo2.png" alt="VL" width={36} height={36} className="rounded-md" />
           <div>
-            <span className="text-sm font-bold text-text-bright">Visual<span className="text-accent"> Learning</span></span>
-            <p className="text-[10px] text-text-muted">PhysicsLab Admin</p>
+            <span className="text-sm font-bold text-text-bright">Physics<span className="text-accent">Lab</span></span>
+            <p className="text-[10px] text-text-bright">Visual Learning</p>
           </div>
         </Link>
       </div>
