@@ -184,7 +184,7 @@ export default function TierCoursePage() {
                   <h2 className="text-lg font-semibold text-text-bright mb-4">{course.name}</h2>
                 )}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                  {(course.chapters || []).map((chapter) => {
+                  {(course.chapters || []).map((chapter, idx) => {
                     const ChapterIcon = getChapterIcon(chapter.name);
                     const AnimationComponent = getChapterAnimation(chapter.name);
 
@@ -194,6 +194,11 @@ export default function TierCoursePage() {
                         href={`/courses/${tier}/${chapter.id}`}
                         className="group relative rounded-2xl border border-border bg-card p-6 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
                       >
+                        {/* Chapter number badge */}
+                        <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center z-10">
+                          <span className="text-xs font-bold text-accent">{chapter.displayOrder || idx + 1}</span>
+                        </div>
+
                         {/* Animated Visual */}
                         <div className="w-full h-28 mx-auto rounded-xl bg-gradient-to-br from-surface-light/60 to-card-hover/60 border border-border/50 mb-4 overflow-hidden relative">
                           {AnimationComponent ? (
