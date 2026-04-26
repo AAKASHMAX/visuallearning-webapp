@@ -157,10 +157,9 @@ export default function TierCoursePage() {
 
         {/* Chapters Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-6 h-52 animate-pulse" />
-            ))}
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="w-12 h-12 rounded-full border-[3px] border-accent/20 border-t-accent animate-spin mb-4" />
+            <p className="text-text-muted text-sm">Loading chapters...</p>
           </div>
         ) : allChapters.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-16 text-center">
