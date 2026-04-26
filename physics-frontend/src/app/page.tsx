@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   Atom,
   Zap,
@@ -26,6 +27,9 @@ import {
   Lightbulb,
   Target,
   Rocket,
+  Flame,
+  Sun,
+  Radio,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -38,7 +42,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <StatsBar />
-      <CoursesSection />
+      <PhysicsCarousel />
       <FeaturesSection />
       <TopicsShowcase />
       <PricingSection />
@@ -204,133 +208,148 @@ function StatsBar() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  COURSES SECTION                                                    */
+/*  3D PHYSICS CONCEPTS CAROUSEL                                       */
 /* ------------------------------------------------------------------ */
 
-function CoursesSection() {
-  const courses = [
+function PhysicsCarousel() {
+  const concepts = [
     {
-      title: "Free Course",
-      subtitle: "Get Started",
-      description:
-        "Explore the world of physics with free animated videos, basic notes, and introductory quizzes. Perfect for curious minds.",
-      features: [
-        "First chapter of every class free",
-        "Selected 3D animations",
-        "Basic chapter notes",
-        "Introductory MCQ quizzes",
-      ],
-      icon: Lightbulb,
-      gradient: "from-emerald-500 to-teal-600",
-      borderColor: "border-emerald-500/30",
-      glowColor: "hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]",
-      tag: "Free Forever",
-      tagColor: "bg-emerald-500/10 text-emerald-400",
-    },
-    {
-      title: "Basic Course",
-      subtitle: "Build Foundation",
-      description:
-        "Complete chapter-wise video lectures with notes and quizzes. Ideal for building strong physics fundamentals.",
-      features: [
-        "All animated video lectures",
-        "Complete chapter notes (PDF)",
-        "Chapter-wise MCQ quizzes",
-        "Progress tracking",
-        "Single class access",
-      ],
-      icon: BookOpen,
+      name: "Atomic Structure",
+      description: "Electrons, protons, and the quantum world",
+      icon: Atom,
       gradient: "from-accent to-blue-600",
-      borderColor: "border-accent/30",
-      glowColor: "hover:shadow-[0_0_40px_rgba(0,212,255,0.15)]",
-      tag: "Most Popular",
-      tagColor: "bg-accent/10 text-accent",
+      formula: "E = -13.6/n\u00B2 eV",
     },
     {
-      title: "Advance Course",
-      subtitle: "Go Beyond",
-      description:
-        "Everything in Basic plus expert lecture videos, virtual lab experiments, board paper practice, and priority support.",
-      features: [
-        "Everything in Basic",
-        "Expert lecture videos",
-        "3D Virtual Lab experiments",
-        "Previous year board papers",
-        "All classes access",
-        "Priority support",
-      ],
-      icon: Rocket,
+      name: "Gravitation",
+      description: "Universal attraction and orbital mechanics",
+      icon: Orbit,
       gradient: "from-secondary to-purple-600",
-      borderColor: "border-secondary/30",
-      glowColor: "hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]",
-      tag: "Best Value",
-      tagColor: "bg-secondary/10 text-secondary-light",
+      formula: "F = Gm\u2081m\u2082/r\u00B2",
+    },
+    {
+      name: "Thermodynamics",
+      description: "Heat, energy, and the laws of entropy",
+      icon: Flame,
+      gradient: "from-energy to-orange-600",
+      formula: "\u0394U = Q - W",
+    },
+    {
+      name: "Electromagnetism",
+      description: "Electric fields, magnetic forces, and EM waves",
+      icon: Zap,
+      gradient: "from-yellow-400 to-amber-600",
+      formula: "F = qE + qv\u00D7B",
+    },
+    {
+      name: "Wave Optics",
+      description: "Light interference, diffraction, and polarization",
+      icon: Sun,
+      gradient: "from-cyan-400 to-teal-600",
+      formula: "\u03BB = h/p",
+    },
+    {
+      name: "Nuclear Physics",
+      description: "Fission, fusion, and radioactive decay",
+      icon: Radio,
+      gradient: "from-rose-500 to-pink-600",
+      formula: "E = mc\u00B2",
+    },
+    {
+      name: "Wave Motion",
+      description: "Sound waves, resonance, and harmonics",
+      icon: Waves,
+      gradient: "from-emerald-400 to-green-600",
+      formula: "v = f\u03BB",
+    },
+    {
+      name: "Magnetism",
+      description: "Magnetic fields, induction, and motors",
+      icon: Magnet,
+      gradient: "from-indigo-400 to-violet-600",
+      formula: "F = BIL sin\u03B8",
     },
   ];
 
+  const totalCards = concepts.length;
+  const angleStep = 360 / totalCards;
+  // Radius so cards don't overlap (card ~180px wide + gap)
+  const radius = 340;
+
   return (
-    <section id="courses" className="py-24 relative">
+    <section id="courses" className="py-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+      {/* Background glows */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px]" />
+      <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-[120px]" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
-            <GraduationCap className="w-4 h-4 text-accent" />
-            <span className="text-sm text-text-muted">Choose Your Path</span>
+            <Sparkles className="w-4 h-4 text-energy" />
+            <span className="text-sm text-text-muted">Explore Physics</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-text-bright mb-4">
-            Three Courses, One <span className="gradient-text">Mission</span>
+            Visualize Every <span className="gradient-text">Concept</span>
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            Whether you&apos;re just starting or preparing for board exams, we have
-            the perfect course to accelerate your physics journey.
+            From atomic structure to astrophysics &mdash; experience physics in
+            stunning 3D animations and interactive simulations.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {courses.map((course, i) => (
-            <div
-              key={i}
-              className={`relative rounded-2xl border ${course.borderColor} bg-card p-8 transition-all duration-500 ${course.glowColor} hover:-translate-y-2 group`}
-            >
-              {/* Tag */}
-              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mb-6 ${course.tagColor}`}>
-                {course.tag}
-              </div>
-
-              {/* Icon */}
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${course.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <course.icon className="w-7 h-7 text-white" />
-              </div>
-
-              <h3 className="text-xl font-bold text-text-bright mb-1">
-                {course.title}
-              </h3>
-              <p className="text-sm text-accent mb-3">{course.subtitle}</p>
-              <p className="text-text-muted text-sm leading-relaxed mb-6">
-                {course.description}
-              </p>
-
-              {/* Features */}
-              <ul className="space-y-3 mb-8">
-                {course.features.map((feature, j) => (
-                  <li key={j} className="flex items-start gap-3 text-sm">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-text-muted">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href="/auth/signup">
-                <Button
-                  variant={i === 1 ? "primary" : "outline"}
-                  className="w-full"
+        {/* 3D Carousel */}
+        <div className="carousel-scene mx-auto" style={{ height: 380 }}>
+          <div
+            className="carousel-ring relative mx-auto"
+            style={{
+              width: 200,
+              height: 260,
+              marginTop: 40,
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {concepts.map((concept, i) => {
+              const angle = i * angleStep;
+              return (
+                <div
+                  key={i}
+                  className="carousel-card absolute inset-0 w-[200px]"
+                  style={{
+                    transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                  }}
                 >
-                  {i === 0 ? "Start Free" : "Get Started"}
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          ))}
+                  <div className="rounded-2xl border border-border bg-card/90 backdrop-blur-sm p-6 text-center h-full flex flex-col items-center justify-center gap-3 hover:border-accent/40 transition-colors">
+                    <div
+                      className={`w-14 h-14 rounded-xl bg-gradient-to-br ${concept.gradient} flex items-center justify-center shrink-0`}
+                    >
+                      <concept.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-sm font-bold text-text-bright leading-tight">
+                      {concept.name}
+                    </h3>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {concept.description}
+                    </p>
+                    <span className="text-xs font-mono text-accent/80 mt-1">
+                      {concept.formula}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Explore button */}
+        <div className="text-center mt-8">
+          <Link href="/courses">
+            <Button size="lg" className="group">
+              Explore All Courses
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

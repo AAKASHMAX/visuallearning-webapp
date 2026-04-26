@@ -137,6 +137,30 @@ body {
   animation: shimmer 3s linear infinite;
 }
 
+/* 3D Carousel */
+@keyframes carousel-rotate {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+.carousel-scene {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.carousel-ring {
+  transform-style: preserve-3d;
+  animation: carousel-rotate 25s linear infinite;
+}
+
+.carousel-ring:hover {
+  animation-play-state: paused;
+}
+
+.carousel-card {
+  backface-visibility: hidden;
+}
+
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
