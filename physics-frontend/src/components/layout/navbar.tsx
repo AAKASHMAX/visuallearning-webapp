@@ -3,7 +3,8 @@
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Atom, Menu, X, LogIn, User, LogOut, BookOpen } from "lucide-react";
+import Image from "next/image";
+import { Menu, X, LogIn, User, LogOut, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -33,17 +34,13 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(0,212,255,0.4)] transition-shadow duration-300">
-                <Atom className="w-6 h-6 text-white" />
-              </div>
-            </div>
+            <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
             <div className="flex flex-col">
               <span className="text-lg font-bold text-text-bright tracking-tight">
-                Physics<span className="text-accent">Lab</span>
+                Visual Learning
               </span>
               <span className="text-[10px] text-text-muted -mt-1 tracking-wider uppercase">
-                Visual Learning
+                PhysicsLab
               </span>
             </div>
           </Link>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Atom, Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -11,15 +12,13 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
-                <Atom className="w-6 h-6 text-white" />
-              </div>
+              <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
               <div>
                 <span className="text-lg font-bold text-text-bright">
-                  Physics<span className="text-accent">Lab</span>
+                  Visual Learning
                 </span>
                 <p className="text-[10px] text-text-muted tracking-wider uppercase -mt-0.5">
-                  Visual Learning
+                  PhysicsLab
                 </p>
               </div>
             </Link>

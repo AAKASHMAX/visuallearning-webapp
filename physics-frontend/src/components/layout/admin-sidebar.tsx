@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   BookOpen,
@@ -10,7 +11,6 @@ import {
   Settings,
   BarChart3,
   Tag,
-  Atom,
   LogOut,
   ChevronLeft,
 } from "lucide-react";
@@ -36,12 +36,10 @@ export function AdminSidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
-            <Atom className="w-5 h-5 text-white" />
-          </div>
+          <Image src="/images/logo2.png" alt="VL" width={36} height={36} className="rounded-md" />
           <div>
-            <span className="text-sm font-bold text-text-bright">PhysicsLab</span>
-            <p className="text-[10px] text-text-muted">Admin Panel</p>
+            <span className="text-sm font-bold text-text-bright">Visual Learning</span>
+            <p className="text-[10px] text-text-muted">PhysicsLab Admin</p>
           </div>
         </Link>
       </div>
