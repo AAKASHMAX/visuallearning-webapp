@@ -15,7 +15,7 @@ export function Footer() {
               <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
               <div>
                 <span className="text-lg font-bold text-text-bright">
-                  Visual Learning
+                  Visual<span className="text-accent"> Learning</span>
                 </span>
                 <p className="text-[10px] text-text-muted tracking-wider uppercase -mt-0.5">
                   PhysicsLab
