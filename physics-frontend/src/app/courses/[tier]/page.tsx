@@ -157,9 +157,9 @@ export default function TierCoursePage() {
 
         {/* Chapters Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-6 h-40 animate-pulse" />
+              <div key={i} className="rounded-2xl border border-border bg-card p-6 h-52 animate-pulse" />
             ))}
           </div>
         ) : allChapters.length === 0 ? (
@@ -183,7 +183,7 @@ export default function TierCoursePage() {
                 {courses.length > 1 && (
                   <h2 className="text-lg font-semibold text-text-bright mb-4">{course.name}</h2>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                   {(course.chapters || []).map((chapter) => {
                     const ChapterIcon = getChapterIcon(chapter.name);
                     const AnimationComponent = getChapterAnimation(chapter.name);
@@ -192,15 +192,15 @@ export default function TierCoursePage() {
                       <Link
                         key={chapter.id}
                         href={`/courses/${tier}/${chapter.id}`}
-                        className="group relative rounded-2xl border border-border bg-card p-5 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
+                        className="group relative rounded-2xl border border-border bg-card p-6 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
                       >
                         {/* Animated Visual */}
-                        <div className="w-full h-20 mx-auto rounded-xl bg-gradient-to-br from-surface-light/50 to-card-hover/50 mb-3 overflow-hidden relative">
+                        <div className="w-full h-28 mx-auto rounded-xl bg-gradient-to-br from-surface-light/60 to-card-hover/60 border border-border/50 mb-4 overflow-hidden relative">
                           {AnimationComponent ? (
                             <AnimationComponent />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <ChapterIcon className="w-8 h-8 text-accent/60" />
+                              <ChapterIcon className="w-10 h-10 text-accent/60" />
                             </div>
                           )}
                         </div>
