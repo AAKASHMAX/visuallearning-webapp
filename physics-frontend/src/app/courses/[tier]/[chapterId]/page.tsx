@@ -91,10 +91,14 @@ export default function ChapterContentPage() {
 
   const [chapterName, setChapterName] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("videos");
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<"HINDI" | "ENGLISH">("HINDI");
+
+  // Filtered videos by language
+  const videos = allVideos.filter((v) => v.language === language);
 
   // Video player state
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -115,13 +119,8 @@ export default function ChapterContentPage() {
           api.get(`/chapters/${chapterId}/videos`),
           api.get(`/chapters/${chapterId}/notes`),
         ]);
-        setVideos(videosRes.data);
+        setAllVideos(videosRes.data);
         setNotes(notesRes.data);
-
-        // Get chapter name from first video or fetch separately
-        if (videosRes.data.length > 0) {
-          // Extract from the chapter data we have
-        }
       } catch (err) {
         console.error("Failed to fetch content");
       }
@@ -166,6 +165,9 @@ export default function ChapterContentPage() {
     }
   }
 
+  const hasHindi = allVideos.some((v) => v.language === "HINDI");
+  const hasEnglish = allVideos.some((v) => v.language === "ENGLISH");
+
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
     { key: "videos", label: "Videos", icon: Play, count: videos.length },
     { key: "notes", label: "Notes", icon: FileText, count: notes.length },
@@ -195,23 +197,25 @@ export default function ChapterContentPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-text-bright">
                 {chapterName || "Loading..."}
               </h1>
-              <p className="text-text-muted text-sm mt-1">Language: Hindi</p>
             </div>
-            <div className="hidden sm:flex items-center gap-4 text-sm text-text-muted">
-              <span className="flex items-center gap-1.5">
-                <Play className="w-4 h-4 text-accent" />
-                {videos.length} Videos
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-emerald-400" />
-                {notes.length} Notes
-              </span>
+            <div className="hidden sm:flex flex-col items-end gap-2">
+              <div className="flex items-center gap-4 text-sm text-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <Play className="w-4 h-4 text-accent" />
+                  {allVideos.length} Videos
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  {notes.length} Notes
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs + Language Switch */}
         <div className="border-b border-border mb-6">
+          <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {tabs.map((tab) => (
               <button
@@ -234,6 +238,33 @@ export default function ChapterContentPage() {
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Language Switch */}
+          {(hasHindi || hasEnglish) && activeTab === "videos" && (
+            <div className="flex items-center gap-1 mb-1">
+              <button
+                onClick={() => setLanguage("HINDI")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  language === "HINDI"
+                    ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
+                    : "bg-surface-light text-text-muted hover:text-text-bright"
+                }`}
+              >
+                हिंदी
+              </button>
+              <button
+                onClick={() => setLanguage("ENGLISH")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  language === "ENGLISH"
+                    ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
+                    : "bg-surface-light text-text-muted hover:text-text-bright"
+                }`}
+              >
+                English
+              </button>
+            </div>
+          )}
           </div>
         </div>
 
