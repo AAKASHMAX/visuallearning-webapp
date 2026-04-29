@@ -29,8 +29,12 @@ async function checkAccess(userId?: string, requiredTier?: string): Promise<bool
     return false;
   }
 
-  // ADVANCE plan has access to everything
-  if (subscription.plan === "ADVANCE" || subscription.plan === "ADVANCE_YEARLY") return true;
+  // BRIDGE plan has access to everything
+  if (subscription.plan === "BRIDGE") return true;
+
+  // ADVANCE plan has access to everything EXCEPT BRIDGE
+  if ((subscription.plan === "ADVANCE" || subscription.plan === "ADVANCE_YEARLY") && requiredTier !== "BRIDGE") return true;
+
   // BASIC plan has access to BASIC and FREE
   if ((subscription.plan === "BASIC" || subscription.plan === "BASIC_YEARLY") && (requiredTier === "BASIC" || requiredTier === "FREE")) return true;
 

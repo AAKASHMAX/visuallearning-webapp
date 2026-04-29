@@ -20,6 +20,7 @@ export const PLANS: Record<string, { name: string; price: number; duration: numb
   FREE: { name: "Free", price: 0, duration: 0 },
   BASIC: { name: "Basic", price: 299, duration: 30 },
   ADVANCE: { name: "Advance", price: 499, duration: 30 },
+  BRIDGE: { name: "Bridge", price: 999, duration: 30 },
   BASIC_YEARLY: { name: "Basic Yearly", price: 2499, duration: 365 },
   ADVANCE_YEARLY: { name: "Advance Yearly", price: 3999, duration: 365 },
 };

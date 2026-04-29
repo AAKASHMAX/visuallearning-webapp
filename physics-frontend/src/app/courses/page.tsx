@@ -13,6 +13,7 @@ import {
   Lock,
   Sparkles,
   GraduationCap,
+  Target,
 } from "lucide-react";
 
 const courses = [
@@ -87,6 +88,29 @@ const courses = [
     period: "/month",
     locked: true,
   },
+  {
+    tier: "BRIDGE",
+    title: "Physics Bridge Course",
+    subtitle: "Master the Basics",
+    description:
+      "A comprehensive bridge course focusing on fundamental physics concepts to prepare you for advanced topics.",
+    features: [
+      "Core physics concepts",
+      "Interactive foundational modules",
+      "Basic mathematics for physics",
+      "Conceptual doubt clearing",
+      "Foundation strengthening tests",
+    ],
+    icon: Target,
+    gradient: "from-orange-500 to-red-600",
+    borderColor: "border-orange-500/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]",
+    tag: "Premium",
+    tagColor: "bg-orange-500/10 text-orange-400",
+    price: "999",
+    period: "/month",
+    locked: true,
+  },
 ];
 
 export default function CoursesPage() {
@@ -110,7 +134,7 @@ export default function CoursesPage() {
         </div>
 
         {/* Course Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {courses.map((course, i) => (
             <div
               key={i}
