@@ -53,6 +53,9 @@ interface Question {
 type Tab = "videos" | "notes" | "quiz";
 
 function getYoutubeThumbnail(url: string): string {
+  // Vimeo doesn't have simple thumbnail URLs — show Play icon placeholder
+  if (url.includes("vimeo.com")) return "";
+
   let videoId = "";
   try {
     if (url.includes("youtu.be/")) {
@@ -68,6 +71,22 @@ function getYoutubeThumbnail(url: string): string {
 }
 
 function getYoutubeEmbedUrl(url: string): string {
+  // Handle Vimeo URLs
+  if (url.includes("vimeo.com")) {
+    let vimeoId = "";
+    try {
+      // Handle formats: vimeo.com/123, player.vimeo.com/video/123
+      if (url.includes("player.vimeo.com/video/")) {
+        return url; // Already an embed URL
+      }
+      const match = url.match(/vimeo\.com\/(\d+)/);
+      if (match) vimeoId = match[1];
+    } catch {}
+    if (vimeoId) return `https://player.vimeo.com/video/${vimeoId}?autoplay=1`;
+    return url;
+  }
+
+  // Handle YouTube URLs
   let videoId = "";
   try {
     if (url.includes("youtu.be/")) {
@@ -192,7 +211,7 @@ export default function ChapterContentPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-accent font-semibold uppercase tracking-wider mb-1">
-                {tier === "free" ? "Free Course" : tier === "basic" ? "Basic Course" : "Advance Course"}
+                {tier === "free" ? "Free Course" : tier === "basic" ? "Basic Course" : tier === "bridge" ? "Bridge Course" : "Advance Course"}
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold text-text-bright">
                 {chapterName || "Loading..."}
