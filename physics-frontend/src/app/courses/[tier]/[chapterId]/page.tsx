@@ -140,6 +140,12 @@ export default function ChapterContentPage() {
         ]);
         setAllVideos(videosRes.data);
         setNotes(notesRes.data);
+
+        // Auto-select the first video in the default language
+        const defaultLangVideos = videosRes.data.filter((v: Video) => v.language === language);
+        if (defaultLangVideos.length > 0 && defaultLangVideos[0].hasAccess) {
+          setSelectedVideo(defaultLangVideos[0]);
+        }
       } catch (err) {
         console.error("Failed to fetch content");
       }
@@ -149,7 +155,6 @@ export default function ChapterContentPage() {
     // Fetch chapter info
     async function fetchChapterInfo() {
       try {
-        // We need to find the chapter name - get all courses and find this chapter
         const res = await api.get("/courses");
         for (const course of res.data) {
           try {
@@ -167,6 +172,16 @@ export default function ChapterContentPage() {
     fetchContent();
     fetchChapterInfo();
   }, [chapterId]);
+
+  // When language changes, auto-select first video of that language
+  useEffect(() => {
+    const langVideos = allVideos.filter((v) => v.language === language);
+    if (langVideos.length > 0 && langVideos[0].hasAccess) {
+      setSelectedVideo(langVideos[0]);
+    } else {
+      setSelectedVideo(null);
+    }
+  }, [language, allVideos]);
 
   async function loadQuiz() {
     try {
@@ -232,9 +247,62 @@ export default function ChapterContentPage() {
           </div>
         </div>
 
-        {/* Tabs + Language Switch */}
+        {/* Persistent Video Player */}
+        <div className="mb-6 rounded-2xl border border-accent/20 bg-card overflow-hidden shadow-[0_0_30px_rgba(0,212,255,0.08)]">
+          {selectedVideo ? (
+            <>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-light/50">
+                <h3 className="text-text-bright font-semibold text-base sm:text-lg truncate pr-4">
+                  {selectedVideo.title}
+                </h3>
+                {/* Language Switch */}
+                {(hasHindi || hasEnglish) && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => setLanguage("HINDI")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        language === "HINDI"
+                          ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
+                          : "bg-surface-light text-text-muted hover:text-text-bright"
+                      }`}
+                    >
+                      हिंदी
+                    </button>
+                    <button
+                      onClick={() => setLanguage("ENGLISH")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        language === "ENGLISH"
+                          ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
+                          : "bg-surface-light text-text-muted hover:text-text-bright"
+                      }`}
+                    >
+                      English
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="relative w-full aspect-video bg-black">
+                <iframe
+                  key={selectedVideo.id}
+                  src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </>
+          ) : (
+            <div className="relative w-full aspect-video bg-black/50 flex items-center justify-center">
+              <div className="text-center">
+                <Play className="w-12 h-12 text-accent/30 mx-auto mb-2" />
+                <p className="text-text-muted text-sm">Select a video to play</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tabs */}
         <div className="border-b border-border mb-6">
-          <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {tabs.map((tab) => (
               <button
@@ -258,59 +326,7 @@ export default function ChapterContentPage() {
               </button>
             ))}
           </div>
-
-          {/* Language Switch */}
-          {(hasHindi || hasEnglish) && activeTab === "videos" && (
-            <div className="flex items-center gap-1 mb-1">
-              <button
-                onClick={() => setLanguage("HINDI")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  language === "HINDI"
-                    ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
-                    : "bg-surface-light text-text-muted hover:text-text-bright"
-                }`}
-              >
-                हिंदी
-              </button>
-              <button
-                onClick={() => setLanguage("ENGLISH")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  language === "ENGLISH"
-                    ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
-                    : "bg-surface-light text-text-muted hover:text-text-bright"
-                }`}
-              >
-                English
-              </button>
-            </div>
-          )}
-          </div>
         </div>
-
-        {/* Inline Video Player */}
-        {selectedVideo && (
-          <div className="mb-6 rounded-2xl border border-accent/20 bg-card overflow-hidden shadow-[0_0_30px_rgba(0,212,255,0.08)]">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-light/50">
-              <h3 className="text-text-bright font-semibold text-base sm:text-lg truncate pr-4">
-                {selectedVideo.title}
-              </h3>
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="text-text-muted hover:text-white transition-colors shrink-0 p-1 rounded-lg hover:bg-surface-light"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="relative w-full aspect-video bg-black">
-              <iframe
-                src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)}
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        )}
 
         {/* Content */}
         {loading ? (
