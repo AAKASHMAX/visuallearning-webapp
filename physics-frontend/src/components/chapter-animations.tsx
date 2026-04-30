@@ -516,6 +516,7 @@ export function SemiconductorAdvancedAnimation() {
 
 /* Map chapter names to animation components */
 const animationMap: Record<string, () => JSX.Element> = {
+  // Existing mappings
   motion: MotionAnimation,
   "force and laws of motion": ForceAnimation,
   gravitation: GravitationAnimation,
@@ -548,6 +549,18 @@ const animationMap: Record<string, () => JSX.Element> = {
   "alternating current": ACAnimation,
   "ray optics & wave optics": RayOpticsAnimation,
   "modern physics": ModernPhysicsAnimation,
+
+  // Bridge Course mappings
+  "language of physics": UnitsAnimation,
+  "motion & change": MotionAnimation,
+  "forces & laws": ForceAnimation,
+  "energy thinking": WorkEnergyAnimation,
+  "momentum & collisions": KinematicsAnimation,
+  "rotational basics": RotationalAnimation,
+  "fluids & pressure": PropertiesOfMatterAnimation,
+  "waves & oscillations": OscillationsAnimation,
+  "heat & thermodynamics": ThermodynamicsAnimation,
+  "electricity foundations": ElectricityAnimation,
 };
 
 export function getChapterAnimation(chapterName: string): (() => JSX.Element) | null {

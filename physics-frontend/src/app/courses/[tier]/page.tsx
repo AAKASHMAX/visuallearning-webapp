@@ -52,6 +52,7 @@ const tierConfig: Record<string, { label: string; gradient: string; tagColor: st
   free: { label: "Free Course", gradient: "from-emerald-500 to-teal-600", tagColor: "bg-emerald-500/10 text-emerald-400" },
   basic: { label: "Basic Course", gradient: "from-accent to-blue-600", tagColor: "bg-accent/10 text-accent" },
   advance: { label: "Advance Course", gradient: "from-secondary to-purple-600", tagColor: "bg-secondary/10 text-secondary-light" },
+  bridge: { label: "Bridge Course", gradient: "from-orange-500 to-amber-600", tagColor: "bg-orange-500/10 text-orange-400" },
 };
 
 // Map chapter names to icons
@@ -144,7 +145,11 @@ export default function TierCoursePage() {
             {config.label}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-text-bright mb-3">
-            {config.label} <span className="gradient-text">Chapters</span>
+            {tier === "bridge" ? (
+              <>Physics <span className="gradient-text">Bridge Course</span></>
+            ) : (
+              <>{config.label} <span className="gradient-text">Chapters</span></>
+            )}
           </h1>
           <p className="text-text-muted max-w-xl">
             {tier === "free"
