@@ -287,29 +287,27 @@ export default function ChapterContentPage() {
           </div>
         </div>
 
-        {/* Video Player Modal */}
+        {/* Inline Video Player */}
         {selectedVideo && (
-          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
-            <div className="w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-text-bright font-semibold text-lg truncate pr-4">
-                  {selectedVideo.title}
-                </h3>
-                <button
-                  onClick={() => setSelectedVideo(null)}
-                  className="text-text-muted hover:text-white transition-colors shrink-0"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
-                <iframe
-                  src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)}
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+          <div className="mb-6 rounded-2xl border border-accent/20 bg-card overflow-hidden shadow-[0_0_30px_rgba(0,212,255,0.08)]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-light/50">
+              <h3 className="text-text-bright font-semibold text-base sm:text-lg truncate pr-4">
+                {selectedVideo.title}
+              </h3>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="text-text-muted hover:text-white transition-colors shrink-0 p-1 rounded-lg hover:bg-surface-light"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="relative w-full aspect-video bg-black">
+              <iframe
+                src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
           </div>
         )}
