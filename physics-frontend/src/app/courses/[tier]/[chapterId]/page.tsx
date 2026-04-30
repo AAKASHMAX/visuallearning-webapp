@@ -283,312 +283,104 @@ export default function ChapterContentPage() {
           </div>
         </div>
 
-        {/* Persistent Video Player */}
-        <div className="mb-6 rounded-2xl border border-accent/20 bg-card overflow-hidden shadow-[0_0_30px_rgba(0,212,255,0.08)]">
-          {selectedVideo ? (
-            <>
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-light/50">
-                <h3 className="text-text-bright font-semibold text-base sm:text-lg truncate pr-4">
-                  {selectedVideo.title}
-                </h3>
-                {/* Language Switch */}
-                {(hasHindi || hasEnglish) && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => setLanguage("HINDI")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        language === "HINDI"
-                          ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
-                          : "bg-surface-light text-text-muted hover:text-text-bright"
-                      }`}
-                    >
-                      हिंदी
-                    </button>
-                    <button
-                      onClick={() => setLanguage("ENGLISH")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        language === "ENGLISH"
-                          ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]"
-                          : "bg-surface-light text-text-muted hover:text-text-bright"
-                      }`}
-                    >
-                      English
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="relative w-full aspect-video bg-black">
-                <iframe
-                  key={selectedVideo.id}
-                  src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)}
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </>
-          ) : (
-            <div className="relative w-full aspect-video bg-black/50 flex items-center justify-center">
-              <div className="text-center">
-                <Play className="w-12 h-12 text-accent/30 mx-auto mb-2" />
-                <p className="text-text-muted text-sm">Select a video to play</p>
-              </div>
+        {/* Side-by-side: Left=Tabs/Content, Right=Player (desktop) | Player on top (mobile) */}
+        <div className="flex flex-col lg:flex-row-reverse gap-6">
+          {/* RIGHT: Video Player (sticky on desktop) */}
+          <div className="w-full lg:w-[55%] xl:w-[60%] shrink-0">
+            <div className="lg:sticky lg:top-24 rounded-2xl border border-accent/20 bg-card overflow-hidden shadow-[0_0_30px_rgba(0,212,255,0.08)]">
+              {selectedVideo ? (<>
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface-light/50">
+                  <h3 className="text-text-bright font-semibold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
+                  {(hasHindi || hasEnglish) && (<div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => setLanguage("HINDI")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${language === "HINDI" ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]" : "bg-surface-light text-text-muted hover:text-text-bright"}`}>हिंदी</button>
+                    <button onClick={() => setLanguage("ENGLISH")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${language === "ENGLISH" ? "bg-accent text-primary shadow-[0_0_10px_rgba(0,212,255,0.3)]" : "bg-surface-light text-text-muted hover:text-text-bright"}`}>English</button>
+                  </div>)}
+                </div>
+                <div className="relative w-full aspect-video bg-black">
+                  <iframe key={selectedVideo.id} src={getYoutubeEmbedUrl(selectedVideo.youtubeUrl)} className="absolute inset-0 w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                </div>
+              </>) : (
+                <div className="relative w-full aspect-video bg-black/50 flex items-center justify-center">
+                  <div className="text-center"><Play className="w-12 h-12 text-accent/30 mx-auto mb-2" /><p className="text-text-muted text-sm">Select a video to play</p></div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-border mb-6">
-          <div className="flex gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-                  activeTab === tab.key
-                    ? "border-accent text-accent"
-                    : "border-transparent text-text-muted hover:text-text-bright"
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-surface-light text-text-muted"
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
           </div>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4 h-24 animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <>
-            {/* Videos Tab */}
-            {activeTab === "videos" && (
-              <div className="space-y-3">
-                {videos.length === 0 ? (
-                  <div className="rounded-2xl border border-border bg-card p-12 text-center">
-                    <Play className="w-10 h-10 text-accent/40 mx-auto mb-3" />
-                    <h3 className="text-lg font-semibold text-text-bright mb-1">No Videos Yet</h3>
-                    <p className="text-text-muted text-sm">Videos for this chapter will be added soon.</p>
-                  </div>
-                ) : (
-                  videos.map((video, idx) => {
+          {/* LEFT: Tabs + Content */}
+          <div className="w-full lg:w-[45%] xl:w-[40%] min-w-0">
+            <div className="border-b border-border mb-4">
+              <div className="flex gap-1">{tabs.map((tab) => (
+                <button key={tab.key} onClick={() => handleTabChange(tab.key)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.key ? "border-accent text-accent" : "border-transparent text-text-muted hover:text-text-bright"}`}>
+                  <tab.icon className="w-4 h-4" />{tab.label}
+                  {tab.count > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-surface-light text-text-muted"}`}>{tab.count}</span>}
+                </button>
+              ))}</div>
+            </div>
+            {loading ? (<div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="rounded-xl border border-border bg-card p-4 h-20 animate-pulse" />))}</div>) : (<>
+              {activeTab === "videos" && (
+                <div className="space-y-2 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1">
+                  {videos.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-card p-10 text-center"><Play className="w-10 h-10 text-accent/40 mx-auto mb-3" /><h3 className="text-lg font-semibold text-text-bright mb-1">No Videos Yet</h3><p className="text-text-muted text-sm">Videos for this chapter will be added soon.</p></div>
+                  ) : (videos.map((video, idx) => {
                     const thumbnail = getYoutubeThumbnail(video.youtubeUrl, vimeoThumbnails);
+                    const isActive = selectedVideo?.id === video.id;
                     return (
-                      <div
-                        key={video.id}
-                        onClick={() => video.hasAccess ? setSelectedVideo(video) : null}
-                        className={`group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition-all duration-300 ${
-                          video.hasAccess
-                            ? "hover:border-accent/30 hover:bg-card-hover cursor-pointer"
-                            : "opacity-70 cursor-not-allowed"
-                        }`}
-                      >
-                        {/* Thumbnail */}
-                        <div className="relative w-36 h-20 sm:w-40 sm:h-[90px] rounded-lg overflow-hidden bg-surface-light shrink-0">
-                          {thumbnail ? (
-                            <img
-                              src={thumbnail}
-                              alt={video.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-light to-card-hover">
-                              <Play className="w-8 h-8 text-accent/40" />
-                            </div>
-                          )}
-                          {/* Play overlay */}
+                      <div key={video.id} onClick={() => video.hasAccess ? setSelectedVideo(video) : null}
+                        className={`group flex items-center gap-3 rounded-xl border p-2.5 transition-all duration-300 ${isActive ? "border-accent/40 bg-accent/5" : video.hasAccess ? "border-border bg-card hover:border-accent/30 hover:bg-card-hover cursor-pointer" : "border-border bg-card opacity-70 cursor-not-allowed"}`}>
+                        <div className="relative w-28 h-16 sm:w-32 sm:h-[72px] rounded-lg overflow-hidden bg-surface-light shrink-0">
+                          {thumbnail ? (<img src={thumbnail} alt={video.title} className="w-full h-full object-cover" />) : (<div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-light to-card-hover"><Play className="w-6 h-6 text-accent/40" /></div>)}
                           {video.hasAccess ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="w-10 h-10 rounded-full bg-accent/90 flex items-center justify-center shadow-[0_0_16px_rgba(0,212,255,0.5)]">
-                                <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                              <Lock className="w-5 h-5 text-white/70" />
-                            </div>
-                          )}
-                          {/* Duration badge */}
-                          {video.isFree && (
-                            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/90 text-white">
-                              FREE
-                            </span>
-                          )}
+                            <div className={`absolute inset-0 flex items-center justify-center bg-black/30 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}><div className="w-8 h-8 rounded-full bg-accent/90 flex items-center justify-center shadow-[0_0_12px_rgba(0,212,255,0.5)]"><Play className="w-4 h-4 text-white fill-white ml-0.5" /></div></div>
+                          ) : (<div className="absolute inset-0 flex items-center justify-center bg-black/50"><Lock className="w-4 h-4 text-white/70" /></div>)}
+                          {video.isFree && <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/90 text-white">FREE</span>}
                         </div>
-
-                        {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm sm:text-base font-semibold text-text-bright mb-1 line-clamp-2">
-                            {idx + 1}. {video.title}
-                          </h3>
-                          <p className="text-xs text-text-muted mb-1">
-                            Chapter: {chapterName}
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-text-muted">{video.language}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              video.videoType === "ANIMATED_VIDEO"
-                                ? "bg-accent/10 text-accent"
-                                : "bg-secondary/10 text-secondary-light"
-                            }`}>
-                              {video.videoType === "ANIMATED_VIDEO" ? "3D Animation" : "Lecture"}
-                            </span>
-                          </div>
+                          <h3 className="text-xs sm:text-sm font-semibold text-text-bright mb-0.5 line-clamp-2">{idx + 1}. {video.title}</h3>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${video.videoType === "ANIMATED_VIDEO" ? "bg-accent/10 text-accent" : "bg-secondary/10 text-secondary-light"}`}>{video.videoType === "ANIMATED_VIDEO" ? "3D Animation" : "Lecture"}</span>
                         </div>
-
-                        {/* Arrow */}
-                        {video.hasAccess && (
-                          <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-accent transition-colors shrink-0" />
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {/* Notes Tab */}
-            {activeTab === "notes" && (
-              <div className="space-y-3">
-                {notes.length === 0 ? (
-                  <div className="rounded-2xl border border-border bg-card p-12 text-center">
-                    <FileText className="w-10 h-10 text-emerald-400/40 mx-auto mb-3" />
-                    <h3 className="text-lg font-semibold text-text-bright mb-1">No Notes Yet</h3>
-                    <p className="text-text-muted text-sm">Notes for this chapter will be added soon.</p>
-                  </div>
-                ) : (
-                  notes.map((note, idx) => (
-                    <div
-                      key={note.id}
-                      className={`flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 ${
-                        note.hasAccess ? "hover:border-emerald-500/30 hover:bg-card-hover" : "opacity-70"
-                      }`}
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-6 h-6 text-emerald-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-text-bright mb-0.5">{idx + 1}. {note.title}</h3>
-                        <p className="text-xs text-text-muted">PDF Notes</p>
-                      </div>
-                      {note.hasAccess ? (
-                        <a href={note.fileUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4 mr-1" />
-                            Download
-                          </Button>
-                        </a>
-                      ) : (
-                        <Lock className="w-5 h-5 text-text-muted shrink-0" />
-                      )}
+                      </div>);
+                  }))}
+                </div>
+              )}
+              {activeTab === "notes" && (
+                <div className="space-y-3">
+                  {notes.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-card p-10 text-center"><FileText className="w-10 h-10 text-emerald-400/40 mx-auto mb-3" /><h3 className="text-lg font-semibold text-text-bright mb-1">No Notes Yet</h3><p className="text-text-muted text-sm">Notes for this chapter will be added soon.</p></div>
+                  ) : (notes.map((note, idx) => (
+                    <div key={note.id} className={`flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 ${note.hasAccess ? "hover:border-emerald-500/30 hover:bg-card-hover" : "opacity-70"}`}>
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0"><FileText className="w-6 h-6 text-emerald-400" /></div>
+                      <div className="flex-1 min-w-0"><h3 className="text-sm font-semibold text-text-bright mb-0.5">{idx + 1}. {note.title}</h3><p className="text-xs text-text-muted">PDF Notes</p></div>
+                      {note.hasAccess ? (<a href={note.fileUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><Button variant="outline" size="sm"><Download className="w-4 h-4 mr-1" />Download</Button></a>) : (<Lock className="w-5 h-5 text-text-muted shrink-0" />)}
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* Quiz Tab */}
-            {activeTab === "quiz" && (
-              <div>
-                {questions.length === 0 ? (
-                  <div className="rounded-2xl border border-border bg-card p-12 text-center">
-                    <HelpCircle className="w-10 h-10 text-energy/40 mx-auto mb-3" />
-                    <h3 className="text-lg font-semibold text-text-bright mb-1">No Quiz Yet</h3>
-                    <p className="text-text-muted text-sm">Quiz questions for this chapter will be added soon.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-6 mb-8">
-                      {questions.map((q, idx) => (
-                        <div key={q.id} className="rounded-xl border border-border bg-card p-5">
-                          <p className="text-sm font-semibold text-text-bright mb-4">
-                            Q{idx + 1}. {q.question}
-                          </p>
-                          <div className="grid sm:grid-cols-2 gap-3">
-                            {["A", "B", "C", "D"].map((opt) => {
-                              const optionKey = `option${opt}` as keyof Question;
-                              const isSelected = selectedAnswers[q.id] === opt;
-                              const isCorrect = showResults && q.correctAnswer === opt;
-                              const isWrong = showResults && isSelected && q.correctAnswer !== opt;
-
-                              return (
-                                <button
-                                  key={opt}
-                                  onClick={() => {
-                                    if (!showResults) {
-                                      setSelectedAnswers((prev) => ({ ...prev, [q.id]: opt }));
-                                    }
-                                  }}
-                                  className={`text-left px-4 py-3 rounded-lg border text-sm transition-all ${
-                                    isCorrect
-                                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                                      : isWrong
-                                      ? "border-danger bg-danger/10 text-danger"
-                                      : isSelected
-                                      ? "border-accent bg-accent/10 text-accent"
-                                      : "border-border hover:border-accent/30 text-text-muted hover:text-text-bright"
-                                  }`}
-                                >
-                                  <span className="font-semibold mr-2">{opt}.</span>
-                                  {q[optionKey]}
-                                  {isCorrect && <CheckCircle2 className="w-4 h-4 inline ml-2 text-emerald-400" />}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {showResults && q.solution && (
-                            <div className="mt-3 p-3 rounded-lg bg-surface-light border border-border">
-                              <p className="text-xs text-text-muted">
-                                <span className="font-semibold text-accent">Solution:</span> {q.solution}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-center gap-4">
-                      {!showResults ? (
-                        <Button onClick={() => setShowResults(true)}>
-                          Submit Quiz
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowResults(false);
-                            setSelectedAnswers({});
-                          }}
-                        >
-                          Retry Quiz
-                        </Button>
-                      )}
-                    </div>
-                    {showResults && (
-                      <div className="text-center mt-4">
-                        <p className="text-text-bright font-semibold">
-                          Score: {questions.filter((q) => selectedAnswers[q.id] === q.correctAnswer).length} / {questions.length}
-                        </p>
+                  )))}
+                </div>
+              )}
+              {activeTab === "quiz" && (
+                <div>
+                  {questions.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-card p-10 text-center"><HelpCircle className="w-10 h-10 text-energy/40 mx-auto mb-3" /><h3 className="text-lg font-semibold text-text-bright mb-1">No Quiz Yet</h3><p className="text-text-muted text-sm">Quiz questions for this chapter will be added soon.</p></div>
+                  ) : (<>
+                    <div className="space-y-6 mb-8">{questions.map((q, idx) => (
+                      <div key={q.id} className="rounded-xl border border-border bg-card p-5">
+                        <p className="text-sm font-semibold text-text-bright mb-4">Q{idx + 1}. {q.question}</p>
+                        <div className="grid sm:grid-cols-2 gap-3">{["A", "B", "C", "D"].map((opt) => {
+                          const optionKey = `option${opt}` as keyof Question;
+                          const isSelected = selectedAnswers[q.id] === opt;
+                          const isCorrect = showResults && q.correctAnswer === opt;
+                          const isWrong = showResults && isSelected && q.correctAnswer !== opt;
+                          return (<button key={opt} onClick={() => { if (!showResults) setSelectedAnswers((prev) => ({ ...prev, [q.id]: opt })); }} className={`text-left px-4 py-3 rounded-lg border text-sm transition-all ${isCorrect ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : isWrong ? "border-danger bg-danger/10 text-danger" : isSelected ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/30 text-text-muted hover:text-text-bright"}`}><span className="font-semibold mr-2">{opt}.</span>{q[optionKey]}{isCorrect && <CheckCircle2 className="w-4 h-4 inline ml-2 text-emerald-400" />}</button>);
+                        })}</div>
+                        {showResults && q.solution && (<div className="mt-3 p-3 rounded-lg bg-surface-light border border-border"><p className="text-xs text-text-muted"><span className="font-semibold text-accent">Solution:</span> {q.solution}</p></div>)}
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </>
-        )}
+                    ))}</div>
+                    <div className="flex justify-center gap-4">{!showResults ? (<Button onClick={() => setShowResults(true)}>Submit Quiz<ChevronRight className="w-4 h-4 ml-1" /></Button>) : (<Button variant="outline" onClick={() => { setShowResults(false); setSelectedAnswers({}); }}>Retry Quiz</Button>)}</div>
+                    {showResults && (<div className="text-center mt-4"><p className="text-text-bright font-semibold">Score: {questions.filter((q) => selectedAnswers[q.id] === q.correctAnswer).length} / {questions.length}</p></div>)}
+                  </>)}
+                </div>
+              )}
+            </>)}
+          </div>
+        </div>
       </div>
       <Footer />
     </main>
