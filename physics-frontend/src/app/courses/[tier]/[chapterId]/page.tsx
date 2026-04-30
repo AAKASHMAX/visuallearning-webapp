@@ -247,38 +247,28 @@ export default function ChapterContentPage() {
   return (
     <main className="min-h-screen bg-primary">
       <Navbar />
-      <div className="pt-28 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back */}
-        <Link
-          href={`/courses/${tier}`}
-          className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Back to Chapters</span>
-        </Link>
-
-        {/* Chapter Header */}
-        <div className="rounded-2xl border border-border bg-gradient-to-r from-accent/10 via-card to-secondary/10 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-accent font-semibold uppercase tracking-wider mb-1">
-                {tier === "free" ? "Free Course" : tier === "basic" ? "Basic Course" : tier === "bridge" ? "Bridge Course" : "Advance Course"}
+      <div className="pt-20 pb-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back + Chapter Header (compact inline) */}
+        <div className="flex items-center gap-4 mb-3">
+          <Link
+            href={`/courses/${tier}`}
+            className="inline-flex items-center gap-1.5 text-text-muted hover:text-accent transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm hidden sm:inline">Back</span>
+          </Link>
+          <div className="rounded-xl border border-border bg-gradient-to-r from-accent/10 via-card to-secondary/10 px-4 py-2.5 flex-1 flex items-center justify-between min-w-0">
+            <div className="min-w-0">
+              <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">
+                {tier === "free" ? "Free" : tier === "basic" ? "Basic" : tier === "bridge" ? "Bridge" : "Advance"}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-bright">
+              <h1 className="text-base sm:text-lg font-bold text-text-bright truncate">
                 {chapterName || "Loading..."}
               </h1>
             </div>
-            <div className="hidden sm:flex flex-col items-end gap-2">
-              <div className="flex items-center gap-4 text-sm text-text-muted">
-                <span className="flex items-center gap-1.5">
-                  <Play className="w-4 h-4 text-accent" />
-                  {allVideos.length} Videos
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-emerald-400" />
-                  {notes.length} Notes
-                </span>
-              </div>
+            <div className="hidden sm:flex items-center gap-3 text-xs text-text-muted shrink-0 ml-4">
+              <span className="flex items-center gap-1"><Play className="w-3.5 h-3.5 text-accent" />{allVideos.length} Videos</span>
+              <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-emerald-400" />{notes.length} Notes</span>
             </div>
           </div>
         </div>
