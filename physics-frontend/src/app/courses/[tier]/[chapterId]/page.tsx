@@ -52,10 +52,13 @@ interface Question {
 
 type Tab = "videos" | "notes" | "quiz";
 
-function getYoutubeThumbnail(url: string): string {
-  // Vimeo doesn't have simple thumbnail URLs — show Play icon placeholder
-  if (url.includes("vimeo.com")) return "";
-
+function getYoutubeThumbnail(url: string, vimeoCache?: Record<string, string>): string {
+  // Check Vimeo cache
+  if (url.includes("vimeo.com")) {
+    const match = url.match(/vimeo\.com\/(\d+)/);
+    if (match && vimeoCache?.[match[1]]) return vimeoCache[match[1]];
+    return "";
+  }
   let videoId = "";
   try {
     if (url.includes("youtu.be/")) {
@@ -126,6 +129,9 @@ export default function ChapterContentPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
 
+  // Vimeo thumbnail cache
+  const [vimeoThumbnails, setVimeoThumbnails] = useState<Record<string, string>>({});
+
   useEffect(() => {
     hydrate();
   }, [hydrate]);
@@ -182,6 +188,36 @@ export default function ChapterContentPage() {
       setSelectedVideo(null);
     }
   }, [language, allVideos]);
+
+  // Fetch Vimeo thumbnails
+  useEffect(() => {
+    if (allVideos.length === 0) return;
+    const vimeoIds = new Set<string>();
+    for (const v of allVideos) {
+      if (v.youtubeUrl?.includes("vimeo.com")) {
+        const match = v.youtubeUrl.match(/vimeo\.com\/(\d+)/);
+        if (match) vimeoIds.add(match[1]);
+      }
+    }
+    if (vimeoIds.size === 0) return;
+
+    const fetchThumbnails = async () => {
+      const cache: Record<string, string> = {};
+      await Promise.all(
+        Array.from(vimeoIds).map(async (id) => {
+          try {
+            const res = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${id}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.thumbnail_url) cache[id] = data.thumbnail_url;
+            }
+          } catch {}
+        })
+      );
+      setVimeoThumbnails((prev) => ({ ...prev, ...cache }));
+    };
+    fetchThumbnails();
+  }, [allVideos]);
 
   async function loadQuiz() {
     try {
@@ -348,7 +384,7 @@ export default function ChapterContentPage() {
                   </div>
                 ) : (
                   videos.map((video, idx) => {
-                    const thumbnail = getYoutubeThumbnail(video.youtubeUrl);
+                    const thumbnail = getYoutubeThumbnail(video.youtubeUrl, vimeoThumbnails);
                     return (
                       <div
                         key={video.id}
