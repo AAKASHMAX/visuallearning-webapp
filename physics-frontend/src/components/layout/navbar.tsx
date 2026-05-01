@@ -74,6 +74,13 @@ export function Navbar() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
+                {user?.role === "ADMIN" && (
+                  <Link href="/admin/dashboard">
+                    <Button variant="outline" size="sm" className="border-accent text-accent hover:bg-accent hover:text-primary">
+                      Admin Panel
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm">
                     <BookOpen className="w-4 h-4 mr-2" />
@@ -153,6 +160,13 @@ export function Navbar() {
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
                 {isAuthenticated ? (
                   <>
+                    {user?.role === "ADMIN" && (
+                      <Link href="/admin/dashboard">
+                        <Button variant="outline" size="sm" className="w-full border-accent text-accent hover:bg-accent hover:text-primary">
+                          Admin Panel
+                        </Button>
+                      </Link>
+                    )}
                     <Link href="/dashboard">
                       <Button variant="outline" size="sm" className="w-full">
                         Dashboard
