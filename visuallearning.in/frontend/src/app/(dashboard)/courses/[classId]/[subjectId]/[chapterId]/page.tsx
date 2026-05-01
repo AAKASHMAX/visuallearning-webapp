@@ -225,25 +225,20 @@ export default function UnifiedChapterPage() {
                         }}
                         className={`group flex items-center gap-4 rounded-xl border p-3.5 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
                       >
-                        <div className="relative w-28 h-16 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative w-36 h-20 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
                             <Clock className="w-6 h-6 text-gray-300" />
                           ) : video.locked ? (
                             <Lock className="w-6 h-6 text-gray-400" />
                           ) : video.vimeoVideoId ? (
-                            <>
                               <img 
                                 src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`} 
                                 alt={video.title}
                                 className="absolute inset-0 w-full h-full object-cover"
                               />
-                              <div className={`relative z-10 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
-                                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                              </div>
-                            </>
                           ) : (
-                            <div className={`w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
-                              <Play className="w-4.5 h-4.5 fill-current ml-0.5" />
+                            <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
                             </div>
                           )}
                           {video.isFree && <span className="absolute top-0 right-0 px-1.5 py-0.5 bg-success text-[9px] font-bold text-white rounded-bl-lg z-20">FREE</span>}

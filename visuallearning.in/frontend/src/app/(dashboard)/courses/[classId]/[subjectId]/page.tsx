@@ -138,12 +138,12 @@ export default function SubjectChaptersPage() {
           <p className="text-text-muted">Chapters for this subject will be available soon.</p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="flex flex-col gap-5">
           {chapters.map((chapter, idx) => {
             const ChapterIcon = getChapterIcon(chapter.name);
 
             return (
-              <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
+              <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`} className="block">
                 <div className="group flex items-center gap-4 rounded-xl border border-[#05BFDB]/30 p-4 transition-all duration-300 hover:border-[#05BFDB]/60 hover:-translate-y-0.5 cursor-pointer" style={{ background: 'linear-gradient(135deg, rgba(5,191,219,0.08) 0%, rgba(5,191,219,0.18) 50%, rgba(5,191,219,0.08) 100%)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(5,191,219,0.1), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
                   <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #05BFDB, #088395)' }}>
                     <ChapterIcon className="w-7 h-7 text-white" />
