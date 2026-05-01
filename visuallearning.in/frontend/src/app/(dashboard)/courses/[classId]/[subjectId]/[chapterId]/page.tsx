@@ -188,17 +188,17 @@ export default function UnifiedChapterPage() {
 
         {/* Tabs & Content List Section */}
         <div className="w-full lg:w-[40%] min-w-0">
-          <div className="flex border-b border-gray-200 mb-6">
+          <div className="flex border-b border-gray-200 mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all ${activeTab === tab.key ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === ("quiz_active" as any) && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-gray-700"}`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-1 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -208,12 +208,18 @@ export default function UnifiedChapterPage() {
 
           <div className="space-y-3 max-h-[60vh] lg:max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
             {/* Videos List */}
-            {activeTab === "videos" && (
+            {(activeTab === "videos" || (activeTab as any) === "quiz_active") && activeTab !== "quiz_active" && (
               <>
                 {filteredVideos.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
                     <Play className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">No videos available in {language === "HINDI" ? "Hindi" : "English"}</p>
+                    <button 
+                      onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
+                      className="text-xs text-accent font-bold mt-2 hover:underline"
+                    >
+                      Switch to {language === "HINDI" ? "English" : "Hindi"}
+                    </button>
                   </div>
                 ) : (
                   filteredVideos.map((video, idx) => {
@@ -228,7 +234,7 @@ export default function UnifiedChapterPage() {
                           if (video.locked) { setShowLockedModal(true); return; }
                           setSelectedVideo(video);
                         }}
-                        className={`group flex items-center gap-4 rounded-xl border p-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-gray-200 bg-gray-50/50 opacity-80" : "border-gray-200 bg-white hover:border-accent/40 hover:shadow-sm cursor-pointer"}`}
+                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-gray-200 bg-gray-50/50 opacity-80" : "border-gray-200 bg-white hover:border-accent/40 hover:shadow-sm cursor-pointer"}`}
                       >
                         <div className="relative w-24 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
