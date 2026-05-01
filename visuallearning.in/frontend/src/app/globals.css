@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1e3a5f;
-  --color-primary-light: #2a4a72;
-  --color-primary-dark: #142942;
-  --color-accent: #f59e0b;
-  --color-accent-light: #fbbf24;
-  --color-accent-dark: #d97706;
-  --color-surface: #f8fafc;
+  --color-primary: #4f46e5;
+  --color-primary-light: #6366f1;
+  --color-primary-dark: #3730a3;
+  --color-accent: #8b5cf6;
+  --color-accent-light: #a78bfa;
+  --color-accent-dark: #7c3aed;
+  --color-surface: #f5f3ff;
   --color-surface-dark: #0f172a;
   --color-card: #ffffff;
   --color-card-dark: #1e293b;
   --color-muted: #64748b;
   
-  /* Physics colors */
-  --color-secondary: #7c3aed;
-  --color-secondary-light: #a78bfa;
+  /* Education Secondary colors */
+  --color-secondary: #0ea5e9;
+  --color-secondary-light: #38bdf8;
   --color-energy: #f59e0b;
   --color-danger: #ef4444;
   
