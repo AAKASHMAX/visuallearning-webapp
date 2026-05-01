@@ -21,7 +21,7 @@ const app = express();
 // Security & parsing
 app.use(helmet());
 app.use(cors({
-  origin: [config.frontendUrl, "https://visuallearning-webapp.vercel.app", "https://visuallearning.in", "https://www.visuallearning.in", "https://physics.visuallearning.in", "https://physics-visuallearning.vercel.app"],
+  origin: [config.frontendUrl, "http://localhost:3000", "https://visuallearning-webapp.vercel.app", "https://visuallearning.in", "https://www.visuallearning.in", "https://physics.visuallearning.in", "https://physics-visuallearning.vercel.app"],
   credentials: true,
 }));
 app.use(compression({ level: 6 }));
