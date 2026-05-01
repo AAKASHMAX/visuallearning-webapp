@@ -144,8 +144,8 @@ export default function SubjectChaptersPage() {
 
             return (
               <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
-                <div className="group flex items-center gap-4 rounded-xl border border-card-border bg-white p-4 card-shadow transition-all duration-300 hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer">
-                  <div className="relative w-14 h-14 rounded-lg bg-primary overflow-hidden shrink-0 flex items-center justify-center">
+                <div className="group flex items-center gap-4 rounded-xl border border-[#05BFDB]/30 p-4 transition-all duration-300 hover:border-[#05BFDB]/60 hover:-translate-y-0.5 cursor-pointer" style={{ background: 'linear-gradient(135deg, rgba(5,191,219,0.08) 0%, rgba(5,191,219,0.18) 50%, rgba(5,191,219,0.08) 100%)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(5,191,219,0.1), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #05BFDB, #088395)' }}>
                     <ChapterIcon className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -154,7 +154,7 @@ export default function SubjectChaptersPage() {
                     </h3>
                     <div className="flex items-center gap-4 mt-1 text-xs text-text-muted font-medium">
                       <span className="flex items-center gap-1">
-                        <Play className="w-3 h-3 text-accent" />
+                        <Play className="w-3 h-3 text-[#05BFDB]" />
                         {chapter._count?.videos || 0} Videos
                       </span>
                       <span className="flex items-center gap-1">
@@ -162,12 +162,12 @@ export default function SubjectChaptersPage() {
                         {chapter._count?.notes || 0} Notes
                       </span>
                       <span className="flex items-center gap-1">
-                        <Brain className="w-3 h-3 text-primary" />
+                        <Brain className="w-3 h-3 text-[#05BFDB]" />
                         {chapter._count?.questions || 0} Quiz
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-accent shrink-0 transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-[#05BFDB]/50 group-hover:text-[#05BFDB] shrink-0 transition-colors" />
                 </div>
               </Link>
             );
