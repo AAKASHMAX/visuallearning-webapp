@@ -230,12 +230,23 @@ export default function UnifiedChapterPage() {
                             <Clock className="w-5 h-5 text-gray-300" />
                           ) : video.locked ? (
                             <Lock className="w-5 h-5 text-gray-400" />
+                          ) : video.vimeoVideoId ? (
+                            <>
+                              <img 
+                                src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`} 
+                                alt={video.title}
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                              <div className={`relative z-10 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
+                                <Play className="w-3 h-3 fill-current ml-0.5" />
+                              </div>
+                            </>
                           ) : (
                             <div className={`w-8 h-8 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
                               <Play className="w-4 h-4 fill-current ml-0.5" />
                             </div>
                           )}
-                          {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-success text-[8px] font-bold text-white rounded-bl-lg">FREE</span>}
+                          {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-success text-[8px] font-bold text-white rounded-bl-lg z-20">FREE</span>}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-heading"}`}>
