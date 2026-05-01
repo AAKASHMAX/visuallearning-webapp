@@ -12,10 +12,18 @@
   --color-card: #ffffff;
   --color-card-dark: #1e293b;
   --color-muted: #64748b;
+  
+  /* Physics colors */
+  --color-secondary: #7c3aed;
+  --color-secondary-light: #a78bfa;
+  --color-energy: #f59e0b;
+  --color-danger: #ef4444;
+  
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--color-surface);
   color: #1e293b;
 }
@@ -30,95 +38,20 @@ body {
   pointer-events: auto;
 }
 
-/* Fade-in animation for hero slideshow */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Base styles */
+html {
+  scroll-behavior: smooth;
 }
-.animate-fade-in {
-  animation: fade-in 0.8s ease-out;
-}
-
-/* Sliding tagline animation */
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(60px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-60px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.animate-slide-right { animation: slide-in-right 0.7s ease-out both; }
-.animate-slide-left { animation: slide-in-left 0.7s ease-out both; }
-.animate-float { animation: float 3s ease-in-out infinite; }
-
-/* Stagger delays for taglines */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-
-/* Gradient text shimmer */
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-.text-shimmer {
-  background-size: 200% auto;
-  animation: shimmer 3s linear infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Pulse glow for live class */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
-  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
-}
-.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-}
 
-/* Base styles */
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background-color: var(--color-primary);
-  color: var(--color-text);
-  font-family: var(--font-body);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent);
-}
-
-/* Animations */
+/* Keyframes */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -127,24 +60,29 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-40px); }
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(60px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(40px); }
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-60px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.6); }
+  0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
 }
 
 @keyframes orbit {
@@ -157,64 +95,7 @@ body {
   to { transform: rotate(0deg) translateX(45px) rotate(0deg); }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-@keyframes particle-float {
-  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
-}
-
-@keyframes wave {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.8); }
-}
-
-.animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
-.animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
-.animate-slide-in-left { animation: slide-in-left 0.6s ease-out forwards; }
-.animate-slide-in-right { animation: slide-in-right 0.6s ease-out forwards; }
-.animate-float { animation: float 3s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-.animate-orbit { animation: orbit 8s linear infinite; }
-.animate-orbit-reverse { animation: orbit-reverse 6s linear infinite; }
-.animate-shimmer {
-  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary), var(--color-accent));
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3s linear infinite;
-}
-
-/* 3D Carousel */
-@keyframes carousel-rotate {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
-}
-
-.carousel-scene {
-  perspective: 1200px;
-  perspective-origin: 50% 50%;
-}
-
-.carousel-ring {
-  transform-style: preserve-3d;
-  animation: carousel-rotate 25s linear infinite;
-}
-
-.carousel-ring:hover {
-  animation-play-state: paused;
-}
-
-.carousel-card {
-  backface-visibility: hidden;
-}
-
-/* Chapter card animations */
+/* Chapter animation specific keyframes */
 @keyframes motionBall {
   0%, 100% { left: 10%; }
   50% { left: 70%; }
@@ -332,12 +213,28 @@ body {
   50% { opacity: 0.8; transform: translateX(4px); }
 }
 
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-600 { animation-delay: 600ms; }
+/* Utility Classes */
+.animate-fade-in { animation: fade-in 0.8s ease-out; }
+.animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+.animate-slide-right { animation: slide-in-right 0.7s ease-out both; }
+.animate-slide-left { animation: slide-in-left 0.7s ease-out both; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+
+.text-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 /* Glass morphism */
 .glass {
