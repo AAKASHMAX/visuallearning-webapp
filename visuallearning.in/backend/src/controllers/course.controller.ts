@@ -155,14 +155,20 @@ export async function getVideos(req: Request, res: Response) {
       orderBy: { order: "asc" },
     });
 
-    // Filter in memory instead of multiple DB calls
-    let videos = allChapterVideos.filter((v) => v.language === language);
+    // Filter in memory
+    let videos = [];
     let usingFallback = false;
 
-    if (videos.length === 0 && language !== "ENGLISH") {
-      videos = allChapterVideos.filter((v) => v.language === "ENGLISH");
-      usingFallback = true;
+    if (language === "all") {
+      videos = allChapterVideos;
+    } else {
+      videos = allChapterVideos.filter((v) => v.language === language);
+      if (videos.length === 0 && language !== "ENGLISH") {
+        videos = allChapterVideos.filter((v) => v.language === "ENGLISH");
+        usingFallback = true;
+      }
     }
+
 
     // Include Coming Soon placeholders from English
     if (language !== "ENGLISH" && !usingFallback) {
