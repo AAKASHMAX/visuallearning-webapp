@@ -1,0 +1,602 @@
+[
+  {
+    "name": "Units and Measurements",
+    "chapterNo": 1,
+    "sequence": 1,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Units of measurement",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "2.Systems of units",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.SI units, fundamental and derived units",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.Significant figures",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.Dimensions of physical quantities",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "6.Dimensional analysis and its applications.",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Motion in a Straight Line",
+    "chapterNo": 2,
+    "sequence": 2,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Motion and its type",
+        "videoIdEnglish": "KfqkMtZLrBQ",
+        "videoIdHindi": "IeVXkgyWiYA"
+      },
+      {
+        "topicName": "2.Frame of reference, and 1,2,3 dimentional motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.Motion in a straight line",
+        "videoIdEnglish": "IfwKLPXr5Vo",
+        "videoIdHindi": "UXazo9CVbb8"
+      },
+      {
+        "topicName": "4.Uniform and nonuniform motion",
+        "videoIdEnglish": "Su1fZ_zQV68",
+        "videoIdHindi": "Kv5Njh_4lrE"
+      },
+      {
+        "topicName": "5.Formula for uniformly acceleracted motion",
+        "videoIdEnglish": "gKA4q-WYPS8",
+        "videoIdHindi": "VL_fgjsSC8M"
+      }
+    ]
+  },
+  {
+    "name": "Motion in a Plane",
+    "chapterNo": 3,
+    "sequence": 3,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Scalar and vector quantities",
+        "videoIdEnglish": "E1-DfKmaOHI",
+        "videoIdHindi": "Q-OUNF1jZn8"
+      },
+      {
+        "topicName": "2.Position and displacement vectors",
+        "videoIdEnglish": "eJcRvYfPiOE",
+        "videoIdHindi": "QSTJYXIJ47A"
+      },
+      {
+        "topicName": "3.Vector and its types",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.Resolution of a vector in a plane",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.Rectangular components",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "6.Scalar and Vector product of vectors.",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "7.Projectile motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": "o_TTvaGzTT0"
+      },
+      {
+        "topicName": "8.Uniform circular motion.",
+        "videoIdEnglish": "rhrEUsYPnsE",
+        "videoIdHindi": "xgpvUu5VVWo"
+      }
+    ]
+  },
+  {
+    "name": "Laws of Motion",
+    "chapterNo": 4,
+    "sequence": 4,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.concept of force",
+        "videoIdEnglish": "0-1NgrGpS4g",
+        "videoIdHindi": "5fZb9t1QSZA"
+      },
+      {
+        "topicName": "2.Inertia",
+        "videoIdEnglish": "XSV2fns2BYo",
+        "videoIdHindi": "fvRWSYx68ac"
+      },
+      {
+        "topicName": "3.Newton's first law of motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": "1t3xE_bljpI"
+      },
+      {
+        "topicName": "4.momentum and Newton's second law of motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.impulse",
+        "videoIdEnglish": "6rObZIi9YgE",
+        "videoIdHindi": "_QxwGO7-W7E"
+      },
+      {
+        "topicName": "6.Friction",
+        "videoIdEnglish": "sJL1ECHxNW4",
+        "videoIdHindi": "6kWBWp__m1s"
+      },
+      {
+        "topicName": "7.Types of friction",
+        "videoIdEnglish": "pTgdAZIyZNM",
+        "videoIdHindi": "GIWHANKV7PA"
+      },
+      {
+        "topicName": "8.laws of friction,rolling friction, lubrication.",
+        "videoIdEnglish": "GCMyKfzxsyM",
+        "videoIdHindi": "jIN7NU8GC6U"
+      },
+      {
+        "topicName": "9.Centripetal force, examples of circular  motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Work, Energy and Power",
+    "chapterNo": 5,
+    "sequence": 5,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Work and its nature",
+        "videoIdEnglish": "",
+        "videoIdHindi": "W1iXNIeEsRE"
+      },
+      {
+        "topicName": "2.Conservative and non conservative force",
+        "videoIdEnglish": "geIxH3xAW5M",
+        "videoIdHindi": "t0X-9uLPH0Y"
+      },
+      {
+        "topicName": "3.kinetic energy",
+        "videoIdEnglish": "q1oEiEjODAQ",
+        "videoIdHindi": "i5qttuMwsk4"
+      },
+      {
+        "topicName": "4.Potential energy",
+        "videoIdEnglish": "Y7LSB8cXzE8",
+        "videoIdHindi": "EKbu_dB49rg"
+      },
+      {
+        "topicName": "5.potential energy of a spring",
+        "videoIdEnglish": "",
+        "videoIdHindi": "CXDW6BXFwuA"
+      },
+      {
+        "topicName": "6.elastic and inelastic collisions in one and two dimensions",
+        "videoIdEnglish": "",
+        "videoIdHindi": "lnHaNssJXOU"
+      }
+    ]
+  },
+  {
+    "name": "System of Particles and Rotational Motion",
+    "chapterNo": 6,
+    "sequence": 6,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Centre of mass of a two-particle system",
+        "videoIdEnglish": "",
+        "videoIdHindi": "ENWqHiwX32U"
+      },
+      {
+        "topicName": "2.Centre of mass of a rigid body",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.Moment of a force",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.Torque",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.Angular momentum",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "6.law of conservation of angular momentum and its applications.",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "7.Moment of inertia",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "8.radius of gyration",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Gravitation",
+    "chapterNo": 7,
+    "sequence": 7,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Kepler's laws of planetary motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": "GRDVFxXPQng"
+      },
+      {
+        "topicName": "2.universal law of gravitation.",
+        "videoIdEnglish": "",
+        "videoIdHindi": "YhVLXsG_UFk"
+      },
+      {
+        "topicName": "3.Acceleration due to gravity",
+        "videoIdEnglish": "",
+        "videoIdHindi": "AdpTcRu00ec"
+      },
+      {
+        "topicName": "4.Gravitational potential energy and gravitational potential",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.escape speed, orbital velocity of a satellite.",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Mechanical Properties of Solids",
+    "chapterNo": 8,
+    "sequence": 8,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Elasticity",
+        "videoIdEnglish": "",
+        "videoIdHindi": "5Xmkjcn5xJs"
+      },
+      {
+        "topicName": "2.Stress",
+        "videoIdEnglish": "",
+        "videoIdHindi": "rPipikrpUNI"
+      },
+      {
+        "topicName": "3.Types of stress",
+        "videoIdEnglish": "",
+        "videoIdHindi": "0aYxeE3Yj9E"
+      },
+      {
+        "topicName": "4.Strain",
+        "videoIdEnglish": "",
+        "videoIdHindi": "DHI1sZ8ZyTk"
+      },
+      {
+        "topicName": "5.Stress-strain relationship, Hooke's law",
+        "videoIdEnglish": "",
+        "videoIdHindi": "YjG_12xpUwQ"
+      },
+      {
+        "topicName": "6.YoungÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s modulus, bulk modulus, shear modulus of rigidity",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "7.Poisson's ratio; elastic energy",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Mechanical Properties of Fluids",
+    "chapterNo": 9,
+    "sequence": 9,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Hydrostatic Paradox",
+        "videoIdEnglish": "",
+        "videoIdHindi": "NBB0fammv5s"
+      },
+      {
+        "topicName": "2.Pacals law",
+        "videoIdEnglish": "",
+        "videoIdHindi": "IElDYcbB91I"
+      },
+      {
+        "topicName": "3.Hydraulic Lift",
+        "videoIdEnglish": "",
+        "videoIdHindi": "8oe5mtaTG6Q"
+      },
+      {
+        "topicName": "4.Torricellil Experiment",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.Buoyancy",
+        "videoIdEnglish": "",
+        "videoIdHindi": "jHAFDkZ1KMI"
+      },
+      {
+        "topicName": "6.Archmiedes Principle",
+        "videoIdEnglish": "",
+        "videoIdHindi": "lLPTYgumF3A"
+      },
+      {
+        "topicName": "7.Surface energy and surface tension",
+        "videoIdEnglish": "",
+        "videoIdHindi": "Hl_h1GDYlQc"
+      },
+      {
+        "topicName": "8.Capillarity",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "9.Viscocity",
+        "videoIdEnglish": "",
+        "videoIdHindi": "Y65aLU_D7S0"
+      },
+      {
+        "topicName": "10.Poiceulis and Stocks law",
+        "videoIdEnglish": "",
+        "videoIdHindi": "0ImLG5LBr0M"
+      },
+      {
+        "topicName": "11.Streamline, laminar , turbulent flow",
+        "videoIdEnglish": "",
+        "videoIdHindi": "vXI_y4hBdUc"
+      },
+      {
+        "topicName": "12.Bernoulli's theorem",
+        "videoIdEnglish": "",
+        "videoIdHindi": "KrXdI_HTwTk"
+      }
+    ]
+  },
+  {
+    "name": "Thermal Properties of Matter",
+    "chapterNo": 10,
+    "sequence": 10,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Heat, temperature",
+        "videoIdEnglish": "",
+        "videoIdHindi": "BtqFd8m97QU"
+      },
+      {
+        "topicName": "2.thermal expansion of solids, liquids and gases",
+        "videoIdEnglish": "",
+        "videoIdHindi": "VIsqOF1r1ZE"
+      },
+      {
+        "topicName": "3.specific heat capacity; Cp, Cv - calorimetry",
+        "videoIdEnglish": "",
+        "videoIdHindi": "zryLGOy76Qk"
+      },
+      {
+        "topicName": "4.specific heat capacity of gas",
+        "videoIdEnglish": "",
+        "videoIdHindi": "yG8qRXf4Btw"
+      },
+      {
+        "topicName": "5.change of state - latent heat capacity",
+        "videoIdEnglish": "",
+        "videoIdHindi": "bCWh0nPRtks"
+      },
+      {
+        "topicName": "6.Heat transfer-conduction, convection and radiation",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "7.thermal conductivity,",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Thermodynamics",
+    "chapterNo": 11,
+    "sequence": 11,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Thermal equilibrium and definition of temperature",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "2.zeroth law of thermodynamics",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.heat, work and internal energy",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.First law of thermodynamics,",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.Second law of thermodynamics",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "6.isothermal, adiabatic, reversible, irreversible, and cyclic processes.",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Kinetic Theory",
+    "chapterNo": 12,
+    "sequence": 12,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Equation of state of a perfect gas",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "2.work done in compressing a gas",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.Kinetic theory of gases",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.degrees of freedom,",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.specific heat capacities of gases",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Oscillations",
+    "chapterNo": 13,
+    "sequence": 13,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Periodic motion - time period, frequency, displacement",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "2.Simple harmonic motion (S.H.M) and its equations of motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.Kinetic and potential energies; simple pendulum",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  },
+  {
+    "name": "Waves",
+    "chapterNo": 14,
+    "sequence": 14,
+    "subjectId": 1,
+    "notesPdf": "",
+    "dbSubjectId": "cmmkpxm6f005tuu34cy4u9n0r",
+    "topics": [
+      {
+        "topicName": "1.Wave motion",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "2.Transverse and longitudinal waves",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "3.speed of travelling wave",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "4.principle of superposition of waves",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      },
+      {
+        "topicName": "5.reflection of waves",
+        "videoIdEnglish": "",
+        "videoIdHindi": ""
+      }
+    ]
+  }
+]

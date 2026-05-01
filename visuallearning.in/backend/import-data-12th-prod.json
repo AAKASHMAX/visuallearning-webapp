@@ -1,0 +1,692 @@
+[
+  {
+    "name": "Electric Charges and Fields",
+    "chapterNo": 1,
+    "sequence": 1,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F1%3A%20Electric%20Charges%20and%20Fields%2F1.%20Electric%20Charges%20and%20Fields%20notes.pdf?alt=media&token=11678377-9a21-452f-b7b8-23e9aa857e77",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Electric charges",
+        "videoIdEnglish": "JiA7iUEFEwU",
+        "videoIdHindi": "xfo8ZGZG4V8"
+      },
+      {
+        "topicName": "2.Conservation of charge",
+        "videoIdEnglish": "IsIrGh2zgJA",
+        "videoIdHindi": "SmscUY5rGUk"
+      },
+      {
+        "topicName": "3.Coulomb's law",
+        "videoIdEnglish": "RkPcBdstmKY",
+        "videoIdHindi": "52MiJSa1uFE"
+      },
+      {
+        "topicName": "4.Coulomb's law in vector form",
+        "videoIdEnglish": "2L0i56Iq-ds",
+        "videoIdHindi": "4AWBa-QrFsg"
+      },
+      {
+        "topicName": "5.Superposition principal",
+        "videoIdEnglish": "U_ss1PHtNlQ",
+        "videoIdHindi": "3K9CSq7tVVk"
+      },
+      {
+        "topicName": "6.Electric field & Electric fields line",
+        "videoIdEnglish": "DZX8saB9DPg",
+        "videoIdHindi": "C0-5Sll_8ik"
+      },
+      {
+        "topicName": "7.Electric dipole",
+        "videoIdEnglish": "eak2QYJvcEw",
+        "videoIdHindi": "f9NAsW4yFHo"
+      },
+      {
+        "topicName": "8.Torque on a dipole",
+        "videoIdEnglish": "aCpz1QqGsVo",
+        "videoIdHindi": "PnDDBzMZUNo"
+      },
+      {
+        "topicName": "9.Electric flux",
+        "videoIdEnglish": "jDWCzK6EOSg",
+        "videoIdHindi": "V17N4ywkYn4"
+      },
+      {
+        "topicName": "10.Gauss's theoram",
+        "videoIdEnglish": "jDWCzK6EOSg",
+        "videoIdHindi": "V17N4ywkYn4"
+      },
+      {
+        "topicName": "11.Field due to infintely long straight wire",
+        "videoIdEnglish": "jDWCzK6EOSg",
+        "videoIdHindi": "V17N4ywkYn4"
+      },
+      {
+        "topicName": "12.Uniformely charged infinite plane sheet",
+        "videoIdEnglish": "jDWCzK6EOSg",
+        "videoIdHindi": "V17N4ywkYn4"
+      },
+      {
+        "topicName": "13.Uniformely charged thin spherical shell",
+        "videoIdEnglish": "jDWCzK6EOSg",
+        "videoIdHindi": "V17N4ywkYn4"
+      }
+    ]
+  },
+  {
+    "name": "Electrostatic Potential and Capacitance",
+    "chapterNo": 2,
+    "sequence": 2,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F2%3A%20Electrostatic%20Potential%20and%20Capacitance%2F2.%20Electrostatic%20Potential%20and%20Capacitance%20notes.pdf?alt=media&token=08e211aa-39c1-4f9d-bae6-e2004b819d7d",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Electric potential and potential difference",
+        "videoIdEnglish": "JWEmthHDotg",
+        "videoIdHindi": "tVJe64HV1Fk"
+      },
+      {
+        "topicName": "2.Conductors and insulators",
+        "videoIdEnglish": "aEgHU0yawg4",
+        "videoIdHindi": "LYfzdaf_QQM"
+      },
+      {
+        "topicName": "3.Dielectrics and electric polarization.",
+        "videoIdEnglish": "wUPBVnkycyo",
+        "videoIdHindi": "vpOBUVfqRCs"
+      },
+      {
+        "topicName": "4.Capacitors and capacitance.",
+        "videoIdEnglish": "eqoP5Mw9i1k",
+        "videoIdHindi": "2dJC4qAcNkE"
+      },
+      {
+        "topicName": "5.Combination of capacitors in series and in parallel.",
+        "videoIdEnglish": "sGyAuEvReVM",
+        "videoIdHindi": "8Ew5CMXHsWU"
+      },
+      {
+        "topicName": "6.Capacitor with and without dielectric medium between the plates",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "7.Energy stored in a capacitor",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Current Electricity",
+    "chapterNo": 3,
+    "sequence": 3,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F3%3A%20Current%20Electricity%2F3%20.%20Current%20Electricity.pdf?alt=media&token=94deebda-02bc-4667-8cf4-aea2a5a2ed8e",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Electric current",
+        "videoIdEnglish": "35UYlYi-BcY",
+        "videoIdHindi": "tMXHygt4BC4"
+      },
+      {
+        "topicName": "2.Conductor and Insulator",
+        "videoIdEnglish": "aEgHU0yawg4",
+        "videoIdHindi": "LYfzdaf_QQM"
+      },
+      {
+        "topicName": "3.Drift velocity,",
+        "videoIdEnglish": "ksSODXvYYAM",
+        "videoIdHindi": "6jI7hcoiVdM"
+      },
+      {
+        "topicName": "4.Ohm's law",
+        "videoIdEnglish": "WQjGeCGuC1o",
+        "videoIdHindi": "SrFcg_VvNUY"
+      },
+      {
+        "topicName": "5.Resistor",
+        "videoIdEnglish": "QUqTGYKtChU",
+        "videoIdHindi": "7UAlXqj1CG8"
+      },
+      {
+        "topicName": "6.Electrical resistivity and conductivity,",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "7.Temperature dependence of resistance.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "8.Combination of resistor",
+        "videoIdEnglish": "5KDEUEd-VGQ",
+        "videoIdHindi": "W3Fza3jyx9Y"
+      },
+      {
+        "topicName": "9.Kirchhoff's rules",
+        "videoIdEnglish": "IWi-GFOsQUY",
+        "videoIdHindi": "hXyBPj4lmok"
+      },
+      {
+        "topicName": "10.Wheatstone bridge.",
+        "videoIdEnglish": "apYROD1FikM",
+        "videoIdHindi": "BsHwY6xvhBY"
+      },
+      {
+        "topicName": "11.Mater Bridge",
+        "videoIdEnglish": "lTVTvTxkHhs",
+        "videoIdHindi": "ilwhceWPt3E"
+      },
+      {
+        "topicName": "12.Potentiometer",
+        "videoIdEnglish": "I6pbeYbJ4bk",
+        "videoIdHindi": "03UXeopKOlk"
+      }
+    ]
+  },
+  {
+    "name": "Moving Charges and Magnetism",
+    "chapterNo": 4,
+    "sequence": 4,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F4%3A%20Moving%20Charges%20and%20Magnetism%2F4.%20Moving%20Charges%20and%20Magnetism.pdf?alt=media&token=51d0802d-afeb-46cb-99d7-28186a4a8b55",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Concept of magnetic field",
+        "videoIdEnglish": "GBfUuntrczo",
+        "videoIdHindi": "HBuLttgPezI"
+      },
+      {
+        "topicName": "2.Oersted's experiment",
+        "videoIdEnglish": "tq0zhYHUjQc",
+        "videoIdHindi": "TNg9N8LnsM8"
+      },
+      {
+        "topicName": "3.Force on a moving charge in magnetic field",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Biot - Savart law",
+        "videoIdEnglish": "aJm0Eb9_-NY",
+        "videoIdHindi": "UIk-h_u3uac"
+      },
+      {
+        "topicName": "5.Ampere's circuital law",
+        "videoIdEnglish": "UmqdeuzeFCc",
+        "videoIdHindi": "FZ3saUFpDHM"
+      },
+      {
+        "topicName": "6.Straight solenoid",
+        "videoIdEnglish": "ZCRrsyl3iSk",
+        "videoIdHindi": "V96UXqi_p5c"
+      },
+      {
+        "topicName": "7.Force on charge in electric field",
+        "videoIdEnglish": "Rq2vyRpA0Lw",
+        "videoIdHindi": "cUFzc4S7FJU"
+      },
+      {
+        "topicName": "8.Force on a current-carrying conductor magnetic field",
+        "videoIdEnglish": "gnpa9Hadk_A",
+        "videoIdHindi": "ATHrAT_c6WU"
+      },
+      {
+        "topicName": "9.Force between two parallel current-carrying conductors.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "10.Torque experienced by a current loop in a uniform magnetic field.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "11.Current loop as a magnetic dipole and its magnetic dipole moment,",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Magnetism and Matter",
+    "chapterNo": 5,
+    "sequence": 5,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F5%3A%20Magnetism%20and%20Matter%2F5%20.Magnetism%20and%20Matter.pdf?alt=media&token=45ec7b4e-f0c6-4f81-a42e-2821142f0b48",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Bar magnet",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "2.bar magnet as an equivalent solenoid (qualitative treatment only)",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "3.Magnetic field intensity due to a magnetic dipole (bar magnet) along its axis and perpendicular to its axis (qualitative treatment only),",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Torque on a magnetic dipole (bar magnet) in a uniform magnetic field (qualitative treatment only),",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "5.Magnetic field and line",
+        "videoIdEnglish": "GBfUuntrczo",
+        "videoIdHindi": "HBuLttgPezI"
+      },
+      {
+        "topicName": "6.Magnetic properties of materials- Para-, dia- and ferromagnetic substances with examples,",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "7.Magnetization of materials",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "8.effect of temperature on magnetic properties.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "9.Magnetic field",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Electromagnetic Induction",
+    "chapterNo": 6,
+    "sequence": 6,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F6%3A%20Electromagnetic%20Induction%2F6.%20Electromagnetic%20Induction.pdf?alt=media&token=5b802dd8-d767-47e6-962f-1bed03811810",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Electromagnetic induction",
+        "videoIdEnglish": "TCTyYLaYSv0",
+        "videoIdHindi": "K95wcRVwh80"
+      },
+      {
+        "topicName": "2.Faraday's laws",
+        "videoIdEnglish": "ZqHaiziVizc",
+        "videoIdHindi": "RGbCbKBwf7Q"
+      },
+      {
+        "topicName": "3.Induced EMF and current",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Lenz's Law",
+        "videoIdEnglish": "jGElv93gkXk",
+        "videoIdHindi": "VKnPYCSeUMA"
+      },
+      {
+        "topicName": "5.Self  induction.",
+        "videoIdEnglish": "9rNKbZ-5RW0",
+        "videoIdHindi": "O9ZR7KyMl28"
+      },
+      {
+        "topicName": "6.Mutual induction.",
+        "videoIdEnglish": "ajsvYwtntLk",
+        "videoIdHindi": "MjvyhTpJ8nw"
+      },
+      {
+        "topicName": "7.Eddy current",
+        "videoIdEnglish": "RUDYsMiH47o",
+        "videoIdHindi": "33wA7oUw5bQ"
+      },
+      {
+        "topicName": "8.Electric motor",
+        "videoIdEnglish": "DK8XkfyiVXA",
+        "videoIdHindi": "itfMRu_P1kw"
+      }
+    ]
+  },
+  {
+    "name": "Alternating Current",
+    "chapterNo": 7,
+    "sequence": 7,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F7%3A%20Alternating%20Current%2F7.%20Alternating%20Current.pdf?alt=media&token=ad7c3c87-2419-4bcb-9b49-90ca0032c8d1",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Alternating currents,",
+        "videoIdEnglish": "VnfbilSHHZ0",
+        "videoIdHindi": "K95wcRVwh80"
+      },
+      {
+        "topicName": "2.Peak and RMS value of alternating current/voltage;",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "3.Reactance and impedance",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.LCR series circuit",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "5.Resonance AC circuits",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "6.Power factor",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "7.Watt less current.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "8.AC generator",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "9.Transformer.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Electromagnetic Waves",
+    "chapterNo": 8,
+    "sequence": 8,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F8%3A%20Electromagnetic%20Waves%2F8.%20Electromagnetic%20Waves.pdf?alt=media&token=051545b0-eabc-472a-be8e-81d2ea4ea4b2",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Electromagnetic waves,",
+        "videoIdEnglish": "8Sc9fJ95AV8",
+        "videoIdHindi": "jHqgDsfEidQ"
+      },
+      {
+        "topicName": "2.Characteristics Electromagnetic waves",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "3.Electromagnetic spectrum",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Ray Optics and Optical Instruments",
+    "chapterNo": 9,
+    "sequence": 9,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F9%3A%20Ray%20Optics%20and%20Optical%20Instruments%2F9.%20Ray%20Optics%20and%20Optical%20Instruments.pdf?alt=media&token=6e55dd8c-b29e-4a5a-9cc6-6d1820d5960c",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Reflection of light",
+        "videoIdEnglish": "usQlMPyQ9n0",
+        "videoIdHindi": "72vOSImbjJk"
+      },
+      {
+        "topicName": "2.Spherical mirrors",
+        "videoIdEnglish": "g_LhgncR19I",
+        "videoIdHindi": "Z0YCyZwMRo0"
+      },
+      {
+        "topicName": "3.Mirror formula",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Refraction of light",
+        "videoIdEnglish": "xbtWgSR5l5g",
+        "videoIdHindi": "6qdkpXoqugw"
+      },
+      {
+        "topicName": "5.Total internal reflection",
+        "videoIdEnglish": "-w99orn0XnY",
+        "videoIdHindi": "AmPByh9pTIc"
+      },
+      {
+        "topicName": "6.Refraction at spherical surfaces",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "7.Lenses",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "8.Lens maker’s formula",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "9.Magnification and power of a lens",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "10.Refraction of light through a prism.",
+        "videoIdEnglish": "4ozoEgg_5EU",
+        "videoIdHindi": "u4UQMpUWyfg"
+      },
+      {
+        "topicName": "11.Microscopes",
+        "videoIdEnglish": "_TBJO__KMkY",
+        "videoIdHindi": "-3ipSOOxe1w"
+      },
+      {
+        "topicName": "12.Astronomical telescopes",
+        "videoIdEnglish": "hBXmHsSAUOw",
+        "videoIdHindi": "b3CZ5FTZw8c"
+      },
+      {
+        "topicName": "13.Dispersion of light",
+        "videoIdEnglish": "cH9VMmklrX0",
+        "videoIdHindi": "SCUFIldIoeA"
+      }
+    ]
+  },
+  {
+    "name": "Wave Optics",
+    "chapterNo": 10,
+    "sequence": 10,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F10%3A%20Wave%20Optics%2F10.%20Wave%20Optics.pdf?alt=media&token=b56015ae-7eb0-453b-801d-8b9a89a0bca0",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Wave front and Huygens principle",
+        "videoIdEnglish": "_V6L_qlzOVA",
+        "videoIdHindi": "qQsaJZ0F7tQ"
+      },
+      {
+        "topicName": "2.Reflection and refraction by huygens principle",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "3.Young's double slit experiment",
+        "videoIdEnglish": "ykjZ5A-77Mk",
+        "videoIdHindi": "O2klAr6Mmek"
+      },
+      {
+        "topicName": "4.Interference of wave",
+        "videoIdEnglish": "VUl_kkiTCj8",
+        "videoIdHindi": "ZAI8obswodw"
+      },
+      {
+        "topicName": "5.Diffraction due to a single slit",
+        "videoIdEnglish": "XMC0Cd_TK3U",
+        "videoIdHindi": "mL63s4QqVPc"
+      }
+    ]
+  },
+  {
+    "name": "Dual Nature of Radiation and Matter",
+    "chapterNo": 11,
+    "sequence": 11,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F11%3A%20Dual%20Nature%20of%20Radiation%20and%20Matter%2F11.%20Dual%20Nature%20of%20Radiation%20and%20Matter.pdf?alt=media&token=0810468c-dc6d-4313-b1a4-c14c47c1b721",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Dual nature of radiation.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "2.Photoelectric effect.",
+        "videoIdEnglish": "LYgIh5qfTn8",
+        "videoIdHindi": "SgXW4foFGpw"
+      },
+      {
+        "topicName": "3.Einstein's photoelectric equation-particle nature of light.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Matter waves-wave nature of particles",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "5.De-Broglie relation.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Atoms",
+    "chapterNo": 12,
+    "sequence": 12,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F12%3A%20Atoms%2F12.%20Atoms%20notes.pdf?alt=media&token=b9cc4e26-fe7c-4e32-9bb0-3dab0359e105",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Rutherford Alpha-particle scattering experiment.",
+        "videoIdEnglish": "QmRFtM08F4A",
+        "videoIdHindi": "fLFXDdnJN5U"
+      },
+      {
+        "topicName": "2.Bohr model of an atom",
+        "videoIdEnglish": "srmCs3uSb3o",
+        "videoIdHindi": "Mxow_MvhZX0"
+      },
+      {
+        "topicName": "3.Atomic spectra",
+        "videoIdEnglish": "A1JuhPurr_o",
+        "videoIdHindi": "ncrYIP4naYw"
+      },
+      {
+        "topicName": "4.Isotops, Isobars, Isotones",
+        "videoIdEnglish": "7GPaKfpqVm0",
+        "videoIdHindi": "ZAKtoS-dzKg"
+      }
+    ]
+  },
+  {
+    "name": "Nuclei",
+    "chapterNo": 13,
+    "sequence": 13,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F13%3A%20Nuclei%2F13.%20Nuclei%20notes.pdf?alt=media&token=7eb6369e-acda-481b-aaa9-a31a1846ac47",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Nuclear force",
+        "videoIdEnglish": "JiBThUBhxaY",
+        "videoIdHindi": "HsDUTJYKC3o"
+      },
+      {
+        "topicName": "2.Nuclear Binding Energy",
+        "videoIdEnglish": "kdXkbEy9wco",
+        "videoIdHindi": "47ANo7rSPMw"
+      },
+      {
+        "topicName": "3.Nuclear fission",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      },
+      {
+        "topicName": "4.Nuclear fusion.",
+        "videoIdEnglish": null,
+        "videoIdHindi": null
+      }
+    ]
+  },
+  {
+    "name": "Semiconductor Electronics",
+    "chapterNo": 14,
+    "sequence": 14,
+    "subjectId": 1,
+    "notesPdf": "https://firebasestorage.googleapis.com/v0/b/vizuara-app-felcys.appspot.com/o/12th%20Class%2F12th_Notes_PDF%2F%2214%3A%20Semiconductor%20Electronics%3A%20%2C%20Materials%2C%20Devices%20%20and%20simple%20circuits%22%2F14.%20Semiconductor%20Electronics%20%2C%20Materials%2C%20Devices%20%20and%20simple%20circuits.pdf?alt=media&token=4563247f-d36b-4741-9064-08c54bad7e02",
+    "dbSubjectId": "cmmn2fe21008puukscstju561",
+    "topics": [
+      {
+        "topicName": "1.Energy bands in conductors",
+        "videoIdEnglish": "ZKPi4vk-Qbw",
+        "videoIdHindi": "4jqQrC00PrY"
+      },
+      {
+        "topicName": "2.Semiconductors",
+        "videoIdEnglish": "Land3ePLP1A",
+        "videoIdHindi": "8LUL2cBoJ48"
+      },
+      {
+        "topicName": "3.P-N Junction Diode",
+        "videoIdEnglish": "RMjDyFIt2-Y",
+        "videoIdHindi": "mute5qGrltU"
+      },
+      {
+        "topicName": "4.Forward and Reverse biasing.",
+        "videoIdEnglish": "mDoDZpOyVCo",
+        "videoIdHindi": "3kWYKEonLM4"
+      },
+      {
+        "topicName": "5.Zener diode",
+        "videoIdEnglish": "NHFrg06IMWQ",
+        "videoIdHindi": "HGyvnpyIims"
+      },
+      {
+        "topicName": "6.Rectifier",
+        "videoIdEnglish": "g-4UfLoOyJ0",
+        "videoIdHindi": "-zsvwRrG3eU"
+      },
+      {
+        "topicName": "7.Transistor",
+        "videoIdEnglish": "g-4UfLoOyJ0",
+        "videoIdHindi": "B3CyuG047mY"
+      }
+    ]
+  }
+]

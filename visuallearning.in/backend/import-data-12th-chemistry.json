@@ -1,0 +1,119 @@
+[
+  {
+    "name": "Solution",
+    "chapterNo": 1,
+    "sequence": 1,
+    "dbSubjectId": "cmmkpxm8u009fuu348y5s7d4i",
+    "notesPdf": "",
+    "topics": [
+      {
+        "topicName": "Types of solution",
+        "videoIdEnglish": "4MbgYXiki7E",
+        "videoIdHindi": "05xtuOllpUo"
+      },
+      {
+        "topicName": "Molarity , Molality , Mole fraction",
+        "videoIdEnglish": null,
+        "videoIdHindi": "zJLwgM0b_uA"
+      },
+      {
+        "topicName": "Henry's law",
+        "videoIdEnglish": null,
+        "videoIdHindi": "sc7Kd9ltlGs"
+      },
+      {
+        "topicName": "Raoults's law",
+        "videoIdEnglish": null,
+        "videoIdHindi": "yvVc76dmvxI"
+      },
+      {
+        "topicName": "Elevation of boiling point",
+        "videoIdEnglish": null,
+        "videoIdHindi": "LFGpwv0c65s"
+      },
+      {
+        "topicName": "Depresion of freezing point",
+        "videoIdEnglish": null,
+        "videoIdHindi": "pjfKk9IgBDE"
+      },
+      {
+        "topicName": "Osmosis and osmotic pressure",
+        "videoIdEnglish": null,
+        "videoIdHindi": "_80RXj38_EQ"
+      }
+    ]
+  },
+  {
+    "name": "Electrochemistry",
+    "chapterNo": 2,
+    "sequence": 2,
+    "dbSubjectId": "cmmkpxm8u009fuu348y5s7d4i",
+    "notesPdf": "",
+    "topics": [
+      {
+        "topicName": "Redox reaction",
+        "videoIdEnglish": null,
+        "videoIdHindi": "axwzP7mqbSA"
+      },
+      {
+        "topicName": "Specific and molar conductivity",
+        "videoIdEnglish": null,
+        "videoIdHindi": "bbc7sIJqr8Y"
+      },
+      {
+        "topicName": "Variations of conductivity with concentration",
+        "videoIdEnglish": null,
+        "videoIdHindi": "djU4udoVois"
+      },
+      {
+        "topicName": "Kohlrausch's law",
+        "videoIdEnglish": null,
+        "videoIdHindi": "kdt5PHuSd6g"
+      },
+      {
+        "topicName": "Electrod potetial",
+        "videoIdEnglish": null,
+        "videoIdHindi": "VjtS556yFfk"
+      },
+      {
+        "topicName": "Electrochemical cell",
+        "videoIdEnglish": null,
+        "videoIdHindi": "hJQireOrbto"
+      },
+      {
+        "topicName": "Corrosion",
+        "videoIdEnglish": null,
+        "videoIdHindi": "fpx0Botj4g4"
+      }
+    ]
+  },
+  {
+    "name": "Chemical Kinetic",
+    "chapterNo": 3,
+    "sequence": 3,
+    "dbSubjectId": "cmmkpxm8u009fuu348y5s7d4i",
+    "notesPdf": "",
+    "topics": [
+      {
+        "topicName": "Classification of reaction",
+        "videoIdEnglish": null,
+        "videoIdHindi": "t_HRhydXfOA"
+      },
+      {
+        "topicName": "Rate of reaction and factor affecting it",
+        "videoIdEnglish": null,
+        "videoIdHindi": "5M4WRT8j4QE"
+      },
+      {
+        "topicName": "Rate law and rate constant",
+        "videoIdEnglish": null,
+        "videoIdHindi": "xR1eOQ0edlg"
+      },
+      {
+        "topicName": "Activation energy",
+        "videoIdEnglish": null,
+        "videoIdHindi": "na8GWJUd7A0"
+      }
+    ]
+  }
+]
