@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  /* VISUAL LEARNING UI DESIGN SYSTEM */
-  --color-primary: #6c5ce7;
-  --color-primary-dark: #4b3fcf;
-  --color-primary-light: #f3f1ff;
+  /* VISUAL LEARNING UI DESIGN SYSTEM - Updated Brand Color */
+  --color-primary: #093C5D;
+  --color-primary-dark: #062a42;
+  --color-primary-light: #e6f0f5;
   
   --color-accent: #00b4d8; /* Blue - Active/Highlight */
   --color-success: #00c896; /* Green */
