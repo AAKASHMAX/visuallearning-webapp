@@ -138,56 +138,37 @@ export default function SubjectChaptersPage() {
           <p className="text-text-muted">Chapters for this subject will be available soon.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="space-y-3">
           {chapters.map((chapter, idx) => {
             const ChapterIcon = getChapterIcon(chapter.name);
-            const AnimationComponent = getChapterAnimation(chapter.name);
 
             return (
               <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
-                <Card className="group relative overflow-hidden border border-primary/20 bg-primary card-shadow transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer h-full">
-                  <CardContent className="p-6 text-center">
-                    {/* Chapter Number */}
-                    <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-white/20 border border-white/10 flex items-center justify-center z-10">
-                      <span className="text-xs font-bold text-white">{chapter.order || idx + 1}</span>
-                    </div>
-
-                    {/* Animated Visual */}
-                    <div className="w-full h-32 mx-auto rounded-xl bg-white/10 border border-white/10 mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                      {AnimationComponent ? (
-                        <AnimationComponent />
-                      ) : (
-                        <ChapterIcon className="w-12 h-12 text-white/40 group-hover:text-white/60 transition-colors" />
-                      )}
-                    </div>
-
-                    {/* Name */}
-                    <h3 className="text-base font-bold text-white mb-3 line-clamp-2 min-h-[2.5rem]">
-                      {chapter.name}
+                <div className="group flex items-center gap-4 rounded-xl border border-card-border bg-white p-4 card-shadow transition-all duration-300 hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer">
+                  <div className="relative w-14 h-14 rounded-lg bg-primary overflow-hidden shrink-0 flex items-center justify-center">
+                    <ChapterIcon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-heading truncate">
+                      {chapter.order || idx + 1}. {chapter.name}
                     </h3>
-
-                    {/* Content counts */}
-                    <div className="flex items-center justify-center gap-4 text-xs text-white/70 font-medium">
+                    <div className="flex items-center gap-4 mt-1 text-xs text-text-muted font-medium">
                       <span className="flex items-center gap-1">
-                        <Play className="w-3.5 h-3.5 text-white/80" />
-                        {chapter._count?.videos || 0}
+                        <Play className="w-3 h-3 text-accent" />
+                        {chapter._count?.videos || 0} Videos
                       </span>
                       <span className="flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5 text-success" />
-                        {chapter._count?.notes || 0}
+                        <FileText className="w-3 h-3 text-success" />
+                        {chapter._count?.notes || 0} Notes
                       </span>
                       <span className="flex items-center gap-1">
-                        <Brain className="w-3.5 h-3.5 text-white/80" />
-                        {chapter._count?.questions || 0}
+                        <Brain className="w-3 h-3 text-primary" />
+                        {chapter._count?.questions || 0} Quiz
                       </span>
                     </div>
-
-                    {/* Hover indicator */}
-                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="w-5 h-5 text-white" />
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-accent shrink-0 transition-colors" />
+                </div>
               </Link>
             );
           })}

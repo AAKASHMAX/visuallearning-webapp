@@ -223,13 +223,13 @@ export default function UnifiedChapterPage() {
                           if (video.locked) { setShowLockedModal(true); return; }
                           setSelectedVideo(video);
                         }}
-                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
+                        className={`group flex items-center gap-4 rounded-xl border p-3.5 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
                       >
-                        <div className="relative w-24 h-14 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative w-28 h-16 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
-                            <Clock className="w-5 h-5 text-gray-300" />
+                            <Clock className="w-6 h-6 text-gray-300" />
                           ) : video.locked ? (
-                            <Lock className="w-5 h-5 text-gray-400" />
+                            <Lock className="w-6 h-6 text-gray-400" />
                           ) : video.vimeoVideoId ? (
                             <>
                               <img 
@@ -237,26 +237,26 @@ export default function UnifiedChapterPage() {
                                 alt={video.title}
                                 className="absolute inset-0 w-full h-full object-cover"
                               />
-                              <div className={`relative z-10 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
-                                <Play className="w-3 h-3 fill-current ml-0.5" />
+                              <div className={`relative z-10 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
+                                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                               </div>
                             </>
                           ) : (
-                            <div className={`w-8 h-8 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            <div className={`w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm ${isActive ? "scale-110" : "group-hover:scale-110"} transition-transform`}>
+                              <Play className="w-4.5 h-4.5 fill-current ml-0.5" />
                             </div>
                           )}
-                          {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-success text-[8px] font-bold text-white rounded-bl-lg z-20">FREE</span>}
+                          {video.isFree && <span className="absolute top-0 right-0 px-1.5 py-0.5 bg-success text-[9px] font-bold text-white rounded-bl-lg z-20">FREE</span>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-heading"}`}>
+                          <h3 className={`text-base font-bold truncate ${isActive ? "text-accent" : "text-heading"}`}>
                             {idx + 1}. {video.title}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1.5">
                             {isComingSoon ? (
-                              <Badge className="text-[9px] px-1.5 py-0">Coming Soon</Badge>
+                              <Badge className="text-[10px] px-2 py-0.5">Coming Soon</Badge>
                             ) : (
-                              <span className="text-[10px] text-gray-500">{video.duration || "Animated"}</span>
+                              <span className="text-[11px] text-gray-500">{video.duration || "Animated"}</span>
                             )}
                           </div>
                         </div>
