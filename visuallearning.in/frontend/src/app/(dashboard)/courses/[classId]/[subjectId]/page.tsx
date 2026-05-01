@@ -122,8 +122,8 @@ export default function SubjectChaptersPage() {
           <Link href={`/courses/${classId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <h1 className="text-3xl font-bold text-white">
-            {subjectName} <span className="text-accent">Chapters</span>
+          <h1 className="text-3xl font-bold text-heading">
+            {subjectName} <span className="text-primary">Chapters</span>
           </h1>
         </div>
         <p className="text-text-muted max-w-2xl">
@@ -132,9 +132,9 @@ export default function SubjectChaptersPage() {
       </div>
 
       {chapters.length === 0 ? (
-        <div className="text-center py-20 bg-primary/20 rounded-3xl border border-dashed border-white/10">
-          <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-text">No chapters found</h2>
+        <div className="text-center py-20 bg-white rounded-3xl border border-card-border card-shadow">
+          <BookOpen className="w-12 h-12 text-primary-light/50 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-heading">No chapters found</h2>
           <p className="text-text-muted">Chapters for this subject will be available soon.</p>
         </div>
       ) : (
@@ -145,15 +145,15 @@ export default function SubjectChaptersPage() {
 
             return (
               <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
-                <Card className="group relative overflow-hidden border border-white/5 bg-card hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer h-full">
+                <Card className="group relative overflow-hidden border border-card-border bg-card card-shadow transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer h-full">
                   <CardContent className="p-6 text-center">
                     {/* Chapter Number */}
-                    <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center z-10">
-                      <span className="text-xs font-bold text-accent">{chapter.order || idx + 1}</span>
+                    <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-primary-light border border-primary/10 flex items-center justify-center z-10">
+                      <span className="text-xs font-bold text-primary">{chapter.order || idx + 1}</span>
                     </div>
 
                     {/* Animated Visual */}
-                    <div className="w-full h-32 mx-auto rounded-xl bg-primary/20 border border-white/5 mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-accent/5 transition-colors">
+                    <div className="w-full h-32 mx-auto rounded-xl bg-surface border border-card-border mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-primary-light transition-colors">
                       {AnimationComponent ? (
                         <AnimationComponent />
                       ) : (
@@ -162,29 +162,29 @@ export default function SubjectChaptersPage() {
                     </div>
 
                     {/* Name */}
-                    <h3 className="text-base font-bold text-white mb-3 line-clamp-2 min-h-[2.5rem]">
+                    <h3 className="text-base font-bold text-heading mb-3 line-clamp-2 min-h-[2.5rem]">
                       {chapter.name}
                     </h3>
 
                     {/* Content counts */}
                     <div className="flex items-center justify-center gap-4 text-xs text-text-muted font-medium">
                       <span className="flex items-center gap-1">
-                        <Play className="w-3.5 h-3.5 text-accent" />
+                        <Play className="w-3.5 h-3.5 text-primary" />
                         {chapter._count?.videos || 0}
                       </span>
                       <span className="flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                        <FileText className="w-3.5 h-3.5 text-success" />
                         {chapter._count?.notes || 0}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Brain className="w-3.5 h-3.5 text-purple-500" />
+                        <Brain className="w-3.5 h-3.5 text-primary" />
                         {chapter._count?.questions || 0}
                       </span>
                     </div>
 
                     {/* Hover indicator */}
                     <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="w-5 h-5 text-accent" />
+                      <ChevronRight className="w-5 h-5 text-primary" />
                     </div>
                   </CardContent>
                 </Card>

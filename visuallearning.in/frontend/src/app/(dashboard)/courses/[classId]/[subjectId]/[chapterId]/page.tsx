@@ -120,13 +120,13 @@ export default function UnifiedChapterPage() {
       ]} />
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6 mb-8">
-        <div className="flex items-center gap-3">
-          <Link href={`/courses/${classId}/${subjectId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6 mb-8 p-6 bg-primary-light rounded-2xl border border-primary/10 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Link href={`/courses/${classId}/${subjectId}`} className="p-2 hover:bg-white rounded-full transition-colors group">
+            <ArrowLeft className="w-5 h-5 text-primary group-hover:-translate-x-1 transition-transform" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white">{chapterName}</h1>
+            <h1 className="text-2xl font-bold text-heading">{chapterName}</h1>
             <p className="text-sm text-text-muted">{subjectName} • {className}</p>
           </div>
         </div>
@@ -137,21 +137,21 @@ export default function UnifiedChapterPage() {
         
         {/* Video Player Section */}
         <div className="w-full lg:w-[60%] shrink-0">
-          <div className="lg:sticky lg:top-24 rounded-2xl border border-white/5 bg-card overflow-hidden shadow-sm">
+          <div className="lg:sticky lg:top-24 rounded-2xl border border-card-border bg-white overflow-hidden shadow-2xl shadow-primary/10 ring-1 ring-primary/5">
             {selectedVideo ? (
               <>
-                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-primary/20">
-                  <h3 className="text-white font-bold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
+                <div className="flex items-center justify-between px-5 py-3 border-b border-card-border bg-alternate">
+                  <h3 className="text-heading font-bold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
                   <div className="flex items-center gap-1 shrink-0">
                     <button 
                       onClick={() => setLanguage("HINDI")} 
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-primary-dark shadow-md" : "bg-white/5 text-text-muted hover:bg-white/10"}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-white shadow-md" : "bg-white text-text-muted hover:bg-surface"}`}
                     >
                       हिंदी
                     </button>
                     <button 
                       onClick={() => setLanguage("ENGLISH")} 
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "ENGLISH" ? "bg-accent text-primary-dark shadow-md" : "bg-white/5 text-text-muted hover:bg-white/10"}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "ENGLISH" ? "bg-accent text-white shadow-md" : "bg-white text-text-muted hover:bg-surface"}`}
                     >
                       English
                     </button>
@@ -167,8 +167,8 @@ export default function UnifiedChapterPage() {
                 </div>
               </>
             ) : (
-              <div className="aspect-video bg-primary/20 flex flex-col items-center justify-center text-white/20 p-8 text-center">
-                <Play className="w-12 h-12 mb-3 opacity-20" />
+              <div className="aspect-video bg-surface flex flex-col items-center justify-center text-text-light p-8 text-center">
+                <Play className="w-12 h-12 mb-3 opacity-20 text-primary" />
                 <p>Select a video from the list to start learning</p>
               </div>
             )}
@@ -177,17 +177,17 @@ export default function UnifiedChapterPage() {
 
         {/* Tabs & Content List Section */}
         <div className="w-full lg:w-[40%] min-w-0">
-          <div className="flex border-b border-white/5 mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
+          <div className="flex border-b border-card-border mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === "quiz_active" && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-text-muted hover:text-white"}`}
+                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === "quiz_active" && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-text-muted hover:text-heading"}`}
               >
                 <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-white/5 text-text-muted"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-surface text-text-muted"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -200,8 +200,8 @@ export default function UnifiedChapterPage() {
             {activeTab === "videos" && (
               <>
                 {filteredVideos.length === 0 ? (
-                  <div className="text-center py-12 bg-primary/20 rounded-xl border border-dashed border-white/10">
-                    <Play className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                  <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
+                    <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
                     <p className="text-sm text-text-muted">No videos available in {language === "HINDI" ? "Hindi" : "English"}</p>
                     <button 
                       onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
@@ -223,9 +223,9 @@ export default function UnifiedChapterPage() {
                           if (video.locked) { setShowLockedModal(true); return; }
                           setSelectedVideo(video);
                         }}
-                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-white/5 bg-primary/10 opacity-80" : "border-white/5 bg-card hover:border-accent/40 hover:shadow-sm cursor-pointer"}`}
+                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
                       >
-                        <div className="relative w-24 h-14 rounded-lg bg-primary/30 overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative w-24 h-14 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
                             <Clock className="w-5 h-5 text-gray-300" />
                           ) : video.locked ? (
@@ -235,10 +235,10 @@ export default function UnifiedChapterPage() {
                               <Play className="w-4 h-4 fill-current ml-0.5" />
                             </div>
                           )}
-                          {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-green-500 text-[8px] font-bold text-white rounded-bl-lg">FREE</span>}
+                          {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-success text-[8px] font-bold text-white rounded-bl-lg">FREE</span>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-white"}`}>
+                          <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-heading"}`}>
                             {idx + 1}. {video.title}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
@@ -260,20 +260,20 @@ export default function UnifiedChapterPage() {
             {activeTab === "notes" && (
               <>
                 {notes.length === 0 ? (
-                  <div className="text-center py-12 bg-primary/20 rounded-xl border border-dashed border-white/10">
-                    <FileText className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                  <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
+                    <FileText className="w-8 h-8 text-primary-light mx-auto mb-2" />
                     <p className="text-sm text-text-muted">No notes available yet</p>
                   </div>
                 ) : (
                   notes
                     .filter(n => !n.title.toLowerCase().includes("important question"))
                     .map((note, idx) => (
-                    <div key={note.id} className="flex items-center gap-4 rounded-xl border border-white/5 bg-card p-4 hover:border-emerald-500/40 hover:shadow-sm transition-all">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                    <div key={note.id} className="flex items-center gap-4 rounded-xl border border-card-border bg-white p-4 card-shadow hover:border-success/40 transition-all">
+                      <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center text-success shrink-0">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-white truncate">{idx + 1}. {note.title}</h3>
+                        <h3 className="text-sm font-bold text-heading truncate">{idx + 1}. {note.title}</h3>
                         <p className="text-[10px] text-text-muted uppercase font-medium">PDF Study Material</p>
                       </div>
                       <a 
@@ -292,18 +292,18 @@ export default function UnifiedChapterPage() {
 
             {/* Quiz Section */}
             {activeTab === "quiz" && (
-              <div className="flex flex-col items-center justify-center py-20 bg-primary/20 rounded-2xl border border-dashed border-white/10 text-center px-6">
-                <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400 mb-6">
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-card-border text-center px-6 card-shadow">
+                <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary mb-6">
                   <Brain className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Chapter Quiz</h3>
+                <h3 className="text-xl font-bold text-heading mb-2">Chapter Quiz</h3>
                 <p className="text-sm text-text-muted mb-8 max-w-[250px]">Test your knowledge of {chapterName} with our interactive MCQ quiz.</p>
                 
                 {questions.length === 0 ? (
                   <p className="text-xs text-gray-400">No questions available for this chapter yet.</p>
                 ) : (
                   <Button 
-                    className="w-full py-6 text-base font-bold shadow-lg shadow-purple-200" 
+                    className="w-full py-6 text-base font-bold bg-cta hover:bg-cta/90 text-white shadow-lg shadow-cta/20 transition-all hover:-translate-y-0.5" 
                     onClick={() => setActiveTab("quiz_active")}
                   >
                     Start Quiz
@@ -316,12 +316,12 @@ export default function UnifiedChapterPage() {
             {activeTab === "quiz_active" && (
               <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-white">Practice Quiz</h3>
-                  <button onClick={() => setActiveTab("quiz")} className="text-xs text-text-muted hover:text-white">Cancel</button>
+                  <h3 className="font-bold text-heading">Practice Quiz</h3>
+                  <button onClick={() => setActiveTab("quiz")} className="text-xs text-text-muted hover:text-heading">Cancel</button>
                 </div>
                 {questions.map((q, idx) => (
-                  <div key={q.id} className="rounded-xl border border-white/5 bg-card p-5 shadow-sm">
-                    <p className="text-sm font-bold text-white mb-4">Q{idx + 1}. {q.questionText}</p>
+                  <div key={q.id} className="rounded-xl border border-card-border bg-white p-5 card-shadow">
+                    <p className="text-sm font-bold text-heading mb-4">Q{idx + 1}. {q.questionText}</p>
                     <div className="grid grid-cols-1 gap-2">
                       {(["A", "B", "C", "D"] as const).map((opt) => {
                         const optionKey = `option${opt}` as keyof Question;
@@ -334,11 +334,11 @@ export default function UnifiedChapterPage() {
                             key={opt}
                             disabled={showResults}
                             onClick={() => setSelectedAnswers(prev => ({ ...prev, [q.id]: opt }))}
-                            className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-green-500 bg-green-500/10 text-green-400 font-bold" : isWrong ? "border-red-500 bg-red-500/10 text-red-400" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-white/5 hover:border-white/10 text-text-muted hover:bg-white/5"}`}
+                            className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-success bg-success/10 text-success font-bold" : isWrong ? "border-red-500 bg-red-50 text-red-600" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-card-border hover:border-accent/40 text-text-muted hover:bg-surface"}`}
                           >
                             <span><span className="opacity-50 mr-2">{opt}.</span> {String(q[optionKey])}</span>
-                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-400" />}
-                            {isWrong && <X className="w-4 h-4 text-red-400" />}
+                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-success" />}
+                            {isWrong && <X className="w-4 h-4 text-red-500" />}
                           </button>
                         );
                       })}
@@ -353,12 +353,12 @@ export default function UnifiedChapterPage() {
                 
                 <div className="flex flex-col items-center gap-3 pt-4">
                   {!showResults ? (
-                    <Button className="w-full py-6 text-base" onClick={() => setShowResults(true)}>
+                    <Button className="w-full py-6 text-base font-bold bg-cta hover:bg-cta/90 text-white" onClick={() => setShowResults(true)}>
                       Submit Quiz
                     </Button>
                   ) : (
                     <div className="text-center w-full">
-                      <div className="text-2xl font-bold text-white mb-2">
+                      <div className="text-2xl font-bold text-heading mb-2">
                         Score: {questions.filter(q => selectedAnswers[q.id] === q.correctOption).length} / {questions.length}
                       </div>
                       <div className="flex gap-2">
@@ -380,18 +380,18 @@ export default function UnifiedChapterPage() {
 
       {/* Subscription Locked Modal */}
       {showLockedModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-card rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-fade-in border border-white/10">
-            <div className="mx-auto w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
-              <Crown className="w-8 h-8 text-amber-500" />
+        <div className="fixed inset-0 bg-heading/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-fade-in border border-card-border">
+            <div className="mx-auto w-16 h-16 bg-cta/10 rounded-full flex items-center justify-center mb-6">
+              <Crown className="w-8 h-8 text-cta" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Unlock Premium Content</h3>
+            <h3 className="text-xl font-bold text-heading mb-2">Unlock Premium Content</h3>
             <p className="text-text-muted text-sm mb-8">This video is part of our premium curriculum. Subscribe to a plan to unlock all 3D animations and expert lessons.</p>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base bg-accent text-primary-dark hover:bg-accent-light">
+              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base bg-primary hover:bg-primary-dark text-white font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
                 View Subscription Plans
               </Button>
-              <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-white font-medium py-2">
+              <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-heading font-medium py-2">
                 Maybe later
               </button>
             </div>

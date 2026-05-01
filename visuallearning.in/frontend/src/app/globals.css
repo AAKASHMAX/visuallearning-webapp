@@ -1,30 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  /* Physics-inspired theme (30% Lighter Midnight) */
-  --color-primary: #151b4d;
-  --color-primary-light: #242c75;
-  --color-primary-dark: #0a0e27;
-
-  --color-accent: #00d4ff;
-  --color-accent-light: #5ce1ff;
-  --color-accent-dark: #00a8cc;
-
-  --color-secondary: #7c3aed;
-  --color-secondary-light: #a78bfa;
-  --color-secondary-dark: #5b21b6;
-
-  --color-energy: #f59e0b;
-  --color-danger: #ef4444;
-
-  --color-surface: #1e2561;
-  --color-surface-light: #2a3180;
-  --color-card: #282f7a;
-  --color-card-dark: #151a3d;
+  /* VISUAL LEARNING UI DESIGN SYSTEM */
+  --color-primary: #6c5ce7;
+  --color-primary-dark: #4b3fcf;
+  --color-primary-light: #f3f1ff;
   
-  --color-text: #e2e8f0;
-  --color-text-muted: #94a3b8;
-  --color-text-bright: #ffffff;
+  --color-accent: #00b4d8; /* Blue - Active/Highlight */
+  --color-success: #00c896; /* Green */
+  --color-cta: #ff9f43;     /* Orange */
+  
+  --color-surface: #f8f9fc;
+  --color-card: #ffffff;
+  --color-card-border: #ececff;
+  --color-alternate: #f1f3fa;
+
+  --color-heading: #1e1e2f;
+  --color-text-muted: #6b7280;
+  --color-text-light: #9ca3af;
 
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -32,7 +25,16 @@
 body {
   font-family: var(--font-body);
   background-color: var(--color-surface);
-  color: var(--color-text);
+  color: var(--color-heading);
+}
+
+/* Card Shadow System */
+.card-shadow {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
 }
 
 /* Disable right-click on video player */
