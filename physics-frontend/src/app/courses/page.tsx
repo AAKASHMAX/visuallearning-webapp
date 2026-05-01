@@ -97,7 +97,6 @@ const courses = [
     features: [
       "Core physics concepts",
       "Interactive foundational modules",
-      "Basic mathematics for physics",
       "Conceptual doubt clearing",
       "Foundation strengthening tests",
     ],
