@@ -145,31 +145,31 @@ export default function SubjectChaptersPage() {
 
             return (
               <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
-                <Card className="group relative overflow-hidden border border-card-border bg-card card-shadow transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer h-full">
+                <Card className="group relative overflow-hidden border border-primary/20 bg-primary card-shadow transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer h-full">
                   <CardContent className="p-6 text-center">
                     {/* Chapter Number */}
-                    <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-primary-light border border-primary/10 flex items-center justify-center z-10">
-                      <span className="text-xs font-bold text-primary">{chapter.order || idx + 1}</span>
+                    <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-white/20 border border-white/10 flex items-center justify-center z-10">
+                      <span className="text-xs font-bold text-white">{chapter.order || idx + 1}</span>
                     </div>
 
                     {/* Animated Visual */}
-                    <div className="w-full h-32 mx-auto rounded-xl bg-surface border border-card-border mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-primary-light transition-colors">
+                    <div className="w-full h-32 mx-auto rounded-xl bg-white/10 border border-white/10 mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-white/20 transition-colors">
                       {AnimationComponent ? (
                         <AnimationComponent />
                       ) : (
-                        <ChapterIcon className="w-12 h-12 text-gray-300 group-hover:text-accent/40 transition-colors" />
+                        <ChapterIcon className="w-12 h-12 text-white/40 group-hover:text-white/60 transition-colors" />
                       )}
                     </div>
 
                     {/* Name */}
-                    <h3 className="text-base font-bold text-heading mb-3 line-clamp-2 min-h-[2.5rem]">
+                    <h3 className="text-base font-bold text-white mb-3 line-clamp-2 min-h-[2.5rem]">
                       {chapter.name}
                     </h3>
 
                     {/* Content counts */}
-                    <div className="flex items-center justify-center gap-4 text-xs text-text-muted font-medium">
+                    <div className="flex items-center justify-center gap-4 text-xs text-white/70 font-medium">
                       <span className="flex items-center gap-1">
-                        <Play className="w-3.5 h-3.5 text-primary" />
+                        <Play className="w-3.5 h-3.5 text-white/80" />
                         {chapter._count?.videos || 0}
                       </span>
                       <span className="flex items-center gap-1">
@@ -177,14 +177,14 @@ export default function SubjectChaptersPage() {
                         {chapter._count?.notes || 0}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Brain className="w-3.5 h-3.5 text-primary" />
+                        <Brain className="w-3.5 h-3.5 text-white/80" />
                         {chapter._count?.questions || 0}
                       </span>
                     </div>
 
                     {/* Hover indicator */}
                     <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="w-5 h-5 text-primary" />
+                      <ChevronRight className="w-5 h-5 text-white" />
                     </div>
                   </CardContent>
                 </Card>
