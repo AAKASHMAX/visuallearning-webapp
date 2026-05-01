@@ -138,7 +138,7 @@ export default function SubjectChaptersPage() {
           <p className="text-text-muted">Chapters for this subject will be available soon.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {chapters.map((chapter, idx) => {
             const ChapterIcon = getChapterIcon(chapter.name);
 
