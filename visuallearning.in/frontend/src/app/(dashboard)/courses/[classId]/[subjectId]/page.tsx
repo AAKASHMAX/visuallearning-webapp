@@ -26,6 +26,7 @@ import {
   FlaskConical,
   Sun,
   Microscope,
+  Gauge,
   Triangle,
   Atom as Molecule
 } from "lucide-react";
