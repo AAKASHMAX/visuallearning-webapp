@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Video, Note, Question, BoardPaper } from "@/types";
 
-type Tab = "videos" | "notes" | "quiz" | "papers";
+type Tab = "videos" | "notes" | "quiz" | "papers" | "quiz_active";
 
 export default function UnifiedChapterPage() {
   const params = useParams();
@@ -193,7 +193,7 @@ export default function UnifiedChapterPage() {
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === ("quiz_active" as any) && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === "quiz_active" && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-gray-700"}`}
               >
                 <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
@@ -208,7 +208,7 @@ export default function UnifiedChapterPage() {
 
           <div className="space-y-3 max-h-[60vh] lg:max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
             {/* Videos List */}
-            {(activeTab === "videos" || (activeTab as any) === "quiz_active") && activeTab !== "quiz_active" && (
+            {activeTab === "videos" && (
               <>
                 {filteredVideos.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
@@ -313,7 +313,7 @@ export default function UnifiedChapterPage() {
                 ) : (
                   <Button 
                     className="w-full py-6 text-base font-bold shadow-lg shadow-purple-200" 
-                    onClick={() => setActiveTab("quiz_active" as any)}
+                    onClick={() => setActiveTab("quiz_active")}
                   >
                     Start Quiz
                   </Button>
@@ -322,7 +322,7 @@ export default function UnifiedChapterPage() {
             )}
 
             {/* Active Quiz View */}
-            {activeTab === ("quiz_active" as any) && (
+            {activeTab === "quiz_active" && (
               <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-800">Practice Quiz</h3>
