@@ -24,11 +24,12 @@ import {
   X, 
   Globe,
   Clock,
-  Crown
+  Crown,
+  ClipboardList
 } from "lucide-react";
-import { Video, Note, Question } from "@/types";
+import { Video, Note, Question, BoardPaper } from "@/types";
 
-type Tab = "videos" | "notes" | "quiz";
+type Tab = "videos" | "notes" | "quiz" | "papers";
 
 export default function UnifiedChapterPage() {
   const params = useParams();
@@ -45,6 +46,7 @@ export default function UnifiedChapterPage() {
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [boardPapers, setBoardPapers] = useState<BoardPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<string>("HINDI");
 
@@ -69,16 +71,24 @@ export default function UnifiedChapterPage() {
         setChapterName(currentChapter?.name || "Chapter");
 
         // Fetch All Content
-        const [videosRes, notesRes, quizRes] = await Promise.all([
+        const [videosRes, notesRes, quizRes, paperRes] = await Promise.all([
           api.get(`/courses/chapters/${chapterId}/videos?language=all`),
           api.get(`/courses/chapters/${chapterId}/notes`),
-          api.get(`/courses/chapters/${chapterId}/questions`)
+          api.get(`/courses/chapters/${chapterId}/questions`),
+          api.get(`/courses/subjects/${subjectId}/board-papers`)
         ]);
-
+  
         const videoList = videosRes.data.data.videos || [];
         setAllVideos(videoList);
         setNotes(notesRes.data.data.notes || notesRes.data.data || []);
         setQuestions(quizRes.data.data.questions || quizRes.data.data || []);
+        
+        const papers = paperRes.data.data.papers || paperRes.data.data;
+        if (typeof papers === 'object' && !Array.isArray(papers)) {
+          setBoardPapers(Object.values(papers).flat() as BoardPaper[]);
+        } else {
+          setBoardPapers(papers || []);
+        }
 
         // Initial Video Selection
         const initialLang = "HINDI";
@@ -103,9 +113,10 @@ export default function UnifiedChapterPage() {
   };
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
-    { key: "videos", label: "Videos", icon: Play, count: filteredVideos.length },
+    { key: "videos", label: "Video(3D)", icon: Play, count: filteredVideos.length },
     { key: "notes", label: "Notes", icon: FileText, count: notes.length },
     { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
+    { key: "papers", label: "Question Papers", icon: ClipboardList, count: boardPapers.length },
   ];
 
   if (loading) return <PageLoader />;
@@ -284,63 +295,117 @@ export default function UnifiedChapterPage() {
 
             {/* Quiz Section */}
             {activeTab === "quiz" && (
-              <>
+              <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center px-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-6">
+                  <Brain className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Chapter Quiz</h3>
+                <p className="text-sm text-gray-500 mb-8 max-w-[250px]">Test your knowledge of {chapterName} with our interactive MCQ quiz.</p>
+                
                 {questions.length === 0 ? (
+                  <p className="text-xs text-gray-400">No questions available for this chapter yet.</p>
+                ) : (
+                  <Button 
+                    className="w-full py-6 text-base font-bold shadow-lg shadow-purple-200" 
+                    onClick={() => setActiveTab("quiz_active" as any)}
+                  >
+                    Start Quiz
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Active Quiz View */}
+            {activeTab === ("quiz_active" as any) && (
+              <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-800">Practice Quiz</h3>
+                  <button onClick={() => setActiveTab("quiz")} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+                {questions.map((q, idx) => (
+                  <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p className="text-sm font-bold text-gray-800 mb-4">Q{idx + 1}. {q.questionText}</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {(["A", "B", "C", "D"] as const).map((opt) => {
+                        const optionKey = `option${opt}` as keyof Question;
+                        const isSelected = selectedAnswers[q.id] === opt;
+                        const isCorrect = showResults && q.correctOption === opt;
+                        const isWrong = showResults && isSelected && q.correctOption !== opt;
+
+                        return (
+                          <button
+                            key={opt}
+                            disabled={showResults}
+                            onClick={() => setSelectedAnswers(prev => ({ ...prev, [q.id]: opt }))}
+                            className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-green-500 bg-green-50 text-green-700 font-bold" : isWrong ? "border-red-500 bg-red-50 text-red-700" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-gray-100 hover:border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                          >
+                            <span><span className="opacity-50 mr-2">{opt}.</span> {String(q[optionKey])}</span>
+                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                            {isWrong && <X className="w-4 h-4 text-red-500" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {showResults && q.solution && (
+                      <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                        <p className="text-xs text-blue-700"><span className="font-bold">Solution:</span> {q.solution}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="flex flex-col items-center gap-3 pt-4">
+                  {!showResults ? (
+                    <Button className="w-full py-6 text-base" onClick={() => setShowResults(true)}>
+                      Submit Quiz
+                    </Button>
+                  ) : (
+                    <div className="text-center w-full">
+                      <div className="text-2xl font-bold text-gray-800 mb-2">
+                        Score: {questions.filter(q => selectedAnswers[q.id] === q.correctOption).length} / {questions.length}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => { setShowResults(false); setSelectedAnswers({}); }}>
+                          Retry
+                        </Button>
+                        <Button className="flex-1" onClick={() => setActiveTab("quiz")}>
+                          Finish
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Question Papers List */}
+            {activeTab === "papers" && (
+              <>
+                {boardPapers.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
-                    <Brain className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No quiz available yet</p>
+                    <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No question papers available yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-6 pb-6">
-                    {questions.map((q, idx) => (
-                      <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <p className="text-sm font-bold text-gray-800 mb-4">Q{idx + 1}. {q.questionText}</p>
-                        <div className="grid grid-cols-1 gap-2">
-                          {(["A", "B", "C", "D"] as const).map((opt) => {
-                            const optionKey = `option${opt}` as keyof Question;
-                            const isSelected = selectedAnswers[q.id] === opt;
-                            const isCorrect = showResults && q.correctOption === opt;
-                            const isWrong = showResults && isSelected && q.correctOption !== opt;
-
-                            return (
-                              <button
-                                key={opt}
-                                disabled={showResults}
-                                onClick={() => setSelectedAnswers(prev => ({ ...prev, [q.id]: opt }))}
-                                className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-green-500 bg-green-50 text-green-700 font-bold" : isWrong ? "border-red-500 bg-red-50 text-red-700" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-gray-100 hover:border-gray-200 text-gray-600 hover:bg-gray-50"}`}
-                              >
-                                <span><span className="opacity-50 mr-2">{opt}.</span> {String(q[optionKey])}</span>
-                                {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                                {isWrong && <X className="w-4 h-4 text-red-500" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {showResults && q.solution && (
-                          <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                            <p className="text-xs text-blue-700"><span className="font-bold">Solution:</span> {q.solution}</p>
-                          </div>
-                        )}
+                  boardPapers.map((paper, idx) => (
+                    <div key={paper.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:border-rose-500/40 hover:shadow-sm transition-all">
+                      <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
+                        <ClipboardList className="w-5 h-5" />
                       </div>
-                    ))}
-                    
-                    <div className="flex flex-col items-center gap-3 pt-4">
-                      {!showResults ? (
-                        <Button className="w-full py-6 text-base" onClick={() => setShowResults(true)}>
-                          Submit Quiz
-                        </Button>
-                      ) : (
-                        <div className="text-center w-full">
-                          <div className="text-2xl font-bold text-gray-800 mb-2">
-                            Score: {questions.filter(q => selectedAnswers[q.id] === q.correctOption).length} / {questions.length}
-                          </div>
-                          <Button variant="outline" className="w-full" onClick={() => { setShowResults(false); setSelectedAnswers({}); }}>
-                            Retry Quiz
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-gray-800 truncate">{paper.title}</h3>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium">{paper.year} Exam Material</p>
+                      </div>
+                      <a 
+                        href={paper.pdfUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors"
+                      >
+                        <Download className="w-5 h-5" />
+                      </a>
                     </div>
-                  </div>
+                  ))
                 )}
               </>
             )}
