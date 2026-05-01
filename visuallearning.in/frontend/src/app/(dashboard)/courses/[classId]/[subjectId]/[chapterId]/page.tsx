@@ -126,8 +126,8 @@ export default function UnifiedChapterPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{chapterName}</h1>
-            <p className="text-sm text-gray-500">{subjectName} • {className}</p>
+            <h1 className="text-2xl font-bold text-white">{chapterName}</h1>
+            <p className="text-sm text-text-muted">{subjectName} • {className}</p>
           </div>
         </div>
       </div>
@@ -137,21 +137,21 @@ export default function UnifiedChapterPage() {
         
         {/* Video Player Section */}
         <div className="w-full lg:w-[60%] shrink-0">
-          <div className="lg:sticky lg:top-24 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+          <div className="lg:sticky lg:top-24 rounded-2xl border border-white/5 bg-card overflow-hidden shadow-sm">
             {selectedVideo ? (
               <>
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/50">
-                  <h3 className="text-gray-800 font-bold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-primary/20">
+                  <h3 className="text-white font-bold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
                   <div className="flex items-center gap-1 shrink-0">
                     <button 
                       onClick={() => setLanguage("HINDI")} 
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-white shadow-md" : "bg-white text-gray-500 hover:bg-gray-100"}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-primary-dark shadow-md" : "bg-white/5 text-text-muted hover:bg-white/10"}`}
                     >
                       हिंदी
                     </button>
                     <button 
                       onClick={() => setLanguage("ENGLISH")} 
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "ENGLISH" ? "bg-accent text-white shadow-md" : "bg-white text-gray-500 hover:bg-gray-100"}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "ENGLISH" ? "bg-accent text-primary-dark shadow-md" : "bg-white/5 text-text-muted hover:bg-white/10"}`}
                     >
                       English
                     </button>
@@ -167,7 +167,7 @@ export default function UnifiedChapterPage() {
                 </div>
               </>
             ) : (
-              <div className="aspect-video bg-gray-100 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+              <div className="aspect-video bg-primary/20 flex flex-col items-center justify-center text-white/20 p-8 text-center">
                 <Play className="w-12 h-12 mb-3 opacity-20" />
                 <p>Select a video from the list to start learning</p>
               </div>
@@ -177,17 +177,17 @@ export default function UnifiedChapterPage() {
 
         {/* Tabs & Content List Section */}
         <div className="w-full lg:w-[40%] min-w-0">
-          <div className="flex border-b border-gray-200 mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
+          <div className="flex border-b border-white/5 mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === "quiz_active" && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-bold border-b-2 transition-all shrink-0 ${activeTab === tab.key || (activeTab === "quiz_active" && tab.key === "quiz") ? "border-accent text-accent" : "border-transparent text-text-muted hover:text-white"}`}
               >
                 <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-white/5 text-text-muted"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -200,9 +200,9 @@ export default function UnifiedChapterPage() {
             {activeTab === "videos" && (
               <>
                 {filteredVideos.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
-                    <Play className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No videos available in {language === "HINDI" ? "Hindi" : "English"}</p>
+                  <div className="text-center py-12 bg-primary/20 rounded-xl border border-dashed border-white/10">
+                    <Play className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                    <p className="text-sm text-text-muted">No videos available in {language === "HINDI" ? "Hindi" : "English"}</p>
                     <button 
                       onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
                       className="text-xs text-accent font-bold mt-2 hover:underline"
@@ -223,9 +223,9 @@ export default function UnifiedChapterPage() {
                           if (video.locked) { setShowLockedModal(true); return; }
                           setSelectedVideo(video);
                         }}
-                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-gray-200 bg-gray-50/50 opacity-80" : "border-gray-200 bg-white hover:border-accent/40 hover:shadow-sm cursor-pointer"}`}
+                        className={`group flex items-center gap-4 rounded-xl border p-3 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-white/5 bg-primary/10 opacity-80" : "border-white/5 bg-card hover:border-accent/40 hover:shadow-sm cursor-pointer"}`}
                       >
-                        <div className="relative w-24 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative w-24 h-14 rounded-lg bg-primary/30 overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
                             <Clock className="w-5 h-5 text-gray-300" />
                           ) : video.locked ? (
@@ -238,7 +238,7 @@ export default function UnifiedChapterPage() {
                           {video.isFree && <span className="absolute top-0 right-0 px-1 py-0.5 bg-green-500 text-[8px] font-bold text-white rounded-bl-lg">FREE</span>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-gray-800"}`}>
+                          <h3 className={`text-sm font-bold truncate ${isActive ? "text-accent" : "text-white"}`}>
                             {idx + 1}. {video.title}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
@@ -260,21 +260,21 @@ export default function UnifiedChapterPage() {
             {activeTab === "notes" && (
               <>
                 {notes.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
-                    <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No notes available yet</p>
+                  <div className="text-center py-12 bg-primary/20 rounded-xl border border-dashed border-white/10">
+                    <FileText className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                    <p className="text-sm text-text-muted">No notes available yet</p>
                   </div>
                 ) : (
                   notes
                     .filter(n => !n.title.toLowerCase().includes("important question"))
                     .map((note, idx) => (
-                    <div key={note.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-500/40 hover:shadow-sm transition-all">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+                    <div key={note.id} className="flex items-center gap-4 rounded-xl border border-white/5 bg-card p-4 hover:border-emerald-500/40 hover:shadow-sm transition-all">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-gray-800 truncate">{idx + 1}. {note.title}</h3>
-                        <p className="text-[10px] text-gray-500 uppercase font-medium">PDF Study Material</p>
+                        <h3 className="text-sm font-bold text-white truncate">{idx + 1}. {note.title}</h3>
+                        <p className="text-[10px] text-text-muted uppercase font-medium">PDF Study Material</p>
                       </div>
                       <a 
                         href={note.pdfUrl} 
@@ -292,12 +292,12 @@ export default function UnifiedChapterPage() {
 
             {/* Quiz Section */}
             {activeTab === "quiz" && (
-              <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center px-6">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-6">
+              <div className="flex flex-col items-center justify-center py-20 bg-primary/20 rounded-2xl border border-dashed border-white/10 text-center px-6">
+                <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400 mb-6">
                   <Brain className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Chapter Quiz</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-[250px]">Test your knowledge of {chapterName} with our interactive MCQ quiz.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Chapter Quiz</h3>
+                <p className="text-sm text-text-muted mb-8 max-w-[250px]">Test your knowledge of {chapterName} with our interactive MCQ quiz.</p>
                 
                 {questions.length === 0 ? (
                   <p className="text-xs text-gray-400">No questions available for this chapter yet.</p>
@@ -316,36 +316,36 @@ export default function UnifiedChapterPage() {
             {activeTab === "quiz_active" && (
               <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-800">Practice Quiz</h3>
-                  <button onClick={() => setActiveTab("quiz")} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                  <h3 className="font-bold text-white">Practice Quiz</h3>
+                  <button onClick={() => setActiveTab("quiz")} className="text-xs text-text-muted hover:text-white">Cancel</button>
                 </div>
                 {questions.map((q, idx) => (
-                  <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm font-bold text-gray-800 mb-4">Q{idx + 1}. {q.questionText}</p>
+                  <div key={q.id} className="rounded-xl border border-white/5 bg-card p-5 shadow-sm">
+                    <p className="text-sm font-bold text-white mb-4">Q{idx + 1}. {q.questionText}</p>
                     <div className="grid grid-cols-1 gap-2">
                       {(["A", "B", "C", "D"] as const).map((opt) => {
                         const optionKey = `option${opt}` as keyof Question;
                         const isSelected = selectedAnswers[q.id] === opt;
                         const isCorrect = showResults && q.correctOption === opt;
                         const isWrong = showResults && isSelected && q.correctOption !== opt;
-
+ 
                         return (
                           <button
                             key={opt}
                             disabled={showResults}
                             onClick={() => setSelectedAnswers(prev => ({ ...prev, [q.id]: opt }))}
-                            className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-green-500 bg-green-50 text-green-700 font-bold" : isWrong ? "border-red-500 bg-red-50 text-red-700" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-gray-100 hover:border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                            className={`text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between ${isCorrect ? "border-green-500 bg-green-500/10 text-green-400 font-bold" : isWrong ? "border-red-500 bg-red-500/10 text-red-400" : isSelected ? "border-accent bg-accent/5 text-accent font-bold" : "border-white/5 hover:border-white/10 text-text-muted hover:bg-white/5"}`}
                           >
                             <span><span className="opacity-50 mr-2">{opt}.</span> {String(q[optionKey])}</span>
-                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                            {isWrong && <X className="w-4 h-4 text-red-500" />}
+                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-400" />}
+                            {isWrong && <X className="w-4 h-4 text-red-400" />}
                           </button>
                         );
                       })}
                     </div>
                     {showResults && q.solution && (
-                      <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                        <p className="text-xs text-blue-700"><span className="font-bold">Solution:</span> {q.solution}</p>
+                      <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <p className="text-xs text-blue-300"><span className="font-bold">Solution:</span> {q.solution}</p>
                       </div>
                     )}
                   </div>
@@ -358,7 +358,7 @@ export default function UnifiedChapterPage() {
                     </Button>
                   ) : (
                     <div className="text-center w-full">
-                      <div className="text-2xl font-bold text-gray-800 mb-2">
+                      <div className="text-2xl font-bold text-white mb-2">
                         Score: {questions.filter(q => selectedAnswers[q.id] === q.correctOption).length} / {questions.length}
                       </div>
                       <div className="flex gap-2">
@@ -380,18 +380,18 @@ export default function UnifiedChapterPage() {
 
       {/* Subscription Locked Modal */}
       {showLockedModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-fade-in">
-            <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-6">
-              <Crown className="w-8 h-8 text-amber-600" />
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-fade-in border border-white/10">
+            <div className="mx-auto w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+              <Crown className="w-8 h-8 text-amber-500" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Unlock Premium Content</h3>
-            <p className="text-gray-500 text-sm mb-8">This video is part of our premium curriculum. Subscribe to a plan to unlock all 3D animations and expert lessons.</p>
+            <h3 className="text-xl font-bold text-white mb-2">Unlock Premium Content</h3>
+            <p className="text-text-muted text-sm mb-8">This video is part of our premium curriculum. Subscribe to a plan to unlock all 3D animations and expert lessons.</p>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base">
+              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base bg-accent text-primary-dark hover:bg-accent-light">
                 View Subscription Plans
               </Button>
-              <button onClick={() => setShowLockedModal(false)} className="text-sm text-gray-400 hover:text-gray-600 font-medium py-2">
+              <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-white font-medium py-2">
                 Maybe later
               </button>
             </div>

@@ -122,20 +122,20 @@ export default function SubjectChaptersPage() {
           <Link href={`/courses/${classId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-white">
             {subjectName} <span className="text-accent">Chapters</span>
           </h1>
         </div>
-        <p className="text-gray-500 max-w-2xl">
+        <p className="text-text-muted max-w-2xl">
           Explore comprehensive 3D animated videos, detailed study notes, and interactive quizzes for every chapter.
         </p>
       </div>
 
       {chapters.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-300">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-600">No chapters found</h2>
-          <p className="text-gray-400">Chapters for this subject will be available soon.</p>
+        <div className="text-center py-20 bg-primary/20 rounded-3xl border border-dashed border-white/10">
+          <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-text">No chapters found</h2>
+          <p className="text-text-muted">Chapters for this subject will be available soon.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -145,7 +145,7 @@ export default function SubjectChaptersPage() {
 
             return (
               <Link key={chapter.id} href={`/courses/${classId}/${subjectId}/${chapter.id}`}>
-                <Card className="group relative overflow-hidden border border-gray-200 bg-white hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer h-full">
+                <Card className="group relative overflow-hidden border border-white/5 bg-card hover:border-accent/30 transition-all duration-500 hover:-translate-y-1 cursor-pointer h-full">
                   <CardContent className="p-6 text-center">
                     {/* Chapter Number */}
                     <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center z-10">
@@ -153,7 +153,7 @@ export default function SubjectChaptersPage() {
                     </div>
 
                     {/* Animated Visual */}
-                    <div className="w-full h-32 mx-auto rounded-xl bg-gray-50 border border-gray-100 mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-accent/5 transition-colors">
+                    <div className="w-full h-32 mx-auto rounded-xl bg-primary/20 border border-white/5 mb-4 overflow-hidden relative flex items-center justify-center group-hover:bg-accent/5 transition-colors">
                       {AnimationComponent ? (
                         <AnimationComponent />
                       ) : (
@@ -162,12 +162,12 @@ export default function SubjectChaptersPage() {
                     </div>
 
                     {/* Name */}
-                    <h3 className="text-base font-bold text-gray-800 mb-3 line-clamp-2 min-h-[2.5rem]">
+                    <h3 className="text-base font-bold text-white mb-3 line-clamp-2 min-h-[2.5rem]">
                       {chapter.name}
                     </h3>
 
                     {/* Content counts */}
-                    <div className="flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
+                    <div className="flex items-center justify-center gap-4 text-xs text-text-muted font-medium">
                       <span className="flex items-center gap-1">
                         <Play className="w-3.5 h-3.5 text-accent" />
                         {chapter._count?.videos || 0}
