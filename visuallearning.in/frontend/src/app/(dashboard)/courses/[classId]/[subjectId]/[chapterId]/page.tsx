@@ -24,12 +24,11 @@ import {
   X, 
   Globe,
   Clock,
-  Crown,
-  ClipboardList
+  Crown
 } from "lucide-react";
 import { Video, Note, Question, BoardPaper } from "@/types";
 
-type Tab = "videos" | "notes" | "quiz" | "papers" | "quiz_active";
+type Tab = "videos" | "notes" | "quiz" | "quiz_active";
 
 export default function UnifiedChapterPage() {
   const params = useParams();
@@ -46,7 +45,6 @@ export default function UnifiedChapterPage() {
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [boardPapers, setBoardPapers] = useState<BoardPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<string>("HINDI");
 
@@ -71,24 +69,16 @@ export default function UnifiedChapterPage() {
         setChapterName(currentChapter?.name || "Chapter");
 
         // Fetch All Content
-        const [videosRes, notesRes, quizRes, paperRes] = await Promise.all([
+        const [videosRes, notesRes, quizRes] = await Promise.all([
           api.get(`/courses/chapters/${chapterId}/videos?language=all`),
           api.get(`/courses/chapters/${chapterId}/notes`),
-          api.get(`/courses/chapters/${chapterId}/questions`),
-          api.get(`/courses/subjects/${subjectId}/board-papers`)
+          api.get(`/courses/chapters/${chapterId}/questions`)
         ]);
   
         const videoList = videosRes.data.data.videos || [];
         setAllVideos(videoList);
         setNotes(notesRes.data.data.notes || notesRes.data.data || []);
         setQuestions(quizRes.data.data.questions || quizRes.data.data || []);
-        
-        const papers = paperRes.data.data.papers || paperRes.data.data;
-        if (typeof papers === 'object' && !Array.isArray(papers)) {
-          setBoardPapers(Object.values(papers).flat() as BoardPaper[]);
-        } else {
-          setBoardPapers(papers || []);
-        }
 
         // Initial Video Selection
         const initialLang = "HINDI";
@@ -116,7 +106,6 @@ export default function UnifiedChapterPage() {
     { key: "videos", label: "Video(3D)", icon: Play, count: filteredVideos.length },
     { key: "notes", label: "Notes", icon: FileText, count: notes.length },
     { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
-    { key: "papers", label: "Question Papers", icon: ClipboardList, count: boardPapers.length },
   ];
 
   if (loading) return <PageLoader />;
@@ -384,37 +373,8 @@ export default function UnifiedChapterPage() {
               </div>
             )}
 
-            {/* Question Papers List */}
-            {activeTab === "papers" && (
-              <>
-                {boardPapers.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
-                    <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No question papers available yet</p>
-                  </div>
-                ) : (
-                  boardPapers.map((paper, idx) => (
-                    <div key={paper.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:border-rose-500/40 hover:shadow-sm transition-all">
-                      <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-                        <ClipboardList className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-gray-800 truncate">{paper.title}</h3>
-                        <p className="text-[10px] text-gray-500 uppercase font-medium">{paper.year} Exam Material</p>
-                      </div>
-                      <a 
-                        href={paper.pdfUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors"
-                      >
-                        <Download className="w-5 h-5" />
-                      </a>
-                    </div>
-                  ))
-                )}
-              </>
             )}
+
           </div>
         </div>
       </div>

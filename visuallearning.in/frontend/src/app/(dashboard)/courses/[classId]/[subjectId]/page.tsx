@@ -26,18 +26,13 @@ import {
   FlaskConical,
   Sun,
   Microscope,
-  Gauge,
   Triangle,
-  ClipboardList,
-  Download,
   Atom as Molecule
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { getChapterAnimation } from "@/components/chapter-animations";
 import { Chapter, BoardPaper } from "@/types";
 
-// Board exam classes show "Board Papers", others show "Important Questions"
-const BOARD_CLASSES = ["10", "12", "class 10", "class 12"];
 
 // Map chapter names to icons (adapted for more subjects)
 const iconMap: Record<string, any> = {
@@ -90,29 +85,19 @@ export default function SubjectChaptersPage() {
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [boardPapers, setBoardPapers] = useState<BoardPaper[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [chapterRes, paperRes] = await Promise.all([
-          api.get(`/courses/subjects/${subjectId}/chapters`),
-          api.get(`/courses/subjects/${subjectId}/board-papers`)
+        const [chapterRes] = await Promise.all([
+          api.get(`/courses/subjects/${subjectId}/chapters`)
         ]);
         
         const data = chapterRes.data.data;
         setSubjectName(data.subject.name);
         setClassName(data.subject.class?.name || "");
         setChapters(data.chapters || []);
-        
-        // Flatten board papers if they come in year-grouped object
-        const papers = paperRes.data.data.papers || paperRes.data.data;
-        if (typeof papers === 'object' && !Array.isArray(papers)) {
-          setBoardPapers(Object.values(papers).flat() as BoardPaper[]);
-        } else {
-          setBoardPapers(papers || []);
-        }
       } catch (err) {
         console.error("Failed to fetch data", err);
       } finally {
@@ -208,36 +193,6 @@ export default function SubjectChaptersPage() {
         </div>
       )}
 
-      {/* Board Papers Section */}
-      {boardPapers.length > 0 && (
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <ClipboardList className="w-6 h-6 text-rose-500" />
-            {BOARD_CLASSES.some((b) => className.toLowerCase().includes(b)) ? "Board Papers" : "Important Questions"}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {boardPapers.map((paper) => (
-              <div key={paper.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:border-rose-500/40 hover:shadow-sm transition-all">
-                <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-                  <ClipboardList className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-gray-800 truncate">{paper.title}</h3>
-                  <p className="text-[10px] text-gray-500 uppercase font-medium">{paper.year} Exam Paper</p>
-                </div>
-                <a 
-                  href={paper.pdfUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-2 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors"
-                >
-                  <Download className="w-5 h-5" />
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
