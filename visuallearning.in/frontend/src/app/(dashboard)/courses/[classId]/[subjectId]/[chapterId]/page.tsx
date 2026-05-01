@@ -265,7 +265,9 @@ export default function UnifiedChapterPage() {
                     <p className="text-sm text-gray-500">No notes available yet</p>
                   </div>
                 ) : (
-                  notes.map((note, idx) => (
+                  notes
+                    .filter(n => !n.title.toLowerCase().includes("important question"))
+                    .map((note, idx) => (
                     <div key={note.id} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-500/40 hover:shadow-sm transition-all">
                       <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
                         <FileText className="w-5 h-5" />
@@ -372,9 +374,6 @@ export default function UnifiedChapterPage() {
                 </div>
               </div>
             )}
-
-            )}
-
           </div>
         </div>
       </div>
