@@ -38,7 +38,7 @@ export default function CustomPlanPreview() {
         // Fetch detailed chapters for these subjects
         const detailedData = await Promise.all(filtered.map(async (cls: any) => {
            const subjectsWithChapters = await Promise.all(cls.subjects.map(async (sub: any) => {
-              const { data: subDetails } = await api.get(`/courses/${cls.id}/${sub.id}`);
+              const { data: subDetails } = await api.get(`/courses/subjects/${sub.id}/chapters`);
               return { ...sub, chapters: subDetails.data.chapters };
            }));
            return { ...cls, subjects: subjectsWithChapters };

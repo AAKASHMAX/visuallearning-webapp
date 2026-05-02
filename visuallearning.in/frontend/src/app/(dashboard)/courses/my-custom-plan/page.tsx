@@ -36,10 +36,9 @@ export default function MyCustomPlan() {
           subjects: cls.subjects.filter((s: any) => sub.subjectsAccess.includes(s.id))
         })).filter((cls: any) => cls.subjects.length > 0);
 
-        // Fetch chapters for these subjects
         const detailedData = await Promise.all(filtered.map(async (cls: any) => {
            const subjectsWithChapters = await Promise.all(cls.subjects.map(async (sub: any) => {
-              const { data: subDetails } = await api.get(`/courses/${cls.id}/${sub.id}`);
+              const { data: subDetails } = await api.get(`/courses/subjects/${sub.id}/chapters`);
               return { ...sub, chapters: subDetails.data.chapters };
            }));
            return { ...cls, subjects: subjectsWithChapters };
