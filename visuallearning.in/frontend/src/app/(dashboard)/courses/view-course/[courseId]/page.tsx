@@ -17,8 +17,8 @@ const iconMap: Record<string, any> = {
   Atom, Lightbulb, Zap, Flame, Waves, Cpu, Beaker, Microscope
 };
 
-export default function CourseContentPage({ params }: { params: Promise<{ courseId: string }> }) {
-  const { courseId } = use(params);
+export default function CourseContentPage({ params }: { params: { courseId: string } }) {
+  const { courseId } = params;
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

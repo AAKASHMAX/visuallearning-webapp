@@ -10,8 +10,8 @@ import { Plus, Trash2, Library, ArrowLeft, GripVertical, Search, CheckCircle2 } 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function AdminCourseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function AdminCourseDetailsPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const [course, setCourse] = useState<any>(null);
   const [allClasses, setAllClasses] = useState<any[]>([]);

@@ -169,8 +169,8 @@ const getCourseTheme = (courseId: string) => {
   };
 };
 
-export default function CourseDetailsPage({ params }: { params: Promise<{ courseId: string }> }) {
-  const { courseId } = use(params);
+export default function CourseDetailsPage({ params }: { params: { courseId: string } }) {
+  const { courseId } = params;
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   
