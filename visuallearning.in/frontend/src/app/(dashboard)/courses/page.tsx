@@ -21,8 +21,8 @@ export default function CoursesPage() {
   useEffect(() => {
     setLoading(true);
     api.get("/courses/pricing/subjects").then(({ data }) => {
-      setClassesData(data.data);
-    }).finally(() => setLoading(false));
+      setClassesData(data.data || []);
+    }).catch(() => setClassesData([])).finally(() => setLoading(false));
   }, []);
 
   const toggleSubject = (subId: string, price: number) => {

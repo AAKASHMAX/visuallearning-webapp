@@ -469,7 +469,6 @@ export async function getSubjectPricing(_req: Request, res: Response) {
       orderBy: { order: "asc" },
       include: {
         subjects: {
-          where: { enabled: true },
           select: { id: true, name: true, icon: true, price: true, enabled: true },
         },
       },
