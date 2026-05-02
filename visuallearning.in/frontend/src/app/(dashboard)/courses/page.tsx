@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { 
   Sparkles, Zap, GraduationCap, 
   Crown, CheckCircle2, XCircle, ArrowRight, 
-  Orbit, Flame, Lightbulb, Microscope, Dna, Waves, Atom,
+  Orbit, Flame, Lightbulb, Microscope, Beaker, Dna, Waves, Atom,
   Layout, AlertCircle
 } from "lucide-react";
 
