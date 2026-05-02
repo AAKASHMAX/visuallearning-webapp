@@ -101,7 +101,7 @@ export default function CourseContentPage({ params }: { params: { courseId: stri
                     return (
                       <Link 
                         key={chapter.id} 
-                        href={`/courses/${classId}/${subjectId}/${chapter.id}`}
+                        href={`/courses/${classId}/${subjectId}/${chapter.id}?fromCourse=${courseId}`}
                         className="group bg-white rounded-[2rem] border border-gray-100 p-2 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full"
                       >
                         {/* Chapter Card Content */}

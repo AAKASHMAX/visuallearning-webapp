@@ -276,6 +276,25 @@ export async function getCourseWithChapters(req: Request, res: Response) {
   }
 }
 
+export async function getChaptersList(req: Request, res: Response) {
+  try {
+    const chapters = await prisma.chapter.findMany({
+      include: {
+        subject: {
+          include: { class: true }
+        },
+        _count: {
+          select: { videos: true, notes: true, questions: true }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+    return success(res, chapters);
+  } catch (e) {
+    return error(res, "Failed to fetch chapters list");
+  }
+}
+
 export async function addChapterToCourse(req: Request, res: Response) {
   try {
     const { id } = req.params; // courseId

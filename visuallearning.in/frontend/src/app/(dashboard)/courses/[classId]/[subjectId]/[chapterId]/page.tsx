@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -32,7 +32,11 @@ type Tab = "videos" | "notes" | "quiz" | "quiz_active";
 
 export default function UnifiedChapterPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  
+  const fromCourse = searchParams.get("fromCourse");
+
   const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
   const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
   const chapterId = Array.isArray(params.chapterId) ? params.chapterId[0] : (params.chapterId as string);
@@ -108,12 +112,17 @@ export default function UnifiedChapterPage() {
     { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
   ];
 
+  const backUrl = fromCourse ? `/courses/view-course/${fromCourse}` : `/courses/${classId}/${subjectId}`;
+
   if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Breadcrumbs */}
-      <Breadcrumb items={[
+      <Breadcrumb items={fromCourse ? [
+        { label: "My Course", href: backUrl },
+        { label: chapterName },
+      ] : [
         { label: className, href: `/courses/${classId}` },
         { label: subjectName, href: `/courses/${classId}/${subjectId}` },
         { label: chapterName },
@@ -122,7 +131,7 @@ export default function UnifiedChapterPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6 mb-8 p-6 bg-primary-light rounded-2xl border border-primary/10 shadow-sm">
         <div className="flex items-center gap-4">
-          <Link href={`/courses/${classId}/${subjectId}`} className="p-2 hover:bg-white rounded-full transition-colors group">
+          <Link href={backUrl} className="p-2 hover:bg-white rounded-full transition-colors group">
             <ArrowLeft className="w-5 h-5 text-primary group-hover:-translate-x-1 transition-transform" />
           </Link>
           <div>

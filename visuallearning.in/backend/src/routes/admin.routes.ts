@@ -12,6 +12,7 @@ import {
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
   getAllCourses, addCourse, updateCourse, deleteCourse, getCourseWithChapters, addChapterToCourse, removeChapterFromCourse, getChaptersGroupedBySubject, courseSchema,
+  getChaptersList,
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
@@ -105,6 +106,7 @@ router.delete("/courses/:id", deleteCourse);
 router.post("/courses/:id/chapters", addChapterToCourse);
 router.delete("/courses/:id/chapters/:chapterId", removeChapterFromCourse);
 router.get("/courses-data/chapters", getChaptersGroupedBySubject);
+router.get("/chapters-list", getChaptersList);
 
 // Analytics
 router.get("/analytics/most-watched", getMostWatched);

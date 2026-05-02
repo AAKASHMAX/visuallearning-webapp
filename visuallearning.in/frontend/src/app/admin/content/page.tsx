@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
-import { useLanguage, type LangOption } from "@/lib/language";
+import { Plus, Pencil, Trash2, X, Layers, List, Search } from "lucide-react";
+import { useLanguage } from "@/lib/language";
 
 type Tab = "classes" | "subjects" | "chapters" | "videos" | "notes" | "questions" | "board-papers";
+type ViewMode = "classwise" | "chapterwise";
 
 export default function AdminContentPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>("classwise");
   const [tab, setTab] = useState<Tab>("classes");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,65 +28,88 @@ export default function AdminContentPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [chapters, setChapters] = useState<any[]>([]);
+  const [allChapters, setAllChapters] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
+  const [chapterSearch, setChapterSearch] = useState("");
   const [videoTypeFilter, setVideoTypeFilter] = useState<"ALL" | "ANIMATED_VIDEO" | "LECTURE_VIDEO">("ALL");
   const [videoLangFilter, setVideoLangFilter] = useState<string>("ALL");
 
   useEffect(() => {
     api.get("/courses/classes").then(({ data }) => setClasses(data.data));
+    api.get("/admin/chapters-list").then(({ data }) => setAllChapters(data.data));
   }, []);
 
-  // Load subjects when class is selected (needed for chapters/videos/board-papers tabs)
+  // Load subjects when class is selected
   useEffect(() => {
-    if (selectedClass && tab !== "classes") {
+    if (selectedClass && viewMode === "classwise" && tab !== "classes") {
       api.get(`/courses/classes/${selectedClass}/subjects`).then(({ data }) => {
         setSubjects(data.data.subjects);
       });
     }
-  }, [selectedClass]);
+  }, [selectedClass, viewMode]);
 
-  // Load chapters when subject is selected (needed for videos/notes/questions tabs)
+  // Load chapters when subject is selected
   useEffect(() => {
-    if (selectedSubject && (tab === "videos" || tab === "chapters" || tab === "notes" || tab === "questions")) {
+    if (selectedSubject && viewMode === "classwise" && (tab === "videos" || tab === "chapters" || tab === "notes" || tab === "questions")) {
       api.get(`/courses/subjects/${selectedSubject}/chapters`).then(({ data }) => {
         setChapters(data.data.chapters);
       });
     }
-  }, [selectedSubject]);
+  }, [selectedSubject, viewMode]);
 
-  useEffect(() => { loadData(); }, [tab, selectedClass, selectedSubject, selectedChapter]);
+  useEffect(() => { loadData(); }, [tab, selectedClass, selectedSubject, selectedChapter, viewMode]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      if (tab === "classes") {
-        const { data } = await api.get("/courses/classes");
-        setData(data.data);
-      } else if (tab === "subjects" && selectedClass) {
-        const { data } = await api.get(`/courses/classes/${selectedClass}/subjects`);
-        setData(data.data.subjects);
-        setSubjects(data.data.subjects);
-      } else if (tab === "chapters" && selectedSubject) {
-        const { data } = await api.get(`/courses/subjects/${selectedSubject}/chapters`);
-        setData(data.data.chapters);
-        setChapters(data.data.chapters);
-      } else if (tab === "videos" && selectedChapter) {
-        const { data } = await api.get(`/admin/videos/chapter/${selectedChapter}`);
-        setData(data.data || []);
-      } else if (tab === "notes" && selectedChapter) {
-        const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
-        setData(data.data || []);
-      } else if (tab === "questions" && selectedChapter) {
-        const { data } = await api.get(`/courses/chapters/${selectedChapter}/questions`);
-        setData(data.data || []);
-      } else if (tab === "board-papers" && selectedSubject) {
-        const { data } = await api.get(`/courses/subjects/${selectedSubject}/board-papers`);
-        const allPapers: any[] = Object.values(data.data.papers || {}).flat();
-        setData(allPapers);
+      if (viewMode === "classwise") {
+        if (tab === "classes") {
+          const { data } = await api.get("/courses/classes");
+          setData(data.data);
+        } else if (tab === "subjects" && selectedClass) {
+          const { data } = await api.get(`/courses/classes/${selectedClass}/subjects`);
+          setData(data.data.subjects);
+          setSubjects(data.data.subjects);
+        } else if (tab === "chapters" && selectedSubject) {
+          const { data } = await api.get(`/courses/subjects/${selectedSubject}/chapters`);
+          setData(data.data.chapters);
+          setChapters(data.data.chapters);
+        } else if (tab === "videos" && selectedChapter) {
+          const { data } = await api.get(`/admin/videos/chapter/${selectedChapter}`);
+          setData(data.data || []);
+        } else if (tab === "notes" && selectedChapter) {
+          const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
+          setData(data.data || []);
+        } else if (tab === "questions" && selectedChapter) {
+          const { data } = await api.get(`/courses/chapters/${selectedChapter}/questions`);
+          setData(data.data || []);
+        } else if (tab === "board-papers" && selectedSubject) {
+          const { data } = await api.get(`/courses/subjects/${selectedSubject}/board-papers`);
+          const allPapers: any[] = Object.values(data.data.papers || {}).flat();
+          setData(allPapers);
+        } else {
+          setData([]);
+        }
       } else {
-        setData([]);
+        // Chapterwise Mode
+        if (tab === "chapters") {
+          const { data } = await api.get("/admin/chapters-list");
+          setData(data.data);
+          setAllChapters(data.data);
+        } else if (tab === "videos" && selectedChapter) {
+          const { data } = await api.get(`/admin/videos/chapter/${selectedChapter}`);
+          setData(data.data || []);
+        } else if (tab === "notes" && selectedChapter) {
+          const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
+          setData(data.data || []);
+        } else if (tab === "questions" && selectedChapter) {
+          const { data } = await api.get(`/courses/chapters/${selectedChapter}/questions`);
+          setData(data.data || []);
+        } else {
+          setData([]);
+        }
       }
     } catch { setData([]); }
     setLoading(false);
@@ -156,14 +181,45 @@ export default function AdminContentPage() {
     setShowForm(true);
   };
 
+  const filteredData = (tab === "videos" ? data.filter((item: any) =>
+    (videoTypeFilter === "ALL" || item.type === videoTypeFilter) &&
+    (videoLangFilter === "ALL" || (item.language || "ENGLISH") === videoLangFilter)
+  ) : data).filter((item: any) => {
+    if (viewMode === "chapterwise" && tab === "chapters" && chapterSearch) {
+      return item.name.toLowerCase().includes(chapterSearch.toLowerCase()) || 
+             item.subject.name.toLowerCase().includes(chapterSearch.toLowerCase()) ||
+             item.subject.class.name.toLowerCase().includes(chapterSearch.toLowerCase());
+    }
+    return true;
+  });
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Content Management</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">Content Management</h1>
+        <div className="flex bg-gray-100 p-1 rounded-xl">
+          <button 
+            onClick={() => { setViewMode("classwise"); setTab("classes"); setSelectedChapter(""); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "classwise" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <Layers className="w-4 h-4" /> Classwise
+          </button>
+          <button 
+            onClick={() => { setViewMode("chapterwise"); setTab("chapters"); setSelectedChapter(""); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "chapterwise" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <List className="w-4 h-4" /> Chapterwise
+          </button>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {(["classes", "subjects", "chapters", "videos", "notes", "questions", "board-papers"] as Tab[]).map((t) => (
-          <button key={t} onClick={() => { setTab(t); setShowForm(false); }}
+        {(viewMode === "classwise" 
+          ? ["classes", "subjects", "chapters", "videos", "notes", "questions", "board-papers"] 
+          : ["chapters", "videos", "notes", "questions"]
+        ).map((t) => (
+          <button key={t} onClick={() => { setTab(t as Tab); setShowForm(false); }}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${tab === t ? "bg-primary text-white" : "bg-white text-gray-600 border"}`}>
             {t === "board-papers" ? "Board Papers" : t}
           </button>
@@ -172,27 +228,57 @@ export default function AdminContentPage() {
 
       {/* Parent Selectors */}
       <div className="flex gap-3 mb-4 flex-wrap">
-        {tab !== "classes" && (
-          <select value={selectedClass} onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(""); setSelectedChapter(""); }}
-            className="border rounded-lg px-3 py-2 text-sm">
-            <option value="">Select Class</option>
-            {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+        {viewMode === "classwise" ? (
+          <>
+            {tab !== "classes" && (
+              <select value={selectedClass} onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(""); setSelectedChapter(""); }}
+                className="border rounded-lg px-3 py-2 text-sm min-w-[150px]">
+                <option value="">Select Class</option>
+                {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+            {tab !== "classes" && tab !== "subjects" && selectedClass && (
+              <select value={selectedSubject} onChange={(e) => { setSelectedSubject(e.target.value); setSelectedChapter(""); }}
+                className="border rounded-lg px-3 py-2 text-sm min-w-[150px]">
+                <option value="">Select Subject</option>
+                {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            )}
+            {(tab === "videos" || tab === "notes" || tab === "questions") && selectedSubject && (
+              <select value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm min-w-[150px]">
+                <option value="">Select Chapter</option>
+                {chapters.map((ch: any) => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
+              </select>
+            )}
+          </>
+        ) : (
+          <>
+            {(tab === "videos" || tab === "notes" || tab === "questions") && (
+              <select value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm min-w-[300px]">
+                <option value="">Choose Chapter to manage content</option>
+                {allChapters.map((ch: any) => (
+                  <option key={ch.id} value={ch.id}>
+                    {ch.name} ({ch.subject.class.name} - {ch.subject.name})
+                  </option>
+                ))}
+              </select>
+            )}
+            {tab === "chapters" && (
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input 
+                  placeholder="Search chapters by name, class or subject..." 
+                  className="pl-10"
+                  value={chapterSearch}
+                  onChange={(e) => setChapterSearch(e.target.value)}
+                />
+              </div>
+            )}
+          </>
         )}
-        {tab !== "classes" && tab !== "subjects" && selectedClass && (
-          <select value={selectedSubject} onChange={(e) => { setSelectedSubject(e.target.value); setSelectedChapter(""); }}
-            className="border rounded-lg px-3 py-2 text-sm">
-            <option value="">Select Subject</option>
-            {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        )}
-        {(tab === "videos" || tab === "notes" || tab === "questions") && selectedSubject && (
-          <select value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm">
-            <option value="">Select Chapter</option>
-            {chapters.map((ch: any) => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
-          </select>
-        )}
+
         {tab === "videos" && selectedChapter && (
           <>
             <select value={videoTypeFilter} onChange={(e) => setVideoTypeFilter(e.target.value as any)}
@@ -213,14 +299,16 @@ export default function AdminContentPage() {
       </div>
 
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setShowForm(!showForm); setEditing(null); setFormData({}); }}>
-          {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "board-papers" ? "Board Paper" : tab === "questions" ? "Question" : tab === "notes" ? "Note" : tab.slice(0, -1)}</>}
-        </Button>
+        {(!viewMode || (viewMode === "classwise" || tab === "chapters")) && (
+          <Button onClick={() => { setShowForm(!showForm); setEditing(null); setFormData({}); }}>
+            {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "board-papers" ? "Board Paper" : tab === "questions" ? "Question" : tab === "notes" ? "Note" : tab.slice(0, -1)}</>}
+          </Button>
+        )}
       </div>
 
       {/* Form */}
       {showForm && (
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-lg border-primary/10">
           <CardContent className="p-6 space-y-3">
             {tab === "classes" && (
               <>
@@ -238,172 +326,158 @@ export default function AdminContentPage() {
               <>
                 <Input label="Chapter Name" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                 <Input label="Order" type="number" value={formData.order || ""} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} />
+                {viewMode === "chapterwise" && !editing && (
+                   <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Class</label>
+                        <select value={formData.classId || ""} onChange={(e) => setFormData({ ...formData, classId: e.target.value, subjectId: "" })} className="w-full border rounded-lg p-2 text-sm">
+                          <option value="">Select Class</option>
+                          {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Subject</label>
+                        <select value={formData.subjectId || ""} onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })} className="w-full border rounded-lg p-2 text-sm">
+                          <option value="">Select Subject</option>
+                          {classes.find(c => c.id === formData.classId)?.subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                   </div>
+                )}
               </>
             )}
             {tab === "videos" && (
               <>
                 <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    value={formData.type || "ANIMATED_VIDEO"}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="border rounded-lg px-3 py-2 text-sm w-full"
-                  >
-                    <option value="ANIMATED_VIDEO">3D Animated Video</option>
-                    <option value="LECTURE_VIDEO">Lecture Video</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select
+                      value={formData.type || "ANIMATED_VIDEO"}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                    >
+                      <option value="ANIMATED_VIDEO">3D Animated Video</option>
+                      <option value="LECTURE_VIDEO">Lecture Video</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                    <select
+                      value={formData.language || "ENGLISH"}
+                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                    >
+                      {enabledLanguages.map((lang) => (
+                        <option key={lang.value} value={lang.value}>{lang.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                  <select
-                    value={formData.language || "ENGLISH"}
-                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                    className="border rounded-lg px-3 py-2 text-sm w-full"
-                  >
-                    {enabledLanguages.map((lang) => (
-                      <option key={lang.value} value={lang.value}>{lang.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <Input label="Vimeo Video ID (recommended - private)" value={formData.vimeoVideoId || ""} onChange={(e) => {
-                  let value = e.target.value.trim();
-                  try {
-                    if (value.includes("vimeo.com")) {
-                      const match = value.match(/vimeo\.com\/(\d+)/);
-                      if (match) value = match[1];
-                    }
-                  } catch {}
-                  setFormData({ ...formData, vimeoVideoId: value });
-                }} placeholder="Paste Vimeo link or Video ID (e.g. 123456789)" />
-                <Input label="YouTube Link or Video ID (legacy)" value={formData.youtubeVideoId || ""} onChange={(e) => {
-                  let value = e.target.value.trim();
-                  try {
-                    if (value.includes("youtube.com") || value.includes("youtu.be")) {
-                      let id = "";
-                      if (value.includes("youtu.be/")) {
-                        id = value.split("youtu.be/")[1].split(/[?&#]/)[0];
-                      } else {
-                        const url = new URL(value);
-                        id = url.searchParams.get("v") || "";
-                      }
-                      if (id) value = id;
-                    }
-                  } catch {}
-                  setFormData({ ...formData, youtubeVideoId: value });
-                }} placeholder="Paste full YouTube link or just the Video ID" />
+                <Input label="Vimeo Video ID" value={formData.vimeoVideoId || ""} onChange={(e) => setFormData({ ...formData, vimeoVideoId: e.target.value })} placeholder="e.g. 123456789" />
+                <Input label="YouTube Link or Video ID" value={formData.youtubeVideoId || ""} onChange={(e) => setFormData({ ...formData, youtubeVideoId: e.target.value })} />
                 <Input label="Duration" value={formData.duration || ""} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} placeholder="e.g. 15:30" />
                 <Input label="Order" type="number" value={formData.order || ""} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} />
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={formData.isFree || false} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} />
-                  Free video (visible without subscription)
+                  Free video
                 </label>
               </>
             )}
             {tab === "notes" && (
               <>
-                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Chapter 1 Notes" />
-                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
+                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} />
               </>
             )}
             {tab === "questions" && (
               <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-                  <textarea
-                    value={formData.questionText || ""}
-                    onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-                    className="border rounded-lg px-3 py-2 text-sm w-full min-h-[80px]"
-                    placeholder="Enter the question..."
-                  />
+                <Input label="Question Text" value={formData.questionText || ""} onChange={(e) => setFormData({ ...formData, questionText: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input label="A" value={formData.optionA || ""} onChange={(e) => setFormData({ ...formData, optionA: e.target.value })} />
+                  <Input label="B" value={formData.optionB || ""} onChange={(e) => setFormData({ ...formData, optionB: e.target.value })} />
+                  <Input label="C" value={formData.optionC || ""} onChange={(e) => setFormData({ ...formData, optionC: e.target.value })} />
+                  <Input label="D" value={formData.optionD || ""} onChange={(e) => setFormData({ ...formData, optionD: e.target.value })} />
                 </div>
-                <Input label="Option A" value={formData.optionA || ""} onChange={(e) => setFormData({ ...formData, optionA: e.target.value })} />
-                <Input label="Option B" value={formData.optionB || ""} onChange={(e) => setFormData({ ...formData, optionB: e.target.value })} />
-                <Input label="Option C" value={formData.optionC || ""} onChange={(e) => setFormData({ ...formData, optionC: e.target.value })} />
-                <Input label="Option D" value={formData.optionD || ""} onChange={(e) => setFormData({ ...formData, optionD: e.target.value })} />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Correct Option</label>
-                  <select
-                    value={formData.correctOption || ""}
-                    onChange={(e) => setFormData({ ...formData, correctOption: e.target.value })}
-                    className="border rounded-lg px-3 py-2 text-sm w-full"
-                  >
-                    <option value="">Select correct answer</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Solution (optional)</label>
-                  <textarea
-                    value={formData.solution || ""}
-                    onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
-                    className="border rounded-lg px-3 py-2 text-sm w-full min-h-[60px]"
-                    placeholder="Explain the answer..."
-                  />
-                </div>
+                <select
+                  value={formData.correctOption || ""}
+                  onChange={(e) => setFormData({ ...formData, correctOption: e.target.value })}
+                  className="border rounded-lg px-3 py-2 text-sm w-full"
+                >
+                  <option value="">Correct Option</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                </select>
+                <Input label="Solution" value={formData.solution || ""} onChange={(e) => setFormData({ ...formData, solution: e.target.value })} />
               </>
             )}
-            {tab === "board-papers" && (
-              <>
-                <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Physics 2024 Question Paper" />
-                <Input label="Year" type="number" value={formData.year || ""} onChange={(e) => setFormData({ ...formData, year: e.target.value })} placeholder="e.g. 2024" />
-                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://... or 'pending'" />
-                <Input label="Order" type="number" value={formData.order || ""} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} placeholder="1 = Question Paper, 2 = Solution" />
-                <p className="text-xs text-gray-400">Tip: Use &quot;pending&quot; as PDF URL for papers not yet uploaded (shows as Coming Soon)</p>
-              </>
-            )}
-            <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
+            <Button onClick={handleSave} className="w-full">{editing ? "Update" : "Create"}</Button>
           </CardContent>
         </Card>
       )}
 
       {/* Data Table */}
       {loading ? <PageLoader /> : (
-        <Card>
+        <Card className="overflow-hidden border-none shadow-xl bg-white rounded-2xl">
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-gray-50 text-left">
-                  <th className="p-4">{tab === "questions" ? "Question" : "Name/Title"}</th>
-                  {tab === "videos" && <th className="p-4">Type</th>}
-                  {tab === "videos" && <th className="p-4">Language</th>}
-                  {tab === "videos" && <th className="p-4">YouTube ID</th>}
-                  {tab === "videos" && <th className="p-4">Duration</th>}
-                  {tab === "notes" && <th className="p-4">PDF URL</th>}
-                  {tab === "questions" && <th className="p-4">Correct</th>}
-                  {tab === "board-papers" && <th className="p-4">Year</th>}
-                  {tab === "board-papers" && <th className="p-4">Status</th>}
-                  {tab === "board-papers" && <th className="p-4">PDF URL</th>}
-                  <th className="p-4">Actions</th>
+                <tr className="border-b bg-gray-50/50 text-left">
+                  <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">
+                    {tab === "questions" ? "Question" : "Name/Title"}
+                  </th>
+                  {viewMode === "chapterwise" && tab === "chapters" && <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Class/Subject</th>}
+                  {tab === "chapters" && <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Content Stats</th>}
+                  {tab === "videos" && <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Details</th>}
+                  <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {(tab === "videos" ? data.filter((item: any) =>
-                  (videoTypeFilter === "ALL" || item.type === videoTypeFilter) &&
-                  (videoLangFilter === "ALL" || (item.language || "ENGLISH") === videoLangFilter)
-                ) : data).map((item: any) => (
-                  <tr key={item.id} className="border-b last:border-0">
-                    <td className="p-4 font-medium max-w-[300px] truncate">{tab === "questions" ? item.questionText : (item.name || item.title)}</td>
-                    {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.type === "LECTURE_VIDEO" ? "Lecture" : "Animated"}</td>}
-                    {tab === "videos" && <td className="p-4 text-gray-500 text-xs">{item.language || "ENGLISH"}</td>}
-                    {tab === "videos" && <td className="p-4 text-gray-500 font-mono text-xs">{item.vimeoVideoId ? `vimeo:${item.vimeoVideoId}` : item.youtubeVideoId}</td>}
-                    {tab === "videos" && <td className="p-4 text-gray-500">{item.duration}</td>}
-                    {tab === "notes" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl}</td>}
-                    {tab === "questions" && <td className="p-4 text-gray-500 font-medium">{item.correctOption}</td>}
-                    {tab === "board-papers" && <td className="p-4 text-gray-500">{item.year}</td>}
-                    {tab === "board-papers" && <td className="p-4">{!item.pdfUrl || item.pdfUrl === "pending" ? <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Pending</span> : <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Uploaded</span>}</td>}
-                    {tab === "board-papers" && <td className="p-4 text-gray-500 text-xs truncate max-w-[200px]">{item.pdfUrl === "pending" ? "—" : item.pdfUrl}</td>}
-                    <td className="p-4 flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => startEdit(item)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                {filteredData.map((item: any) => (
+                  <tr key={item.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-gray-900 max-w-[300px] truncate">
+                        {tab === "questions" ? item.questionText : (item.name || item.title)}
+                      </div>
+                      {tab === "videos" && <div className="text-[10px] font-mono text-gray-400">{item.vimeoVideoId || item.youtubeVideoId}</div>}
+                    </td>
+                    {viewMode === "chapterwise" && tab === "chapters" && (
+                      <td className="p-4">
+                         <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full w-fit">{item.subject.class.name}</span>
+                            <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">{item.subject.name}</span>
+                         </div>
+                      </td>
+                    )}
+                    {tab === "chapters" && (
+                      <td className="p-4">
+                        <div className="flex gap-2 text-[10px] font-bold">
+                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{item._count?.videos || 0} Videos</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{item._count?.notes || 0} Notes</span>
+                          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{item._count?.questions || 0} Quiz</span>
+                        </div>
+                      </td>
+                    )}
+                    {tab === "videos" && (
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1 text-[10px] font-bold text-gray-500">
+                          <span>{item.type === "LECTURE_VIDEO" ? "LECTURE" : "ANIMATED"}</span>
+                          <span>{item.language} • {item.duration}</span>
+                        </div>
+                      </td>
+                    )}
+                    <td className="p-4">
+                       <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => startEdit(item)} className="h-8 w-8 p-0"><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button>
+                       </div>
                     </td>
                   </tr>
                 ))}
-                {data.length === 0 && (
-                  <tr><td colSpan={10} className="p-8 text-center text-gray-400">No data. {tab !== "classes" ? "Select a parent first or add new items." : "Add your first class."}</td></tr>
+                {filteredData.length === 0 && (
+                  <tr><td colSpan={10} className="p-12 text-center text-gray-400 font-medium italic">No data found. Select a parent or switch view modes.</td></tr>
                 )}
               </tbody>
             </table>
