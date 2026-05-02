@@ -3,12 +3,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket, Radio, Video } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, BarChart3, LogOut, CreditCard, Settings, ChevronDown, Globe, MapPin, Ticket, Radio, Video, Library } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/courses", label: "Courses", icon: Library },
   { href: "/admin/content", label: "Content", icon: FolderOpen },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/teachers", label: "Teachers", icon: Users },

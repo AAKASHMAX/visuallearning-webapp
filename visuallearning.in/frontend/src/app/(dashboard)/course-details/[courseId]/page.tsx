@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle, Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, ArrowRight } from "lucide-react";
@@ -15,7 +15,6 @@ const iconMap: Record<string, any> = {
   Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
 };
 
-// Mock data matching the premium theme and the provided images
 /* ── ANIMATION: Atom Structure ── */
 function AtomAnimation({ accent }: { accent: string }) {
   return (
@@ -138,17 +137,12 @@ function BookAnimation({ accent }: { accent: string }) {
   );
 }
 
-const getCourseData = (courseId: string) => {
+const getCourseTheme = (courseId: string) => {
   const isFoundation = courseId === "foundation-pass";
   const isAcademic = courseId === "academic-plus";
   const isElite = courseId === "elite-learning";
   
   return {
-    id: courseId,
-    title: isFoundation ? "Foundation Pass: Physics Essentials" :
-           isAcademic ? "Academic Plus: Complete Class 9–10 Physics" :
-           isElite ? "Elite Learning: Advanced Physics 11–12" :
-           "Complete Physics Masterclass",
     subtitle: "Understand core concepts, simulate real-world phenomena with Virtual Labs, and master problem-solving - Your Next Step in Visual Learning.",
     badge: "Bestseller",
     rating: "4.8",
@@ -164,16 +158,6 @@ const getCourseData = (courseId: string) => {
     accentColor: isFoundation ? "#60A5FA" : isAcademic ? "#38BDF8" : isElite ? "#D8B4FE" : "#818CF8",
     animationType: isFoundation ? "atom" : isAcademic ? "magnet" : isElite ? "circuit" : "book",
     themeIcon: isFoundation ? "Zap" : isAcademic ? "GraduationCap" : isElite ? "Crown" : "Atom",
-    themeColorFrom: isFoundation ? "from-emerald-400" : isAcademic ? "from-blue-500" : isElite ? "from-[#05BFDB]" : "from-[#05BFDB]",
-    themeColorTo: isFoundation ? "to-emerald-700" : isAcademic ? "to-blue-800" : isElite ? "to-purple-700" : "to-blue-700",
-    themeShadow: isFoundation ? "rgba(16,185,129,0.5)" : isAcademic ? "rgba(59,130,246,0.5)" : isElite ? "rgba(5,191,219,0.5)" : "rgba(5,191,219,0.5)",
-    themeOrbit1: isFoundation ? "border-emerald-500/20" : isAcademic ? "border-blue-500/20" : "border-[#05BFDB]/20",
-    themeOrbit2: isFoundation ? "border-teal-400/30" : isAcademic ? "border-indigo-400/30" : "border-blue-400/30",
-    themeOrbit3: isFoundation ? "border-green-500/10" : isAcademic ? "border-cyan-500/10" : "border-amber-500/10",
-    themeDot1: isFoundation ? "bg-emerald-500" : isAcademic ? "bg-blue-500" : "bg-[#05BFDB]",
-    themeDot2: isFoundation ? "bg-teal-400" : isAcademic ? "bg-indigo-400" : "bg-blue-400",
-    themeDot3: isFoundation ? "bg-green-500" : isAcademic ? "bg-cyan-500" : "bg-amber-500",
-    themeFormulaColor: isFoundation ? "text-emerald-400" : isAcademic ? "text-blue-400" : "text-[#05BFDB]",
     learningOutcomes: [
       "Understand the core concepts of Mechanics and Kinematics",
       "Simulate and visualize complex physics problems",
@@ -182,85 +166,71 @@ const getCourseData = (courseId: string) => {
       "Solve advanced numerical problems with ease",
       "Learn how to use virtual labs for practical experiments"
     ],
-    subjects: [
-      {
-        name: "Physics",
-        icon: "Atom",
-        color: "from-blue-500 to-blue-700",
-        chapters: [
-          { id: 1, title: "Mechanics", desc: "Motion, Forces, Gravitation", icon: "Atom", gradient: "from-blue-500 to-blue-700" },
-          { id: 2, title: "Optics", desc: "Light, Lenses, Mirrors", icon: "Lightbulb", gradient: "from-amber-500 to-amber-700" },
-          { id: 3, title: "Electricity", desc: "Current, Circuits, EMF", icon: "Zap", gradient: "from-indigo-500 to-indigo-700" },
-        ]
-      },
-      {
-        name: "Chemistry",
-        icon: "Beaker",
-        color: "from-emerald-500 to-emerald-700",
-        chapters: [
-          { id: 4, title: "Atomic Structure", desc: "Electrons, Protons, Neutrons", icon: "Cpu", gradient: "from-emerald-500 to-emerald-700" },
-          { id: 5, title: "Chemical Bonding", desc: "Ionic & Covalent Bonds", icon: "Zap", gradient: "from-teal-500 to-teal-700" },
-          { id: 6, title: "Thermodynamics", desc: "Heat, Energy, Entropy", icon: "Flame", gradient: "from-rose-500 to-rose-700" },
-        ]
-      },
-      {
-        name: "Biology",
-        icon: "Microscope",
-        color: "from-rose-500 to-rose-700",
-        chapters: [
-          { id: 7, title: "Cell Biology", desc: "Structure and Function", icon: "Microscope", gradient: "from-rose-500 to-rose-700" },
-          { id: 8, title: "Genetics", desc: "Heredity and Variation", icon: "Atom", gradient: "from-pink-500 to-pink-700" },
-          { id: 9, title: "Waves", desc: "Sound, EM Waves", icon: "Waves", gradient: "from-cyan-500 to-cyan-700" },
-        ]
-      }
-    ]
   };
 };
 
-export default function CourseDetailsPage() {
-  const params = useParams();
+export default function CourseDetailsPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = use(params);
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  
+  const [course, setCourse] = useState<any>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [loadingSub, setLoadingSub] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const courseId = params?.courseId as string || "default";
-  const data = getCourseData(courseId);
-  const ThemeIcon = iconMap[data.themeIcon] || Atom;
+  const theme = getCourseTheme(courseId);
+  const ThemeIcon = iconMap[theme.themeIcon] || Atom;
 
   useEffect(() => {
-    if (isAuthenticated) {
-      api.get("/subscription/my-subscription")
-        .then(res => {
-          const sub = res.data.data;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [courseRes, subRes] = await Promise.all([
+          api.get(`/courses/course-content/${courseId}`),
+          isAuthenticated ? api.get("/subscription/my-subscription") : Promise.resolve({ data: { data: null } })
+        ]);
+
+        setCourse(courseRes.data.data);
+        
+        if (isAuthenticated) {
+          const sub = subRes.data.data;
           const active = sub?.status === "ACTIVE" && new Date(sub.expiryDate) > new Date();
           setIsSubscribed(active || user?.role === "ADMIN");
-        })
-        .catch(() => setIsSubscribed(false))
-        .finally(() => setLoadingSub(false));
-    } else {
-      setIsSubscribed(false);
-      setLoadingSub(false);
+        }
+      } catch (err) {
+        console.error("Failed to load course details", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [isAuthenticated, user]);
+    loadData();
+  }, [courseId, isAuthenticated, user]);
 
-  if (loadingSub) return <PageLoader />;
+  if (loading) return <PageLoader />;
+  if (!course) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-xl font-bold mb-2">Course not found</h2>
+        <Link href="/courses" className="text-primary hover:underline">Back to all courses</Link>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
       
       {/* ── HERO SECTION (Dark Theme) ── */}
-      <div className="relative text-white pt-12 pb-16 lg:pb-20 overflow-hidden" style={{ background: `linear-gradient(135deg, ${data.bgColor} 0%, ${data.bgColor}dd 50%, ${data.bgColor} 100%)` }}>
+      <div className="relative text-white pt-12 pb-16 lg:pb-20 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.bgColor}dd 50%, ${theme.bgColor} 100%)` }}>
         {/* Grid texture overlay */}
         <div className="absolute inset-0 bg-grid-dark opacity-20 pointer-events-none" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: `${data.accentColor}15` }} />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-[100px]" style={{ backgroundColor: `${data.accentColor}15` }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: `${theme.accentColor}15` }} />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-[100px]" style={{ backgroundColor: `${theme.accentColor}15` }} />
         
         {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="absolute w-1 h-1 rounded-full"
-              style={{ left: `${15 + i * 15}%`, top: `${20 + (i % 3) * 25}%`, animation: `particle-float ${8 + i * 2}s linear infinite`, animationDelay: `${i * 1.5}s`, backgroundColor: `${data.accentColor}66` }} />
+              style={{ left: `${15 + i * 15}%`, top: `${20 + (i % 3) * 25}%`, animation: `particle-float ${8 + i * 2}s linear infinite`, animationDelay: `${i * 1.5}s`, backgroundColor: `${theme.accentColor}66` }} />
           ))}
         </div>
 
@@ -269,9 +239,9 @@ export default function CourseDetailsPage() {
           {/* Left Content (Top Left) */}
           <div className="lg:col-span-1 pt-4">
             <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-2 leading-tight tracking-tight">
-              {data.title.split(':').map((part, index) => (
-                <span key={index} className={index === 0 ? "text-white block" : "block"} style={{ color: index === 0 ? undefined : data.accentColor }}>
-                  {index === 0 ? part + ':' : part}
+              {course.name.split(':').map((part: string, index: number) => (
+                <span key={index} className={index === 0 ? "text-white block" : "block"} style={{ color: index === 0 ? undefined : theme.accentColor }}>
+                  {index === 0 ? part + (course.name.includes(':') ? ':' : '') : part}
                 </span>
               ))}
             </h1>
@@ -279,10 +249,10 @@ export default function CourseDetailsPage() {
 
           {/* Dynamic Animation visual (Middle) */}
           <div className="hidden lg:flex justify-center items-center animate-fade-in delay-300 relative pt-4 scale-150">
-            {data.animationType === "atom" && <AtomAnimation accent={data.accentColor} />}
-            {data.animationType === "magnet" && <MagnetAnimation accent={data.accentColor} />}
-            {data.animationType === "circuit" && <CircuitAnimation accent={data.accentColor} />}
-            {data.animationType === "book" && <BookAnimation accent={data.accentColor} />}
+            {theme.animationType === "atom" && <AtomAnimation accent={theme.accentColor} />}
+            {theme.animationType === "magnet" && <MagnetAnimation accent={theme.accentColor} />}
+            {theme.animationType === "circuit" && <CircuitAnimation accent={theme.accentColor} />}
+            {theme.animationType === "book" && <BookAnimation accent={theme.accentColor} />}
           </div>
 
           {/* Right Content (Go To Course - Subscribed Only) */}
@@ -311,7 +281,7 @@ export default function CourseDetailsPage() {
             <div className="bg-white rounded-xl border shadow-sm p-6 md:p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">What you&apos;ll learn</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {data.learningOutcomes.map((outcome, idx) => (
+                {theme.learningOutcomes.map((outcome, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                     <span className="text-gray-700 text-sm leading-relaxed">{outcome}</span>
@@ -324,7 +294,7 @@ export default function CourseDetailsPage() {
             <div className="space-y-12">
               <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
               
-              {data.subjects.map((subject, sIdx) => {
+              {course.subjects.map((subject: any, sIdx: number) => {
                 const SubjectIcon = iconMap[subject.icon] || Atom;
                 return (
                   <div key={sIdx} className="space-y-6">
@@ -336,7 +306,7 @@ export default function CourseDetailsPage() {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {subject.chapters.map((chapter) => {
+                      {subject.chapters.map((chapter: any) => {
                         const Icon = iconMap[chapter.icon] || Atom;
                         return (
                           <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
@@ -353,8 +323,6 @@ export default function CourseDetailsPage() {
                 );
               })}
             </div>
-
-
 
           </div>
 
@@ -381,13 +349,13 @@ export default function CourseDetailsPage() {
                 <div className="p-6">
                   <div className="mb-6">
                     <h3 className="text-2xl font-black text-gray-900 flex items-end gap-2">
-                      {data.price}
-                      {data.originalPrice && (
+                      {theme.price}
+                      {theme.originalPrice && (
                         <span className="text-sm text-gray-500 line-through font-medium mb-1">
-                          {data.originalPrice}
+                          {theme.originalPrice}
                         </span>
                       )}
-                      <span className="text-sm font-medium text-gray-600 mb-1">{data.period}</span>
+                      <span className="text-sm font-medium text-gray-600 mb-1">{theme.period}</span>
                     </h3>
                   </div>
   

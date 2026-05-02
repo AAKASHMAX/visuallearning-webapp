@@ -11,6 +11,7 @@ import {
   addNote, deleteNote, noteSchema,
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
+  getAllCourses, addCourse, updateCourse, deleteCourse, getCourseWithChapters, addChapterToCourse, removeChapterFromCourse, getChaptersGroupedBySubject, courseSchema,
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
@@ -94,6 +95,16 @@ router.delete("/questions/:id", deleteQuestion);
 router.post("/board-papers", validate(boardPaperSchema), addBoardPaper);
 router.put("/board-papers/:id", updateBoardPaper);
 router.delete("/board-papers/:id", deleteBoardPaper);
+
+// Courses
+router.get("/courses", getAllCourses);
+router.post("/courses", validate(courseSchema), addCourse);
+router.get("/courses/:id", getCourseWithChapters);
+router.put("/courses/:id", updateCourse);
+router.delete("/courses/:id", deleteCourse);
+router.post("/courses/:id/chapters", addChapterToCourse);
+router.delete("/courses/:id/chapters/:chapterId", removeChapterFromCourse);
+router.get("/courses-data/chapters", getChaptersGroupedBySubject);
 
 // Analytics
 router.get("/analytics/most-watched", getMostWatched);

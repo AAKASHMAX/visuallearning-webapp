@@ -405,3 +405,60 @@ export async function getBoardPapers(req: Request, res: Response) {
     return error(res, "Failed to fetch board papers");
   }
 }
+
+export async function getCourseBySlug(req: Request, res: Response) {
+  try {
+    const { slug } = req.params;
+    const course = await prisma.course.findUnique({
+      where: { slug },
+      include: {
+        chapters: {
+          include: {
+            chapter: {
+              include: { 
+                subject: true,
+                _count: { select: { videos: true, notes: true, questions: true } }
+              }
+            }
+          },
+          orderBy: { order: "asc" }
+        }
+      }
+    });
+
+    if (!course) return error(res, "Course not found", 404);
+
+    // Group chapters by subject for the UI
+    const subjectsMap: Record<string, any> = {};
+    
+    course.chapters.forEach(({ chapter }) => {
+      const subjectName = chapter.subject.name;
+      if (!subjectsMap[subjectName]) {
+        subjectsMap[subjectName] = {
+          name: subjectName,
+          icon: chapter.subject.icon || "Atom",
+          color: subjectName === "Physics" ? "from-blue-500 to-blue-700" : 
+                 subjectName === "Chemistry" ? "from-emerald-500 to-emerald-700" : 
+                 "from-rose-500 to-rose-700",
+          chapters: []
+        };
+      }
+      subjectsMap[subjectName].chapters.push({
+        id: chapter.id,
+        title: chapter.name,
+        desc: `Comprehensive lessons for ${chapter.name}`,
+        icon: chapter.subject.icon || "Atom",
+        gradient: subjectsMap[subjectName].color,
+        contentCount: chapter._count
+      });
+    });
+
+    return success(res, {
+      ...course,
+      subjects: Object.values(subjectsMap)
+    });
+  } catch (e) {
+    console.error("Get course by slug error:", e);
+    return error(res, "Failed to fetch course content");
+  }
+}

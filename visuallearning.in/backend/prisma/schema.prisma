@@ -121,6 +121,31 @@ model Subject {
   @@index([classId])
 }
 
+model Course {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  accentColor String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapters    CourseChapter[]
+}
+
+model CourseChapter {
+  courseId  String
+  chapterId String
+  order     Int    @default(0)
+
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, chapterId])
+  @@index([courseId])
+  @@index([chapterId])
+}
+
 model Chapter {
   id        String     @id @default(cuid())
   subjectId String
@@ -131,6 +156,7 @@ model Chapter {
   videos    Video[]
   notes     Note[]
   questions Question[]
+  courses   CourseChapter[]
 
   @@index([subjectId])
   @@index([order])

@@ -25,6 +25,12 @@ export const questionSchema = z.object({
   optionA: z.string(), optionB: z.string(), optionC: z.string(), optionD: z.string(),
   correctOption: z.enum(["A", "B", "C", "D"]), solution: z.string().optional(),
 });
+export const courseSchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().optional(),
+  accentColor: z.string().optional(),
+});
 
 // --- Dashboard Stats ---
 export async function getStats(_req: Request, res: Response) {
@@ -229,6 +235,93 @@ export async function deleteQuestion(req: Request, res: Response) { return crudD
 export async function addBoardPaper(req: Request, res: Response) { return crudCreate(prisma.boardPaper, req.body, res); }
 export async function updateBoardPaper(req: Request, res: Response) { return crudUpdate(prisma.boardPaper, req.params.id, req.body, res); }
 export async function deleteBoardPaper(req: Request, res: Response) { return crudDelete(prisma.boardPaper, req.params.id, res); }
+
+// --- Courses ---
+export async function getAllCourses(_req: Request, res: Response) {
+  try {
+    const courses = await prisma.course.findMany({
+      include: { _count: { select: { chapters: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return success(res, courses);
+  } catch (e) {
+    return error(res, "Failed to fetch courses");
+  }
+}
+
+export async function addCourse(req: Request, res: Response) { return crudCreate(prisma.course, req.body, res); }
+export async function updateCourse(req: Request, res: Response) { return crudUpdate(prisma.course, req.params.id, req.body, res); }
+export async function deleteCourse(req: Request, res: Response) { return crudDelete(prisma.course, req.params.id, res); }
+
+export async function getCourseWithChapters(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        chapters: {
+          include: {
+            chapter: {
+              include: { subject: { include: { class: true } } }
+            }
+          },
+          orderBy: { order: "asc" }
+        }
+      }
+    });
+    if (!course) return error(res, "Course not found", 404);
+    return success(res, course);
+  } catch (e) {
+    return error(res, "Failed to fetch course details");
+  }
+}
+
+export async function addChapterToCourse(req: Request, res: Response) {
+  try {
+    const { id } = req.params; // courseId
+    const { chapterId, order } = req.body;
+    
+    const result = await prisma.courseChapter.create({
+      data: { courseId: id, chapterId, order: order || 0 }
+    });
+    return success(res, result, "Chapter added to course", 201);
+  } catch (e: any) {
+    console.error("Add chapter to course error:", e);
+    return error(res, e.code === "P2002" ? "Chapter already in course" : "Failed to add chapter");
+  }
+}
+
+export async function removeChapterFromCourse(req: Request, res: Response) {
+  try {
+    const { id, chapterId } = req.params;
+    await prisma.courseChapter.delete({
+      where: { courseId_chapterId: { courseId: id, chapterId } }
+    });
+    return success(res, null, "Chapter removed from course");
+  } catch (e) {
+    return error(res, "Failed to remove chapter");
+  }
+}
+
+export async function getChaptersGroupedBySubject(_req: Request, res: Response) {
+  try {
+    const classes = await prisma.class.findMany({
+      include: {
+        subjects: {
+          include: {
+            chapters: {
+              orderBy: { order: "asc" }
+            }
+          }
+        }
+      },
+      orderBy: { order: "asc" }
+    });
+    return success(res, classes);
+  } catch (e) {
+    return error(res, "Failed to fetch chapters");
+  }
+}
 
 // --- Subscriptions Management ---
 export const grantSubscriptionSchema = z.object({

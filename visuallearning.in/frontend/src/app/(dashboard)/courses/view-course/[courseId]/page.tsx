@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, use } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -8,62 +9,43 @@ import {
   Monitor, FileText, Layout
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { PageLoader } from "@/components/ui/loading";
+import api from "@/lib/api";
 
 // Map string names to Lucide icons
 const iconMap: Record<string, any> = {
   Atom, Lightbulb, Zap, Flame, Waves, Cpu, Beaker, Microscope
 };
 
-const getCourseData = (courseId: string) => {
-  const isFoundation = courseId === "foundation-pass";
-  const isAcademic = courseId === "academic-plus";
-  const isElite = courseId === "elite-learning";
-  
-  return {
-    title: isFoundation ? "Foundation Pass: Physics Essentials" :
-           isAcademic ? "Academic Plus: Complete Class 9–10 Physics" :
-           isElite ? "Elite Learning: Advanced Physics 11–12" :
-           "Complete Physics Masterclass",
-    accentColor: isFoundation ? "#60A5FA" : isAcademic ? "#38BDF8" : isElite ? "#D8B4FE" : "#818CF8",
-    subjects: [
-      {
-        name: "Physics",
-        icon: "Atom",
-        color: "from-blue-500 to-blue-700",
-        chapters: [
-          { id: 1, title: "Mechanics", desc: "Motion, Forces, Gravitation", icon: "Atom", gradient: "from-blue-500 to-blue-700", progress: 0 },
-          { id: 2, title: "Optics", desc: "Light, Lenses, Mirrors", icon: "Lightbulb", gradient: "from-amber-500 to-amber-700", progress: 0 },
-          { id: 3, title: "Electricity", desc: "Current, Circuits, EMF", icon: "Zap", gradient: "from-indigo-500 to-indigo-700", progress: 0 },
-        ]
-      },
-      {
-        name: "Chemistry",
-        icon: "Beaker",
-        color: "from-emerald-500 to-emerald-700",
-        chapters: [
-          { id: 4, title: "Atomic Structure", desc: "Electrons, Protons, Neutrons", icon: "Cpu", gradient: "from-emerald-500 to-emerald-700", progress: 0 },
-          { id: 5, title: "Chemical Bonding", desc: "Ionic & Covalent Bonds", icon: "Zap", gradient: "from-teal-500 to-teal-700", progress: 0 },
-          { id: 6, title: "Thermodynamics", desc: "Heat, Energy, Entropy", icon: "Flame", gradient: "from-rose-500 to-rose-700", progress: 0 },
-        ]
-      },
-      {
-        name: "Biology",
-        icon: "Microscope",
-        color: "from-rose-500 to-rose-700",
-        chapters: [
-          { id: 7, title: "Cell Biology", desc: "Structure and Function", icon: "Microscope", gradient: "from-rose-500 to-rose-700", progress: 0 },
-          { id: 8, title: "Genetics", desc: "Heredity and Variation", icon: "Atom", gradient: "from-pink-500 to-pink-700", progress: 0 },
-          { id: 9, title: "Waves", desc: "Sound, EM Waves", icon: "Waves", gradient: "from-cyan-500 to-cyan-700", progress: 0 },
-        ]
-      }
-    ]
-  };
-};
+export default function CourseContentPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = use(params);
+  const [course, setCourse] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function CourseContentPage() {
-  const params = useParams();
-  const courseId = params?.courseId as string || "default";
-  const data = getCourseData(courseId);
+  useEffect(() => {
+    async function fetchCourse() {
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/courses/course-content/${courseId}`);
+        setCourse(data.data);
+      } catch (err) {
+        console.error("Failed to fetch course content", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCourse();
+  }, [courseId]);
+
+  if (loading) return <PageLoader />;
+  if (!course) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-xl font-bold mb-2">Course not found</h2>
+        <Link href="/courses" className="text-primary hover:underline">Back to all courses</Link>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafd] pb-20">
@@ -72,18 +54,18 @@ export default function CourseContentPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <Breadcrumb items={[{ label: "Courses", href: "/courses" }, { label: data.title }]} />
+              <Breadcrumb items={[{ label: "Courses", href: "/courses" }, { label: course.name }]} />
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 mt-2 tracking-tight">
-                {data.title}
+                {course.name}
               </h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right mr-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Progress</p>
-                <p className="text-sm font-bold text-gray-900">0% Complete</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Status</p>
+                <p className="text-sm font-bold text-gray-900">Premium Access</p>
               </div>
-              <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden hidden sm:block">
-                <div className="h-full bg-blue-500 w-0" />
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
               </div>
             </div>
           </div>
@@ -92,7 +74,7 @@ export default function CourseContentPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="space-y-16">
-          {data.subjects.map((subject, sIdx) => {
+          {course.subjects.map((subject: any, sIdx: number) => {
             const SubjectIcon = iconMap[subject.icon] || Atom;
             return (
               <div key={sIdx} className="animate-fade-in" style={{ animationDelay: `${sIdx * 0.1}s` }}>
@@ -109,12 +91,17 @@ export default function CourseContentPage() {
 
                 {/* Chapters Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subject.chapters.map((chapter) => {
+                  {subject.chapters.map((chapter: any) => {
                     const ChapterIcon = iconMap[chapter.icon] || Atom;
+                    // Find the original path components from the API response metadata
+                    const originalChapter = course.chapters.find((c: any) => c.chapterId === chapter.id)?.chapter;
+                    const classId = originalChapter?.subject?.classId;
+                    const subjectId = originalChapter?.subjectId;
+
                     return (
                       <Link 
                         key={chapter.id} 
-                        href={`/courses/${courseId}/${subject.name.toLowerCase()}/${chapter.id}`}
+                        href={`/courses/${classId}/${subjectId}/${chapter.id}`}
                         className="group bg-white rounded-[2rem] border border-gray-100 p-2 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full"
                       >
                         {/* Chapter Card Content */}
@@ -144,11 +131,11 @@ export default function CourseContentPage() {
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1">
                                 <Monitor className="w-3.5 h-3.5 text-gray-300" />
-                                <span className="text-[10px] font-black text-gray-400">3D Lab</span>
+                                <span className="text-[10px] font-black text-gray-400">{chapter.contentCount.videos} Videos</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <FileText className="w-3.5 h-3.5 text-gray-300" />
-                                <span className="text-[10px] font-black text-gray-400">PDF Notes</span>
+                                <span className="text-[10px] font-black text-gray-400">{chapter.contentCount.notes} PDFs</span>
                               </div>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
@@ -163,6 +150,12 @@ export default function CourseContentPage() {
               </div>
             );
           })}
+          {course.subjects.length === 0 && (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+               <Layout className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+               <p className="text-gray-500 font-bold">This course content is being prepared. Stay tuned!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
