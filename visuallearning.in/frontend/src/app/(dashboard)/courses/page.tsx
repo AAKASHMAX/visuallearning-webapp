@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import { 
   Sparkles, Zap, GraduationCap, 
   Crown, CheckCircle2, XCircle, ArrowRight, 
@@ -12,87 +11,15 @@ import {
   Layout, AlertCircle
 } from "lucide-react";
 
-const planMapping: Record<string, string> = {
-  "Foundation Pass": "foundation-pass",
-  "Academic Plus": "academic-plus",
-  "Elite Learning": "elite-learning",
-  "FlexiLearn": "flexilearn"
-};
-
 export default function CoursesPage() {
-  const { isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<any>(null);
-
-  useEffect(() => {
-    async function loadSubscription() {
-      if (!isAuthenticated) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const { data } = await api.get("/subscription/my-subscription");
-        const sub = data.data;
-        if (sub?.status === "ACTIVE" && new Date(sub.expiryDate) > new Date()) {
-          setSubscription(sub);
-        }
-      } catch (err) {
-        console.error("Failed to load subscription", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadSubscription();
-  }, [isAuthenticated]);
+  const [loading, setLoading] = useState(false);
 
   if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       
-      {/* ── USER DASHBOARD STATUS ── */}
-      {isAuthenticated && (
-        <div className="mb-16">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass mb-6">
-            <Layout className="w-4 h-4 text-primary" />
-            <span className="text-[11px] text-text-muted font-black uppercase tracking-widest">My Dashboard</span>
-          </div>
-          
-          {subscription ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               <div className="md:col-span-1">
-                 <h2 className="text-2xl font-black text-heading mb-6 tracking-tight">Active <span className="gradient-text">Curriculum</span></h2>
-                 <PlanCard 
-                   bgColor={subscription.plan === "Foundation Pass" ? "#1C4D8D" : subscription.plan === "Academic Plus" ? "#162855" : subscription.plan === "Elite Learning" ? "#2d1654" : "#202940"} 
-                   accentColor={subscription.plan === "Foundation Pass" ? "#60A5FA" : subscription.plan === "Academic Plus" ? "#38BDF8" : subscription.plan === "Elite Learning" ? "#D8B4FE" : "#818CF8"} 
-                   planName={subscription.plan} 
-                   price="ACTIVE" 
-                   period={`Exp: ${new Date(subscription.expiryDate).toLocaleDateString()}`}
-                   animation={subscription.plan === "Foundation Pass" ? "atom" : subscription.plan === "Academic Plus" ? "magnet" : subscription.plan === "Elite Learning" ? "circuit" : "book"}
-                   included={getPlanFeatures(subscription.plan)}
-                   excluded={[]} 
-                   ctaLink={`/courses/view-course/${planMapping[subscription.plan] || 'foundation-pass'}`}
-                   ctaText="Go To Course"
-                   isSubscribed={true}
-                 />
-               </div>
-               <div className="hidden lg:flex md:col-span-2 items-center justify-center p-8 bg-blue-50/50 rounded-[2.5rem] border border-dashed border-blue-200">
-                  <div className="text-center space-y-4 max-w-sm">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl mx-auto">
-                      <Zap className="w-8 h-8 text-blue-500" />
-                    </div>
-                    <h3 className="text-xl font-black text-gray-900">Welcome Back!</h3>
-                    <p className="text-sm text-gray-500 font-medium">Continue your visual learning journey where you left off. Your premium access is active and ready.</p>
-                  </div>
-               </div>
-            </div>
-          ) : (
-            <CardPlaceholder />
-          )}
-        </div>
-      )}
-
-      {!subscription && <ConceptCarousel />}
+      <ConceptCarousel />
 
       {/* ── ALL PRICING PLANS ── */}
       <div className="mt-20 mb-20">
@@ -129,30 +56,6 @@ export default function CoursesPage() {
       </div>
     </div>
   );
-}
-
-function CardPlaceholder() {
-  return (
-    <div className="w-full max-w-md bg-white rounded-3xl border border-dashed border-gray-300 p-10 text-center space-y-6">
-      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
-        <AlertCircle className="w-8 h-8 text-gray-400" />
-      </div>
-      <div>
-        <h3 className="text-xl font-black text-gray-900">No course active</h3>
-        <p className="text-sm text-gray-500 font-medium mt-1">Subscribe to a plan below to start your visual learning adventure!</p>
-      </div>
-      <Button variant="outline" className="rounded-xl font-bold" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
-        View All Plans
-      </Button>
-    </div>
-  );
-}
-
-function getPlanFeatures(plan: string) {
-  if (plan === "Foundation Pass") return ["Selected chapters (9–12 PCB)","Animated concept videos","Beginner-friendly path","Progress tracking"];
-  if (plan === "Academic Plus") return ["Full Class 9–10 (PCB)","Selected 11–12 P & C","Chapter notes (PDF)","MCQ quizzes + solutions"];
-  if (plan === "Elite Learning") return ["Full 9–12 P + C + B","Virtual Labs (64+) 🧪","3D Visual Learning 🔬","Board exam practice"];
-  return ["Choose class (9–12)","Select up to 3 subjects","Flexible pricing"];
 }
 
 /* ── COUNTDOWN TIMER ── */
@@ -314,10 +217,10 @@ function BookAnimation({ accent }: { accent: string }) {
 /* ── PLAN CARD ── */
 function PlanCard({ 
   bgColor, accentColor, planName, price, originalPrice, period = "", badge, 
-  animation, included, excluded, ctaLink, ctaText = "Explore Course", showCountdown, isSubscribed = false 
+  animation, included, excluded, ctaLink, ctaText = "Explore Course", showCountdown 
 }: any) {
   return (
-    <div className={`relative flex flex-col rounded-[2.5rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 border border-card-border bg-white h-full group ${isSubscribed ? "ring-4 ring-blue-500/20" : ""}`}>
+    <div className="relative flex flex-col rounded-[2.5rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 border border-card-border bg-white h-full group">
       
       {/* ── DARK HEADER ── */}
       <div className="relative overflow-hidden" style={{ backgroundColor: bgColor }}>
@@ -358,6 +261,12 @@ function PlanCard({
             <li key={`i-${i}`} className="flex items-start gap-2 text-[12px]">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
               <span className="text-heading font-bold leading-tight">{f}</span>
+            </li>
+          ))}
+          {excluded && excluded.map((f: string, i: number) => (
+            <li key={`e-${i}`} className="flex items-start gap-2 text-[12px] opacity-40">
+              <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span className="text-text-muted font-medium leading-tight line-through">{f}</span>
             </li>
           ))}
         </ul>
