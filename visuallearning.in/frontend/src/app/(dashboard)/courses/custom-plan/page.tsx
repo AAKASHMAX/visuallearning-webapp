@@ -165,12 +165,12 @@ export default function CustomPlanPreview() {
                     {sub.chapters?.map((ch: any) => {
                       const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
                       return (
-                        <div key={ch.id} className="group bg-[#162855]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 p-8 shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-1 flex flex-col items-center text-center">
-                          <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${subColor} flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-transform`}>
-                            <ChapterIcon className="w-8 h-8 text-white" />
+                        <div key={ch.id} className="group bg-[#16213e] rounded-[2rem] p-8 border border-white/5 shadow-xl hover:bg-[#1a2c5a] transition-all duration-300 flex flex-col items-center text-center">
+                          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <ChapterIcon className="w-6 h-6 text-[#00b4d8]" />
                           </div>
-                          <h5 className="text-lg font-black text-white mb-2 leading-tight">{ch.name}</h5>
-                          <p className="text-xs text-white/40 font-medium">Comprehensive lessons for {ch.name}</p>
+                          <h5 className="text-lg font-black text-white mb-2">{ch.name}</h5>
+                          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Master Concept</p>
                         </div>
                       );
                     })}

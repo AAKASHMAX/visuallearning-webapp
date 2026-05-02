@@ -127,13 +127,13 @@ export default function MyCustomPlan() {
                     {sub.chapters?.map((ch: any) => {
                       const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
                       return (
-                        <Link key={ch.id} href={`/courses/${cls.id}/${sub.id}/${ch.id}`} className="group bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 flex flex-col items-center text-center">
-                          <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${subColor} flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-transform`}>
-                            <ChapterIcon className="w-8 h-8 text-white" />
+                        <Link key={ch.id} href={`/courses/${cls.id}/${sub.id}/${ch.id}`} className="group bg-[#16213e] rounded-[2rem] p-8 border border-white/5 shadow-xl hover:bg-[#1a2c5a] transition-all duration-300 flex flex-col items-center text-center">
+                          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <ChapterIcon className="w-6 h-6 text-[#00b4d8]" />
                           </div>
-                          <h5 className="text-lg font-black text-heading mb-2 leading-tight">{ch.name}</h5>
-                          <p className="text-xs text-text-muted font-medium">Click to resume learning</p>
-                          <div className="mt-6 flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                          <h5 className="text-lg font-black text-white mb-2">{ch.name}</h5>
+                          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Resume Learning</p>
+                          <div className="mt-4 flex items-center gap-2 text-[#00b4d8] font-black text-[9px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                             Continue <ArrowRight className="w-3 h-3" />
                           </div>
                         </Link>
