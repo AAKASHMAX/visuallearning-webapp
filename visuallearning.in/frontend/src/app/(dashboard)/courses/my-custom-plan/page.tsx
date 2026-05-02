@@ -6,9 +6,23 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import { 
   BookOpen, Video, FileText, Layout, 
-  ArrowRight, Sparkles, Star, ChevronRight
+  ArrowRight, Sparkles, Star, ChevronRight,
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+// Map string names to Lucide icons
+const iconMap: Record<string, any> = {
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
+};
+
+const getSubjectColor = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes("physics")) return "from-blue-500 to-blue-700";
+  if (n.includes("chemistry")) return "from-emerald-500 to-emerald-700";
+  if (n.includes("biology")) return "from-rose-500 to-rose-700";
+  return "from-primary to-primary-dark";
+};
 
 export default function MyCustomPlan() {
   const [loading, setLoading] = useState(true);
@@ -87,46 +101,48 @@ export default function MyCustomPlan() {
       </div>
 
       {/* Subject Grid */}
-      <div className="space-y-12">
+      <div className="space-y-16">
         {curriculum.map((cls) => (
-          <div key={cls.id} className="space-y-6">
+          <div key={cls.id} className="space-y-10">
             <div className="flex items-center gap-4">
-              <h3 className="text-xl font-black text-white/90">{cls.name}</h3>
+              <div className="h-px flex-1 bg-white/5" />
+              <h3 className="text-xl font-black text-white/50 uppercase tracking-widest">{cls.name}</h3>
               <div className="h-px flex-1 bg-white/5" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {cls.subjects.map((sub: any) => (
-                <div key={sub.id} className="group glass rounded-[2.5rem] border border-white/5 overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1">
-                  <div className="p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-white transition-colors">
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                      <Badge variant="info">{sub.chapters?.length || 0} Chapters</Badge>
-                    </div>
-                    
-                    <h4 className="text-xl font-black text-white mb-2">{sub.name}</h4>
-                    <p className="text-white/40 text-sm mb-6 line-clamp-2">Master all concepts of {sub.name} with 3D visualizations and interactive labs.</p>
-                    
-                    <div className="space-y-3 mb-8">
-                      {sub.chapters?.slice(0, 3).map((ch: any) => (
-                        <Link key={ch.id} href={`/courses/${cls.id}/${sub.id}/${ch.id}`} className="flex items-center justify-between text-xs font-bold text-white/60 hover:text-primary transition-colors group/item">
-                          <span className="truncate mr-2">{ch.name}</span>
-                          <ChevronRight className="w-3 h-3 group-hover/item:translate-x-1 transition-transform" />
-                        </Link>
-                      ))}
-                    </div>
+            {cls.subjects.map((sub: any) => {
+              const SubjectIcon = iconMap[sub.icon] || Atom;
+              const subColor = getSubjectColor(sub.name);
 
-                    <Link href={`/courses/${cls.id}/${sub.id}/${sub.chapters?.[0]?.id || ''}`}>
-                      <Button className="w-full py-6 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-white transition-all">
-                        Resume Learning <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
+              return (
+                <div key={sub.id} className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${subColor} flex items-center justify-center shadow-2xl`}>
+                      <SubjectIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <h4 className="text-2xl font-black text-white">{sub.name}</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sub.chapters?.map((ch: any) => {
+                      const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
+                      return (
+                        <Link key={ch.id} href={`/courses/${cls.id}/${sub.id}/${ch.id}`} className="group bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 flex flex-col items-center text-center">
+                          <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${subColor} flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-transform`}>
+                            <ChapterIcon className="w-8 h-8 text-white" />
+                          </div>
+                          <h5 className="text-lg font-black text-heading mb-2 leading-tight">{ch.name}</h5>
+                          <p className="text-xs text-text-muted font-medium">Click to resume learning</p>
+                          <div className="mt-6 flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                            Continue <ArrowRight className="w-3 h-3" />
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         ))}
       </div>

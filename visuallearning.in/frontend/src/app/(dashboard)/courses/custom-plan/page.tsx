@@ -7,9 +7,23 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import { 
   CheckCircle2, ArrowRight, Zap, 
-  BookOpen, Video, FileText, HelpCircle, Layout
+  BookOpen, Video, FileText, HelpCircle, Layout,
+  Atom, Lightbulb, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, PlayCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+// Map string names to Lucide icons
+const iconMap: Record<string, any> = {
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
+};
+
+const getSubjectColor = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes("physics")) return "from-blue-500 to-blue-700";
+  if (n.includes("chemistry")) return "from-emerald-500 to-emerald-700";
+  if (n.includes("biology")) return "from-rose-500 to-rose-700";
+  return "from-primary to-primary-dark";
+};
 
 export default function CustomPlanPreview() {
   const searchParams = useSearchParams();
@@ -120,44 +134,50 @@ export default function CustomPlanPreview() {
       </div>
 
       {/* Curriculum Preview */}
-      <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
-        <BookOpen className="w-6 h-6 text-primary" /> Included Curriculum
-      </h2>
+      <div className="space-y-16">
+        <h2 className="text-3xl font-black text-white mb-12 tracking-tight flex items-center gap-3">
+          <BookOpen className="w-8 h-8 text-primary" /> 
+          Course <span className="text-primary">Content</span>
+        </h2>
 
-      <div className="grid grid-cols-1 gap-8">
         {data.map((cls) => (
-          <div key={cls.id} className="space-y-6">
+          <div key={cls.id} className="space-y-10">
             <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-white/5" />
-              <h3 className="text-lg font-black text-white/40 uppercase tracking-widest">{cls.name}</h3>
-              <div className="h-px flex-1 bg-white/5" />
+              <div className="h-px flex-1 bg-white/10" />
+              <h3 className="text-xl font-black text-white/50 uppercase tracking-widest">{cls.name}</h3>
+              <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {cls.subjects.map((sub: any) => (
-                <div key={sub.id} className="glass rounded-[2.5rem] border border-white/5 overflow-hidden">
-                  <div className="bg-white/5 px-8 py-4 border-b border-white/5 flex items-center justify-between">
-                    <h4 className="font-black text-white">{sub.name}</h4>
-                    <Badge variant="info" className="text-[10px] font-black">{sub.chapters?.length || 0} Chapters</Badge>
-                  </div>
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 gap-3">
-                      {sub.chapters?.slice(0, 5).map((ch: any) => (
-                        <div key={ch.id} className="flex items-center gap-3 text-white/50 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-primary/40 shrink-0" />
-                          <span>{ch.name}</span>
-                        </div>
-                      ))}
-                      {sub.chapters?.length > 5 && (
-                        <div className="text-[10px] font-black text-primary/60 uppercase tracking-widest pt-2">
-                          + {sub.chapters.length - 5} more chapters
-                        </div>
-                      )}
+            {cls.subjects.map((sub: any) => {
+              const SubjectIcon = iconMap[sub.icon] || Atom;
+              const subColor = getSubjectColor(sub.name);
+              
+              return (
+                <div key={sub.id} className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${subColor} flex items-center justify-center shadow-2xl`}>
+                      <SubjectIcon className="w-6 h-6 text-white" />
                     </div>
+                    <h4 className="text-2xl font-black text-white">{sub.name}</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sub.chapters?.map((ch: any) => {
+                      const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
+                      return (
+                        <div key={ch.id} className="group bg-[#162855]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 p-8 shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-1 flex flex-col items-center text-center">
+                          <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${subColor} flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-transform`}>
+                            <ChapterIcon className="w-8 h-8 text-white" />
+                          </div>
+                          <h5 className="text-lg font-black text-white mb-2 leading-tight">{ch.name}</h5>
+                          <p className="text-xs text-white/40 font-medium">Comprehensive lessons for {ch.name}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         ))}
       </div>
