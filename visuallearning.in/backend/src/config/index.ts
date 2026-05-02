@@ -33,5 +33,6 @@ export const config = {
     MULTI_CLASS: { amount: 49900, label: "Multi Class Pack", duration: 365, billingCycle: "yearly" },
     FULL_ACCESS: { amount: 69900, label: "Full Access Plan", duration: 365, billingCycle: "yearly" },
     LIVE_CLASS: { amount: 99900, label: "Live Classes", duration: 30, billingCycle: "monthly" },
+    FLEXI_PLAN: { amount: 0, label: "Customized Learning", duration: 365, billingCycle: "yearly" },
   },
 };

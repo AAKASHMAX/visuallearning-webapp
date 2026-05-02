@@ -18,7 +18,8 @@ const planMapping: Record<string, string> = {
   "Foundation Pass": "foundation-pass",
   "Academic Plus": "academic-plus",
   "Elite Learning": "elite-learning",
-  "FlexiLearn": "flexilearn"
+  "FlexiLearn": "flexilearn",
+  "FLEXI_PLAN": "my-custom-plan"
 };
 
 export default function DashboardPage() {
@@ -133,7 +134,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl md:text-3xl font-black tracking-tight">Ready to master science today?</h2>
               <p className="text-white/50 font-medium">Dive into your chapter lessons and virtual experiments.</p>
             </div>
-            <Link href={`/courses/view-course/${planMapping[subscription!.plan] || 'foundation-pass'}`}>
+            <Link href={subscription?.plan === "FLEXI_PLAN" ? "/courses/my-custom-plan" : `/courses/view-course/${planMapping[subscription!.plan] || 'foundation-pass'}`}>
               <Button className="bg-white text-black hover:bg-white/90 font-black px-8 py-7 rounded-2xl shadow-2xl">
                 Go To Classroom <MonitorPlay className="w-5 h-5 ml-2" />
               </Button>
@@ -183,7 +184,7 @@ function ActiveCourseCard({ subscription, daysLeft }: { subscription: any; daysL
            </div>
         </div>
 
-        <Link href={`/courses/view-course/${slug}`} className="mt-auto">
+        <Link href={subscription.plan === "FLEXI_PLAN" ? "/courses/my-custom-plan" : `/courses/view-course/${slug}`} className="mt-auto">
           <Button className="w-full py-7 text-sm font-black bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02]">
             Go To Course <ArrowRight className="w-4 h-4 ml-2" />
           </Button>

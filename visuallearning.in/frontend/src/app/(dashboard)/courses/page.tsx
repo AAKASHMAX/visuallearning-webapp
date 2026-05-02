@@ -13,6 +13,32 @@ import {
 
 export default function CoursesPage() {
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"smart" | "custom">("smart");
+  const [classesData, setClassesData] = useState<any[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    api.get("/admin/subject-access").then(({ data }) => {
+      setClassesData(data.data);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const toggleSubject = (subId: string, price: number) => {
+    setSelectedSubjects(prev => {
+      const isSelected = prev.includes(subId);
+      if (isSelected) {
+        setTotalPrice(totalPrice - price);
+        return prev.filter(id => id !== subId);
+      } else {
+        setTotalPrice(totalPrice + price);
+        return [...prev, subId];
+      }
+    });
+  };
+
+  const selectedCount = selectedSubjects.length;
 
   if (loading) return <PageLoader />;
 
@@ -23,16 +49,30 @@ export default function CoursesPage() {
 
       {/* ── ALL PRICING PLANS ── */}
       <div className="mt-20 mb-20">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass mb-4">
-            <Sparkles className="w-4 h-4 text-[#05BFDB]" />
-            <span className="text-[11px] text-text-muted font-black uppercase tracking-widest">Available Plans</span>
+        <div className="text-center mb-8">
+          <div className="inline-flex p-1.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-8">
+            <button onClick={() => setActiveTab("smart")} 
+              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "smart" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}>
+              Smart Learning
+            </button>
+            <button onClick={() => setActiveTab("custom")} 
+              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "custom" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}>
+              Customized Learning
+            </button>
           </div>
-          <h2 className="text-3xl font-black text-heading mb-3 tracking-tight">Level Up Your <span className="gradient-text">Learning</span></h2>
-          <p className="text-text-muted max-w-xl mx-auto text-sm">Choose the perfect plan to unlock premium visual content and accelerate your science learning journey.</p>
+          
+          <h2 className="text-3xl font-black text-heading mb-3 tracking-tight">
+            {activeTab === "smart" ? <>Level Up Your <span className="gradient-text">Learning</span></> : <>Design Your Own <span className="gradient-text">Curriculum</span></>}
+          </h2>
+          <p className="text-text-muted max-w-xl mx-auto text-sm">
+            {activeTab === "smart" 
+              ? "Choose the perfect plan to unlock premium visual content and accelerate your science learning journey."
+              : "Pick exactly what you need. Select any combination of classes and subjects to build your personalized learning path."}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {activeTab === "smart" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <PlanCard bgColor="#1C4D8D" accentColor="#60A5FA" planName="Foundation Pass" price="FREE" originalPrice="₹3999" period="/yr" showCountdown
             animation="atom"
             included={["Selected chapters (9–12 PCB)","Animated concept videos","Beginner-friendly path","Progress tracking","Mobile & desktop access"]}
@@ -53,6 +93,76 @@ export default function CoursesPage() {
             included={["Choose class (9–12)","Select up to 3 subjects","Flexible pricing","Personalized dashboard","Switch subjects anytime"]}
             excluded={["Full platform access","Virtual Labs (Elite only)"]} ctaLink="/course-details/flexilearn" />
         </div>
+            excluded={["Full platform access","Virtual Labs (Elite only)"]} ctaLink="/course-details/flexilearn" />
+        </div>
+        ) : (
+          /* Customized Learning Section */
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {classesData.map((cls) => (
+                <div key={cls.id} className="glass rounded-[2rem] p-6 border border-white/5 flex flex-col h-full relative overflow-hidden group">
+                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                  <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+                    <Layout className="w-4 h-4 text-primary" /> {cls.name}
+                  </h3>
+                  <div className="space-y-3 flex-1">
+                    {cls.subjects.map((sub: any) => (
+                      <button 
+                        key={sub.id} 
+                        disabled={!sub.enabled}
+                        onClick={() => toggleSubject(sub.id, sub.price)}
+                        className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                          selectedSubjects.includes(sub.id) 
+                            ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(5,191,219,0.2)]" 
+                            : sub.enabled ? "bg-white/5 border-white/5 hover:border-white/20" : "opacity-40 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="text-[11px] font-black text-white uppercase tracking-tight">{sub.name}</span>
+                          <span className="text-[10px] text-primary font-bold">₹{sub.price}</span>
+                        </div>
+                        {selectedSubjects.includes(sub.id) && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Float Checkout Summary */}
+            <div className="sticky bottom-6 z-50 max-w-2xl mx-auto">
+              <div className="glass-morphism rounded-3xl p-6 border border-primary/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30">
+                    <Zap className="w-6 h-6 text-primary animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-black text-lg">Custom Selection</h4>
+                    <p className="text-white/50 text-xs font-semibold">{selectedCount} {selectedCount === 1 ? 'Subject' : 'Subjects'} selected</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <span className="block text-[10px] text-white/40 font-black uppercase tracking-widest">Total Investment</span>
+                    <span className="text-3xl font-black text-white">₹{totalPrice}</span>
+                  </div>
+                  <Link href={`/courses/custom-plan?subjects=${selectedSubjects.join(',')}`}>
+                    <Button disabled={selectedCount === 0} className="px-10 py-7 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-primary/20 bg-primary hover:bg-[#04A9C4] text-white">
+                      Explore Course <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              {selectedCount === 0 && (
+                <div className="mt-4 flex items-center justify-center gap-2 text-white/40 animate-pulse">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Please select at least one subject to proceed</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

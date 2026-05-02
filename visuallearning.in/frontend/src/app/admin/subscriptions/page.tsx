@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Plus, X, Pencil, Ban } from "lucide-react";
+import { Plus, X, Pencil, Ban, DollarSign, Save } from "lucide-react";
 
 interface SubRow {
   id: string;
@@ -41,6 +41,11 @@ export default function AdminSubscriptionsPage() {
   // Plan labels from settings
   const [planLabels, setPlanLabels] = useState<Record<string, string>>({});
   const [planKeys, setPlanKeys] = useState<string[]>([]);
+  
+  // Subject pricing
+  const [subjectPricing, setSubjectPricing] = useState<any[]>([]);
+  const [loadingPricing, setLoadingPricing] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<{ id: string; price: number } | null>(null);
 
   useEffect(() => {
     api.get("/courses/classes").then(({ data }) => setClasses(data.data));
@@ -51,7 +56,26 @@ export default function AdminSubscriptionsPage() {
       setPlanLabels(labels);
       setPlanKeys(Object.keys(plans));
     });
+    loadSubjectPricing();
   }, []);
+
+  const loadSubjectPricing = () => {
+    setLoadingPricing(true);
+    api.get("/admin/subject-access").then(({ data }) => {
+      setSubjectPricing(data.data);
+    }).finally(() => setLoadingPricing(false));
+  };
+
+  const updateSubjectPrice = async (id: string, price: number) => {
+    try {
+      await api.put(`/admin/subjects/${id}`, { price });
+      toast.success("Price updated");
+      setEditingPrice(null);
+      loadSubjectPricing();
+    } catch {
+      toast.error("Failed to update price");
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -278,6 +302,70 @@ export default function AdminSubscriptionsPage() {
         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
         <span className="px-4 py-2 text-sm">Page {page} of {totalPages}</span>
         <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+      </div>
+
+      {/* Subject Pricing Section */}
+      <div className="mt-12">
+        <div className="flex items-center gap-2 mb-6">
+          <DollarSign className="w-6 h-6 text-primary" />
+          <h2 className="text-xl font-bold">Subject Pricing (Custom Plans)</h2>
+        </div>
+        
+        {loadingPricing ? <PageLoader /> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {subjectPricing.map((cls) => (
+              <Card key={cls.id} className="overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b">
+                  <h3 className="font-bold text-gray-900">{cls.name}</h3>
+                </div>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    {cls.subjects.map((sub: any) => (
+                      <div key={sub.id} className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">{sub.name}</span>
+                          {!sub.enabled && <Badge variant="default" className="text-[9px] h-4">Disabled</Badge>}
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {editingPrice?.id === sub.id ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-400">₹</span>
+                              <Input 
+                                type="number" 
+                                className="w-24 h-8 text-sm" 
+                                value={editingPrice.price} 
+                                onChange={(e) => setEditingPrice({ ...editingPrice, price: parseInt(e.target.value) || 0 })}
+                              />
+                              <Button size="sm" className="h-8 px-2" onClick={() => updateSubjectPrice(sub.id, editingPrice.price)}>
+                                <Save className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditingPrice(null)}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-black text-gray-900">₹{sub.price || 0}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => setEditingPrice({ id: sub.id, price: sub.price || 0 })}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

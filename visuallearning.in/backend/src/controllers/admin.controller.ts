@@ -6,7 +6,12 @@ import { cacheInvalidate } from "../utils/cache";
 
 // --- Schemas ---
 export const classSchema = z.object({ name: z.string().min(1), order: z.number().int().optional() });
-export const subjectSchema = z.object({ classId: z.string(), name: z.string().min(1), icon: z.string().optional() });
+export const subjectSchema = z.object({ 
+  classId: z.string(), 
+  name: z.string().min(1), 
+  icon: z.string().optional(),
+  price: z.number().int().min(0).optional(),
+});
 export const chapterSchema = z.object({ subjectId: z.string(), name: z.string().min(1), order: z.number().int().optional() });
 export const videoSchema = z.object({
   chapterId: z.string(), title: z.string().min(1),
@@ -189,7 +194,7 @@ export async function getSubjectAccessList(_req: Request, res: Response) {
       orderBy: { order: "asc" },
       include: {
         subjects: {
-          select: { id: true, name: true, icon: true, enabled: true },
+          select: { id: true, name: true, icon: true, enabled: true, price: true },
         },
       },
     });
@@ -347,6 +352,7 @@ export const grantSubscriptionSchema = z.object({
   userId: z.string(),
   plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
+  subjectsAccess: z.array(z.string()).optional(),
   durationDays: z.number().int().min(1),
   amount: z.number().int().min(0).optional(),
 });
@@ -412,6 +418,7 @@ export async function grantSubscription(req: Request, res: Response) {
         userId,
         plan,
         classesAccess: resolvedClasses,
+        subjectsAccess: req.body.subjectsAccess || [],
         expiryDate,
         status: "ACTIVE",
         amount: amount || 0,

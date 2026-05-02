@@ -61,6 +61,7 @@ model Subscription {
   userId             String
   plan               String
   classesAccess      String[]           @default([])
+  subjectsAccess     String[]           @default([])
   startDate          DateTime           @default(now())
   expiryDate         DateTime
   paymentId          String?
@@ -112,6 +113,7 @@ model Subject {
   name     String
   icon     String?
   enabled  Boolean   @default(true)
+  price    Int       @default(0)
 
   class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   chapters    Chapter[]

@@ -9,6 +9,7 @@ import { cacheGet, cacheSet } from "../utils/cache";
 export const createOrderSchema = z.object({
   plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
+  subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
 });
 
@@ -18,6 +19,7 @@ export const verifyPaymentSchema = z.object({
   razorpay_signature: z.string(),
   plan: z.string().min(1),
   classesAccess: z.array(z.string()).optional(),
+  subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
 });
 
@@ -141,6 +143,19 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     let amount = planConfig.amount;
+    const { subjectsAccess } = req.body;
+
+    if (plan === "FLEXI_PLAN") {
+      if (!subjectsAccess || subjectsAccess.length === 0) {
+        return error(res, "Customized learning requires at least one subject", 400);
+      }
+      const subjects = await prisma.subject.findMany({
+        where: { id: { in: subjectsAccess } },
+        select: { price: true }
+      });
+      amount = subjects.reduce((sum, s) => sum + s.price, 0);
+    }
+
     let couponDiscount = 0;
     let upgradeDiscount = 0;
 
@@ -178,6 +193,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       currency: order.currency,
       plan,
       classesAccess,
+      subjectsAccess,
       couponCode,
       originalAmount: planConfig.amount,
       upgradeDiscount,
@@ -235,9 +251,19 @@ export async function verifyPayment(req: Request, res: Response) {
 
     if (amount < 100) amount = 100;
 
-    // If plan has classSelection > 0, use provided classesAccess; otherwise grant all
+    const { subjectsAccess } = req.body;
+    let resolvedSubjectsAccess: string[] = [];
     let resolvedClassesAccess: string[] = [];
-    if (planConfig.classSelection > 0) {
+
+    if (plan === "FLEXI_PLAN") {
+      resolvedSubjectsAccess = subjectsAccess || [];
+      // Also resolve classes from subjects for easier filtering later
+      const subjects = await prisma.subject.findMany({
+        where: { id: { in: resolvedSubjectsAccess } },
+        select: { classId: true }
+      });
+      resolvedClassesAccess = Array.from(new Set(subjects.map(s => s.classId)));
+    } else if (planConfig.classSelection > 0) {
       resolvedClassesAccess = classesAccess || [];
     } else {
       const allClasses = await prisma.class.findMany({ select: { id: true } });
@@ -255,6 +281,7 @@ export async function verifyPayment(req: Request, res: Response) {
         userId: req.user!.id,
         plan,
         classesAccess: resolvedClassesAccess,
+        subjectsAccess: resolvedSubjectsAccess,
         expiryDate,
         paymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
