@@ -186,9 +186,10 @@ export default function AdminContentPage() {
     (videoLangFilter === "ALL" || (item.language || "ENGLISH") === videoLangFilter)
   ) : data).filter((item: any) => {
     if (viewMode === "chapterwise" && tab === "chapters" && chapterSearch) {
-      return item.name.toLowerCase().includes(chapterSearch.toLowerCase()) || 
-             item.subject.name.toLowerCase().includes(chapterSearch.toLowerCase()) ||
-             item.subject.class.name.toLowerCase().includes(chapterSearch.toLowerCase());
+      const search = chapterSearch.toLowerCase();
+      return (item.name?.toLowerCase() || "").includes(search) || 
+             (item.subject?.name?.toLowerCase() || "").includes(search) ||
+             (item.subject?.class?.name?.toLowerCase() || "").includes(search);
     }
     return true;
   });
@@ -260,7 +261,7 @@ export default function AdminContentPage() {
                 <option value="">Choose Chapter to manage content</option>
                 {allChapters.map((ch: any) => (
                   <option key={ch.id} value={ch.id}>
-                    {ch.name} ({ch.subject.class.name} - {ch.subject.name})
+                    {ch.name} ({ch.subject?.class?.name || "N/A"} - {ch.subject?.name || "N/A"})
                   </option>
                 ))}
               </select>
@@ -299,7 +300,7 @@ export default function AdminContentPage() {
       </div>
 
       <div className="flex justify-end mb-4">
-        {(!viewMode || (viewMode === "classwise" || tab === "chapters")) && (
+        {(viewMode === "classwise" || tab === "chapters") && (
           <Button onClick={() => { setShowForm(!showForm); setEditing(null); setFormData({}); }}>
             {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "board-papers" ? "Board Paper" : tab === "questions" ? "Question" : tab === "notes" ? "Note" : tab.slice(0, -1)}</>}
           </Button>
@@ -446,8 +447,8 @@ export default function AdminContentPage() {
                     {viewMode === "chapterwise" && tab === "chapters" && (
                       <td className="p-4">
                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full w-fit">{item.subject.class.name}</span>
-                            <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">{item.subject.name}</span>
+                            <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full w-fit">{item.subject?.class?.name || "N/A"}</span>
+                            <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">{item.subject?.name || "N/A"}</span>
                          </div>
                       </td>
                     )}
