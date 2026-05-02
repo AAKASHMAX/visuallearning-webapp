@@ -50,13 +50,13 @@ export default function CoursesPage() {
       {/* ── ALL PRICING PLANS ── */}
       <div className="mt-20 mb-20">
         <div className="text-center mb-8">
-          <div className="inline-flex p-1.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-8">
+          <div className="inline-flex p-1.5 rounded-2xl bg-gray-100 border border-gray-200 shadow-inner mb-8">
             <button onClick={() => setActiveTab("smart")} 
-              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "smart" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}>
+              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "smart" ? "bg-primary text-white shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>
               Smart Learning
             </button>
             <button onClick={() => setActiveTab("custom")} 
-              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "custom" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}>
+              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "custom" ? "bg-primary text-white shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>
               Customized Learning
             </button>
           </div>
@@ -91,16 +91,36 @@ export default function CoursesPage() {
           <PlanCard bgColor="#202940" accentColor="#818CF8" planName="FlexiLearn" price="Custom"
             animation="book"
             included={["Choose class (9–12)","Select up to 3 subjects","Flexible pricing","Personalized dashboard","Switch subjects anytime"]}
-            excluded={["Full platform access","Virtual Labs (Elite only)"]} ctaLink="/course-details/flexilearn" />
+            excluded={["Full platform access","Virtual Labs (Elite only)"]} 
+            onCtaClick={() => setActiveTab("custom")} 
+            ctaText="Customize Now"
+          />
         </div>
         ) : (
           /* Customized Learning Section */
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Intro Card */}
+            <div className="bg-[#202940] rounded-[3rem] overflow-hidden relative border border-white/5 shadow-2xl">
+              <div className="absolute inset-0 bg-grid-dark opacity-10 pointer-events-none" />
+              <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+                <div className="shrink-0 w-32 h-32 md:w-48 md:h-48">
+                  <BookAnimation accent="#818CF8" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <Badge className="bg-[#818CF8]/20 text-[#818CF8] border-[#818CF8]/30 mb-4 font-black">FLEXILEARN PLAN</Badge>
+                  <h3 className="text-3xl font-black text-white mb-4">Build Your Own <span className="text-[#818CF8]">Science Path</span></h3>
+                  <p className="text-white/60 max-w-xl text-sm leading-relaxed">
+                    Why pay for everything when you only need specific subjects? Select any combination of classes and subjects below. Your price updates instantly based on your choices.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {classesData.map((cls) => (
-                <div key={cls.id} className="glass rounded-[2rem] p-6 border border-white/5 flex flex-col h-full relative overflow-hidden group">
-                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
-                  <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+                <div key={cls.id} className="bg-white rounded-[2rem] p-6 border border-gray-100 flex flex-col h-full relative overflow-hidden group shadow-sm hover:shadow-xl transition-all">
+                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all" />
+                  <h3 className="text-lg font-black text-heading mb-4 flex items-center gap-2">
                     <Layout className="w-4 h-4 text-primary" /> {cls.name}
                   </h3>
                   <div className="space-y-3 flex-1">
@@ -111,12 +131,12 @@ export default function CoursesPage() {
                         onClick={() => toggleSubject(sub.id, sub.price)}
                         className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
                           selectedSubjects.includes(sub.id) 
-                            ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(5,191,219,0.2)]" 
-                            : sub.enabled ? "bg-white/5 border-white/5 hover:border-white/20" : "opacity-40 cursor-not-allowed"
+                            ? "bg-primary/5 border-primary shadow-[0_0_15px_rgba(5,191,219,0.1)]" 
+                            : sub.enabled ? "bg-gray-50 border-gray-100 hover:border-gray-200" : "opacity-30 cursor-not-allowed"
                         }`}
                       >
                         <div className="flex flex-col items-start">
-                          <span className="text-[11px] font-black text-white uppercase tracking-tight">{sub.name}</span>
+                          <span className="text-[11px] font-black text-heading uppercase tracking-tight">{sub.name}</span>
                           <span className="text-[10px] text-primary font-bold">₹{sub.price}</span>
                         </div>
                         {selectedSubjects.includes(sub.id) && <CheckCircle2 className="w-4 h-4 text-primary" />}
@@ -325,7 +345,7 @@ function BookAnimation({ accent }: { accent: string }) {
 /* ── PLAN CARD ── */
 function PlanCard({ 
   bgColor, accentColor, planName, price, originalPrice, period = "", badge, 
-  animation, included, excluded, ctaLink, ctaText = "Explore Course", showCountdown 
+  animation, included, excluded, ctaLink, ctaText = "Explore Course", showCountdown, onCtaClick 
 }: any) {
   return (
     <div className="relative flex flex-col rounded-[2.5rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 border border-card-border bg-white h-full group">
@@ -378,13 +398,33 @@ function PlanCard({
             </li>
           ))}
         </ul>
-        <Link href={ctaLink} className="block">
-          <Button className="w-full font-black py-6 text-sm rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] text-white"
+        {onCtaClick ? (
+          <Button onClick={onCtaClick} className="w-full font-black py-6 text-sm rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] text-white"
             style={{ background: `linear-gradient(135deg, ${accentColor}, ${bgColor})` }}>
             {ctaText} <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-        </Link>
+        ) : (
+          <Link href={ctaLink || "#"} className="block">
+            <Button className="w-full font-black py-6 text-sm rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] text-white"
+              style={{ background: `linear-gradient(135deg, ${accentColor}, ${bgColor})` }}>
+              {ctaText} <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );
 }
+
+function Badge({ children, variant = "default", className = "" }: any) {
+  const variants: any = {
+    default: "bg-white/10 text-white",
+    info: "bg-primary/20 text-primary border border-primary/30",
+  };
+  return (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
