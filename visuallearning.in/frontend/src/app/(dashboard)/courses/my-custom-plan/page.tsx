@@ -28,7 +28,7 @@ export default function MyCustomPlan() {
         }
 
         // Fetch all classes and filter
-        const { data: classRes } = await api.get("/admin/subject-access");
+        const { data: classRes } = await api.get("/courses/pricing/subjects");
         const allClasses = classRes.data;
         
         const filtered = allClasses.map((cls: any) => ({

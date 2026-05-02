@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middleware/auth";
 import {
   getClasses, getSubjects, getChapters, getVideos, getVideoById, getNotes, getQuestions,
-  getSubjectContentCounts, getBoardPapers, getCourseBySlug,
+  getSubjectContentCounts, getBoardPapers, getCourseBySlug, getSubjectPricing,
 } from "../controllers/course.controller";
 
 const router = Router();
@@ -26,5 +26,6 @@ router.get("/videos/:id", optionalAuth, getVideoById);
 router.get("/chapters/:id/notes", optionalAuth, getNotes);
 router.get("/chapters/:id/questions", optionalAuth, getQuestions);
 router.get("/course-content/:slug", getCourseBySlug);
+router.get("/pricing/subjects", getSubjectPricing);
 
 export default router;

@@ -27,7 +27,7 @@ export default function CustomPlanPreview() {
 
     const loadData = async () => {
       try {
-        const { data: res } = await api.get("/admin/subject-access");
+        const { data: res } = await api.get("/courses/pricing/subjects");
         const allClasses = res.data;
         
         const filtered = allClasses.map((cls: any) => ({

@@ -462,3 +462,21 @@ export async function getCourseBySlug(req: Request, res: Response) {
     return error(res, "Failed to fetch course content");
   }
 }
+
+export async function getSubjectPricing(_req: Request, res: Response) {
+  try {
+    const classes = await prisma.class.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        subjects: {
+          where: { enabled: true },
+          select: { id: true, name: true, icon: true, price: true, enabled: true },
+        },
+      },
+    });
+    return success(res, classes);
+  } catch (e) {
+    console.error("Get subject pricing error:", e);
+    return error(res, "Failed to fetch pricing information");
+  }
+}

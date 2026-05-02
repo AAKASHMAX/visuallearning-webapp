@@ -20,7 +20,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     setLoading(true);
-    api.get("/admin/subject-access").then(({ data }) => {
+    api.get("/courses/pricing/subjects").then(({ data }) => {
       setClassesData(data.data);
     }).finally(() => setLoading(false));
   }, []);
