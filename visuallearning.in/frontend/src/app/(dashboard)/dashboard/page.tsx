@@ -111,7 +111,7 @@ export default function DashboardPage() {
             <p className="text-gray-500 font-medium max-w-md mx-auto mb-10 text-lg">
               Unlock the full potential of 3D science learning by subscribing to a plan.
             </p>
-            <Link href="/subscription">
+            <Link href="/courses">
               <Button className="px-10 py-8 text-lg font-black bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02]">
                 View All Courses & Plans <ArrowRight className="w-6 h-6 ml-3" />
               </Button>
