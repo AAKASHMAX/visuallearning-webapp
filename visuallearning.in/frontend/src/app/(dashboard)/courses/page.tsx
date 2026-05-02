@@ -93,8 +93,6 @@ export default function CoursesPage() {
             included={["Choose class (9–12)","Select up to 3 subjects","Flexible pricing","Personalized dashboard","Switch subjects anytime"]}
             excluded={["Full platform access","Virtual Labs (Elite only)"]} ctaLink="/course-details/flexilearn" />
         </div>
-            excluded={["Full platform access","Virtual Labs (Elite only)"]} ctaLink="/course-details/flexilearn" />
-        </div>
         ) : (
           /* Customized Learning Section */
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
