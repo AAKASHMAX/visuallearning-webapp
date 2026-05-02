@@ -7,25 +7,23 @@ import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import type { Subscription, Plan, ClassItem } from "@/types";
-import { CheckCircle, Crown, Sparkles, Tag, ArrowUpRight } from "lucide-react";
+import { 
+  CheckCircle, Crown, Sparkles, Tag, ArrowUpRight, 
+  CheckCircle2, Zap, GraduationCap, Target, AlertCircle 
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 type BillingTab = "yearly" | "monthly";
 
-const PLAN_THEMES: Record<string, { border: string; bg: string; badge: string; accent: string; icon: string }> = {
-  SINGLE_CLASS: { border: "border-blue-200", bg: "bg-blue-50", badge: "bg-blue-500", accent: "text-blue-600", icon: "text-blue-500" },
-  MULTI_CLASS:  { border: "border-violet-200", bg: "bg-violet-50", badge: "bg-violet-500", accent: "text-violet-600", icon: "text-violet-500" },
-  FULL_ACCESS:  { border: "border-emerald-200", bg: "bg-emerald-50", badge: "bg-emerald-500", accent: "text-emerald-600", icon: "text-emerald-500" },
-  MONTHLY:      { border: "border-orange-200", bg: "bg-orange-50", badge: "bg-orange-500", accent: "text-orange-600", icon: "text-orange-500" },
-  YEARLY:       { border: "border-rose-200", bg: "bg-rose-50", badge: "bg-rose-500", accent: "text-rose-600", icon: "text-rose-500" },
-  LIVE_CLASS:   { border: "border-red-200", bg: "bg-red-50", badge: "bg-red-500", accent: "text-red-600", icon: "text-red-500" },
+// Map our new plans to themes/icons
+const PLAN_INFO: Record<string, { icon: any; color: string; bg: string; border: string }> = {
+  "foundation": { icon: Zap, color: "text-success", bg: "bg-success/10", border: "border-success/20" },
+  "academic": { icon: GraduationCap, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+  "elite": { icon: Crown, color: "text-[#05BFDB]", bg: "bg-[#05BFDB]/10", border: "border-[#05BFDB]/30" },
+  "flexi": { icon: Target, color: "text-cta", bg: "bg-cta/10", border: "border-cta/20" },
 };
 
-const DEFAULT_THEME = { border: "border-gray-200", bg: "bg-gray-50", badge: "bg-gray-500", accent: "text-gray-600", icon: "text-gray-500" };
-
-function isMonthly(plan: Plan) {
-  return plan.billingCycle === "monthly" || (!plan.billingCycle && plan.duration.includes("30"));
-}
+const DEFAULT_INFO = { icon: Sparkles, color: "text-primary", bg: "bg-primary/5", border: "border-card-border" };
 
 export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -33,7 +31,7 @@ export default function SubscriptionPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClasses, setSelectedClasses] = useState<Record<string, string[]>>({});
-  const [tab, setTab] = useState<BillingTab>("monthly");
+  const [tab, setTab] = useState<BillingTab>("yearly"); // Default to yearly as requested by new plans
   const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
   const [showUpgradePlans, setShowUpgradePlans] = useState(false);
 
@@ -75,297 +73,179 @@ export default function SubscriptionPage() {
     try {
       const { data } = await api.get(`/subscription/validate-coupon?code=${couponCode.trim()}`);
       if (data.data.valid) {
-        const applicablePlans = data.data.applicablePlans || [];
         setCouponApplied(true);
         setCouponDiscount(data.data.discountPercent);
-        setCouponApplicablePlans(applicablePlans);
-        const planMsg = applicablePlans.length === 0 ? "all plans" : `${applicablePlans.length} plan${applicablePlans.length > 1 ? "s" : ""}`;
-        toast.success(`Coupon applied! ${data.data.discountPercent}% discount on ${planMsg}`);
+        setCouponApplicablePlans(data.data.applicablePlans || []);
+        toast.success(`Coupon applied! ${data.data.discountPercent}% discount`);
       } else {
         toast.error(data.data.message);
         setCouponApplied(false);
-        setCouponDiscount(0);
-        setCouponApplicablePlans([]);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to validate coupon");
-      setCouponApplied(false);
-      setCouponDiscount(0);
+      toast.error("Failed to validate coupon");
     } finally {
       setValidatingCoupon(false);
     }
   };
 
-  const removeCoupon = () => {
-    setCouponCode("");
-    setCouponApplied(false);
-    setCouponDiscount(0);
-    setCouponApplicablePlans([]);
-  };
-
-  const isCouponApplicable = (planId: string) => {
-    if (!couponApplied) return false;
-    if (couponApplicablePlans.length === 0) return true;
-    return couponApplicablePlans.includes(planId);
-  };
-
-  const getDiscountedPrice = (originalPrice: number, planId?: string) => {
-    let price = originalPrice;
-    if (isActive && upgradeDiscountPercent > 0) {
-      price = price - (price * upgradeDiscountPercent / 100);
-    }
-    if (couponApplied && couponDiscount > 0 && (!planId || isCouponApplicable(planId))) {
-      price = price - (price * couponDiscount / 100);
-    }
-    return Math.max(1, Math.round(price));
-  };
-
   if (loading) return <PageLoader />;
 
   const isActive = subscription?.status === "ACTIVE" && new Date(subscription.expiryDate) > new Date();
-
-  const planLabel: Record<string, string> = {};
-  plans.forEach((p) => { planLabel[p.id] = p.name; });
-
-  const monthlyPlans = plans.filter((p) => isMonthly(p));
-  const yearlyPlans = plans.filter((p) => !isMonthly(p));
-  const visiblePlans = tab === "monthly" ? monthlyPlans : yearlyPlans;
-
-  // Filter out current plan for upgrade view
-  const upgradePlans = isActive
-    ? visiblePlans.filter((p) => p.id !== subscription?.plan)
-    : visiblePlans;
-
-  const showPlans = isActive ? showUpgradePlans : true;
-  const plansToShow = isActive ? upgradePlans : visiblePlans;
+  
+  // Try to match API plans to our new 4 categories
+  const getPlanType = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("foundation") || n.includes("free") || n.includes("pass")) return "foundation";
+    if (n.includes("academic") || n.includes("plus") || n.includes("school")) return "academic";
+    if (n.includes("elite") || n.includes("premium") || n.includes("pro")) return "elite";
+    if (n.includes("flexi") || n.includes("personalized") || n.includes("custom")) return "flexi";
+    return "default";
+  };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {isActive ? "Manage Your Subscription" : "Choose Your Plan"}
+    <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
+          <Sparkles className="w-4 h-4 text-[#05BFDB]" />
+          <span className="text-sm text-text-muted font-bold uppercase tracking-widest">Premium Access</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-heading mb-4 tracking-tighter">
+          {isActive ? "Your Subscription" : "Choose Your Plan"}
         </h1>
-        <p className="text-gray-500">
-          {isActive ? "Upgrade or change your plan to access more content" : "Unlock premium content and boost your exam preparation"}
+        <p className="text-text-muted max-w-2xl mx-auto text-lg font-medium">
+          {isActive 
+            ? "Manage your current plan or upgrade for more advanced features." 
+            : "Unlock premium 3D animations, virtual labs, and expert-led science courses."}
         </p>
       </div>
 
-      {/* Active Subscription */}
+      {/* Active Subscription Banner */}
       {isActive && subscription && (
-        <Card className="mb-8 border-green-200 bg-green-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <Crown className="w-6 h-6 text-accent" />
-                  <h2 className="text-lg font-bold">Active Subscription</h2>
-                  <Badge variant="success">{planLabel[subscription.plan] || subscription.plan}</Badge>
-                </div>
-                <p className="text-gray-600">Expires: {new Date(subscription.expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
-                {subscription.classesAccess && subscription.classesAccess.length > 0 && (
-                  <p className="text-gray-500 text-sm mt-1">
-                    Classes: {classes.filter((c) => subscription.classesAccess.includes(c.id)).map((c) => c.name).join(", ") || "All Classes"}
-                  </p>
-                )}
+        <div className="mb-12 relative overflow-hidden rounded-3xl border-2 border-primary/20 bg-primary/5 p-8 shadow-xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                <Crown className="w-8 h-8 text-white" />
               </div>
-              <Button
-                variant={showUpgradePlans ? "outline" : "accent"}
-                onClick={() => setShowUpgradePlans(!showUpgradePlans)}
-              >
-                {showUpgradePlans ? (
-                  "Hide Plans"
-                ) : (
-                  <><ArrowUpRight className="w-4 h-4 mr-1" />View Other Plans</>
-                )}
-              </Button>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-2xl font-black text-heading tracking-tight">Active Plan</h2>
+                  <Badge className="bg-success text-white font-bold border-none">ACTIVE</Badge>
+                </div>
+                <p className="text-text-muted font-bold">
+                  Expires: {new Date(subscription.expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <Button 
+              variant={showUpgradePlans ? "outline" : "accent"}
+              onClick={() => setShowUpgradePlans(!showUpgradePlans)}
+              className="rounded-xl font-bold px-8 py-6"
+            >
+              {showUpgradePlans ? "Hide Upgrades" : "View Upgrade Options"}
+            </Button>
+          </div>
+        </div>
       )}
 
-      {showPlans && (
+      {(!isActive || showUpgradePlans) && (
         <>
-          {/* Billing Toggle */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex bg-gray-100 rounded-xl p-1">
-              <button
-                onClick={() => setTab("monthly")}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                  tab === "monthly"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setTab("yearly")}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                  tab === "yearly"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Yearly <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">Save more</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Upgrade Discount Banner */}
-          {isActive && upgradeDiscountPercent > 0 && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl text-center">
-              <p className="text-violet-700 font-medium">
-                <Tag className="w-4 h-4 inline mr-1" />
-                As an existing subscriber, you get {upgradeDiscountPercent}% off on plan upgrades!
-              </p>
-            </div>
-          )}
-
-          {/* Coupon Code */}
-          <div className="mb-8 max-w-md mx-auto">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => {
-                  setCouponCode(e.target.value.toUpperCase());
-                  if (couponApplied) {
-                    setCouponApplied(false);
-                    setCouponDiscount(0);
-                  }
-                }}
-                placeholder="Have a coupon code?"
-                className="border rounded-lg px-4 py-2.5 text-sm flex-1"
-                disabled={couponApplied}
-              />
-              {couponApplied ? (
-                <Button variant="outline" onClick={removeCoupon} className="shrink-0">
-                  Remove
-                </Button>
-              ) : (
-                <Button onClick={applyCoupon} disabled={validatingCoupon} className="shrink-0">
-                  {validatingCoupon ? "Checking..." : "Apply"}
-                </Button>
-              )}
-            </div>
-            {couponApplied && (
-              <div className="mt-2">
-                <p className="text-sm text-emerald-600 flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4" />
-                  Coupon &quot;{couponCode}&quot; applied - {couponDiscount}% discount
-                </p>
-                {couponApplicablePlans.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Applies to: {couponApplicablePlans.map((k) => planLabel[k] || k).join(", ")}
-                  </p>
-                )}
-              </div>
+          {/* Coupon Section */}
+          <div className="max-w-md mx-auto mb-16 bg-white rounded-2xl p-2 shadow-md border border-card-border flex gap-2">
+            <input
+              type="text"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              placeholder="ENTER COUPON CODE"
+              className="flex-1 bg-transparent px-4 font-bold text-sm tracking-widest focus:outline-none"
+              disabled={couponApplied}
+            />
+            {couponApplied ? (
+              <Button variant="ghost" onClick={() => { setCouponApplied(false); setCouponCode(""); }} className="text-rose-500 font-bold">REMOVE</Button>
+            ) : (
+              <Button onClick={applyCoupon} disabled={validatingCoupon} className="bg-heading text-white font-bold px-6 rounded-xl">
+                {validatingCoupon ? "..." : "APPLY"}
+              </Button>
             )}
           </div>
 
           {/* Plans Grid */}
-          {plansToShow.length > 0 ? (
-            <div className={`grid grid-cols-1 gap-6 ${plansToShow.length === 1 ? "max-w-md mx-auto" : plansToShow.length === 2 ? "md:grid-cols-2 max-w-3xl mx-auto" : "md:grid-cols-3"}`}>
-              {plansToShow.map((plan) => {
-                const theme = PLAN_THEMES[plan.id] || DEFAULT_THEME;
-                const needsClassSelection = (plan.classSelection || 0) > 0;
-                const selected = selectedClasses[plan.id] || [];
-                const canSubscribe = !needsClassSelection || selected.length === plan.classSelection;
-                const couponAppliesHere = isCouponApplicable(plan.id);
-                const discountedPrice = getDiscountedPrice(plan.price, plan.id);
-                const hasDiscount = discountedPrice < plan.price;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {plans.map((plan) => {
+              const type = getPlanType(plan.name);
+              const info = PLAN_INFO[type] || DEFAULT_INFO;
+              const PlanIcon = info.icon;
+              const discountedPrice = Math.round(plan.price * (1 - (couponApplied ? couponDiscount / 100 : 0)));
 
-                return (
-                  <Card key={plan.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${plan.popular ? `${theme.border} border-2 scale-[1.02]` : theme.border}`}>
-                    <div className={`h-1.5 ${theme.badge}`} />
+              return (
+                <div key={plan.id} className={`group relative rounded-3xl border-2 ${plan.popular ? "border-[#05BFDB] bg-[#1A3263]/5 shadow-2xl scale-[1.03]" : "border-card-border bg-white shadow-lg"} p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col`}>
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-[#05BFDB] text-white text-[10px] font-black tracking-widest uppercase z-10 shadow-lg">
+                      BEST VALUE
+                    </div>
+                  )}
+                  
+                  <div className={`w-14 h-14 rounded-2xl ${info.bg} flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-500`}>
+                    <PlanIcon className={`w-7 h-7 ${info.color}`} />
+                  </div>
 
-                    {plan.popular && (
-                      <div className={`absolute top-4 right-4 ${theme.badge} text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1`}>
-                        <Sparkles className="w-3 h-3" /> Most Popular
-                      </div>
-                    )}
+                  <h3 className="text-2xl font-black text-heading mb-1 tracking-tight">{plan.name}</h3>
+                  <p className="text-sm text-text-muted font-bold mb-6 opacity-60 uppercase tracking-widest">{plan.duration}</p>
 
-                    <CardContent className="p-8">
-                      <h3 className={`text-xl font-bold mb-1 ${theme.accent}`}>{plan.name}</h3>
-                      <p className="text-sm text-gray-400 mb-4">{plan.duration}</p>
+                  <div className="mb-8">
+                    {couponApplied && <span className="text-lg text-text-muted line-through mr-2 font-bold opacity-40">₹{plan.price}</span>}
+                    <span className="text-4xl font-black text-heading">₹{discountedPrice}</span>
+                    <span className="text-text-muted text-sm font-bold ml-1">/year</span>
+                  </div>
 
-                      <div className="mb-6">
-                        {hasDiscount && (
-                          <span className="text-lg text-gray-400 line-through mr-2">&#8377;{plan.price}</span>
-                        )}
-                        <span className="text-4xl font-bold text-gray-900">&#8377;{discountedPrice}</span>
-                        <span className="text-gray-400 text-sm ml-1">/{isMonthly(plan) ? "month" : "year"}</span>
-                        {hasDiscount && (
-                          <div className="mt-1">
-                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                              You save &#8377;{plan.price - discountedPrice}
-                            </span>
-                          </div>
-                        )}
-                        {couponApplied && !couponAppliesHere && (
-                          <div className="mt-1">
-                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
-                              Coupon not applicable for this plan
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                  <ul className="space-y-4 mb-10 flex-1">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-text-muted font-medium leading-tight">
+                        <CheckCircle2 className={`w-5 h-5 ${info.color} shrink-0 mt-0.5`} />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                      <ul className="space-y-3 mb-6">
-                        {plan.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2.5 text-sm">
-                            <CheckCircle className={`w-4 h-4 ${theme.icon} shrink-0 mt-0.5`} />
-                            <span className="text-gray-600">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {needsClassSelection && (
-                        <div className="mb-6">
-                          <p className="text-sm font-medium text-gray-700 mb-2">
-                            Select {plan.classSelection} class{(plan.classSelection || 0) > 1 ? "es" : ""}:
-                          </p>
-                          <div className="space-y-2">
-                            {classes.map((c) => (
-                              <label key={c.id} className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={selected.includes(c.id)}
-                                  onChange={() => toggleClass(plan.id, c.id, plan.classSelection || 1)}
-                                  className="rounded border-gray-300"
-                                />
-                                <span className="text-sm">{c.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                          {!canSubscribe && (
-                            <p className="text-xs text-amber-600 mt-2">
-                              Please select {plan.classSelection} class{(plan.classSelection || 0) > 1 ? "es" : ""} to continue
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className={!canSubscribe ? "opacity-50 pointer-events-none" : ""}>
-                        <RazorpayButton
-                          plan={plan.id}
-                          amount={discountedPrice}
-                          label={plan.name}
-                          classesAccess={needsClassSelection ? selected : undefined}
-                          couponCode={couponApplied && couponAppliesHere ? couponCode : undefined}
-                          onSuccess={load}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-center text-gray-400 py-8">No other plans available in this billing cycle.</p>
-          )}
+                  <RazorpayButton
+                    plan={plan.id}
+                    amount={discountedPrice}
+                    label={plan.name}
+                    couponCode={couponApplied ? couponCode : undefined}
+                    onSuccess={load}
+                    className={`w-full py-7 text-base font-black rounded-2xl shadow-xl transition-all ${
+                      plan.popular 
+                        ? "bg-gradient-to-r from-primary to-[#05BFDB] hover:opacity-90 text-white shadow-[#05BFDB]/30" 
+                        : "bg-heading hover:bg-black text-white shadow-black/10"
+                    }`}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
+
+      {/* Trust Badges */}
+      <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+        <div className="flex flex-col items-center text-center gap-2">
+          <CheckCircle className="w-8 h-8 text-success" />
+          <p className="text-xs font-black uppercase tracking-widest">Secure Payment</p>
+        </div>
+        <div className="flex flex-col items-center text-center gap-2">
+          <AlertCircle className="w-8 h-8 text-primary" />
+          <p className="text-xs font-black uppercase tracking-widest">24/7 Support</p>
+        </div>
+        <div className="flex flex-col items-center text-center gap-2">
+          <Sparkles className="w-8 h-8 text-[#05BFDB]" />
+          <p className="text-xs font-black uppercase tracking-widest">Premium Content</p>
+        </div>
+        <div className="flex flex-col items-center text-center gap-2">
+          <Tag className="w-8 h-8 text-cta" />
+          <p className="text-xs font-black uppercase tracking-widest">Best Price</p>
+        </div>
+      </div>
     </div>
   );
 }

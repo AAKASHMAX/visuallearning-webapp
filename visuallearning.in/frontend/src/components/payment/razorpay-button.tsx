@@ -12,6 +12,7 @@ interface RazorpayButtonProps {
   classesAccess?: string[];
   couponCode?: string;
   onSuccess?: () => void;
+  className?: string;
 }
 
 declare global {
@@ -31,7 +32,7 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, classesAccess, couponCode, onSuccess }: RazorpayButtonProps) {
+export function RazorpayButton({ plan, amount, label, classesAccess, couponCode, onSuccess, className }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -56,7 +57,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, couponCode,
         description: `${label} Subscription`,
         order_id: order.orderId,
         prefill: { name: user?.name, email: user?.email },
-        theme: { color: "#1e3a5f" },
+        theme: { color: "#1A3263" },
         handler: async (response: any) => {
           try {
             await api.post("/subscription/verify-payment", {
@@ -86,8 +87,8 @@ export function RazorpayButton({ plan, amount, label, classesAccess, couponCode,
   };
 
   return (
-    <Button variant="accent" size="lg" onClick={handlePayment} disabled={loading} className="w-full">
-      {loading ? "Processing..." : `Subscribe - Rs ${amount}`}
+    <Button variant="accent" size="lg" onClick={handlePayment} disabled={loading} className={className || "w-full"}>
+      {loading ? "Processing..." : `Subscribe - ₹${amount}`}
     </Button>
   );
 }
