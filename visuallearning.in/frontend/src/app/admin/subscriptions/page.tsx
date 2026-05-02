@@ -334,10 +334,10 @@ export default function AdminSubscriptionsPage() {
                               <Input 
                                 type="number" 
                                 className="w-24 h-8 text-sm" 
-                                value={editingPrice.price} 
-                                onChange={(e) => setEditingPrice({ ...editingPrice, price: parseInt(e.target.value) || 0 })}
+                                value={editingPrice!.price} 
+                                onChange={(e) => setEditingPrice({ ...editingPrice!, price: parseInt(e.target.value) || 0 })}
                               />
-                              <Button size="sm" className="h-8 px-2" onClick={() => updateSubjectPrice(sub.id, editingPrice.price)}>
+                              <Button size="sm" className="h-8 px-2" onClick={() => updateSubjectPrice(sub.id, editingPrice!.price)}>
                                 <Save className="w-4 h-4" />
                               </Button>
                               <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditingPrice(null)}>
