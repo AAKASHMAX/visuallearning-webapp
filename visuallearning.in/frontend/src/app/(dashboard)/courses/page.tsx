@@ -72,7 +72,7 @@ export default function CoursesPage() {
         </div>
 
         {activeTab === "smart" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <PlanCard bgColor="#1C4D8D" accentColor="#60A5FA" planName="Foundation Pass" price="FREE" originalPrice="₹3999" period="/yr" showCountdown
             animation="atom"
             included={["Selected chapters (9–12 PCB)","Animated concept videos","Beginner-friendly path","Progress tracking","Mobile & desktop access"]}
@@ -87,14 +87,6 @@ export default function CoursesPage() {
             animation="circuit"
             included={["Full 9–12 P + C + B","Virtual Labs (64+) 🧪","3D Visual Learning 🔬","Board exam practice","Notes + formula sheets","Priority WhatsApp support","Deep concept tools"]}
             excluded={[]} ctaLink="/course-details/elite-learning" />
-
-          <PlanCard bgColor="#202940" accentColor="#818CF8" planName="FlexiLearn" price="Custom"
-            animation="book"
-            included={["Choose class (9–12)","Select up to 3 subjects","Flexible pricing","Personalized dashboard","Switch subjects anytime"]}
-            excluded={["Full platform access","Virtual Labs (Elite only)"]} 
-            onCtaClick={() => setActiveTab("custom")} 
-            ctaText="Customize Now"
-          />
         </div>
         ) : (
           /* Customized Learning Section */
