@@ -93,10 +93,8 @@ export default function CourseContentPage({ params }: { params: { courseId: stri
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {subject.chapters.map((chapter: any) => {
                     const ChapterIcon = iconMap[chapter.icon] || Atom;
-                    // Find the original path components from the API response metadata
-                    const originalChapter = course.chapters.find((c: any) => c.chapterId === chapter.id)?.chapter;
-                    const classId = originalChapter?.subject?.classId;
-                    const subjectId = originalChapter?.subjectId;
+                    const classId = chapter.classId;
+                    const subjectId = chapter.subjectId;
 
                     return (
                       <Link 

@@ -210,9 +210,10 @@ export default function CustomPlanPreview() {
                     {sub.chapters?.map((ch: any) => {
                       const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
                       return (
-                        <div
+                        <Link
                           key={ch.id}
-                          className="group flex flex-col items-center text-center bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                          href={`/courses/${cls.id}/${sub.id}/${ch.id}?fromDetails=flexilearn`}
+                          className="group flex flex-col items-center text-center bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                         >
                           {/* Icon */}
                           <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.iconGrad} flex items-center justify-center shadow-md mb-2.5 group-hover:scale-105 transition-transform duration-300`}>
@@ -229,7 +230,7 @@ export default function CustomPlanPreview() {
                             Comprehensive lessons for{" "}
                             <span className={theme.priceColor}>{ch.name}</span>
                           </p>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
