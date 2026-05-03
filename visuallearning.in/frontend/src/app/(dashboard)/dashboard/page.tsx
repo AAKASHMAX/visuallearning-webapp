@@ -217,7 +217,7 @@ function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscriptio
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-900 leading-tight">{sub.course.name}</h3>
-              <Badge variant="outline" className="text-[9px] mt-1 font-black uppercase tracking-widest">{planName}</Badge>
+              <Badge variant="info" className="text-[9px] mt-1 font-black uppercase tracking-widest">{planName}</Badge>
             </div>
           </div>
           
