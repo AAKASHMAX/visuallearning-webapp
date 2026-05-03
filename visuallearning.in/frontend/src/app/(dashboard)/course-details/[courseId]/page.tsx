@@ -193,9 +193,8 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
         setCourse(courseRes.data.data);
         
         if (isAuthenticated) {
-          const sub = subRes.data.data;
-          const active = sub?.status === "ACTIVE" && new Date(sub.expiryDate) > new Date();
-          setIsSubscribed(active || user?.role === "ADMIN");
+          const hasCourseAccess = courseRes.data.data.userHasAccess;
+          setIsSubscribed(hasCourseAccess || user?.role === "ADMIN");
         }
       } catch (err) {
         console.error("Failed to load course details", err);
