@@ -372,9 +372,10 @@ export default function SubscriptionPage() {
                 {/* Pay button */}
                 {apiPlan ? (
                   <RazorpayButton
-                    plan={apiPlan.id}
+                    plan={apiPlan?.id || planParam}
                     amount={discounted}
                     label={planName}
+                    subjectsAccess={isFlexi ? subjectIds : undefined}
                     couponCode={couponApplied ? couponCode : undefined}
                     onSuccess={() => router.push("/dashboard")}
                     className="w-full py-3.5 rounded-xl text-sm font-black text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"

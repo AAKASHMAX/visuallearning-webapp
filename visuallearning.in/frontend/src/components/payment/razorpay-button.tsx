@@ -32,7 +32,7 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, classesAccess, couponCode, onSuccess, className }: RazorpayButtonProps) {
+export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAccess, couponCode, onSuccess, className }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -45,6 +45,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, couponCode,
       const { data } = await api.post("/subscription/create-order", {
         plan,
         classesAccess,
+        subjectsAccess,
         couponCode: couponCode || undefined,
       });
       const order = data.data;
@@ -66,6 +67,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, couponCode,
               razorpay_signature: response.razorpay_signature,
               plan,
               classesAccess,
+              subjectsAccess,
               couponCode: couponCode || undefined,
             });
             toast.success("Subscription activated!");
