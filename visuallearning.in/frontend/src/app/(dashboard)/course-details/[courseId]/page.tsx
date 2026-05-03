@@ -350,13 +350,15 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                 <div className="p-6">
                   <div className="mb-6">
                     <h3 className="text-2xl font-black text-gray-900 flex items-end gap-2">
-                      {theme.price}
-                      {theme.originalPrice && (
+                      {course?.planConfig?.price === 0 ? "FREE" : (course?.planConfig?.price ? `₹${course.planConfig.price.toLocaleString("en-IN")}` : theme.price)}
+                      {((course?.planConfig?.price === 0) || (!course)) && theme.originalPrice && (
                         <span className="text-sm text-gray-500 line-through font-medium mb-1">
                           {theme.originalPrice}
                         </span>
                       )}
-                      <span className="text-sm font-medium text-gray-600 mb-1">{theme.period}</span>
+                      <span className="text-sm font-medium text-gray-600 mb-1">
+                        {course?.planConfig?.billingCycle === "monthly" ? "/mo" : "/year"}
+                      </span>
                     </h3>
                   </div>
   
