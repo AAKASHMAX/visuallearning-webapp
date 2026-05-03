@@ -148,14 +148,15 @@ export default function AdminCourseDetailsPage({ params }: { params: { id: strin
                   size="sm" 
                   onClick={async () => {
                     try {
-                      await api.patch(`/admin/courses/${id}`, {
+                      await api.put(`/admin/courses/${id}`, {
                         name: course.name,
+                        slug: course.slug,
                         description: course.description,
                         vimeoVideoId: course.vimeoVideoId
                       });
                       toast.success("Course updated");
-                    } catch {
-                      toast.error("Failed to update course");
+                    } catch (err: any) {
+                      toast.error(err.response?.data?.message || "Failed to update course");
                     }
                   }}
                   className="text-xs"
