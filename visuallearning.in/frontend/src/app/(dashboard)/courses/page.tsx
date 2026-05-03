@@ -83,6 +83,10 @@ const COURSE_THEME: Record<string, { bgColor: string; accentColor: string; anima
   FOUNDATION_PASS: { bgColor: "#1C4D8D", accentColor: "#60A5FA", animation: "atom", excluded: ["Full class content", "Virtual Labs", "Priority support"] },
   ACADEMIC_PLUS: { bgColor: "#162855", accentColor: "#38BDF8", animation: "magnet", excluded: ["Virtual Labs & 3D", "WhatsApp support"] },
   ELITE_LEARNING: { bgColor: "#2d1654", accentColor: "#D8B4FE", animation: "circuit", excluded: [] },
+  CLASS_9: { bgColor: "#1e3a8a", accentColor: "#3b82f6", animation: "atom", excluded: [] },
+  CLASS_10: { bgColor: "#1e3a8a", accentColor: "#3b82f6", animation: "magnet", excluded: [] },
+  CLASS_11: { bgColor: "#312e81", accentColor: "#818cf8", animation: "circuit", excluded: [] },
+  CLASS_12: { bgColor: "#312e81", accentColor: "#818cf8", animation: "book", excluded: [] },
 };
 
 export default function CoursesPage() {
@@ -158,27 +162,27 @@ export default function CoursesPage() {
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              Customized Learning
+              Grade-wise Plans
             </button>
           </div>
 
           <h2 className="text-3xl font-black text-heading mb-2 tracking-tight text-center">
             {activeTab === "smart" ? (
-              <>Level Up Your <span className="gradient-text">Learning</span></>
+              <>Premium Learning <span className="gradient-text">Packages</span></>
             ) : (
-              <>Design Your Own <span className="gradient-text">Curriculum</span></>
+              <>Structured <span className="gradient-text">Grade-wise</span> Plans</>
             )}
           </h2>
           <p className="text-text-muted max-w-lg mx-auto text-sm text-center">
             {activeTab === "smart"
               ? "Choose the perfect plan to unlock premium visual content and accelerate your science journey."
-              : "Pick exactly what you need — any combination of classes and subjects."}
+              : "Complete curricula tailored for your specific grade level with full access to all features."}
           </p>
         </div>
 
         {activeTab === "smart" ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {courses.filter(c => c.planKey && c.planKey !== "FLEXI_PLAN").map((course) => {
+            {courses.filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey)).map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
               const priceStr = course.price === 0 ? "FREE" : `₹${course.price.toLocaleString("en-IN")}`;
               const isElite = course.planKey === "ELITE_LEARNING";
@@ -202,247 +206,25 @@ export default function CoursesPage() {
             })}
           </div>
         ) : (
-          /* Customized Learning Section */
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-            {/* FlexiLearn intro card with book animation */}
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-[#2d1f8a]/60">
-              {/* Dark header */}
-              <div className="relative overflow-hidden" style={{ backgroundColor: "#170C79" }}>
-                <div className="absolute inset-0 bg-grid-dark pointer-events-none opacity-60" />
-                <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-[70px] opacity-25" style={{ backgroundColor: "#818CF8" }} />
-
-                <div className="relative z-10 flex items-center gap-6 px-6 pt-5 pb-0">
-                  {/* Book animation */}
-                  <div className="shrink-0 flex h-[90px] items-end justify-center overflow-hidden">
-                    <div className="scale-[0.56] origin-bottom">
-                      <BookAnimation accent="#818CF8" />
-                    </div>
-                  </div>
-
-                  {/* Text */}
-                  <div className="flex-1 pb-4">
-                    <span className="inline-block px-4 py-1.5 rounded-full text-sm font-black uppercase tracking-widest text-white mb-2 shadow-lg"
-                      style={{ background: "linear-gradient(135deg, #818CF8, #170C79)", boxShadow: "0 0 18px rgba(129,140,248,0.55)" }}>
-                      ✦ FlexiLearn Plan
-                    </span>
-                    <h3 className="text-xl font-black text-white leading-tight">
-                      Build Your Own <span className="text-[#818CF8]">Science Path</span>
-                    </h3>
-                    <p className="text-xs text-white/50 mt-1 max-w-sm">
-                      Pick a class below, then tap subjects to add them to your bundle. Total updates live as you select.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Wave */}
-                <svg className="relative z-10 w-full -mb-px block" viewBox="0 0 500 20" preserveAspectRatio="none" style={{ height: "16px" }}>
-                  <path d="M0,8 C125,24 375,0 500,8 L500,20 L0,20 Z" fill="white" />
-                </svg>
-              </div>
-
-              {/* White body */}
-              <div className="bg-white px-6 py-3 flex items-center gap-3 flex-wrap">
-                {[
-                  "Choose any class",
-                  "Pick any subject",
-                  "Pay only for what you need",
-                ].map((step, i) => (
-                  <span key={i} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-heading">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-black text-white" style={{ background: "linear-gradient(135deg, #818CF8, #170C79)" }}>
-                      {i + 1}
-                    </span>
-                    {step}
-                    {i < 2 && <span className="text-text-muted mx-1">→</span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Class selector */}
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-heading/40 mb-1">
-                    Step 1 · Choose class
-                  </p>
-                  <h4 className="text-lg font-black text-heading tracking-tight">
-                    Which grade are you in?
-                  </h4>
-                </div>
-                <p className="text-xs text-text-muted">
-                  Your picks from every class are combined in one plan.
-                </p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin">
-                {classesData.map((cls) => {
-                  const selectedHere = cls.subjects.filter((s: { id: string }) =>
-                    selectedSubjects.includes(s.id)
-                  ).length;
-                  const isActive = cls.id === activeClassId;
-                  return (
-                    <button
-                      key={cls.id}
-                      type="button"
-                      onClick={() => setActiveClassId(cls.id)}
-                      className={`snap-start shrink-0 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-left transition-all duration-300 min-w-[160px] ${
-                        isActive
-                          ? "border-primary bg-primary/10 shadow-md shadow-primary/15 ring-1 ring-primary/25"
-                          : "border-gray-200 bg-white hover:border-primary/30 hover:shadow-sm"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white ${
-                          isActive
-                            ? "bg-gradient-to-br from-primary to-[#04A9C4]"
-                            : "bg-gradient-to-br from-slate-500 to-slate-700"
-                        }`}
-                      >
-                        <GraduationCap className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-sm font-black text-heading truncate">{cls.name}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-text-muted">
-                          {cls.subjects?.length ?? 0} subjects
-                          {selectedHere > 0 && (
-                            <span className="text-primary"> · {selectedHere} picked</span>
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Subject cards */}
-            {activeClass && (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-heading/40 mb-1">
-                      Step 2 · Add subjects
-                    </p>
-                    <h4 className="text-lg font-black text-heading tracking-tight flex items-center gap-2">
-                      <Sparkle className="w-4 h-4 text-primary" />
-                      Subjects for {activeClass.name}
-                    </h4>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px] font-bold text-heading">
-                    <Zap className="h-3 w-3 text-primary" />
-                    Tap a card to select it
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {activeClass.subjects.map((sub: any) => {
-                    const selected = selectedSubjects.includes(sub.id);
-                    const { Icon, bg, border, iconGrad, ring, shadow, priceColor, subtitleColor } = subjectVisual(sub.name, sub.icon);
-                    const enabled = sub.enabled !== false;
-                    return (
-                      <button
-                        key={sub.id}
-                        type="button"
-                        disabled={!enabled}
-                        onClick={() => enabled && toggleSubject(sub.id)}
-                        className={`group relative overflow-hidden rounded-2xl text-left transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 bg-gradient-to-br ${bg} border ${border} ${
-                          !enabled
-                            ? "cursor-not-allowed opacity-40 grayscale"
-                            : "cursor-pointer hover:-translate-y-1 hover:shadow-xl"
-                        } ${
-                          selected ? `ring-2 ${ring}` : "shadow-sm hover:shadow-md"
-                        }`}
-                        style={selected ? { boxShadow: `0 8px 28px -6px ${shadow}` } : undefined}
-                      >
-                        {/* Selected top bar */}
-                        {selected && (
-                          <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${iconGrad}`} />
-                        )}
-
-                        <div className="p-4">
-                          {/* Icon + check */}
-                          <div className="flex items-start justify-between mb-3 gap-2">
-                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${iconGrad} shadow-md`}>
-                              <Icon className="h-5 w-5 text-white drop-shadow" />
-                            </div>
-                            <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                              selected
-                                ? "border-emerald-400 bg-emerald-400"
-                                : "border-gray-400 bg-white group-hover:border-gray-600"
-                            }`}>
-                              {selected
-                                ? <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={3} />
-                                : <span className="text-sm font-black text-gray-600 leading-none">+</span>
-                              }
-                            </div>
-                          </div>
-
-                          {/* Name */}
-                          <h5 className="text-[13.5px] font-black text-heading leading-snug mb-0.5">
-                            {sub.name}
-                          </h5>
-                          <p className={`text-[9px] font-bold uppercase tracking-wide mb-3 ${subtitleColor}`}>
-                            Videos · Notes · Quizzes
-                          </p>
-
-                          {/* Price + status */}
-                          <div className="flex items-center justify-between">
-                            <span className={`text-sm font-black ${priceColor}`}>₹{sub.price}</span>
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${
-                              !enabled ? "text-gray-400" : selected ? "text-emerald-500" : "text-gray-400"
-                            }`}>
-                              {!enabled ? "Coming soon" : selected ? "Added ✓" : "Tap to add"}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Floating checkout bar */}
-            <div className="sticky bottom-5 z-50 max-w-xl mx-auto">
-              <div className="glass-morphism rounded-2xl px-5 py-4 border border-primary/25 shadow-[0_16px_40px_rgba(0,0,0,0.45)] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/25 shrink-0">
-                    <Zap className="w-5 h-5 text-primary animate-pulse" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-black text-sm">Custom Selection</h4>
-                    <p className="text-white/45 text-[10px] font-semibold">
-                      {selectedCount} {selectedCount === 1 ? "Subject" : "Subjects"} selected
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right shrink-0">
-                    <span className="block text-[9px] text-white/35 font-black uppercase tracking-widest">
-                      Total
-                    </span>
-                    <span className="text-xl font-black text-white">₹{totalPrice}</span>
-                  </div>
-                  <Link href={`/courses/custom-plan?subjects=${selectedSubjects.join(",")}`}>
-                    <Button
-                      disabled={selectedCount === 0}
-                      className="px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 bg-primary hover:bg-[#04A9C4] text-white"
-                    >
-                      Explore <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              {selectedCount === 0 && (
-                <div className="mt-2.5 flex items-center justify-center gap-1.5 text-white/35 animate-pulse">
-                  <AlertCircle className="w-3 h-3" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">
-                    Select at least one subject to proceed
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {courses.filter(c => ["CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"].includes(c.planKey)).map((course) => {
+              const theme = COURSE_THEME[course.planKey] || COURSE_THEME.CLASS_9;
+              const priceStr = `₹${course.price.toLocaleString("en-IN")}`;
+              return (
+                <PlanCard
+                  key={course.id}
+                  bgColor={theme.bgColor}
+                  accentColor={theme.accentColor}
+                  planName={course.name}
+                  price={priceStr}
+                  period={`/${course.billingCycle === "monthly" ? "mo" : "yr"}`}
+                  animation={theme.animation}
+                  included={course.features}
+                  excluded={theme.excluded}
+                  ctaLink={`/course-details/${course.slug}`}
+                />
+              );
+            })}
           </div>
         )}
       </div>
