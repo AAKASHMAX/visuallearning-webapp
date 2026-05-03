@@ -301,11 +301,13 @@ export async function verifyPayment(req: Request, res: Response) {
       resolvedClassesAccess = allClasses.map((c) => c.id);
     }
 
-    // Expire any existing active subscriptions
+    // NOTE: We no longer auto-expire old subscriptions to allow multiple active plans (e.g. Class 9 + Elite)
+    /*
     await prisma.subscription.updateMany({
       where: { userId: req.user!.id, status: "ACTIVE" },
       data: { status: "EXPIRED" },
     });
+    */
 
     // Link subscription to course if plan has a matching course
     let courseId: string | null = null;
@@ -341,22 +343,28 @@ export async function verifyPayment(req: Request, res: Response) {
 
 export async function getMySubscription(req: Request, res: Response) {
   try {
-    const subscription = await prisma.subscription.findFirst({
-      where: { userId: req.user!.id },
+    const subscriptions = await prisma.subscription.findMany({
+      where: { userId: req.user!.id, status: "ACTIVE" },
       orderBy: { createdAt: "desc" },
       include: { course: { select: { id: true, name: true, slug: true, accentColor: true, icon: true, planKey: true } } },
     });
 
-    // Auto-expire if past expiry date
-    if (subscription && subscription.status === "ACTIVE" && subscription.expiryDate < new Date()) {
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { status: "EXPIRED" },
-      });
-      subscription.status = "EXPIRED";
+    // Auto-expire and filter out if past expiry date
+    const now = new Date();
+    const activeSubs = [];
+
+    for (const sub of subscriptions) {
+      if (sub.expiryDate < now) {
+        await prisma.subscription.update({
+          where: { id: sub.id },
+          data: { status: "EXPIRED" },
+        });
+      } else {
+        activeSubs.push(sub);
+      }
     }
 
-    return success(res, subscription);
+    return success(res, activeSubs);
   } catch (e) {
     console.error("Get subscription error:", e);
     return error(res, "Failed to fetch subscription");

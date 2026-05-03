@@ -38,7 +38,7 @@ interface SubjectInfo {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [flexiSubjects, setFlexiSubjects] = useState<SubjectInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,18 +50,19 @@ export default function DashboardPage() {
           api.get("/subscription/my-subscription"),
           api.get("/courses/classes"),
         ]);
-        const sub: Subscription = subRes.data.data;
-        setSubscription(sub);
+        const subs: Subscription[] = Array.isArray(subRes.data.data) ? subRes.data.data : [subRes.data.data].filter(Boolean);
+        setSubscriptions(subs);
         setAllClasses(classRes.data.data);
 
-        // For FLEXI_PLAN, resolve subject names from pricing endpoint
-        if (sub && sub.status === "ACTIVE" && sub.plan === "FLEXI_PLAN" && sub.subjectsAccess?.length > 0) {
+        // For any FLEXI_PLAN in the active list, resolve subject names
+        const flexiSub = subs.find(s => s.status === "ACTIVE" && s.plan === "FLEXI_PLAN" && s.subjectsAccess?.length > 0);
+        if (flexiSub) {
           const { data: pricingRes } = await api.get("/courses/pricing/subjects");
           const allCls = pricingRes.data as any[];
           const found: SubjectInfo[] = [];
           for (const cls of allCls) {
             for (const s of cls.subjects) {
-              if (sub.subjectsAccess.includes(s.id)) {
+              if (flexiSub.subjectsAccess.includes(s.id)) {
                 found.push({ subjectId: s.id, subjectName: s.name, classId: cls.id, className: cls.name, icon: s.icon });
               }
             }
@@ -77,16 +78,8 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  const isActive = subscription?.status === "ACTIVE" && new Date(subscription.expiryDate) > new Date();
-  const daysLeft = isActive ? Math.ceil((new Date(subscription!.expiryDate).getTime() - Date.now()) / 86400000) : 0;
-
-  // Determine access type
-  const isFlexiPlan = isActive && subscription?.plan === "FLEXI_PLAN";
-  const hasCourse = isActive && !isFlexiPlan && (subscription as any)?.course;
-  const subscribedClassIds = subscription?.classesAccess ?? [];
-  const isFullAccess = isActive && !isFlexiPlan && !hasCourse && (subscribedClassIds.length === 0 || subscribedClassIds.length >= allClasses.length);
-  const isClassSpecific = isActive && !isFlexiPlan && !hasCourse && !isFullAccess && subscribedClassIds.length > 0;
-  const subscribedClasses = allClasses.filter(c => subscribedClassIds.includes(c.id));
+  const activeSubs = subscriptions.filter(s => s.status === "ACTIVE" && new Date(s.expiryDate) > new Date());
+  const isActive = activeSubs.length > 0;
 
   if (loading) return <PageLoader />;
 
@@ -104,146 +97,20 @@ export default function DashboardPage() {
       <div className="mb-16">
         <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass mb-8">
           <Layout className="w-4 h-4 text-primary" />
-          <span className="text-[11px] text-text-muted font-black uppercase tracking-widest">Enrollment Status</span>
+          <span className="text-[11px] text-text-muted font-black uppercase tracking-widest">My Active Plans</span>
         </div>
 
         {isActive ? (
-          <>
-            {/* FLEXI_PLAN: Subject-by-subject cards */}
-            {isFlexiPlan && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-gray-900">Your FlexiLearn Subjects</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{flexiSubjects.length} subjects · {daysLeft} days remaining</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest">Active</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {flexiSubjects.map((sub) => {
-                    const theme = subjectTheme(sub.subjectName);
-                    const SubIcon = iconMap[sub.icon ?? ""] || Atom;
-                    return (
-                      <div key={sub.subjectId} className={`bg-white rounded-2xl border ${theme.border} shadow-sm overflow-hidden`}>
-                        <div className={`h-2 bg-gradient-to-r ${theme.grad}`} />
-                        <div className="p-5">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.grad} flex items-center justify-center shadow-sm shrink-0`}>
-                              <SubIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className={`font-black text-sm ${theme.text} leading-tight`}>{sub.subjectName}</h4>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{sub.className}</p>
-                            </div>
-                          </div>
-                          <Link href={`/courses/${sub.classId}/${sub.subjectId}`}>
-                            <button className={`w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r ${theme.grad} text-white flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity`}>
-                              Go to Course <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Expiry row */}
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Clock className="w-3.5 h-3.5" />
-                  Valid until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "long" })}
-                </div>
-              </div>
-            )}
-
-            {/* Course-based plan: show enrolled course card */}
-            {hasCourse && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-gray-900">Your Enrolled Course</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{daysLeft} days remaining</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest">Active</span>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden max-w-md">
-                  <div className="h-3" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }} />
-                  <div className="p-6">
-                    <div className="flex items-center gap-4 mb-5">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }}>
-                        {(() => { const I = iconMap[(subscription as any).course.icon] || Crown; return <I className="w-7 h-7 text-white" />; })()}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-black text-gray-900">{(subscription as any).course.name}</h3>
-                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">{subscription!.plan.replace(/_/g, " ")}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-5">
-                      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
-                    </div>
-                    <Link href={`/courses/view-course/${(subscription as any).course.slug}`}>
-                      <button className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }}>
-                        Go to Course <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Class-specific plan: show subscribed classes */}
-            {isClassSpecific && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-gray-900">Your Course Access</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{subscribedClasses.length} class{subscribedClasses.length > 1 ? "es" : ""} · {daysLeft} days remaining</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest">Active</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {subscribedClasses.map((cls) => (
-                    <div key={cls.id} className="bg-white rounded-2xl border border-blue-200 shadow-sm overflow-hidden">
-                      <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-600" />
-                      <div className="p-5">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm shrink-0">
-                            <GraduationCap className="w-5 h-5 text-white" />
-                          </div>
-                          <div>
-                            <h4 className="font-black text-sm text-blue-700 leading-tight">{cls.name}</h4>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">All Subjects</p>
-                          </div>
-                        </div>
-                        <Link href={`/courses/${cls.id}`}>
-                          <button className="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity">
-                            Go to Course <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Clock className="w-3.5 h-3.5" />
-                  Valid until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "long" })}
-                </div>
-              </div>
-            )}
-
-            {/* Full access: generic card layout */}
-            {isFullAccess && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                  <ActiveCourseCard subscription={subscription!} daysLeft={daysLeft} />
-                </div>
-                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 h-fit">
-                  <DashboardStatCard icon={BookOpen} title="Curriculum" value="Class 9-12 Science" desc="Comprehensive 3D Learning" color="blue" />
-                  <DashboardStatCard icon={MonitorPlay} title="Learning Resource" value="64+ Virtual Labs" desc="Interactive Simulations" color="purple" />
-                  <DashboardStatCard icon={PenTool} title="Study Material" value="PDF Notes & Formulae" desc="Chapter-wise Downloads" color="emerald" />
-                  <DashboardStatCard icon={Zap} title="Active Path" value="Animated Lessons" desc="Concept Visualization" color="orange" />
-                </div>
-              </div>
-            )}
-          </>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {activeSubs.map((sub) => (
+              <SubscriptionCard 
+                key={sub.id} 
+                sub={sub} 
+                flexiSubjects={sub.plan === "FLEXI_PLAN" ? flexiSubjects : []} 
+                allClasses={allClasses}
+              />
+            ))}
+          </div>
         ) : (
           <div className="bg-white rounded-[3rem] border-2 border-dashed border-gray-200 p-8 md:p-16 text-center shadow-sm">
             <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -262,6 +129,16 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Stats / Features Grid (only for active users) */}
+      {isActive && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          <DashboardStatCard icon={BookOpen} title="Curriculum" value="Class 9-12 Science" desc="Comprehensive 3D Learning" color="blue" />
+          <DashboardStatCard icon={MonitorPlay} title="Learning Resource" value="64+ Virtual Labs" desc="Interactive Simulations" color="purple" />
+          <DashboardStatCard icon={PenTool} title="Study Material" value="PDF Notes & Formulae" desc="Chapter-wise Downloads" color="emerald" />
+          <DashboardStatCard icon={Zap} title="Active Path" value="Animated Lessons" desc="Concept Visualization" color="orange" />
+        </div>
+      )}
+
       {/* Bottom CTA (only for active users) */}
       {isActive && (
         <div className="bg-gray-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden">
@@ -275,9 +152,9 @@ export default function DashboardPage() {
               <h2 className="text-2xl md:text-3xl font-black tracking-tight">Ready to master science today?</h2>
               <p className="text-white/50 font-medium">Dive into your chapter lessons and virtual experiments.</p>
             </div>
-            <Link href={isFlexiPlan ? "/courses/my-custom-plan" : hasCourse ? `/courses/view-course/${(subscription as any).course.slug}` : isClassSpecific && subscribedClasses[0] ? `/courses/${subscribedClasses[0].id}` : "/courses"}>
+            <Link href="/courses">
               <Button className="bg-white text-black hover:bg-white/90 font-black px-8 py-7 rounded-2xl shadow-2xl">
-                Go To Classroom <MonitorPlay className="w-5 h-5 ml-2" />
+                Explore More Courses <MonitorPlay className="w-5 h-5 ml-2" />
               </Button>
             </Link>
           </div>
@@ -287,41 +164,115 @@ export default function DashboardPage() {
   );
 }
 
-function ActiveCourseCard({ subscription, daysLeft }: { subscription: Subscription; daysLeft: number }) {
-  const plan = subscription.plan;
+function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscription; flexiSubjects: SubjectInfo[]; allClasses: ClassItem[] }) {
+  const daysLeft = Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / 86400000);
+  const planName = sub.plan.replace(/_/g, " ");
 
-  return (
-    <div className="relative group rounded-[2.5rem] overflow-hidden bg-white border border-gray-100 shadow-2xl h-full flex flex-col ring-1 ring-black/5">
-      <div className={`h-48 relative overflow-hidden flex items-center justify-center ${
-        plan.includes("Elite") || plan.includes("ELITE") ? "bg-gradient-to-br from-indigo-900 to-purple-900" :
-        plan.includes("Academic") || plan.includes("ACADEMIC") ? "bg-gradient-to-br from-blue-900 to-indigo-900" :
-        "bg-gradient-to-br from-slate-900 to-blue-900"
-      }`}>
-        <div className="absolute inset-0 bg-grid-white opacity-10 pointer-events-none" />
-        <div className="relative z-10 text-center">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
-            <Crown className="w-8 h-8 text-white" />
+  // FLEXI PLAN Layout
+  if (sub.plan === "FLEXI_PLAN") {
+    return (
+      <div className="bg-white rounded-3xl border border-indigo-100 shadow-xl overflow-hidden flex flex-col">
+        <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-black text-[9px]">FLEXI LEARN</Badge>
+            <span className="text-[10px] font-bold text-indigo-400">{daysLeft} days left</span>
           </div>
-          <h3 className="text-xl font-black text-white uppercase tracking-wider">{plan}</h3>
+          <h3 className="text-xl font-black mb-1">Customized Subjects</h3>
+          <p className="text-xs text-indigo-300/70 font-medium">You have access to {flexiSubjects.length} selected subjects</p>
         </div>
-        <div className="absolute bottom-4 right-4">
-          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-black text-[9px] py-1">ACTIVE</Badge>
+        <div className="p-5 flex-1 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+          {flexiSubjects.map((s) => {
+            const theme = subjectTheme(s.subjectName);
+            const SubIcon = iconMap[s.icon ?? ""] || Atom;
+            return (
+              <Link href={`/courses/${s.classId}/${s.subjectId}`} key={s.subjectId}>
+                <div className={`group flex items-center justify-between p-3 rounded-xl border ${theme.border} ${theme.bg} hover:shadow-md transition-all mb-2`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${theme.grad} flex items-center justify-center shadow-sm`}>
+                      <SubIcon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-xs font-black ${theme.text} truncate`}>{s.subjectName}</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">{s.className}</p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 ${theme.text} group-hover:translate-x-1 transition-transform`} />
+                </div>
+              </Link>
+            ))}
         </div>
       </div>
-      <div className="p-8 flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-8">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valid Until</p>
-            <p className="text-sm font-bold text-gray-900">{new Date(subscription.expiryDate).toLocaleDateString("en-IN", { dateStyle: "long" })}</p>
+    );
+  }
+
+  // Course-based plan (Standard/Grade courses)
+  if (sub.course) {
+    return (
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
+        <div className="h-2" style={{ background: sub.course.accentColor || "#3b82f6" }} />
+        <div className="p-8 flex flex-col h-full">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: sub.course.accentColor || "#3b82f6" }}>
+              {(() => { const I = iconMap[sub.course.icon ?? ""] || Crown; return <I className="w-7 h-7 text-white" />; })()}
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-900 leading-tight">{sub.course.name}</h3>
+              <Badge variant="outline" className="text-[9px] mt-1 font-black uppercase tracking-widest">{planName}</Badge>
+            </div>
           </div>
-          <div className="text-right space-y-1">
-            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Access</p>
-            <p className="text-sm font-bold text-gray-900">{daysLeft} Days Left</p>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400 font-bold uppercase tracking-widest">Status</span>
+              <span className="text-emerald-500 font-black">ACTIVE</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400 font-bold uppercase tracking-widest">Valid Until</span>
+              <span className="text-gray-900 font-black">{new Date(sub.expiryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400 font-bold uppercase tracking-widest">Remaining</span>
+              <span className="text-blue-600 font-black">{daysLeft} Days</span>
+            </div>
           </div>
+
+          <Link href={`/courses/view-course/${sub.course.slug}`} className="mt-auto">
+            <button className="w-full py-4 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-95" style={{ background: sub.course.accentColor || "#3b82f6" }}>
+              Go To Classroom <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
         </div>
+      </div>
+    );
+  }
+
+  // Class-based / Full Access fallback
+  const subClasses = allClasses.filter(c => sub.classesAccess.includes(c.id));
+  const isFullAccess = sub.classesAccess.length === 0 || sub.classesAccess.length >= allClasses.length;
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
+      <div className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
+        <div className="flex items-center justify-between mb-4">
+          <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 font-black text-[9px]">{isFullAccess ? "ALL ACCESS" : "CLASS PASS"}</Badge>
+          <span className="text-[10px] font-bold text-blue-400">{daysLeft} days left</span>
+        </div>
+        <h3 className="text-xl font-black mb-1">{isFullAccess ? "Full Access Pass" : "Grade Access Plan"}</h3>
+        <p className="text-xs text-blue-300/70 font-medium">{isFullAccess ? "9th to 12th Grade" : `${subClasses.length} Grade Access`}</p>
+      </div>
+      <div className="p-6 flex-1 flex flex-col">
+        {!isFullAccess && (
+          <div className="space-y-2 mb-6">
+            {subClasses.map(c => (
+              <div key={c.id} className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" /> {c.name}
+              </div>
+            ))}
+          </div>
+        )}
         <Link href="/courses" className="mt-auto">
-          <Button className="w-full py-7 text-sm font-black bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02]">
-            Go To Course <ArrowRight className="w-4 h-4 ml-2" />
+          <Button className="w-full py-6 text-sm font-black bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl transition-all">
+            Enter Classroom <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Link>
       </div>

@@ -120,42 +120,52 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
   if (cached) return cached;
 
-  const sub = await prisma.subscription.findFirst({
+  const activeSubscriptions = await prisma.subscription.findMany({
     where: { userId, status: "ACTIVE", expiryDate: { gt: new Date() } },
   });
-  if (!sub) {
+
+  if (activeSubscriptions.length === 0) {
     const result = { hasAccess: false, subscription: null };
     cacheSet(cacheKey, result, 60);
     return result;
   }
 
-  const subjectsAccess = sub.subjectsAccess as string[];
-  const classesAccess = sub.classesAccess as string[];
+  // Check each active subscription for access
+  for (const sub of activeSubscriptions) {
+    const subjectsAccess = sub.subjectsAccess as string[];
+    const classesAccess = sub.classesAccess as string[];
 
-  let hasAccess: boolean;
+    let hasAccess = false;
 
-  if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
-    hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
-  } else if (sub.courseId && chapterId) {
-    const courseChapter = await prisma.courseChapter.findUnique({
-      where: { courseId_chapterId: { courseId: sub.courseId, chapterId } },
-    });
-    hasAccess = !!courseChapter;
-  } else if (sub.courseId) {
-    const courseChapters = await prisma.courseChapter.findMany({
-      where: { courseId: sub.courseId },
-      include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
-    });
-    if (subjectId) {
-      hasAccess = courseChapters.some((cc) => cc.chapter.subjectId === subjectId);
+    if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
+      hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
+    } else if (sub.courseId && chapterId) {
+      const courseChapter = await prisma.courseChapter.findUnique({
+        where: { courseId_chapterId: { courseId: sub.courseId, chapterId } },
+      });
+      hasAccess = !!courseChapter;
+    } else if (sub.courseId) {
+      const courseChapters = await prisma.courseChapter.findMany({
+        where: { courseId: sub.courseId },
+        include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
+      });
+      if (subjectId) {
+        hasAccess = courseChapters.some((cc) => cc.chapter.subjectId === subjectId);
+      } else {
+        hasAccess = courseChapters.some((cc) => cc.chapter.subject.classId === classId);
+      }
     } else {
-      hasAccess = courseChapters.some((cc) => cc.chapter.subject.classId === classId);
+      hasAccess = classesAccess.length === 0 || classesAccess.includes(classId);
     }
-  } else {
-    hasAccess = classesAccess.length === 0 || classesAccess.includes(classId);
+
+    if (hasAccess) {
+      const result = { hasAccess: true, subscription: sub };
+      cacheSet(cacheKey, result, 60);
+      return result;
+    }
   }
 
-  const result = { hasAccess, subscription: sub };
+  const result = { hasAccess: false, subscription: null };
   cacheSet(cacheKey, result, 60);
   return result;
 }
@@ -473,11 +483,31 @@ export async function getCourseBySlug(req: Request, res: Response) {
 
     let userHasAccess = false;
     if (req.user) {
-      const sub = await prisma.subscription.findFirst({
-        where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
-      });
-      if (sub && sub.courseId === course.id) userHasAccess = true;
-      if (req.user.role === "ADMIN") userHasAccess = true;
+      const isAdmin = req.user.role === "ADMIN";
+      if (isAdmin) {
+        userHasAccess = true;
+      } else {
+        const activeSubs = await prisma.subscription.findMany({
+          where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+        });
+        
+        for (const sub of activeSubs) {
+          if (sub.courseId === course.id) {
+            userHasAccess = true;
+            break;
+          }
+          // Also handle Elite Learning which covers multiple grade courses
+          if (sub.plan === "ELITE_LEARNING") {
+            userHasAccess = true;
+            break;
+          }
+          // Handle specific class access
+          if (sub.classesAccess && (sub.classesAccess as string[]).includes(course.id)) {
+             userHasAccess = true;
+             break;
+          }
+        }
+      }
     }
 
     return success(res, {
