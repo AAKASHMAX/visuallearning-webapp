@@ -26,7 +26,16 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : data.data.user.role === "TEACHER" ? "/admin/live-classes" : "/dashboard");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Login failed");
+      const apiMsg = err.response?.data?.message;
+      const validation =
+        Array.isArray(err.response?.data?.errors) && err.response.data.errors.length
+          ? err.response.data.errors.join(" ")
+          : undefined;
+      const networkHint =
+        err.code === "ERR_NETWORK" || err.message === "Network Error"
+          ? "Cannot reach the API. Start the backend (port 5000) and set NEXT_PUBLIC_API_URL=http://localhost:5000/api in frontend/.env.local"
+          : undefined;
+      toast.error(apiMsg || validation || networkHint || err.message || "Login failed");
     } finally {
       setLoading(false);
     }

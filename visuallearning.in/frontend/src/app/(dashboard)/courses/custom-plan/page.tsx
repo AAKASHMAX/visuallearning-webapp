@@ -17,12 +17,52 @@ const iconMap: Record<string, any> = {
   Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
 };
 
-const getSubjectColor = (name: string) => {
+const getSubjectTheme = (name: string) => {
   const n = name.toLowerCase();
-  if (n.includes("physics")) return "from-blue-500 to-blue-700";
-  if (n.includes("chemistry")) return "from-emerald-500 to-emerald-700";
-  if (n.includes("biology")) return "from-rose-500 to-rose-700";
-  return "from-primary to-primary-dark";
+  if (n.includes("physics")) return {
+    headerGrad: "from-blue-500 to-blue-700",
+    bg: "from-sky-50 to-blue-50",
+    border: "border-sky-100",
+    iconGrad: "from-sky-400 to-blue-600",
+    ring: "ring-sky-300",
+    priceColor: "text-sky-600",
+    subtitleColor: "text-sky-400",
+    badgeBg: "bg-sky-100",
+    badgeText: "text-sky-600",
+  };
+  if (n.includes("chemistry")) return {
+    headerGrad: "from-emerald-500 to-emerald-700",
+    bg: "from-emerald-50 to-teal-50",
+    border: "border-emerald-100",
+    iconGrad: "from-emerald-400 to-teal-500",
+    ring: "ring-emerald-300",
+    priceColor: "text-emerald-600",
+    subtitleColor: "text-emerald-400",
+    badgeBg: "bg-emerald-100",
+    badgeText: "text-emerald-700",
+  };
+  if (n.includes("biology")) return {
+    headerGrad: "from-rose-500 to-rose-700",
+    bg: "from-rose-50 to-pink-50",
+    border: "border-rose-100",
+    iconGrad: "from-rose-400 to-fuchsia-500",
+    ring: "ring-rose-300",
+    priceColor: "text-rose-500",
+    subtitleColor: "text-rose-400",
+    badgeBg: "bg-rose-100",
+    badgeText: "text-rose-600",
+  };
+  return {
+    headerGrad: "from-violet-500 to-purple-700",
+    bg: "from-violet-50 to-purple-50",
+    border: "border-violet-100",
+    iconGrad: "from-violet-400 to-purple-600",
+    ring: "ring-violet-300",
+    priceColor: "text-violet-600",
+    subtitleColor: "text-violet-400",
+    badgeBg: "bg-violet-100",
+    badgeText: "text-violet-700",
+  };
 };
 
 export default function CustomPlanPreview() {
@@ -141,7 +181,7 @@ export default function CustomPlanPreview() {
         </h2>
 
         {data.map((cls) => (
-          <div key={cls.id} className="space-y-10">
+          <div key={cls.id} className="space-y-8">
             <div className="flex items-center gap-4">
               <div className="h-px flex-1 bg-white/10" />
               <h3 className="text-xl font-black text-white/50 uppercase tracking-widest">{cls.name}</h3>
@@ -150,27 +190,45 @@ export default function CustomPlanPreview() {
 
             {cls.subjects.map((sub: any) => {
               const SubjectIcon = iconMap[sub.icon] || Atom;
-              const subColor = getSubjectColor(sub.name);
-              
+              const theme = getSubjectTheme(sub.name);
+
               return (
-                <div key={sub.id} className="space-y-8">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${subColor} flex items-center justify-center shadow-2xl`}>
-                      <SubjectIcon className="w-6 h-6 text-white" />
+                <div key={sub.id} className="space-y-4">
+                  {/* Subject header */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.iconGrad} flex items-center justify-center shadow-md`}>
+                      <SubjectIcon className="w-5 h-5 text-white" />
                     </div>
-                    <h4 className="text-2xl font-black text-white">{sub.name}</h4>
+                    <div>
+                      <h4 className={`text-xl font-black ${theme.priceColor} leading-tight`}>{sub.name}</h4>
+                      <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{sub.chapters?.length ?? 0} chapters included</p>
+                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                  {/* Chapter cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {sub.chapters?.map((ch: any) => {
                       const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
                       return (
-                        <div key={ch.id} className="group bg-[#16213e] rounded-[2rem] p-8 border border-white/5 shadow-xl hover:bg-[#1a2c5a] transition-all duration-300 flex flex-col items-center text-center">
-                          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <ChapterIcon className="w-6 h-6 text-[#00b4d8]" />
+                        <div
+                          key={ch.id}
+                          className="group flex flex-col items-center text-center bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                        >
+                          {/* Icon */}
+                          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.iconGrad} flex items-center justify-center shadow-md mb-2.5 group-hover:scale-105 transition-transform duration-300`}>
+                            <ChapterIcon className="w-5 h-5 text-white drop-shadow" />
                           </div>
-                          <h5 className="text-lg font-black text-white mb-2">{ch.name}</h5>
-                          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Master Concept</p>
+
+                          {/* Chapter name */}
+                          <h5 className="text-[12px] font-black text-heading leading-snug mb-1">
+                            {ch.name}
+                          </h5>
+
+                          {/* Subtitle */}
+                          <p className="text-[10px] text-text-muted leading-snug">
+                            Comprehensive lessons for{" "}
+                            <span className={theme.priceColor}>{ch.name}</span>
+                          </p>
                         </div>
                       );
                     })}

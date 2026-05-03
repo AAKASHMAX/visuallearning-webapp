@@ -377,3 +377,4 @@ html {
   0%, 100% { opacity: 0; filter: blur(4px); transform: scaleY(0.8) scaleX(0.8); }
   50% { opacity: 1; filter: blur(0px); transform: scaleY(1) scaleX(1); }
 }
+

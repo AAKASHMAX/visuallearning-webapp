@@ -20,10 +20,34 @@ const app = express();
 
 // Security & parsing
 app.use(helmet());
-app.use(cors({
-  origin: [config.frontendUrl, "http://localhost:3000", "https://visuallearning-webapp.vercel.app", "https://visuallearning.in", "https://www.visuallearning.in", "https://physics.visuallearning.in", "https://physics-visuallearning.vercel.app"],
-  credentials: true,
-}));
+
+const corsAllowedOrigins = new Set([
+  config.frontendUrl,
+  "http://localhost:3000",
+  "https://visuallearning-webapp.vercel.app",
+  "https://visuallearning.in",
+  "https://www.visuallearning.in",
+  "https://physics.visuallearning.in",
+  "https://physics-visuallearning.vercel.app",
+]);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (corsAllowedOrigins.has(origin)) return callback(null, true);
+      // Next.js often runs on 3001+ when 3000 is taken; allow any local dev origin
+      if (
+        config.nodeEnv === "development" &&
+        /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(compression({ level: 6 }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));

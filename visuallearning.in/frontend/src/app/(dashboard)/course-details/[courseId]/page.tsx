@@ -207,14 +207,13 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
   }, [courseId, isAuthenticated, user]);
 
   if (loading) return <PageLoader />;
-  if (!course) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-xl font-bold mb-2">Course not found</h2>
-        <Link href="/courses" className="text-primary hover:underline">Back to all courses</Link>
-      </div>
-    </div>
-  );
+
+  // Plan name fallback when course record doesn't exist in DB yet
+  const planDisplayName =
+    courseId === "foundation-pass" ? "Foundation Pass" :
+    courseId === "academic-plus"   ? "Academic Plus"   :
+    courseId === "elite-learning"  ? "Elite Learning"  :
+    courseId;
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -238,12 +237,8 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
           
           {/* Left Content (Top Left) */}
           <div className="lg:col-span-1 pt-4">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-2 leading-tight tracking-tight">
-              {course.name.split(':').map((part: string, index: number) => (
-                <span key={index} className={index === 0 ? "text-white block" : "block"} style={{ color: index === 0 ? undefined : theme.accentColor }}>
-                  {index === 0 ? part + (course.name.includes(':') ? ':' : '') : part}
-                </span>
-              ))}
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-2 leading-tight tracking-tight text-white">
+              {course?.name ?? planDisplayName}
             </h1>
           </div>
 
@@ -291,38 +286,44 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
             </div>
 
             {/* Course Content Sections */}
-            <div className="space-y-12">
-              <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
-              
-              {course.subjects.map((subject: any, sIdx: number) => {
-                const SubjectIcon = iconMap[subject.icon] || Atom;
-                return (
-                  <div key={sIdx} className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-lg`}>
-                        <SubjectIcon className="w-5 h-5 text-white" />
+            {course && course.subjects?.length > 0 ? (
+              <div className="space-y-12">
+                <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
+                {course.subjects.map((subject: any, sIdx: number) => {
+                  const SubjectIcon = iconMap[subject.icon] || Atom;
+                  return (
+                    <div key={sIdx} className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-lg`}>
+                          <SubjectIcon className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {subject.chapters.map((chapter: any) => {
-                        const Icon = iconMap[chapter.icon] || Atom;
-                        return (
-                          <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
-                            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
-                              <Icon className="w-7 h-7 text-white" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {subject.chapters.map((chapter: any) => {
+                          const Icon = iconMap[chapter.icon] || Atom;
+                          return (
+                            <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
+                              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
+                                <Icon className="w-7 h-7 text-white" />
+                              </div>
+                              <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
+                              <p className="text-xs text-gray-500">{chapter.desc}</p>
                             </div>
-                            <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
-                            <p className="text-xs text-gray-500">{chapter.desc}</p>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-gray-700 mb-1">Detailed chapter listing coming soon</h3>
+                <p className="text-sm text-gray-500">Subscribe now to get full access to all chapters, videos, and notes included in this plan.</p>
+              </div>
+            )}
 
           </div>
 
@@ -359,7 +360,7 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                     </h3>
                   </div>
   
-                  <Link href="/subscription" className="block w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold text-center rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4">
+                  <Link href={`/subscription?plan=${courseId}`} className="block w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold text-center rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4">
                     Start subscription
                   </Link>
   
