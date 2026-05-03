@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth";
+import { prisma } from "../config/prisma";
 import {
   getClasses, getSubjects, getChapters, getVideos, getVideoById, getNotes, getQuestions,
   getSubjectContentCounts, getBoardPapers, getCourseBySlug, getSubjectPricing, getCourses,
@@ -28,5 +29,33 @@ router.get("/chapters/:id/notes", optionalAuth, getNotes);
 router.get("/chapters/:id/questions", optionalAuth, getQuestions);
 router.get("/course-content/:slug", optionalAuth, getCourseBySlug);
 router.get("/pricing/subjects", getSubjectPricing);
+
+router.get("/debug/seed", async (req, res) => {
+  try {
+    const coursesToSeed = [
+      { name: "Foundation Pass", slug: "foundation-pass", planKey: "FOUNDATION_PASS", accentColor: "#06b6d4", icon: "Sparkles", description: "Begin your science journey with curated introductory chapters" },
+      { name: "Academic Plus", slug: "academic-plus", planKey: "ACADEMIC_PLUS", accentColor: "#3b82f6", icon: "GraduationCap", description: "Comprehensive coverage of Class 9-10 with selected 11-12 content" },
+      { name: "Elite Learning", slug: "elite-learning", planKey: "ELITE_LEARNING", accentColor: "#8b5cf6", icon: "Crown", description: "Complete 9-12 Physics, Chemistry & Biology with advanced tools" },
+    ];
+    const results = [];
+    for (const c of coursesToSeed) {
+      const result = await prisma.course.upsert({
+        where: { slug: c.slug },
+        update: {
+          planKey: c.planKey,
+          icon: c.icon,
+          accentColor: c.accentColor,
+          description: c.description,
+          name: c.name
+        },
+        create: c
+      });
+      results.push(result);
+    }
+    res.json({ success: true, results });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message, stack: e.stack });
+  }
+});
 
 export default router;
