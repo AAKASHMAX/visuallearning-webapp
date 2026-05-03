@@ -127,11 +127,18 @@ async function seedCourses() {
     ];
 
     for (const c of coursesToSeed) {
-      const existing = await prisma.course.findUnique({ where: { planKey: c.planKey } });
-      if (!existing) {
-        await prisma.course.create({ data: c });
-        console.log(`  Created course: ${c.name}`);
-      }
+      await prisma.course.upsert({
+        where: { slug: c.slug },
+        update: {
+          planKey: c.planKey,
+          icon: c.icon,
+          accentColor: c.accentColor,
+          description: c.description,
+          name: c.name
+        },
+        create: c
+      });
+      console.log(`  Seeded/Updated course: ${c.name}`);
     }
   } catch (e) {
     console.error("Course seed error:", e);
