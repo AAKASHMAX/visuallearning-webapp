@@ -35,6 +35,8 @@ export const courseSchema = z.object({
   slug: z.string().min(1),
   description: z.string().optional(),
   accentColor: z.string().optional(),
+  icon: z.string().optional(),
+  vimeoVideoId: z.string().optional().nullable(),
 });
 
 // --- Dashboard Stats ---

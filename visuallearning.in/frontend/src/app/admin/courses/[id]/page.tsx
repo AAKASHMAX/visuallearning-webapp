@@ -139,21 +139,67 @@ export default function AdminCourseDetailsPage({ params }: { params: { id: strin
 
         {/* Info/Stats Card */}
         <div className="space-y-6">
-          <Card className="bg-gradient-to-br from-primary to-primary-dark text-white border-none shadow-xl">
+          <Card className="bg-white border shadow-sm">
             <CardContent className="p-6">
-              <h3 className="text-lg font-bold mb-4">Course Info</h3>
-              <div className="space-y-3 text-sm opacity-90">
-                <div className="flex justify-between">
-                  <span>Slug:</span>
-                  <span className="font-mono">{course.slug}</span>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Course Info</h3>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={async () => {
+                    try {
+                      await api.patch(`/admin/courses/${id}`, {
+                        name: course.name,
+                        description: course.description,
+                        vimeoVideoId: course.vimeoVideoId
+                      });
+                      toast.success("Course updated");
+                    } catch {
+                      toast.error("Failed to update course");
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  Save Changes
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Course Name</label>
+                  <Input 
+                    value={course.name} 
+                    onChange={(e) => setCourse({ ...course, name: e.target.value })}
+                    className="bg-gray-50 border-gray-100 font-bold"
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Created:</span>
-                  <span>{new Date(course.createdAt).toLocaleDateString()}</span>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Description</label>
+                  <textarea 
+                    value={course.description || ""} 
+                    onChange={(e) => setCourse({ ...course, description: e.target.value })}
+                    className="w-full min-h-[100px] p-3 text-sm bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Last Update:</span>
-                  <span>{new Date(course.updatedAt).toLocaleDateString()}</span>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Preview Vimeo ID</label>
+                  <Input 
+                    value={course.vimeoVideoId || ""} 
+                    placeholder="Enter Vimeo Video ID (e.g. 123456789)"
+                    onChange={(e) => setCourse({ ...course, vimeoVideoId: e.target.value })}
+                    className="bg-gray-50 border-gray-100 font-mono text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">This video will appear on the course details preview card.</p>
+                </div>
+                <div className="pt-4 border-t space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Slug:</span>
+                    <span className="font-mono text-gray-600">{course.slug}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Created:</span>
+                    <span className="text-gray-600">{new Date(course.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>

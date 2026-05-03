@@ -336,18 +336,24 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
             <div className="lg:col-span-1 order-1 lg:order-2">
               <div className="lg:sticky lg:top-24 bg-white/80 backdrop-blur-2xl rounded-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden lg:-mt-[18rem] z-30">
                 
-                {/* Video Preview Placeholder */}
-                <div className="relative aspect-video bg-gray-900 flex items-center justify-center group cursor-pointer overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/40 to-purple-900/40 mix-blend-overlay"></div>
-                  {/* Simulated course thumbnail graphics */}
-                  <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
-                  <ThemeIcon className="absolute -left-10 top-1/2 w-40 h-40 text-blue-500/10 animate-spin-slow" />
-                  <div className="z-10 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                      <PlayCircle className="w-10 h-10 text-gray-900 ml-1" />
+                {/* Video Preview Section */}
+                <div className="relative aspect-video bg-gray-900 overflow-hidden group">
+                  {course?.vimeoVideoId ? (
+                    <iframe
+                      src={`https://player.vimeo.com/video/${course.vimeoVideoId}?badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0&dnt=1`}
+                      className="absolute inset-0 w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                      <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                        <Play className="w-8 h-8 text-white fill-current" />
+                      </div>
+                      <p className="text-white font-bold text-sm">Course Preview</p>
+                      <p className="text-gray-400 text-[10px] mt-1">Watch our 3D animated learning in action</p>
                     </div>
-                    <span className="text-white font-bold mt-4 tracking-wide shadow-black text-shadow-sm">Preview this course</span>
-                  </div>
+                  )}
                 </div>
   
                 {/* Pricing & CTA */}
