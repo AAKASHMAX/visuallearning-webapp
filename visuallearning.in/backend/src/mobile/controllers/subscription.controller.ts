@@ -54,11 +54,10 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
       plansConfig = JSON.parse(setting.value);
     } else {
       plansConfig = {
-        SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1, billingCycle: "yearly" },
-        MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2, billingCycle: "yearly" },
-        FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0, billingCycle: "monthly" },
-        YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        FOUNDATION_PASS: { amount: config.plans.FOUNDATION_PASS.amount, label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        ACADEMIC_PLUS:   { amount: config.plans.ACADEMIC_PLUS.amount,   label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        ELITE_LEARNING:  { amount: config.plans.ELITE_LEARNING.amount,  label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        FLEXI_PLAN:      { amount: config.plans.FLEXI_PLAN.amount,      label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
       };
     }
 

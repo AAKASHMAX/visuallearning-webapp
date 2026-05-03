@@ -15,6 +15,29 @@ import feedbackRoutes from "./routes/feedback.routes";
 import liveclassRoutes from "./routes/liveclass.routes";
 import studentGroupRoutes from "./routes/studentgroup.routes";
 import mobileRoutes from "./mobile/routes";
+import { prisma } from "./config/prisma";
+
+// Migrate old plan keys → new Foundation Pass / Academic Plus / Elite Learning / FlexiLearn
+async function migratePlansConfig() {
+  try {
+    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+    if (!setting) return;
+    const plans = JSON.parse(setting.value) as Record<string, any>;
+    const OLD_KEYS = ["SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS", "MONTHLY", "YEARLY", "LIVE_CLASS"];
+    if (!OLD_KEYS.some((k) => k in plans)) return; // already migrated
+
+    const newPlans = {
+      FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+    };
+    await prisma.setting.update({ where: { key: "plans_config" }, data: { value: JSON.stringify(newPlans) } });
+    console.log("✅ Plans config migrated to Foundation Pass / Academic Plus / Elite Learning / FlexiLearn");
+  } catch (e) {
+    console.error("Plan migration error:", e);
+  }
+}
 
 const app = express();
 
@@ -82,9 +105,10 @@ app.get("/api/health", (_req, res) => {
 // Error handler
 app.use(errorHandler);
 
-app.listen(config.port, () => {
+app.listen(config.port, async () => {
   console.log(`VisualLearning API running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
+  await migratePlansConfig();
 });
 
 export default app;

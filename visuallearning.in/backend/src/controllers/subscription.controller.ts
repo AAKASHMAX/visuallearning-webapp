@@ -77,22 +77,18 @@ export async function getPlans(req: Request, res: Response) {
   } else {
     // Fallback to hardcoded defaults
     plansConfig = {
-      SINGLE_CLASS: { amount: config.plans.SINGLE_CLASS.amount, label: "Single Class Plan", duration: 365, enabled: true, classSelection: 1, billingCycle: "yearly" },
-      MULTI_CLASS: { amount: config.plans.MULTI_CLASS.amount, label: "Multi Class Pack", duration: 365, enabled: true, classSelection: 2, billingCycle: "yearly" },
-      FULL_ACCESS: { amount: config.plans.FULL_ACCESS.amount, label: "Full Access Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      MONTHLY: { amount: config.plans.MONTHLY.amount, label: "Monthly Plan", duration: 30, enabled: true, classSelection: 0, billingCycle: "monthly" },
-      YEARLY: { amount: config.plans.YEARLY.amount, label: "Yearly Plan", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      LIVE_CLASS: { amount: config.plans.LIVE_CLASS.amount, label: "Live Classes", duration: 30, enabled: true, classSelection: 1, billingCycle: "monthly" },
+      FOUNDATION_PASS: { amount: config.plans.FOUNDATION_PASS.amount, label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      ACADEMIC_PLUS:   { amount: config.plans.ACADEMIC_PLUS.amount,   label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      ELITE_LEARNING:  { amount: config.plans.ELITE_LEARNING.amount,  label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      FLEXI_PLAN:      { amount: config.plans.FLEXI_PLAN.amount,      label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
     };
   }
 
   const featureMap: Record<string, string[]> = {
-    SINGLE_CLASS: ["3D Animated Videos", "Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-    MULTI_CLASS: ["3D Animated Videos", "Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-    FULL_ACCESS: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Best value", "Quiz", "Solved Board Question Papers"],
-    MONTHLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-    YEARLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Save 33%", "Quiz", "Solved Board Question Papers"],
-    LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
+    FOUNDATION_PASS: ["Selected chapters (9–12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
+    ACADEMIC_PLUS:   ["Full Class 9–10 (PCB)", "Selected 11–12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
+    ELITE_LEARNING:  ["Full 9–12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],
+    FLEXI_PLAN:      ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
   };
 
   const plans = Object.entries(plansConfig)
