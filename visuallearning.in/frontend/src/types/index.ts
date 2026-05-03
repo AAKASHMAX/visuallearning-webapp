@@ -14,6 +14,7 @@ export interface Subscription {
   id: string;
   plan: string;
   classesAccess: string[];
+  subjectsAccess: string[];
   startDate: string;
   expiryDate: string;
   status: "ACTIVE" | "EXPIRED" | "CANCELLED";

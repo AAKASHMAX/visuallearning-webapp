@@ -114,9 +114,10 @@ export async function getChapters(req: Request, res: Response) {
   }
 }
 
-// Helper: check if user has access to a specific class (cached for 60s)
-async function checkClassAccess(userId: string, classId: string): Promise<{ hasAccess: boolean; subscription: any }> {
-  const cacheKey = `access:${userId}:${classId}`;
+// Helper: check if user has access to a specific class/subject (cached for 60s)
+// For FLEXI_PLAN with subjectsAccess, enforces subject-level access.
+async function checkClassAccess(userId: string, classId: string, subjectId?: string): Promise<{ hasAccess: boolean; subscription: any }> {
+  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}`;
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
   if (cached) return cached;
 
@@ -129,8 +130,18 @@ async function checkClassAccess(userId: string, classId: string): Promise<{ hasA
     return result;
   }
 
-  // MONTHLY, YEARLY, FULL_ACCESS or empty classesAccess = full access
-  const hasAccess = sub.classesAccess.length === 0 || sub.classesAccess.includes(classId);
+  const subjectsAccess = sub.subjectsAccess as string[];
+  const classesAccess = sub.classesAccess as string[];
+
+  let hasAccess: boolean;
+  if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
+    // Subject-level access: only allow chapters of explicitly purchased subjects
+    hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
+  } else {
+    // Class-level or full access
+    hasAccess = classesAccess.length === 0 || classesAccess.includes(classId);
+  }
+
   const result = { hasAccess, subscription: sub };
   cacheSet(cacheKey, result, 60);
   return result;
@@ -188,7 +199,7 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = true;
     } else if (req.user) {
       const classId = chapter.subject.class.id;
-      const result = await checkClassAccess(req.user.id, classId);
+      const result = await checkClassAccess(req.user.id, classId, chapter.subject.id);
       hasAccess = result.hasAccess;
     }
 
@@ -240,7 +251,7 @@ export async function getVideoById(req: Request, res: Response) {
       const isAdmin = req.user.role === "ADMIN";
       if (!isAdmin) {
         const classId = video.chapter.subject.class.id;
-        const { hasAccess } = await checkClassAccess(req.user.id, classId);
+        const { hasAccess } = await checkClassAccess(req.user.id, classId, video.chapter.subject.id);
         if (!hasAccess) return error(res, "Active subscription required for this class", 403);
       }
     }
@@ -276,7 +287,7 @@ export async function getNotes(req: Request, res: Response) {
     if (isAdmin) {
       hasAccess = true;
     } else if (req.user) {
-      const result = await checkClassAccess(req.user.id, chapter.subject.class.id);
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id);
       hasAccess = result.hasAccess;
     }
 
