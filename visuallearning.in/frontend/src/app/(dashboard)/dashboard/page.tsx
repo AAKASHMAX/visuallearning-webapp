@@ -179,7 +179,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between text-xs text-gray-500 mb-5">
                       <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
                     </div>
-                    <Link href={`/course-details/${(subscription as any).course.slug}`}>
+                    <Link href={`/courses/view-course/${(subscription as any).course.slug}`}>
                       <button className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }}>
                         Go to Course <ChevronRight className="w-4 h-4" />
                       </button>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl md:text-3xl font-black tracking-tight">Ready to master science today?</h2>
               <p className="text-white/50 font-medium">Dive into your chapter lessons and virtual experiments.</p>
             </div>
-            <Link href={isFlexiPlan ? "/courses/my-custom-plan" : hasCourse ? `/course-details/${(subscription as any).course.slug}` : isClassSpecific && subscribedClasses[0] ? `/courses/${subscribedClasses[0].id}` : "/courses"}>
+            <Link href={isFlexiPlan ? "/courses/my-custom-plan" : hasCourse ? `/courses/view-course/${(subscription as any).course.slug}` : isClassSpecific && subscribedClasses[0] ? `/courses/${subscribedClasses[0].id}` : "/courses"}>
               <Button className="bg-white text-black hover:bg-white/90 font-black px-8 py-7 rounded-2xl shadow-2xl">
                 Go To Classroom <MonitorPlay className="w-5 h-5 ml-2" />
               </Button>
