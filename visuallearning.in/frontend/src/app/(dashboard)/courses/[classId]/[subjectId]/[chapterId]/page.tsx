@@ -36,6 +36,7 @@ export default function UnifiedChapterPage() {
   const router = useRouter();
   
   const fromCourse = searchParams.get("fromCourse");
+  const fromDetails = searchParams.get("fromDetails");
 
   const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
   const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
@@ -115,21 +116,29 @@ export default function UnifiedChapterPage() {
     { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
   ];
 
-  const backUrl = fromCourse ? `/courses/view-course/${fromCourse}` : `/courses/${classId}/${subjectId}`;
+  const backUrl = fromDetails ? `/course-details/${fromDetails}` : 
+                 fromCourse ? `/courses/view-course/${fromCourse}` : 
+                 `/courses/${classId}/${subjectId}`;
 
   if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Breadcrumbs */}
-      <Breadcrumb items={fromCourse ? [
-        { label: "My Course", href: backUrl },
-        { label: chapterName },
-      ] : [
-        { label: className, href: `/courses/${classId}` },
-        { label: subjectName, href: `/courses/${classId}/${subjectId}` },
-        { label: chapterName },
-      ]} />
+      <Breadcrumb items={
+        fromDetails ? [
+          { label: "Course Details", href: backUrl },
+          { label: chapterName },
+        ] :
+        fromCourse ? [
+          { label: "My Course", href: backUrl },
+          { label: chapterName },
+        ] : [
+          { label: className, href: `/courses/${classId}` },
+          { label: subjectName, href: `/courses/${classId}/${subjectId}` },
+          { label: chapterName },
+        ]
+      } />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6 mb-8 p-6 bg-primary-light rounded-2xl border border-primary/10 shadow-sm">
