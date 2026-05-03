@@ -55,6 +55,7 @@ export default function UnifiedChapterPage() {
   // Video player state
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [showLockedModal, setShowLockedModal] = useState(false);
+  const [quizLocked, setQuizLocked] = useState(false);
 
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -82,7 +83,9 @@ export default function UnifiedChapterPage() {
         const videoList = videosRes.data.data.videos || [];
         setAllVideos(videoList);
         setNotes(notesRes.data.data.notes || notesRes.data.data || []);
-        setQuestions(quizRes.data.data.questions || quizRes.data.data || []);
+        const quizData = quizRes.data.data;
+        setQuestions(quizData.questions || quizData || []);
+        setQuizLocked(quizData.locked || false);
 
         // Initial Video Selection
         const initialLang = "HINDI";
@@ -283,22 +286,29 @@ export default function UnifiedChapterPage() {
                   notes
                     .filter(n => !n.title.toLowerCase().includes("important question"))
                     .map((note, idx) => (
-                    <div key={note.id} className="flex items-center gap-4 rounded-xl border border-card-border bg-white p-4 card-shadow hover:border-success/40 transition-all">
-                      <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center text-success shrink-0">
-                        <FileText className="w-5 h-5" />
+                    <div 
+                      key={note.id} 
+                      onClick={() => { if (note.locked) setShowLockedModal(true); }}
+                      className={`flex items-center gap-4 rounded-xl border p-4 card-shadow transition-all ${note.locked ? "border-card-border bg-surface opacity-80 cursor-pointer" : "border-card-border bg-white hover:border-success/40"}`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${note.locked ? "bg-gray-200 text-gray-400" : "bg-success/10 text-success"}`}>
+                        {note.locked ? <Lock className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-heading truncate">{idx + 1}. {note.title}</h3>
+                        <h3 className={`text-sm font-bold truncate ${note.locked ? "text-text-muted" : "text-heading"}`}>{idx + 1}. {note.title}</h3>
                         <p className="text-[10px] text-text-muted uppercase font-medium">PDF Study Material</p>
                       </div>
-                      <a 
-                        href={note.pdfUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors"
-                      >
-                        <Download className="w-5 h-5" />
-                      </a>
+                      {!note.locked && (
+                        <a 
+                          href={note.pdfUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors"
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                      )}
+                      {note.locked && <Lock className="w-4 h-4 text-gray-400" />}
                     </div>
                   ))
                 )}
@@ -314,7 +324,15 @@ export default function UnifiedChapterPage() {
                 <h3 className="text-xl font-bold text-heading mb-2">Chapter Quiz</h3>
                 <p className="text-sm text-text-muted mb-8 max-w-[250px]">Test your knowledge of {chapterName} with our interactive MCQ quiz.</p>
                 
-                {questions.length === 0 ? (
+                {quizLocked ? (
+                  <Button 
+                    className="w-full py-6 text-base font-bold bg-gray-400 text-white shadow-lg" 
+                    onClick={() => setShowLockedModal(true)}
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Unlock Quiz
+                  </Button>
+                ) : questions.length === 0 ? (
                   <p className="text-xs text-gray-400">No questions available for this chapter yet.</p>
                 ) : (
                   <Button 

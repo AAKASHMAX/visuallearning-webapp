@@ -221,17 +221,16 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Free preview: all videos in the first chapter are free for unsubscribed users
-    const isFirstChapter = chapter.order === 1;
+    // Access control: all videos are locked for unsubscribed users
     const videosWithAccess = videos.map((v) => {
-      const canWatch = hasAccess || isFirstChapter;
+      const canWatch = hasAccess;
       return {
         ...v,
         youtubeVideoId: canWatch ? v.youtubeVideoId : null,
         vimeoVideoId: canWatch ? v.vimeoVideoId : null,
         hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
         locked: !canWatch,
-        isFree: isFirstChapter,
+        isFree: false,
       };
     });
 
@@ -309,11 +308,9 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Free preview: only 1st note of 1st chapter is viewable without subscription
-    const isFirstChapter = chapter.order === 1;
-    const notesWithAccess = notes.map((n, i) => {
-      const isFreePreview = isFirstChapter && i === 0;
-      const canView = hasAccess || isFreePreview;
+    // Access control: all notes are locked for unsubscribed users
+    const notesWithAccess = notes.map((n) => {
+      const canView = hasAccess;
       return {
         ...n,
         pdfUrl: canView ? n.pdfUrl : null,
@@ -347,9 +344,8 @@ export async function getQuestions(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Free preview: only 1st chapter quiz is free
-    const isFirstChapter = chapter.order === 1;
-    if (!hasAccess && !isFirstChapter) {
+    // Access control: all quizzes are locked for unsubscribed users
+    if (!hasAccess) {
       return success(res, { questions: [], hasAccess: false, locked: true });
     }
 
@@ -484,6 +480,8 @@ export async function getCourseBySlug(req: Request, res: Response) {
       }
       subjectsMap[subjectName].chapters.push({
         id: chapter.id,
+        subjectId: chapter.subjectId,
+        classId: chapter.subject.classId,
         title: chapter.name,
         desc: `Comprehensive lessons for ${chapter.name}`,
         icon: chapter.subject.icon || "Atom",

@@ -303,13 +303,17 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                         {subject.chapters.map((chapter: any) => {
                           const Icon = iconMap[chapter.icon] || Atom;
                           return (
-                            <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
+                            <Link 
+                              key={chapter.id} 
+                              href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromCourse=${courseId}`}
+                              className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center"
+                            >
                               <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
                                 <Icon className="w-7 h-7 text-white" />
                               </div>
                               <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
                               <p className="text-xs text-gray-500">{chapter.desc}</p>
-                            </div>
+                            </Link>
                           );
                         })}
                       </div>
