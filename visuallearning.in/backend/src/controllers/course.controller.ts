@@ -115,7 +115,6 @@ export async function getChapters(req: Request, res: Response) {
 }
 
 // Helper: check if user has access to a specific chapter/class/subject (cached for 60s)
-// Supports: course-based plans (check chapter in course), FLEXI_PLAN (subject-level), legacy class-based
 async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string): Promise<{ hasAccess: boolean; subscription: any }> {
   const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}`;
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
@@ -136,16 +135,13 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
   let hasAccess: boolean;
 
   if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
-    // Subject-level access: only allow chapters of explicitly purchased subjects
     hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
   } else if (sub.courseId && chapterId) {
-    // Course-based access: check if the chapter is in the user's purchased course
     const courseChapter = await prisma.courseChapter.findUnique({
       where: { courseId_chapterId: { courseId: sub.courseId, chapterId } },
     });
     hasAccess = !!courseChapter;
   } else if (sub.courseId) {
-    // Course-based but no chapterId provided — check if any chapter from this class/subject is in the course
     const courseChapters = await prisma.courseChapter.findMany({
       where: { courseId: sub.courseId },
       include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
@@ -156,7 +152,6 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
       hasAccess = courseChapters.some((cc) => cc.chapter.subject.classId === classId);
     }
   } else {
-    // Legacy class-level or full access
     hasAccess = classesAccess.length === 0 || classesAccess.includes(classId);
   }
 
@@ -171,20 +166,17 @@ export async function getVideos(req: Request, res: Response) {
     const language = (req.query.language as string) || "ENGLISH";
     const type = req.query.type as string | undefined;
 
-    // Single query: fetch chapter + ALL videos for this chapter (filter in memory)
     const chapter = await prisma.chapter.findUnique({
       where: { id },
       include: { subject: { include: { class: true } } },
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    // Fetch all videos for this chapter in one query (avoids 3-4 separate queries)
     const allChapterVideos = await prisma.video.findMany({
       where: { chapterId: id, ...(type ? { type } : {}) },
       orderBy: { order: "asc" },
     });
 
-    // Filter in memory
     let videos = [];
     let usingFallback = false;
 
@@ -198,8 +190,6 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
-
-    // Include Coming Soon placeholders from English
     if (language !== "ENGLISH" && !usingFallback) {
       const existingOrders = new Set(videos.map((v) => v.order));
       const comingSoon = allChapterVideos.filter(
@@ -210,7 +200,6 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
-    // Check access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
@@ -221,7 +210,6 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Access control: all videos are locked for unsubscribed users
     const videosWithAccess = videos.map((v) => {
       const canWatch = hasAccess;
       const exists = !!(v.youtubeVideoId || v.vimeoVideoId);
@@ -233,7 +221,6 @@ export async function getVideos(req: Request, res: Response) {
       };
     });
 
-    // Extract available languages from the already-fetched data (no extra query)
     const availableLanguages = [...new Set(allChapterVideos.map((v) => v.language))];
 
     return success(res, {
@@ -258,8 +245,6 @@ export async function getVideoById(req: Request, res: Response) {
     });
     if (!video) return error(res, "Video not found", 404);
 
-    // Free preview: only the first video (order=1) of the first chapter (order=1) is free
-    // All videos in the first chapter are free
     const isFirstChapter = video.chapter.order === 1;
 
     if (!isFirstChapter) {
@@ -297,7 +282,6 @@ export async function getNotes(req: Request, res: Response) {
 
     const notes = await prisma.note.findMany({ where: { chapterId: id } });
 
-    // Check subscription access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
@@ -307,7 +291,6 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Access control: all notes are locked for unsubscribed users
     const notesWithAccess = notes.map((n) => {
       const canView = hasAccess;
       return {
@@ -333,7 +316,6 @@ export async function getQuestions(req: Request, res: Response) {
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    // Check subscription access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
@@ -343,7 +325,6 @@ export async function getQuestions(req: Request, res: Response) {
       hasAccess = result.hasAccess;
     }
 
-    // Access control: all quizzes are locked for unsubscribed users
     if (!hasAccess) {
       return success(res, { questions: [], hasAccess: false, locked: true });
     }
@@ -392,7 +373,6 @@ export async function getBoardPapers(req: Request, res: Response) {
     });
     if (!subject) return error(res, "Subject not found", 404);
 
-    // Check subscription access
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
@@ -407,14 +387,12 @@ export async function getBoardPapers(req: Request, res: Response) {
       orderBy: [{ year: "desc" }, { order: "asc" }],
     });
 
-    // Group by year
     const grouped: Record<number, any[]> = {};
     const years = [...new Set(papers.map((p) => p.year))].sort((a, b) => b - a);
 
     papers.forEach((p) => {
       if (!grouped[p.year]) grouped[p.year] = [];
-      // Free preview: only the first year's papers are free
-      const isFirstYear = p.year === years[years.length - 1]; // oldest/first year
+      const isFirstYear = p.year === years[years.length - 1];
       const canView = hasAccess || isFirstYear;
       grouped[p.year].push({
         ...p,
@@ -452,19 +430,23 @@ export async function getCourseBySlug(req: Request, res: Response) {
 
     if (!course) return error(res, "Course not found", 404);
 
-    // Get plan config for pricing
     let planConfig: any = null;
     if (course.planKey) {
       const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
       if (setting) {
         const plans = JSON.parse(setting.value);
-        planConfig = plans[course.planKey] || null;
+        const config = plans[course.planKey] || null;
+        if (config) {
+          planConfig = {
+            price: course.price !== null ? course.price : (config.amount / 100),
+            duration: config.duration,
+            billingCycle: config.billingCycle || "yearly",
+          };
+        }
       }
     }
 
-    // Group chapters by subject for the UI
     const subjectsMap: Record<string, any> = {};
-
     course.chapters.forEach(({ chapter }) => {
       const subjectName = chapter.subject.name;
       if (!subjectsMap[subjectName]) {
@@ -489,7 +471,6 @@ export async function getCourseBySlug(req: Request, res: Response) {
       });
     });
 
-    // Check if authenticated user has access to this course
     let userHasAccess = false;
     if (req.user) {
       const sub = await prisma.subscription.findFirst({
@@ -502,11 +483,7 @@ export async function getCourseBySlug(req: Request, res: Response) {
     return success(res, {
       ...course,
       subjects: Object.values(subjectsMap),
-      planConfig: planConfig ? {
-        price: planConfig.amount / 100,
-        duration: planConfig.duration,
-        billingCycle: planConfig.billingCycle || "yearly",
-      } : null,
+      planConfig,
       userHasAccess,
     });
   } catch (e) {
@@ -515,7 +492,6 @@ export async function getCourseBySlug(req: Request, res: Response) {
   }
 }
 
-// GET /api/courses/list — all courses with plan config (for courses page)
 export async function getCourses(_req: Request, res: Response) {
   try {
     const cached = cacheGet("courses-list");
@@ -528,7 +504,6 @@ export async function getCourses(_req: Request, res: Response) {
       },
     });
 
-    // Get plans config for pricing/features
     const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
     let plansConfig: Record<string, any> = {};
     if (setting) {
@@ -539,6 +514,10 @@ export async function getCourses(_req: Request, res: Response) {
       FOUNDATION_PASS: ["Selected chapters (9-12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
       ACADEMIC_PLUS: ["Full Class 9-10 (PCB)", "Selected 11-12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
       ELITE_LEARNING: ["Full 9-12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],
+      CLASS_9: ["Full 9th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
+      CLASS_10: ["Full 10th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
+      CLASS_11: ["Full 11th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Competitive exam base", "Formula sheets", "Priority support"],
+      CLASS_12: ["Full 12th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Board & Competitive prep", "Formula sheets", "Priority support"],
       FLEXI_PLAN: ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
     };
 
@@ -553,7 +532,7 @@ export async function getCourses(_req: Request, res: Response) {
         icon: c.icon,
         planKey: c.planKey,
         chapterCount: c._count.chapters,
-        price: planConfig ? planConfig.amount / 100 : 0,
+        price: c.price !== null ? c.price : (planConfig ? planConfig.amount / 100 : 0),
         duration: planConfig ? planConfig.duration : 365,
         billingCycle: planConfig?.billingCycle || "yearly",
         features: c.planKey ? (featureMap[c.planKey] || []) : [],
@@ -561,7 +540,7 @@ export async function getCourses(_req: Request, res: Response) {
       };
     });
 
-    cacheSet("courses-list", result, 300);
+    cacheSet("courses-list", result, 60); // Reduced to 60s for faster updates
     return success(res, result);
   } catch (e) {
     console.error("Get courses error:", e);

@@ -25,16 +25,40 @@ export const verifyPaymentSchema = z.object({
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+  // 1. Check Course table first for price updates from admin panel
+  const course = await prisma.course.findFirst({ where: { planKey } });
+  
+  // 2. Get metadata from plans_config setting
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  let plans: Record<string, any> = {};
   if (setting) {
-    const plans = JSON.parse(setting.value);
-    if (plans[planKey]) {
-      return plans[planKey];
-    }
+    plans = JSON.parse(setting.value);
   }
-  // Fallback to hardcoded config
-  const fallback = config.plans[planKey as keyof typeof config.plans];
-  return { amount: fallback.amount, duration: fallback.duration, label: fallback.label, classSelection: 0 };
+
+  const configFromSetting = plans[planKey];
+
+  if (course) {
+    return {
+      amount: course.price * 100, // Course price is in Rs, convert to paise
+      duration: configFromSetting?.duration || 365,
+      label: course.name,
+      classSelection: configFromSetting?.classSelection || 0
+    };
+  }
+
+  // 3. Fallback to settings DB if no course record linked
+  if (configFromSetting) {
+    return configFromSetting;
+  }
+  
+  // 4. Last fallback to hardcoded config
+  const fallback = (config.plans as any)[planKey];
+  return { 
+    amount: fallback?.amount || 0, 
+    duration: fallback?.duration || 365, 
+    label: fallback?.label || planKey, 
+    classSelection: 0 
+  };
 }
 
 // Helper: get upgrade discount config
@@ -84,31 +108,42 @@ export async function getPlans(req: Request, res: Response) {
     };
   }
 
+  // Also fetch courses to get live prices
+  const courses = await prisma.course.findMany({ where: { planKey: { not: null } } });
+  const coursePriceMap = new Map(courses.map(c => [c.planKey, c.price]));
+
   const featureMap: Record<string, string[]> = {
     FOUNDATION_PASS: ["Selected chapters (9–12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
     ACADEMIC_PLUS:   ["Full Class 9–10 (PCB)", "Selected 11–12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
     ELITE_LEARNING:  ["Full 9–12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],
+    CLASS_9:         ["Full 9th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
+    CLASS_10:        ["Full 10th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
+    CLASS_11:        ["Full 11th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Competitive exam base", "Formula sheets", "Priority support"],
+    CLASS_12:        ["Full 12th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Board & Competitive prep", "Formula sheets", "Priority support"],
     FLEXI_PLAN:      ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
   };
 
   const plans = Object.entries(plansConfig)
     .filter(([_, v]: [string, any]) => v.enabled)
-    .map(([key, v]: [string, any]) => ({
-      id: key,
-      name: v.label,
-      price: v.amount / 100,
-      duration: `${v.duration} days`,
-      billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
-      features: featureMap[key] || [],
-      classSelection: v.classSelection || 0,
-      popular: key === "MULTI_CLASS",
-    }));
+    .map(([key, v]: [string, any]) => {
+      const livePrice = coursePriceMap.get(key);
+      return {
+        id: key,
+        name: v.label,
+        price: livePrice !== undefined ? livePrice : v.amount / 100,
+        duration: `${v.duration} days`,
+        billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
+        features: featureMap[key] || [],
+        classSelection: v.classSelection || 0,
+        popular: key === "ELITE_LEARNING",
+      };
+    });
 
   // Get upgrade discount
   const upgradeDiscountPercent = await getUpgradeDiscount();
 
   const result = { plans, classes, upgradeDiscountPercent };
-  cacheSet("plans", result, 600); // 10 min cache
+  cacheSet("plans", result, 60); // 1 min cache (reduced for live updates)
   return success(res, result);
 }
 
