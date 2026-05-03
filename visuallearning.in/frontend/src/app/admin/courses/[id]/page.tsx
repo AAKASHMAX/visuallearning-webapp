@@ -186,11 +186,18 @@ export default function AdminCourseDetailsPage({ params }: { params: { id: strin
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Preview Vimeo ID</label>
                   <Input 
                     value={course.vimeoVideoId || ""} 
-                    placeholder="Enter Vimeo Video ID (e.g. 123456789)"
-                    onChange={(e) => setCourse({ ...course, vimeoVideoId: e.target.value })}
+                    placeholder="Enter Vimeo Video ID or URL"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Support both 123456789 and 123456789/hash
+                      const match = val.match(/vimeo\.com\/(?:video\/)?(\d+(?:\/[a-z0-9]+)?)/i) || 
+                                    val.match(/player\.vimeo\.com\/video\/(\d+(?:\/[a-z0-9]+)?)/i);
+                      const id = match ? match[1] : val.trim();
+                      setCourse({ ...course, vimeoVideoId: id });
+                    }}
                     className="bg-gray-50 border-gray-100 font-mono text-sm"
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">This video will appear on the course details preview card.</p>
+                  <p className="text-[10px] text-gray-400 mt-1">This video will appear on the course details preview card. You can paste the full Vimeo link (even private ones with hashes).</p>
                 </div>
                 <div className="pt-4 border-t space-y-2">
                   <div className="flex justify-between text-xs">

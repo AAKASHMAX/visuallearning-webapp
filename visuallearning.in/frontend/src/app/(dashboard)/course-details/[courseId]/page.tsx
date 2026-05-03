@@ -339,12 +339,18 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                 {/* Video Preview Section */}
                 <div className="relative aspect-video bg-gray-900 overflow-hidden group">
                   {course?.vimeoVideoId ? (
-                    <iframe
-                      src={`https://player.vimeo.com/video/${course.vimeoVideoId}?badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0&dnt=1`}
-                      className="absolute inset-0 w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                      allowFullScreen
-                    />
+                    (() => {
+                      const [videoId, hash] = course.vimeoVideoId.split('/');
+                      const vimeoSrc = `https://player.vimeo.com/video/${videoId}${hash ? `?h=${hash}` : ''}${hash ? '&' : '?'}badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0&dnt=1`;
+                      return (
+                        <iframe
+                          src={vimeoSrc}
+                          className="absolute inset-0 w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                          allowFullScreen
+                        />
+                      );
+                    })()
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
                       <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
