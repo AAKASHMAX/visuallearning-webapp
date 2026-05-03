@@ -224,11 +224,10 @@ export async function getVideos(req: Request, res: Response) {
     // Access control: all videos are locked for unsubscribed users
     const videosWithAccess = videos.map((v) => {
       const canWatch = hasAccess;
+      const exists = !!(v.youtubeVideoId || v.vimeoVideoId);
       return {
         ...v,
-        youtubeVideoId: canWatch ? v.youtubeVideoId : null,
-        vimeoVideoId: canWatch ? v.vimeoVideoId : null,
-        hasVideo: !!(v.youtubeVideoId || v.vimeoVideoId),
+        hasVideo: exists,
         locked: !canWatch,
         isFree: false,
       };

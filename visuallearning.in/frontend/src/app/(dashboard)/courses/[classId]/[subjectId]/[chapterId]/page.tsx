@@ -240,18 +240,25 @@ export default function UnifiedChapterPage() {
                         <div className="relative w-36 h-20 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
                           {isComingSoon ? (
                             <Clock className="w-6 h-6 text-gray-300" />
-                          ) : video.locked ? (
-                            <Lock className="w-6 h-6 text-gray-400" />
-                          ) : video.vimeoVideoId ? (
-                              <img 
-                                src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`} 
-                                alt={video.title}
-                                className="absolute inset-0 w-full h-full object-cover"
-                              />
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
-                            </div>
+                            <>
+                              {video.vimeoVideoId ? (
+                                <img 
+                                  src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`} 
+                                  alt={video.title}
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
+                                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                                </div>
+                              )}
+                              {video.locked && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <Lock className="w-6 h-6 text-white" />
+                                </div>
+                              )}
+                            </>
                           )}
                           {video.isFree && <span className="absolute top-0 right-0 px-1.5 py-0.5 bg-success text-[9px] font-bold text-white rounded-bl-lg z-20">FREE</span>}
                         </div>
