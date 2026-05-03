@@ -117,7 +117,10 @@ export default function UnifiedChapterPage() {
     { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
   ];
 
-  const backUrl = fromDetails ? `/course-details/${fromDetails}` : 
+  const returnTo = searchParams.get("returnTo");
+
+  const backUrl = returnTo ? decodeURIComponent(returnTo) :
+                 fromDetails ? `/course-details/${fromDetails}` : 
                  fromCourse ? `/courses/view-course/${fromCourse}` : 
                  `/courses/${classId}/${subjectId}`;
 

@@ -212,7 +212,7 @@ export default function CustomPlanPreview() {
                       return (
                         <Link
                           key={ch.id}
-                          href={`/courses/${cls.id}/${sub.id}/${ch.id}?fromDetails=flexilearn`}
+                          href={`/courses/${cls.id}/${sub.id}/${ch.id}?returnTo=${encodeURIComponent(`/courses/custom-plan?subjects=${subjectIds.join(",")}`)}`}
                           className="group flex flex-col items-center text-center bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                         >
                           {/* Icon */}
