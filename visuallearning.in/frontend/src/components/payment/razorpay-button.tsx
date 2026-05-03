@@ -10,6 +10,7 @@ interface RazorpayButtonProps {
   amount: number;
   label: string;
   classesAccess?: string[];
+  subjectsAccess?: string[];
   couponCode?: string;
   onSuccess?: () => void;
   className?: string;
