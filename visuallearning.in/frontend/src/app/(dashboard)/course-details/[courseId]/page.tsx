@@ -270,67 +270,69 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left Column (Main Info) */}
-          <div className={`${isSubscribed ? "lg:col-span-3" : "lg:col-span-2"} pt-8 space-y-12 order-2 lg:order-1`}>
-            
-            {/* What you'll learn */}
-            <div className="bg-white rounded-xl border shadow-sm p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">What you&apos;ll learn</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {theme.learningOutcomes.map((outcome, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-                    <span className="text-gray-700 text-sm leading-relaxed">{outcome}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Course Content Sections */}
-            {course && course.subjects?.length > 0 ? (
-              <div className="space-y-12">
-                <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
-                {course.subjects.map((subject: any, sIdx: number) => {
-                  const SubjectIcon = iconMap[subject.icon] || Atom;
-                  return (
-                    <div key={sIdx} className="space-y-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-lg`}>
-                          <SubjectIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {subject.chapters.map((chapter: any) => {
-                          const Icon = iconMap[chapter.icon] || Atom;
-                          return (
-                            <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
-                              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
-                                <Icon className="w-7 h-7 text-white" />
-                              </div>
-                              <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
-                              <p className="text-xs text-gray-500">{chapter.desc}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
+          {isSubscribed && (
+            <div className="lg:col-span-3 pt-8 space-y-12 order-2 lg:order-1">
+              
+              {/* What you'll learn */}
+              <div className="bg-white rounded-xl border shadow-sm p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">What you&apos;ll learn</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  {theme.learningOutcomes.map((outcome, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm leading-relaxed">{outcome}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
-                <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-gray-700 mb-1">Detailed chapter listing coming soon</h3>
-                <p className="text-sm text-gray-500">Subscribe now to get full access to all chapters, videos, and notes included in this plan.</p>
-              </div>
-            )}
 
-          </div>
+              {/* Course Content Sections */}
+              {course && course.subjects?.length > 0 ? (
+                <div className="space-y-12">
+                  <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
+                  {course.subjects.map((subject: any, sIdx: number) => {
+                    const SubjectIcon = iconMap[subject.icon] || Atom;
+                    return (
+                      <div key={sIdx} className="space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-lg`}>
+                            <SubjectIcon className="w-5 h-5 text-white" />
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {subject.chapters.map((chapter: any) => {
+                            const Icon = iconMap[chapter.icon] || Atom;
+                            return (
+                              <div key={chapter.id} className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center">
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
+                                  <Icon className="w-7 h-7 text-white" />
+                                </div>
+                                <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
+                                <p className="text-xs text-gray-500">{chapter.desc}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                  <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-lg font-bold text-gray-700 mb-1">Detailed chapter listing coming soon</h3>
+                  <p className="text-sm text-gray-500">Subscribe now to get full access to all chapters, videos, and notes included in this plan.</p>
+                </div>
+              )}
+
+            </div>
+          )}
 
           {/* Right Column (Floating Card) */}
           {!isSubscribed && (
-            <div className="lg:col-span-1 order-1 lg:order-2">
-              <div className="lg:sticky lg:top-24 bg-white/80 backdrop-blur-2xl rounded-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden lg:-mt-[18rem] z-30">
+            <div className="lg:col-span-3 flex justify-center pt-8 order-1 lg:order-2">
+              <div className="w-full max-w-md bg-white/80 backdrop-blur-2xl rounded-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden lg:-mt-[12rem] z-30">
                 
                 {/* Video Preview Placeholder */}
                 <div className="relative aspect-video bg-gray-900 flex items-center justify-center group cursor-pointer overflow-hidden">
