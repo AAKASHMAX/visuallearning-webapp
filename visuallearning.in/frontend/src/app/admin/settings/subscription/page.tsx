@@ -22,54 +22,49 @@ interface PlanConfig {
 
 // Theme per known plan key / label
 function getPlanTheme(key: string, label: string) {
-  const k = (key + label).toLowerCase();
-  if (k.includes("foundation") || k.includes("free"))
+  const k = (key + " " + label).toLowerCase();
+
+  // Single class / foundation tier
+  if (k.includes("single") || k.includes("foundation") || k.includes("free") || k.includes("monthly"))
     return {
       grad: "from-sky-500 to-blue-600",
       lightBg: "from-sky-50 to-blue-50",
       border: "border-sky-200",
-      ring: "ring-sky-300",
       text: "text-sky-700",
-      badge: "bg-sky-100 text-sky-700 border-sky-200",
       Icon: Star,
     };
-  if (k.includes("academic") || k.includes("plus"))
+  // Multi class / academic tier
+  if (k.includes("multi") || k.includes("academic") || k.includes("plus"))
     return {
       grad: "from-blue-500 to-indigo-600",
       lightBg: "from-blue-50 to-indigo-50",
       border: "border-blue-200",
-      ring: "ring-blue-300",
       text: "text-blue-700",
-      badge: "bg-blue-100 text-blue-700 border-blue-200",
       Icon: Zap,
     };
-  if (k.includes("elite") || k.includes("premium"))
+  // Full / yearly / elite tier
+  if (k.includes("full") || k.includes("yearly") || k.includes("elite") || k.includes("premium") || k.includes("live"))
     return {
       grad: "from-violet-500 to-purple-700",
       lightBg: "from-violet-50 to-purple-50",
       border: "border-violet-200",
-      ring: "ring-violet-300",
       text: "text-violet-700",
-      badge: "bg-violet-100 text-violet-700 border-violet-200",
       Icon: Crown,
     };
+  // FlexiLearn / custom
   if (k.includes("flexi") || k.includes("custom"))
     return {
       grad: "from-indigo-500 to-[#170C79]",
       lightBg: "from-indigo-50 to-purple-50",
       border: "border-indigo-200",
-      ring: "ring-indigo-300",
       text: "text-indigo-700",
-      badge: "bg-indigo-100 text-indigo-700 border-indigo-200",
       Icon: Layers,
     };
   return {
     grad: "from-gray-500 to-gray-700",
     lightBg: "from-gray-50 to-slate-50",
     border: "border-gray-200",
-    ring: "ring-gray-300",
     text: "text-gray-700",
-    badge: "bg-gray-100 text-gray-600 border-gray-200",
     Icon: CreditCard,
   };
 }
