@@ -77,6 +77,7 @@ export interface BoardPaper {
   title: string;
   pdfUrl: string;
   order?: number;
+  locked?: boolean;
 }
 
 export interface Note {
@@ -84,6 +85,7 @@ export interface Note {
   chapterId: string;
   title: string;
   pdfUrl: string;
+  locked?: boolean;
 }
 
 export interface Question {
