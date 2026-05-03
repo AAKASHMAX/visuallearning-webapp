@@ -66,7 +66,7 @@ export default function SubscriptionSettingsPage() {
     Promise.all([
       api.get("/admin/settings"),
       api.get("/admin/settings/subscription"),
-      api.get("/admin/subject-access"),
+      api.get("/admin/subjects/access"),
     ]).then(([settingsRes, subSettingsRes, pricingRes]) => {
       setPlansConfig(settingsRes.data.data.plansConfig);
       setUpgradeDiscountPercent(subSettingsRes.data.data.upgradeDiscountPercent || 0);
@@ -77,7 +77,7 @@ export default function SubscriptionSettingsPage() {
   }, []);
 
   const reloadPricing = () => {
-    api.get("/admin/subject-access").then(({ data }) => {
+    api.get("/admin/subjects/access").then(({ data }) => {
       setSubjectPricing(data.data || []);
     });
   };

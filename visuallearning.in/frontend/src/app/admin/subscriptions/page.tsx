@@ -90,7 +90,7 @@ export default function AdminSubscriptionsPage() {
 
   const loadSubjectPricing = () => {
     setLoadingPricing(true);
-    api.get("/admin/subject-access").then(({ data }) => setSubjectPricing(data.data))
+    api.get("/admin/subjects/access").then(({ data }) => setSubjectPricing(data.data))
       .finally(() => setLoadingPricing(false));
   };
 
