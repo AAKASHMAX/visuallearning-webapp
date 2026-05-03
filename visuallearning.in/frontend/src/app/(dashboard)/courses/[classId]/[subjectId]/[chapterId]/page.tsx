@@ -91,8 +91,9 @@ export default function UnifiedChapterPage() {
         // Initial Video Selection
         const initialLang = "HINDI";
         const langVideos = videoList.filter((v: Video) => v.language === initialLang);
-        const firstPlayable = langVideos.find((v: Video) => !v.locked) || videoList.find((v: Video) => !v.locked);
-        if (firstPlayable) setSelectedVideo(firstPlayable);
+        // Initial Video Selection: Load first video from the list (even if locked)
+        const firstVideo = langVideos[0] || videoList[0];
+        if (firstVideo) setSelectedVideo(firstVideo);
         
       } catch (err) {
         console.error("Failed to fetch chapter content", err);
@@ -178,13 +179,29 @@ export default function UnifiedChapterPage() {
                     </button>
                   </div>
                 </div>
-                <div className="bg-black">
-                  <VideoPlayer 
-                    videoId={selectedVideo.id} 
-                    youtubeVideoId={selectedVideo.youtubeVideoId} 
-                    vimeoVideoId={selectedVideo.vimeoVideoId}
-                    title={selectedVideo.title} 
-                  />
+                <div className="bg-black relative aspect-video">
+                  {selectedVideo.locked ? (
+                    <div 
+                      className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-md z-20 cursor-pointer group"
+                      onClick={() => setShowLockedModal(true)}
+                    >
+                      <div className="w-20 h-20 rounded-full bg-cta/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Crown className="w-10 h-10 text-cta" />
+                      </div>
+                      <h4 className="text-white font-bold text-lg mb-2">Premium Content</h4>
+                      <p className="text-gray-400 text-sm px-8 text-center max-w-sm">Subscribe to a plan to unlock all 3D animations and expert lessons for this chapter.</p>
+                      <Button className="mt-6 bg-cta hover:bg-cta/90 text-white font-bold px-8 py-2 rounded-full">
+                        Unlock Now
+                      </Button>
+                    </div>
+                  ) : (
+                    <VideoPlayer 
+                      videoId={selectedVideo.id} 
+                      youtubeVideoId={selectedVideo.youtubeVideoId} 
+                      vimeoVideoId={selectedVideo.vimeoVideoId}
+                      title={selectedVideo.title} 
+                    />
+                  )}
                 </div>
               </>
             ) : (
