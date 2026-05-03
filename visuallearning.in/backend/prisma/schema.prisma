@@ -60,6 +60,7 @@ model Subscription {
   id                 String             @id @default(cuid())
   userId             String
   plan               String
+  courseId            String?
   classesAccess      String[]           @default([])
   subjectsAccess     String[]           @default([])
   startDate          DateTime           @default(now())
@@ -74,11 +75,13 @@ model Subscription {
   createdAt          DateTime           @default(now())
 
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course             Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([expiryDate])
   @@index([userId, status, expiryDate])
+  @@index([courseId])
 }
 
 model Coupon {
@@ -129,10 +132,13 @@ model Course {
   slug        String   @unique
   description String?
   accentColor String?
+  planKey     String?  @unique
+  icon        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  chapters    CourseChapter[]
+  chapters      CourseChapter[]
+  subscriptions Subscription[]
 }
 
 model CourseChapter {

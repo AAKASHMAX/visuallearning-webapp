@@ -82,9 +82,10 @@ export default function DashboardPage() {
 
   // Determine access type
   const isFlexiPlan = isActive && subscription?.plan === "FLEXI_PLAN";
+  const hasCourse = isActive && !isFlexiPlan && (subscription as any)?.course;
   const subscribedClassIds = subscription?.classesAccess ?? [];
-  const isFullAccess = isActive && !isFlexiPlan && (subscribedClassIds.length === 0 || subscribedClassIds.length >= allClasses.length);
-  const isClassSpecific = isActive && !isFlexiPlan && !isFullAccess && subscribedClassIds.length > 0;
+  const isFullAccess = isActive && !isFlexiPlan && !hasCourse && (subscribedClassIds.length === 0 || subscribedClassIds.length >= allClasses.length);
+  const isClassSpecific = isActive && !isFlexiPlan && !hasCourse && !isFullAccess && subscribedClassIds.length > 0;
   const subscribedClasses = allClasses.filter(c => subscribedClassIds.includes(c.id));
 
   if (loading) return <PageLoader />;
@@ -149,6 +150,41 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 text-xs text-gray-400">
                   <Clock className="w-3.5 h-3.5" />
                   Valid until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "long" })}
+                </div>
+              </div>
+            )}
+
+            {/* Course-based plan: show enrolled course card */}
+            {hasCourse && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-gray-900">Your Enrolled Course</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{daysLeft} days remaining</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-widest">Active</span>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden max-w-md">
+                  <div className="h-3" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }} />
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }}>
+                        {(() => { const I = iconMap[(subscription as any).course.icon] || Crown; return <I className="w-7 h-7 text-white" />; })()}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900">{(subscription as any).course.name}</h3>
+                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">{subscription!.plan.replace(/_/g, " ")}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-5">
+                      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Until {new Date(subscription!.expiryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
+                    </div>
+                    <Link href={`/course-details/${(subscription as any).course.slug}`}>
+                      <button className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity" style={{ background: (subscription as any).course.accentColor || "#3b82f6" }}>
+                        Go to Course <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -239,7 +275,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl md:text-3xl font-black tracking-tight">Ready to master science today?</h2>
               <p className="text-white/50 font-medium">Dive into your chapter lessons and virtual experiments.</p>
             </div>
-            <Link href={isFlexiPlan ? "/courses/my-custom-plan" : isClassSpecific && subscribedClasses[0] ? `/courses/${subscribedClasses[0].id}` : "/courses"}>
+            <Link href={isFlexiPlan ? "/courses/my-custom-plan" : hasCourse ? `/course-details/${(subscription as any).course.slug}` : isClassSpecific && subscribedClasses[0] ? `/courses/${subscribedClasses[0].id}` : "/courses"}>
               <Button className="bg-white text-black hover:bg-white/90 font-black px-8 py-7 rounded-2xl shadow-2xl">
                 Go To Classroom <MonitorPlay className="w-5 h-5 ml-2" />
               </Button>

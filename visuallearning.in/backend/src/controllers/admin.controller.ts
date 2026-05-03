@@ -563,6 +563,7 @@ export async function updatePlanSettings(req: Request, res: Response) {
     });
 
     cacheInvalidate("plans");
+    cacheInvalidate("courses-list");
     return success(res, { plansConfig }, "Plan settings updated");
   } catch (e) {
     console.error("Update plan settings error:", e);

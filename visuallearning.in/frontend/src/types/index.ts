@@ -13,12 +13,21 @@ export type Language = string;
 export interface Subscription {
   id: string;
   plan: string;
+  courseId?: string;
   classesAccess: string[];
   subjectsAccess: string[];
   startDate: string;
   expiryDate: string;
   status: "ACTIVE" | "EXPIRED" | "CANCELLED";
   amount: number;
+  course?: {
+    id: string;
+    name: string;
+    slug: string;
+    accentColor?: string;
+    icon?: string;
+    planKey?: string;
+  };
 }
 
 export interface ClassItem {

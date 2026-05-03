@@ -78,25 +78,35 @@ function subjectVisual(name: string, iconKey?: string | null) {
   return { Icon, bg, border, iconGrad, ring, shadow, priceColor, subtitleColor };
 }
 
+// Course theme config based on planKey
+const COURSE_THEME: Record<string, { bgColor: string; accentColor: string; animation: string; excluded: string[] }> = {
+  FOUNDATION_PASS: { bgColor: "#1C4D8D", accentColor: "#60A5FA", animation: "atom", excluded: ["Full class content", "Virtual Labs", "Priority support"] },
+  ACADEMIC_PLUS: { bgColor: "#162855", accentColor: "#38BDF8", animation: "magnet", excluded: ["Virtual Labs & 3D", "WhatsApp support"] },
+  ELITE_LEARNING: { bgColor: "#2d1654", accentColor: "#D8B4FE", animation: "circuit", excluded: [] },
+};
+
 export default function CoursesPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"smart" | "custom">("smart");
   const [classesData, setClassesData] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [activeClassId, setActiveClassId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    api
-      .get("/courses/pricing/subjects")
-      .then(({ data }) => {
-        const list = data.data || [];
-        setClassesData(list);
+    Promise.all([
+      api.get("/courses/pricing/subjects").then(({ data }) => data.data || []),
+      api.get("/courses/list").then(({ data }) => data.data || []),
+    ])
+      .then(([subjectsData, coursesData]) => {
+        setClassesData(subjectsData);
+        setCourses(coursesData);
         setActiveClassId((prev) =>
-          prev && list.some((c: { id: string }) => c.id === prev) ? prev : list[0]?.id ?? null
+          prev && subjectsData.some((c: { id: string }) => c.id === prev) ? prev : subjectsData[0]?.id ?? null
         );
       })
-      .catch(() => setClassesData([]))
+      .catch(() => { setClassesData([]); setCourses([]); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -168,65 +178,28 @@ export default function CoursesPage() {
 
         {activeTab === "smart" ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <PlanCard
-              bgColor="#1C4D8D"
-              accentColor="#60A5FA"
-              planName="Foundation Pass"
-              price="FREE"
-              originalPrice="₹3999"
-              period="/yr"
-              showCountdown
-              animation="atom"
-              included={[
-                "Selected chapters (9–12 PCB)",
-                "Animated concept videos",
-                "Beginner-friendly path",
-                "Progress tracking",
-                "Mobile & desktop access",
-              ]}
-              excluded={["Full class content", "Virtual Labs", "Priority support"]}
-              ctaLink="/course-details/foundation-pass"
-            />
-
-            <PlanCard
-              bgColor="#162855"
-              accentColor="#38BDF8"
-              planName="Academic Plus"
-              price="₹8,999"
-              period="/yr"
-              animation="magnet"
-              included={[
-                "Full Class 9–10 (PCB)",
-                "Selected 11–12 P & C",
-                "Chapter notes (PDF)",
-                "MCQ quizzes + solutions",
-                "Performance analytics",
-                "Email support (24hr)",
-              ]}
-              excluded={["Virtual Labs & 3D", "WhatsApp support"]}
-              ctaLink="/course-details/academic-plus"
-            />
-
-            <PlanCard
-              bgColor="#2d1654"
-              accentColor="#D8B4FE"
-              planName="Elite Learning"
-              price="₹15,999"
-              period="/yr"
-              badge="Most Popular"
-              animation="circuit"
-              included={[
-                "Full 9–12 P + C + B",
-                "Virtual Labs (64+) 🧪",
-                "3D Visual Learning 🔬",
-                "Board exam practice",
-                "Notes + formula sheets",
-                "Priority WhatsApp support",
-                "Deep concept tools",
-              ]}
-              excluded={[]}
-              ctaLink="/course-details/elite-learning"
-            />
+            {courses.filter(c => c.planKey && c.planKey !== "FLEXI_PLAN").map((course) => {
+              const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
+              const priceStr = course.price === 0 ? "FREE" : `₹${course.price.toLocaleString("en-IN")}`;
+              const isElite = course.planKey === "ELITE_LEARNING";
+              return (
+                <PlanCard
+                  key={course.id}
+                  bgColor={theme.bgColor}
+                  accentColor={theme.accentColor}
+                  planName={course.name}
+                  price={priceStr}
+                  originalPrice={course.price === 0 ? "₹3999" : undefined}
+                  period={`/${course.billingCycle === "monthly" ? "mo" : "yr"}`}
+                  showCountdown={course.price === 0}
+                  animation={theme.animation}
+                  badge={isElite ? "Most Popular" : undefined}
+                  included={course.features}
+                  excluded={theme.excluded}
+                  ctaLink={`/course-details/${course.slug}`}
+                />
+              );
+            })}
           </div>
         ) : (
           /* Customized Learning Section */

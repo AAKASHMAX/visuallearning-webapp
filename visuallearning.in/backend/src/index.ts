@@ -117,10 +117,32 @@ app.get("/api/health", (_req, res) => {
 // Error handler
 app.use(errorHandler);
 
+// Ensure default courses exist linked to plan keys
+async function seedCourses() {
+  try {
+    const coursesToSeed = [
+      { name: "Foundation Pass", slug: "foundation-pass", planKey: "FOUNDATION_PASS", accentColor: "#06b6d4", icon: "Sparkles", description: "Begin your science journey with curated introductory chapters" },
+      { name: "Academic Plus", slug: "academic-plus", planKey: "ACADEMIC_PLUS", accentColor: "#3b82f6", icon: "GraduationCap", description: "Comprehensive coverage of Class 9-10 with selected 11-12 content" },
+      { name: "Elite Learning", slug: "elite-learning", planKey: "ELITE_LEARNING", accentColor: "#8b5cf6", icon: "Crown", description: "Complete 9-12 Physics, Chemistry & Biology with advanced tools" },
+    ];
+
+    for (const c of coursesToSeed) {
+      const existing = await prisma.course.findUnique({ where: { planKey: c.planKey } });
+      if (!existing) {
+        await prisma.course.create({ data: c });
+        console.log(`  Created course: ${c.name}`);
+      }
+    }
+  } catch (e) {
+    console.error("Course seed error:", e);
+  }
+}
+
 app.listen(config.port, async () => {
   console.log(`VisualLearning API running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
   await migratePlansConfig();
+  await seedCourses();
 });
 
 export default app;

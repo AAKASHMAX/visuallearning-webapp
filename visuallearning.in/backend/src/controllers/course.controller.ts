@@ -114,10 +114,10 @@ export async function getChapters(req: Request, res: Response) {
   }
 }
 
-// Helper: check if user has access to a specific class/subject (cached for 60s)
-// For FLEXI_PLAN with subjectsAccess, enforces subject-level access.
-async function checkClassAccess(userId: string, classId: string, subjectId?: string): Promise<{ hasAccess: boolean; subscription: any }> {
-  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}`;
+// Helper: check if user has access to a specific chapter/class/subject (cached for 60s)
+// Supports: course-based plans (check chapter in course), FLEXI_PLAN (subject-level), legacy class-based
+async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string): Promise<{ hasAccess: boolean; subscription: any }> {
+  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}`;
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
   if (cached) return cached;
 
@@ -134,11 +134,29 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
   const classesAccess = sub.classesAccess as string[];
 
   let hasAccess: boolean;
+
   if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
     // Subject-level access: only allow chapters of explicitly purchased subjects
     hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
+  } else if (sub.courseId && chapterId) {
+    // Course-based access: check if the chapter is in the user's purchased course
+    const courseChapter = await prisma.courseChapter.findUnique({
+      where: { courseId_chapterId: { courseId: sub.courseId, chapterId } },
+    });
+    hasAccess = !!courseChapter;
+  } else if (sub.courseId) {
+    // Course-based but no chapterId provided — check if any chapter from this class/subject is in the course
+    const courseChapters = await prisma.courseChapter.findMany({
+      where: { courseId: sub.courseId },
+      include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
+    });
+    if (subjectId) {
+      hasAccess = courseChapters.some((cc) => cc.chapter.subjectId === subjectId);
+    } else {
+      hasAccess = courseChapters.some((cc) => cc.chapter.subject.classId === classId);
+    }
   } else {
-    // Class-level or full access
+    // Legacy class-level or full access
     hasAccess = classesAccess.length === 0 || classesAccess.includes(classId);
   }
 
@@ -199,7 +217,7 @@ export async function getVideos(req: Request, res: Response) {
       hasAccess = true;
     } else if (req.user) {
       const classId = chapter.subject.class.id;
-      const result = await checkClassAccess(req.user.id, classId, chapter.subject.id);
+      const result = await checkClassAccess(req.user.id, classId, chapter.subject.id, chapter.id);
       hasAccess = result.hasAccess;
     }
 
@@ -251,7 +269,7 @@ export async function getVideoById(req: Request, res: Response) {
       const isAdmin = req.user.role === "ADMIN";
       if (!isAdmin) {
         const classId = video.chapter.subject.class.id;
-        const { hasAccess } = await checkClassAccess(req.user.id, classId, video.chapter.subject.id);
+        const { hasAccess } = await checkClassAccess(req.user.id, classId, video.chapter.subject.id, video.chapter.id);
         if (!hasAccess) return error(res, "Active subscription required for this class", 403);
       }
     }
@@ -287,7 +305,7 @@ export async function getNotes(req: Request, res: Response) {
     if (isAdmin) {
       hasAccess = true;
     } else if (req.user) {
-      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id);
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
       hasAccess = result.hasAccess;
     }
 
@@ -426,7 +444,7 @@ export async function getCourseBySlug(req: Request, res: Response) {
         chapters: {
           include: {
             chapter: {
-              include: { 
+              include: {
                 subject: true,
                 _count: { select: { videos: true, notes: true, questions: true } }
               }
@@ -439,17 +457,27 @@ export async function getCourseBySlug(req: Request, res: Response) {
 
     if (!course) return error(res, "Course not found", 404);
 
+    // Get plan config for pricing
+    let planConfig: any = null;
+    if (course.planKey) {
+      const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+      if (setting) {
+        const plans = JSON.parse(setting.value);
+        planConfig = plans[course.planKey] || null;
+      }
+    }
+
     // Group chapters by subject for the UI
     const subjectsMap: Record<string, any> = {};
-    
+
     course.chapters.forEach(({ chapter }) => {
       const subjectName = chapter.subject.name;
       if (!subjectsMap[subjectName]) {
         subjectsMap[subjectName] = {
           name: subjectName,
           icon: chapter.subject.icon || "Atom",
-          color: subjectName === "Physics" ? "from-blue-500 to-blue-700" : 
-                 subjectName === "Chemistry" ? "from-emerald-500 to-emerald-700" : 
+          color: subjectName === "Physics" ? "from-blue-500 to-blue-700" :
+                 subjectName === "Chemistry" ? "from-emerald-500 to-emerald-700" :
                  "from-rose-500 to-rose-700",
           chapters: []
         };
@@ -464,13 +492,83 @@ export async function getCourseBySlug(req: Request, res: Response) {
       });
     });
 
+    // Check if authenticated user has access to this course
+    let userHasAccess = false;
+    if (req.user) {
+      const sub = await prisma.subscription.findFirst({
+        where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+      });
+      if (sub && sub.courseId === course.id) userHasAccess = true;
+      if (req.user.role === "ADMIN") userHasAccess = true;
+    }
+
     return success(res, {
       ...course,
-      subjects: Object.values(subjectsMap)
+      subjects: Object.values(subjectsMap),
+      planConfig: planConfig ? {
+        price: planConfig.amount / 100,
+        duration: planConfig.duration,
+        billingCycle: planConfig.billingCycle || "yearly",
+      } : null,
+      userHasAccess,
     });
   } catch (e) {
     console.error("Get course by slug error:", e);
     return error(res, "Failed to fetch course content");
+  }
+}
+
+// GET /api/courses/list — all courses with plan config (for courses page)
+export async function getCourses(_req: Request, res: Response) {
+  try {
+    const cached = cacheGet("courses-list");
+    if (cached) return success(res, cached);
+
+    const courses = await prisma.course.findMany({
+      orderBy: { createdAt: "asc" },
+      include: {
+        _count: { select: { chapters: true } },
+      },
+    });
+
+    // Get plans config for pricing/features
+    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+    let plansConfig: Record<string, any> = {};
+    if (setting) {
+      plansConfig = JSON.parse(setting.value);
+    }
+
+    const featureMap: Record<string, string[]> = {
+      FOUNDATION_PASS: ["Selected chapters (9-12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
+      ACADEMIC_PLUS: ["Full Class 9-10 (PCB)", "Selected 11-12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
+      ELITE_LEARNING: ["Full 9-12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],
+      FLEXI_PLAN: ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
+    };
+
+    const result = courses.map((c) => {
+      const planConfig = c.planKey ? plansConfig[c.planKey] : null;
+      return {
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        accentColor: c.accentColor,
+        icon: c.icon,
+        planKey: c.planKey,
+        chapterCount: c._count.chapters,
+        price: planConfig ? planConfig.amount / 100 : 0,
+        duration: planConfig ? planConfig.duration : 365,
+        billingCycle: planConfig?.billingCycle || "yearly",
+        features: c.planKey ? (featureMap[c.planKey] || []) : [],
+        enabled: planConfig ? planConfig.enabled : true,
+      };
+    });
+
+    cacheSet("courses-list", result, 300);
+    return success(res, result);
+  } catch (e) {
+    console.error("Get courses error:", e);
+    return error(res, "Failed to fetch courses");
   }
 }
 

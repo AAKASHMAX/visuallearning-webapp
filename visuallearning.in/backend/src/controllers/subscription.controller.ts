@@ -272,10 +272,18 @@ export async function verifyPayment(req: Request, res: Response) {
       data: { status: "EXPIRED" },
     });
 
+    // Link subscription to course if plan has a matching course
+    let courseId: string | null = null;
+    if (plan !== "FLEXI_PLAN") {
+      const course = await prisma.course.findUnique({ where: { planKey: plan } });
+      if (course) courseId = course.id;
+    }
+
     const subscription = await prisma.subscription.create({
       data: {
         userId: req.user!.id,
         plan,
+        courseId,
         classesAccess: resolvedClassesAccess,
         subjectsAccess: resolvedSubjectsAccess,
         expiryDate,
@@ -301,6 +309,7 @@ export async function getMySubscription(req: Request, res: Response) {
     const subscription = await prisma.subscription.findFirst({
       where: { userId: req.user!.id },
       orderBy: { createdAt: "desc" },
+      include: { course: { select: { id: true, name: true, slug: true, accentColor: true, icon: true, planKey: true } } },
     });
 
     // Auto-expire if past expiry date
