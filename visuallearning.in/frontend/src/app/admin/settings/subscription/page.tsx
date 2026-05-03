@@ -6,10 +6,10 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import {
   CreditCard, Save, Plus, Trash2, X, Percent,
-  Star, Zap, Crown, Layers, ArrowRight, ExternalLink,
-  BookOpen, CheckCircle2, ToggleLeft, ToggleRight
+  Star, Zap, Crown, Layers, CheckCircle2,
+  ToggleLeft, ToggleRight, Pencil, IndianRupee,
+  Atom, FlaskConical, Dna, Calculator, Sparkles
 } from "lucide-react";
-import Link from "next/link";
 
 interface PlanConfig {
   amount: number;
@@ -20,53 +20,26 @@ interface PlanConfig {
   billingCycle: "monthly" | "yearly";
 }
 
-// Theme per known plan key / label
 function getPlanTheme(key: string, label: string) {
   const k = (key + " " + label).toLowerCase();
-
-  // Single class / foundation tier
   if (k.includes("single") || k.includes("foundation") || k.includes("free") || k.includes("monthly"))
-    return {
-      grad: "from-sky-500 to-blue-600",
-      lightBg: "from-sky-50 to-blue-50",
-      border: "border-sky-200",
-      text: "text-sky-700",
-      Icon: Star,
-    };
-  // Multi class / academic tier
+    return { grad: "from-sky-500 to-blue-600", lightBg: "from-sky-50 to-blue-50", border: "border-sky-200", text: "text-sky-700", Icon: Star };
   if (k.includes("multi") || k.includes("academic") || k.includes("plus"))
-    return {
-      grad: "from-blue-500 to-indigo-600",
-      lightBg: "from-blue-50 to-indigo-50",
-      border: "border-blue-200",
-      text: "text-blue-700",
-      Icon: Zap,
-    };
-  // Full / yearly / elite tier
+    return { grad: "from-blue-500 to-indigo-600", lightBg: "from-blue-50 to-indigo-50", border: "border-blue-200", text: "text-blue-700", Icon: Zap };
   if (k.includes("full") || k.includes("yearly") || k.includes("elite") || k.includes("premium") || k.includes("live"))
-    return {
-      grad: "from-violet-500 to-purple-700",
-      lightBg: "from-violet-50 to-purple-50",
-      border: "border-violet-200",
-      text: "text-violet-700",
-      Icon: Crown,
-    };
-  // FlexiLearn / custom
+    return { grad: "from-violet-500 to-purple-700", lightBg: "from-violet-50 to-purple-50", border: "border-violet-200", text: "text-violet-700", Icon: Crown };
   if (k.includes("flexi") || k.includes("custom"))
-    return {
-      grad: "from-indigo-500 to-[#170C79]",
-      lightBg: "from-indigo-50 to-purple-50",
-      border: "border-indigo-200",
-      text: "text-indigo-700",
-      Icon: Layers,
-    };
-  return {
-    grad: "from-gray-500 to-gray-700",
-    lightBg: "from-gray-50 to-slate-50",
-    border: "border-gray-200",
-    text: "text-gray-700",
-    Icon: CreditCard,
-  };
+    return { grad: "from-indigo-500 to-[#170C79]", lightBg: "from-indigo-50 to-purple-50", border: "border-indigo-200", text: "text-indigo-700", Icon: Layers };
+  return { grad: "from-gray-500 to-gray-700", lightBg: "from-gray-50 to-slate-50", border: "border-gray-200", text: "text-gray-700", Icon: CreditCard };
+}
+
+function subjectTheme(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes("physics"))   return { Icon: Atom,        grad: "from-sky-400 to-blue-600",    bg: "from-sky-50 to-blue-50",    border: "border-sky-100",    text: "text-sky-600" };
+  if (n.includes("chemistry")) return { Icon: FlaskConical, grad: "from-emerald-400 to-teal-500", bg: "from-emerald-50 to-teal-50", border: "border-emerald-100", text: "text-emerald-600" };
+  if (n.includes("biology"))   return { Icon: Dna,          grad: "from-rose-400 to-fuchsia-500", bg: "from-rose-50 to-pink-50",   border: "border-rose-100",   text: "text-rose-500" };
+  if (n.includes("math"))      return { Icon: Calculator,   grad: "from-violet-400 to-purple-600", bg: "from-violet-50 to-purple-50", border: "border-violet-100", text: "text-violet-600" };
+  return                              { Icon: Sparkles,     grad: "from-cyan-400 to-teal-500",    bg: "from-cyan-50 to-teal-50",   border: "border-cyan-100",   text: "text-cyan-600" };
 }
 
 export default function SubscriptionSettingsPage() {
@@ -83,27 +56,48 @@ export default function SubscriptionSettingsPage() {
   const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
   const [savingDiscount, setSavingDiscount] = useState(false);
 
+  // Subject pricing
+  const [subjectPricing, setSubjectPricing] = useState<any[]>([]);
+  const [activeClassTab, setActiveClassTab] = useState("");
+  const [editingPrice, setEditingPrice] = useState<{ id: string; price: number } | null>(null);
+  const [savingPrice, setSavingPrice] = useState(false);
+
   useEffect(() => {
     Promise.all([
       api.get("/admin/settings"),
       api.get("/admin/settings/subscription"),
-    ]).then(([settingsRes, subSettingsRes]) => {
+      api.get("/admin/subject-access"),
+    ]).then(([settingsRes, subSettingsRes, pricingRes]) => {
       setPlansConfig(settingsRes.data.data.plansConfig);
       setUpgradeDiscountPercent(subSettingsRes.data.data.upgradeDiscountPercent || 0);
+      const pricing = pricingRes.data.data || [];
+      setSubjectPricing(pricing);
+      setActiveClassTab(pricing[0]?.id ?? "");
     }).finally(() => setLoading(false));
   }, []);
 
-  const updatePlan = (key: string, field: string, value: any) => {
-    setPlansConfig((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: value },
-    }));
+  const reloadPricing = () => {
+    api.get("/admin/subject-access").then(({ data }) => {
+      setSubjectPricing(data.data || []);
+    });
   };
 
-  // amount stored in paise; UI shows rupees
-  const updatePlanRupees = (key: string, rupees: number) => {
-    updatePlan(key, "amount", Math.round(rupees * 100));
+  const updateSubjectPrice = async (id: string, price: number) => {
+    setSavingPrice(true);
+    try {
+      await api.put(`/admin/subjects/${id}`, { price });
+      toast.success("Price updated");
+      setEditingPrice(null);
+      reloadPricing();
+    } catch { toast.error("Failed to update price"); }
+    finally { setSavingPrice(false); }
   };
+
+  const updatePlan = (key: string, field: string, value: any) =>
+    setPlansConfig((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
+
+  const updatePlanRupees = (key: string, rupees: number) =>
+    updatePlan(key, "amount", Math.round(rupees * 100));
 
   const addPlan = () => {
     const key = newPlanKey.toUpperCase().replace(/[^A-Z0-9_]/g, "");
@@ -111,18 +105,10 @@ export default function SubscriptionSettingsPage() {
     if (plansConfig[key]) { toast.error("Plan key already exists"); return; }
     setPlansConfig({
       ...plansConfig,
-      [key]: {
-        label: newPlanLabel.trim(),
-        amount: Math.round(newPlanRupees * 100),
-        duration: newPlanDuration,
-        enabled: true,
-        classSelection: newPlanClassSelection,
-        billingCycle: newPlanBillingCycle,
-      },
+      [key]: { label: newPlanLabel.trim(), amount: Math.round(newPlanRupees * 100), duration: newPlanDuration, enabled: true, classSelection: newPlanClassSelection, billingCycle: newPlanBillingCycle },
     });
     setNewPlanKey(""); setNewPlanLabel(""); setNewPlanRupees(2999);
-    setNewPlanDuration(365); setNewPlanClassSelection(0);
-    setNewPlanBillingCycle("yearly"); setShowAddPlan(false);
+    setNewPlanDuration(365); setNewPlanClassSelection(0); setNewPlanBillingCycle("yearly"); setShowAddPlan(false);
   };
 
   const removePlan = (key: string) => {
@@ -154,6 +140,8 @@ export default function SubscriptionSettingsPage() {
 
   if (loading) return <PageLoader />;
 
+  const activeClassData = subjectPricing.find((c) => c.id === activeClassTab);
+
   return (
     <div className="max-w-5xl space-y-8">
 
@@ -170,8 +158,7 @@ export default function SubscriptionSettingsPage() {
             <CreditCard className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-black text-gray-900">Active Plans</h2>
           </div>
-          <Button size="sm" onClick={() => setShowAddPlan(!showAddPlan)}
-            className="rounded-xl font-bold gap-1.5">
+          <Button size="sm" onClick={() => setShowAddPlan(!showAddPlan)} className="rounded-xl font-bold gap-1.5">
             {showAddPlan ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Add Plan</>}
           </Button>
         </div>
@@ -183,42 +170,19 @@ export default function SubscriptionSettingsPage() {
               <Plus className="w-4 h-4 text-primary" /> New Plan
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Plan Key</label>
-                <input value={newPlanKey}
-                  onChange={(e) => setNewPlanKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))}
-                  placeholder="e.g. PREMIUM" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Display Name</label>
-                <input value={newPlanLabel} onChange={(e) => setNewPlanLabel(e.target.value)}
-                  placeholder="e.g. Premium Plan" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Price (₹)</label>
-                <input type="number" value={newPlanRupees} onChange={(e) => setNewPlanRupees(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Duration (days)</label>
-                <input type="number" value={newPlanDuration} onChange={(e) => setNewPlanDuration(parseInt(e.target.value) || 1)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access</label>
-                <input type="number" value={newPlanClassSelection} min={0}
-                  onChange={(e) => setNewPlanClassSelection(parseInt(e.target.value) || 0)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" />
-                <p className="text-[10px] text-gray-400 mt-1">0 = all classes</p>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Billing Tab</label>
-                <select value={newPlanBillingCycle} onChange={(e) => setNewPlanBillingCycle(e.target.value as "monthly" | "yearly")}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white">
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-              </div>
+              {[
+                { label: "Plan Key", el: <input value={newPlanKey} onChange={(e) => setNewPlanKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))} placeholder="e.g. PREMIUM" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Display Name", el: <input value={newPlanLabel} onChange={(e) => setNewPlanLabel(e.target.value)} placeholder="e.g. Premium Plan" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Price (₹)", el: <input type="number" value={newPlanRupees} onChange={(e) => setNewPlanRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Duration (days)", el: <input type="number" value={newPlanDuration} onChange={(e) => setNewPlanDuration(parseInt(e.target.value) || 1)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Class Access (0=all)", el: <input type="number" min={0} value={newPlanClassSelection} onChange={(e) => setNewPlanClassSelection(parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Billing Tab", el: <select value={newPlanBillingCycle} onChange={(e) => setNewPlanBillingCycle(e.target.value as "monthly" | "yearly")} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select> },
+              ].map(({ label, el }) => (
+                <div key={label}>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{label}</label>
+                  {el}
+                </div>
+              ))}
             </div>
             <Button size="sm" onClick={addPlan} className="rounded-xl font-bold">Add Plan</Button>
           </div>
@@ -231,8 +195,7 @@ export default function SubscriptionSettingsPage() {
             const { Icon } = theme;
             const isFlexiLearn = (key + plan.label).toLowerCase().includes("flexi") || (key + plan.label).toLowerCase().includes("custom");
             return (
-              <div key={key}
-                className={`bg-gradient-to-br ${theme.lightBg} border ${theme.border} rounded-2xl overflow-hidden shadow-sm transition-all ${!plan.enabled ? "opacity-60" : ""}`}>
+              <div key={key} className={`bg-gradient-to-br ${theme.lightBg} border ${theme.border} rounded-2xl overflow-hidden shadow-sm ${!plan.enabled ? "opacity-60" : ""}`}>
 
                 {/* Card header */}
                 <div className={`bg-gradient-to-r ${theme.grad} px-5 py-4 flex items-center justify-between`}>
@@ -249,8 +212,7 @@ export default function SubscriptionSettingsPage() {
                     <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${plan.enabled ? "bg-white/20 text-white border-white/30" : "bg-black/20 text-white/50 border-white/10"}`}>
                       {plan.enabled ? "Active" : "Disabled"}
                     </span>
-                    <button onClick={() => removePlan(key)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-red-500 text-white/60 hover:text-white transition-all">
+                    <button onClick={() => removePlan(key)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-red-500 text-white/60 hover:text-white transition-all">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -261,74 +223,126 @@ export default function SubscriptionSettingsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Plan Name</label>
-                      <input type="text" value={plan.label}
-                        onChange={(e) => updatePlan(key, "label", e.target.value)}
+                      <input type="text" value={plan.label} onChange={(e) => updatePlan(key, "label", e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">
-                        Price (₹)
-                      </label>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Price (₹)</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">₹</span>
-                        <input type="number" value={Math.round(plan.amount / 100)}
-                          onChange={(e) => updatePlanRupees(key, parseFloat(e.target.value) || 0)}
+                        <input type="number" value={Math.round(plan.amount / 100)} onChange={(e) => updatePlanRupees(key, parseFloat(e.target.value) || 0)}
                           className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
                       </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Duration (days)</label>
-                      <input type="number" value={plan.duration}
-                        onChange={(e) => updatePlan(key, "duration", parseInt(e.target.value) || 1)}
+                      <input type="number" value={plan.duration} onChange={(e) => updatePlan(key, "duration", parseInt(e.target.value) || 1)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access</label>
-                      <input type="number" value={plan.classSelection} min={0}
-                        onChange={(e) => updatePlan(key, "classSelection", parseInt(e.target.value) || 0)}
+                      <input type="number" min={0} value={plan.classSelection} onChange={(e) => updatePlan(key, "classSelection", parseInt(e.target.value) || 0)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Billing Tab</label>
-                      <select value={plan.billingCycle || "yearly"}
-                        onChange={(e) => updatePlan(key, "billingCycle", e.target.value)}
+                      <select value={plan.billingCycle || "yearly"} onChange={(e) => updatePlan(key, "billingCycle", e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none">
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                       </select>
                     </div>
                     <div className="flex items-end">
-                      <button
-                        onClick={() => updatePlan(key, "enabled", !plan.enabled)}
-                        className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
-                          plan.enabled
-                            ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
-                        }`}>
-                        {plan.enabled
-                          ? <ToggleRight className="w-4 h-4 text-emerald-500" />
-                          : <ToggleLeft className="w-4 h-4 text-gray-400" />}
+                      <button onClick={() => updatePlan(key, "enabled", !plan.enabled)}
+                        className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl border text-sm font-bold transition-all ${plan.enabled ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+                        {plan.enabled ? <ToggleRight className="w-4 h-4 text-emerald-500" /> : <ToggleLeft className="w-4 h-4 text-gray-400" />}
                         {plan.enabled ? "Enabled" : "Disabled"}
                       </button>
                     </div>
                   </div>
+                </div>
 
-                  {/* FlexiLearn pricing note */}
-                  {isFlexiLearn && (
-                    <div className="flex items-start gap-2.5 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
-                      <BookOpen className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-black text-indigo-700 leading-snug">Subject-wise pricing</p>
-                        <p className="text-[10px] text-indigo-500 mt-0.5 leading-snug">
-                          Per-subject prices for this plan are managed in the Subscriptions section.
-                        </p>
-                        <Link href="/admin/subscriptions" className="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-800 mt-1">
-                          Manage Subject Prices <ArrowRight className="w-3 h-3" />
-                        </Link>
+                {/* FlexiLearn: subject pricing inline */}
+                {isFlexiLearn && (
+                  <div className="border-t border-indigo-100 bg-white/60 px-5 py-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <IndianRupee className="w-3.5 h-3.5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-gray-900">Subject-wise Pricing</p>
+                        <p className="text-[10px] text-gray-400">Set per-subject prices for FlexiLearn</p>
                       </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Class tabs */}
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {subjectPricing.map((cls) => (
+                        <button key={cls.id} onClick={() => setActiveClassTab(cls.id)}
+                          className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                            activeClassTab === cls.id
+                              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                              : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                          }`}>
+                          {cls.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Subject price cards */}
+                    {activeClassData ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {activeClassData.subjects.map((sub: any) => {
+                          const t = subjectTheme(sub.name);
+                          const isEditing = editingPrice?.id === sub.id;
+                          return (
+                            <div key={sub.id} className={`bg-gradient-to-br ${t.bg} border ${t.border} rounded-xl p-3`}>
+                              <div className="flex items-center gap-2.5 mb-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center shadow-sm shrink-0`}>
+                                  <t.Icon className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-black text-gray-900 truncate">{sub.name}</p>
+                                  <span className={`text-[10px] font-bold ${sub.enabled ? "text-emerald-600" : "text-gray-400"}`}>
+                                    {sub.enabled ? "Enabled" : "Disabled"}
+                                  </span>
+                                </div>
+                              </div>
+                              {isEditing ? (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                    <span className="px-2 text-xs font-bold text-gray-400">₹</span>
+                                    <input type="number" value={editingPrice!.price} autoFocus
+                                      onChange={(e) => setEditingPrice({ ...editingPrice!, price: parseInt(e.target.value) || 0 })}
+                                      className="flex-1 py-1.5 pr-2 text-sm font-black focus:outline-none" />
+                                  </div>
+                                  <button onClick={() => updateSubjectPrice(sub.id, editingPrice!.price)} disabled={savingPrice}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors">
+                                    <Save className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => setEditingPrice(null)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-gray-600 transition-colors">
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-lg font-black ${t.text}`}>₹{sub.price || 0}</span>
+                                  <button onClick={() => setEditingPrice({ id: sub.id, price: sub.price || 0 })}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white text-[10px] font-bold text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all">
+                                    <Pencil className="w-3 h-3" /> Edit
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center py-4">No subjects found.</p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
