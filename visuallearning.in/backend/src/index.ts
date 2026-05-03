@@ -17,22 +17,34 @@ import studentGroupRoutes from "./routes/studentgroup.routes";
 import mobileRoutes from "./mobile/routes";
 import { prisma } from "./config/prisma";
 
-// Migrate old plan keys → new Foundation Pass / Academic Plus / Elite Learning / FlexiLearn
+const NEW_PLANS = {
+  FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+  ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+  ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+  FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+};
+
+// Ensure DB always has the correct plan keys on startup
 async function migratePlansConfig() {
   try {
     const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    if (!setting) return;
-    const plans = JSON.parse(setting.value) as Record<string, any>;
-    const OLD_KEYS = ["SINGLE_CLASS", "MULTI_CLASS", "FULL_ACCESS", "MONTHLY", "YEARLY", "LIVE_CLASS"];
-    if (!OLD_KEYS.some((k) => k in plans)) return; // already migrated
 
-    const newPlans = {
-      FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-    };
-    await prisma.setting.update({ where: { key: "plans_config" }, data: { value: JSON.stringify(newPlans) } });
+    if (!setting) {
+      // No record at all — create with new plans
+      await prisma.setting.create({ data: { key: "plans_config", value: JSON.stringify(NEW_PLANS) } });
+      console.log("✅ Plans config created with new plans");
+      return;
+    }
+
+    let plans: Record<string, any> = {};
+    try { plans = JSON.parse(setting.value); } catch { /* invalid JSON — replace */ }
+
+    // Already has new keys — skip
+    const hasNewKeys = ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].some((k) => k in plans);
+    if (hasNewKeys) return;
+
+    // Empty or has old keys — replace with new plans
+    await prisma.setting.update({ where: { key: "plans_config" }, data: { value: JSON.stringify(NEW_PLANS) } });
     console.log("✅ Plans config migrated to Foundation Pass / Academic Plus / Elite Learning / FlexiLearn");
   } catch (e) {
     console.error("Plan migration error:", e);
