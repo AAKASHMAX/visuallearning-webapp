@@ -563,6 +563,7 @@ export async function updatePlanSettings(req: Request, res: Response) {
       create: { key: "plans_config", value: JSON.stringify(plansConfig) },
     });
 
+    cacheInvalidate("plans");
     return success(res, { plansConfig }, "Plan settings updated");
   } catch (e) {
     console.error("Update plan settings error:", e);
