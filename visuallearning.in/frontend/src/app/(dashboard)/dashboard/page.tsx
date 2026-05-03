@@ -199,7 +199,7 @@ function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscriptio
                   <ChevronRight className={`w-4 h-4 ${theme.text} group-hover:translate-x-1 transition-transform`} />
                 </div>
               </Link>
-          })}
+          )})}
         </div>
       </div>
     );
