@@ -114,6 +114,7 @@ export default function SubscriptionPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const planParam  = searchParams.get("plan")     ?? "";
+  const billingCycle = searchParams.get("billing") ?? "yearly";
   const subjectStr = searchParams.get("subjects") ?? "";
   const subjectIds = subjectStr ? subjectStr.split(",").filter(Boolean) : [];
 
@@ -183,9 +184,13 @@ export default function SubscriptionPage() {
 
   if (isFocused) {
     const meta       = PLAN_METADATA[apiPlan?.id] || null;
-    const basePrice  = isFlexi
+    const rawBasePrice = isFlexi
       ? subjectData.reduce((s, sub) => s + (sub.price ?? 0), 0)
-      : (apiPlan?.price ?? 0);
+      : (billingCycle === "monthly" ? apiPlan?.monthlyPrice : apiPlan?.yearlyPrice) ?? 0;
+    
+    // adjust Flexi monthly price
+    const basePrice = isFlexi && billingCycle === "monthly" ? Math.round(rawBasePrice / 10) : rawBasePrice;
+
     const discounted = couponApplied
       ? Math.round(basePrice * (1 - couponDiscount / 100))
       : basePrice;
