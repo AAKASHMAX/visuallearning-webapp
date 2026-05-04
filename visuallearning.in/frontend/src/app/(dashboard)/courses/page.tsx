@@ -139,8 +139,8 @@ export default function CoursesPage() {
 
       {/* Page Header */}
       <div className="mb-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-black text-heading tracking-tight mb-4">
-          VisualLearning <span className="text-primary">Courses</span>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-500 to-[#05BFDB] drop-shadow-sm py-1">
+          VisualLearning Courses
         </h1>
         <p className="text-lg text-text-muted max-w-2xl mx-auto font-medium">
           Unlock your potential with our immersive 3D science curriculum. Choose a plan that fits your learning style.
