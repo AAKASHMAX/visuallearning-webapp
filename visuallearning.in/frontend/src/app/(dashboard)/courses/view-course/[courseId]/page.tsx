@@ -1,20 +1,26 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  Atom, Beaker, Microscope, Lightbulb, Zap, Flame, 
-  Waves, Cpu, PlayCircle, BookOpen, Clock, ChevronRight,
-  Monitor, FileText, Layout
+import {
+  Atom, Beaker, Microscope, Lightbulb, Zap, Flame,
+  Waves, Cpu, PlayCircle, ChevronRight,
+  Monitor, FileText, Layout, BookOpen
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 
-// Map string names to Lucide icons
 const iconMap: Record<string, any> = {
-  Atom, Lightbulb, Zap, Flame, Waves, Cpu, Beaker, Microscope
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, Beaker, Microscope, BookOpen
+};
+
+const subjectStyle = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes("physics"))   return { gradient: "from-blue-500 to-indigo-600", light: "bg-blue-50", text: "text-blue-700", ring: "ring-blue-500/20", accent: "#3b82f6" };
+  if (n.includes("chemistry")) return { gradient: "from-emerald-500 to-teal-600", light: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-500/20", accent: "#10b981" };
+  if (n.includes("biology"))   return { gradient: "from-rose-500 to-pink-600", light: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-500/20", accent: "#f43f5e" };
+  return { gradient: "from-violet-500 to-purple-600", light: "bg-violet-50", text: "text-violet-700", ring: "ring-violet-500/20", accent: "#8b5cf6" };
 };
 
 export default function CourseContentPage({ params }: { params: { courseId: string } }) {
@@ -47,100 +53,89 @@ export default function CourseContentPage({ params }: { params: { courseId: stri
     </div>
   );
 
+  const accentColor = course.accentColor || "#3b82f6";
+
   return (
     <div className="min-h-screen bg-[#f8fafd] pb-20">
-      {/* ── HEADER SECTION ── */}
-      <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* ── HEADER ── */}
+      <div className="border-b sticky top-0 z-30 backdrop-blur-xl bg-white/80">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
             <div>
               <Breadcrumb items={[{ label: "Courses", href: "/courses" }, { label: course.name }]} />
-              <h1 className="text-2xl md:text-3xl font-black text-gray-900 mt-2 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-black text-gray-900 mt-1 tracking-tight">
                 {course.name}
               </h1>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:block text-right mr-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Status</p>
-                <p className="text-sm font-bold text-gray-900">Premium Access</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border" style={{ color: accentColor, borderColor: `${accentColor}30`, backgroundColor: `${accentColor}08` }}>
+                Premium Access
+              </span>
+              <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="space-y-16">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="space-y-12">
           {course.subjects.map((subject: any, sIdx: number) => {
             const SubjectIcon = iconMap[subject.icon] || Atom;
+            const style = subjectStyle(subject.name);
             return (
-              <div key={sIdx} className="animate-fade-in" style={{ animationDelay: `${sIdx * 0.1}s` }}>
+              <div key={sIdx}>
                 {/* Subject Header */}
-                <div className="flex items-center gap-4 mb-8">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-xl shadow-blue-500/10`}>
-                    <SubjectIcon className="w-7 h-7 text-white" />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${style.gradient} flex items-center justify-center shadow-lg`}>
+                    <SubjectIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">{subject.name}</h2>
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{subject.chapters.length} Premium Chapters</p>
+                    <h2 className="text-xl font-black text-gray-900 tracking-tight">{subject.name}</h2>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{subject.chapters.length} chapters</p>
                   </div>
                 </div>
 
-                {/* Chapters Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subject.chapters.map((chapter: any) => {
+                {/* Chapters Grid — compact cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {subject.chapters.map((chapter: any, cIdx: number) => {
                     const ChapterIcon = iconMap[chapter.icon] || Atom;
                     const classId = chapter.classId;
                     const subjectId = chapter.subjectId;
 
                     return (
-                      <Link 
-                        key={chapter.id} 
+                      <Link
+                        key={chapter.id}
                         href={`/courses/${classId}/${subjectId}/${chapter.id}?fromCourse=${courseId}`}
-                        className="group bg-white rounded-[2rem] border border-gray-100 p-2 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full"
+                        className={`group relative bg-white rounded-2xl border border-gray-100 hover:border-gray-200 p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-start gap-3.5`}
                       >
-                        {/* Chapter Card Content */}
-                        <div className="relative aspect-[16/10] rounded-[1.6rem] overflow-hidden bg-gray-900 mb-4">
-                          {/* Simulated Thumbnail */}
-                          <div className={`absolute inset-0 bg-gradient-to-br ${chapter.gradient} opacity-20`} />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <ChapterIcon className="w-16 h-16 text-white/20 group-hover:scale-125 transition-transform duration-700" />
-                          </div>
-                          <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1 flex items-center gap-2">
-                                <PlayCircle className="w-3.5 h-3.5 text-white" />
-                                <span className="text-[10px] font-black text-white uppercase tracking-wider">Start Lesson</span>
-                            </div>
+                        {/* Icon */}
+                        <div className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${style.gradient} flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all`}>
+                          <ChapterIcon className="w-5 h-5 text-white" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1 group-hover:text-gray-700 transition-colors line-clamp-2">
+                            {chapter.title}
+                          </h3>
+                          <div className="flex items-center gap-2.5 text-[10px] font-semibold text-gray-400">
+                            {chapter.contentCount.videos > 0 && (
+                              <span className="flex items-center gap-0.5">
+                                <PlayCircle className="w-3 h-3" />
+                                {chapter.contentCount.videos}
+                              </span>
+                            )}
+                            {chapter.contentCount.notes > 0 && (
+                              <span className="flex items-center gap-0.5">
+                                <FileText className="w-3 h-3" />
+                                {chapter.contentCount.notes}
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        <div className="px-5 pb-6 flex-1 flex flex-col">
-                          <h3 className="text-lg font-black text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                            {chapter.title}
-                          </h3>
-                          <p className="text-xs font-bold text-gray-400 mb-4 line-clamp-2">
-                            {chapter.desc}
-                          </p>
-                          
-                          <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <Monitor className="w-3.5 h-3.5 text-gray-300" />
-                                <span className="text-[10px] font-black text-gray-400">{chapter.contentCount.videos} Videos</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <FileText className="w-3.5 h-3.5 text-gray-300" />
-                                <span className="text-[10px] font-black text-gray-400">{chapter.contentCount.notes} PDFs</span>
-                              </div>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-white" />
-                            </div>
-                          </div>
-                        </div>
+                        {/* Arrow */}
+                        <ChevronRight className="w-4 h-4 text-gray-200 group-hover:text-gray-400 shrink-0 mt-1 transition-colors" />
                       </Link>
                     );
                   })}

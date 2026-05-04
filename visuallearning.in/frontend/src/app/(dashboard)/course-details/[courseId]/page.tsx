@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle, Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, ArrowRight } from "lucide-react";
+import { Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle, Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, ArrowRight, ChevronRight } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
@@ -298,20 +298,23 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                         </div>
                         <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {subject.chapters.map((chapter: any) => {
                           const Icon = iconMap[chapter.icon] || Atom;
                           return (
-                            <Link 
-                              key={chapter.id} 
+                            <Link
+                              key={chapter.id}
                               href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromDetails=${courseId}`}
-                              className="group cursor-pointer bg-white rounded-2xl border p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center"
+                              className="group bg-white rounded-xl border border-gray-100 hover:border-gray-200 p-3.5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3"
                             >
-                              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${chapter.gradient} flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
-                                <Icon className="w-7 h-7 text-white" />
+                              <div className={`shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br ${chapter.gradient || subject.color} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+                                <Icon className="w-4.5 h-4.5 text-white" />
                               </div>
-                              <h4 className="font-bold text-gray-900 mb-1">{chapter.title}</h4>
-                              <p className="text-xs text-gray-500">{chapter.desc}</p>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-gray-900 leading-snug line-clamp-1 group-hover:text-gray-700 transition-colors">{chapter.title}</h4>
+                                {chapter.desc && <p className="text-[11px] text-gray-400 line-clamp-1 mt-0.5">{chapter.desc}</p>}
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-gray-200 group-hover:text-gray-400 shrink-0 transition-colors" />
                             </Link>
                           );
                         })}
