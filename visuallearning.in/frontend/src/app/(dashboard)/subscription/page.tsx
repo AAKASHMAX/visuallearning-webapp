@@ -114,7 +114,7 @@ export default function SubscriptionPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const planParam  = searchParams.get("plan")     ?? "";
-  const billingCycle = searchParams.get("billing") ?? "yearly";
+  const billingCycle = searchParams.get("billing") ?? "monthly";
   const subjectStr = searchParams.get("subjects") ?? "";
   const subjectIds = subjectStr ? subjectStr.split(",").filter(Boolean) : [];
 

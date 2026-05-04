@@ -95,7 +95,7 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [activeClassId, setActiveClassId] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
     setLoading(true);
