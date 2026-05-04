@@ -318,7 +318,7 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
     <div className="min-h-screen bg-gray-50/50 pb-20">
       
       {/* ── HERO SECTION (Dark Theme) ── */}
-      <div className="relative text-white pt-12 pb-16 lg:pb-20 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.bgColor}dd 50%, ${theme.bgColor} 100%)` }}>
+      <div className="relative text-white pt-16 pb-24 lg:pb-32 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.bgColor}dd 50%, ${theme.bgColor} 100%)` }}>
         {/* Grid texture overlay */}
         <div className="absolute inset-0 bg-grid-dark opacity-20 pointer-events-none" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: `${theme.accentColor}15` }} />
@@ -335,10 +335,19 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
         <div className="max-w-7xl mx-auto px-4 relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           
           {/* Left Content (Top Left) */}
-          <div className="lg:col-span-1 pt-4">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-2 leading-tight tracking-tight text-white">
-              {course?.name ?? planDisplayName}
+          <div className="lg:col-span-1 pt-4 md:pt-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 shadow-xl shadow-black/5">
+              <Sparkles className="w-4 h-4 text-yellow-400 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/90 shadow-sm">Premium Course</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black mb-6 leading-[1.1] tracking-tight">
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/70 drop-shadow-sm" style={{ textShadow: `0 0 40px ${theme.accentColor}40` }}>
+                {course?.name ?? planDisplayName}
+              </span>
             </h1>
+            <p className="text-white/80 text-base font-medium leading-relaxed max-w-xl opacity-90">
+              {theme.subtitle}
+            </p>
           </div>
 
           {/* Dynamic Animation visual (Middle) */}
@@ -361,6 +370,13 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
             )}
           </div>
 
+        </div>
+
+        {/* Curve Separator */}
+        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-[0] transform translate-y-[1px]">
+          <svg className="relative block w-full h-[40px] md:h-[80px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C52.71,76.5,158.15,74.75,321.39,56.44Z" fill="#f9fafb" />
+          </svg>
         </div>
       </div>
 
