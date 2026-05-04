@@ -3,7 +3,14 @@
 import { useEffect, useState, use } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle, Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, ArrowRight, ChevronRight } from "lucide-react";
+import {
+  Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle,
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, ArrowRight, ChevronRight,
+  Eye, Magnet, Orbit, FlaskConical, Thermometer, Wind, Gauge, Activity, Radiation, CircuitBoard,
+  Battery, Unplug, Radio, Telescope, Rocket, Dna, Heart, Brain, Leaf, Bug, Flower2, Trees, Droplets,
+  Shell, Egg, Bone, Ribbon, Sprout, Apple, Footprints, TestTube, FlaskRound, Gem, Pipette, Hexagon,
+  Snowflake, SunDim, Moon, Mountain, Cloudy, type LucideIcon
+} from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
@@ -12,8 +19,84 @@ import { PageLoader } from "@/components/ui/loading";
 
 // Map string names to Lucide icons
 const iconMap: Record<string, any> = {
-  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope
+  Atom, Lightbulb, Zap, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope,
+  FlaskConical, Thermometer, Wind, Gauge, Activity, Radiation, CircuitBoard,
+  Battery, Radio, Telescope, Rocket, Globe, Orbit, Eye, Magnet,
+  Dna, Heart, Brain, Leaf, Bug, Flower2, Trees, Droplets,
+  Shell, Egg, Bone, Ribbon, Sprout, Apple, Footprints,
+  TestTube, FlaskRound, Gem, Pipette, Hexagon, Snowflake,
+  SunDim, Moon, Mountain, Cloudy, Monitor, Unplug
 };
+
+function getChapterIcon(title: string, fallbackIcon?: string): LucideIcon {
+  if (fallbackIcon && iconMap[fallbackIcon]) return iconMap[fallbackIcon];
+  const t = title.toLowerCase();
+  if (t.includes("mechanic") || t.includes("motion") || t.includes("kinematic")) return Gauge;
+  if (t.includes("force") || t.includes("newton") || t.includes("friction")) return Activity;
+  if (t.includes("gravit")) return Globe;
+  if (t.includes("optic") || t.includes("light") || t.includes("mirror") || t.includes("lens") || t.includes("refraction") || t.includes("reflection")) return Eye;
+  if (t.includes("electric") || t.includes("current") || t.includes("circuit") || t.includes("ohm")) return Zap;
+  if (t.includes("magnet") || t.includes("electromagnetic")) return Magnet;
+  if (t.includes("wave") || t.includes("sound") || t.includes("oscillat")) return Waves;
+  if (t.includes("therm") || t.includes("heat") || t.includes("temperature") || t.includes("calori")) return Thermometer;
+  if (t.includes("nuclear") || t.includes("radioact") || t.includes("atom")) return Radiation;
+  if (t.includes("energy") || t.includes("work") || t.includes("power")) return Flame;
+  if (t.includes("pressure") || t.includes("fluid") || t.includes("buoyan")) return Wind;
+  if (t.includes("semiconductor") || t.includes("diode") || t.includes("transistor")) return CircuitBoard;
+  if (t.includes("battery") || t.includes("cell") || t.includes("emf")) return Battery;
+  if (t.includes("organic") || t.includes("carbon") || t.includes("hydrocarbon")) return Hexagon;
+  if (t.includes("acid") || t.includes("base") || t.includes("salt") || t.includes("ph")) return FlaskConical;
+  if (t.includes("metal") || t.includes("alloy")) return Gem;
+  if (t.includes("periodic") || t.includes("element")) return TestTube;
+  if (t.includes("bond") || t.includes("ionic") || t.includes("covalent")) return Unplug;
+  if (t.includes("reaction") || t.includes("equation") || t.includes("redox")) return FlaskRound;
+  if (t.includes("solution") || t.includes("solut")) return Pipette;
+  if (t.includes("polymer")) return Ribbon;
+  if (t.includes("crystal") || t.includes("solid state")) return Snowflake;
+  if (t.includes("dna") || t.includes("gene") || t.includes("hered") || t.includes("chromosom")) return Dna;
+  if (t.includes("heart") || t.includes("circulat") || t.includes("blood")) return Heart;
+  if (t.includes("brain") || t.includes("nerv") || t.includes("neuro")) return Brain;
+  if (t.includes("plant") || t.includes("photosynth")) return Leaf;
+  if (t.includes("cell") || t.includes("cytol")) return Microscope;
+  if (t.includes("ecology") || t.includes("ecosystem") || t.includes("environment")) return Trees;
+  if (t.includes("evolution") || t.includes("fossil")) return Shell;
+  if (t.includes("nutrition") || t.includes("digest") || t.includes("food")) return Apple;
+  if (t.includes("reproduct")) return Flower2;
+  if (t.includes("respir") || t.includes("lung")) return Wind;
+  return Atom;
+}
+
+const GRADIENTS: Record<string, { bg: string; light: string }[]> = {
+  physics: [
+    { bg: "from-blue-500 to-indigo-600", light: "from-blue-50 to-indigo-50" },
+    { bg: "from-sky-500 to-blue-600", light: "from-sky-50 to-blue-50" },
+    { bg: "from-indigo-500 to-violet-600", light: "from-indigo-50 to-violet-50" },
+    { bg: "from-cyan-500 to-blue-600", light: "from-cyan-50 to-blue-50" },
+  ],
+  chemistry: [
+    { bg: "from-emerald-500 to-teal-600", light: "from-emerald-50 to-teal-50" },
+    { bg: "from-green-500 to-emerald-600", light: "from-green-50 to-emerald-50" },
+    { bg: "from-teal-500 to-cyan-600", light: "from-teal-50 to-cyan-50" },
+    { bg: "from-lime-500 to-green-600", light: "from-lime-50 to-green-50" },
+  ],
+  biology: [
+    { bg: "from-rose-500 to-pink-600", light: "from-rose-50 to-pink-50" },
+    { bg: "from-pink-500 to-fuchsia-600", light: "from-pink-50 to-fuchsia-50" },
+    { bg: "from-red-500 to-rose-600", light: "from-red-50 to-rose-50" },
+    { bg: "from-orange-500 to-rose-600", light: "from-orange-50 to-rose-50" },
+  ],
+  default: [
+    { bg: "from-violet-500 to-purple-600", light: "from-violet-50 to-purple-50" },
+    { bg: "from-purple-500 to-fuchsia-600", light: "from-purple-50 to-fuchsia-50" },
+  ],
+};
+function getSubjectGradients(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes("physics")) return GRADIENTS.physics;
+  if (n.includes("chemistry")) return GRADIENTS.chemistry;
+  if (n.includes("biology")) return GRADIENTS.biology;
+  return GRADIENTS.default;
+}
 
 /* ── ANIMATION: Atom Structure ── */
 function AtomAnimation({ accent }: { accent: string }) {
@@ -290,31 +373,30 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                 <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Course Content</h2>
                 {course.subjects.map((subject: any, sIdx: number) => {
                   const SubjectIcon = iconMap[subject.icon] || Atom;
+                  const gradients = getSubjectGradients(subject.name);
                   return (
-                    <div key={sIdx} className="space-y-6">
+                    <div key={sIdx} className="space-y-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-lg`}>
                           <SubjectIcon className="w-5 h-5 text-white" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {subject.chapters.map((chapter: any) => {
-                          const Icon = iconMap[chapter.icon] || Atom;
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {subject.chapters.map((chapter: any, cIdx: number) => {
+                          const Icon = getChapterIcon(chapter.title, chapter.icon);
+                          const grad = gradients[cIdx % gradients.length];
                           return (
                             <Link
                               key={chapter.id}
                               href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromDetails=${courseId}`}
-                              className="group bg-white rounded-xl border border-gray-100 hover:border-gray-200 p-3.5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3"
+                              className={`group bg-gradient-to-br ${grad.light} rounded-2xl border border-white/80 p-4 hover:shadow-lg hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center`}
                             >
-                              <div className={`shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br ${chapter.gradient || subject.color} flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-                                <Icon className="w-4.5 h-4.5 text-white" />
+                              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${grad.bg} flex items-center justify-center shadow-md mb-2.5 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                                <Icon className="w-5 h-5 text-white" />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-gray-900 leading-snug line-clamp-1 group-hover:text-gray-700 transition-colors">{chapter.title}</h4>
-                                {chapter.desc && <p className="text-[11px] text-gray-400 line-clamp-1 mt-0.5">{chapter.desc}</p>}
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-gray-200 group-hover:text-gray-400 shrink-0 transition-colors" />
+                              <h4 className="text-[13px] font-bold text-gray-800 leading-snug line-clamp-2 group-hover:text-gray-900 transition-colors">{chapter.title}</h4>
+                              {chapter.desc && <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">{chapter.desc}</p>}
                             </Link>
                           );
                         })}
