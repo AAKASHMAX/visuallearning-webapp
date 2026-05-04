@@ -175,6 +175,7 @@ export default function SubscriptionSettingsPage() {
               <Plus className="w-4 h-4 text-primary" /> New Plan
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {[
                 { label: "Plan Key", el: <input value={newPlanKey} onChange={(e) => setNewPlanKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))} placeholder="e.g. PREMIUM" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Display Name", el: <input value={newPlanLabel} onChange={(e) => setNewPlanLabel(e.target.value)} placeholder="e.g. Premium Plan" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Class Access (0=all)", el: <input type="number" min={0} value={newPlanClassSelection} onChange={(e) => setNewPlanClassSelection(parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
