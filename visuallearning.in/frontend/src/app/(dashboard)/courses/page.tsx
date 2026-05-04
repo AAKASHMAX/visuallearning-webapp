@@ -91,7 +91,6 @@ const COURSE_THEME: Record<string, { bgColor: string; accentColor: string; anima
 
 export default function CoursesPage() {
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"smart" | "custom">("smart");
   const [classesData, setClassesData] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -170,47 +169,18 @@ export default function CoursesPage() {
       <div className="mt-12 mb-16">
         {/* Tab selector */}
         <div className="flex flex-col items-center mb-10">
-          <div className="inline-flex p-1 rounded-2xl bg-white border border-gray-200 shadow-sm mb-6">
-            <button
-              onClick={() => setActiveTab("smart")}
-              className={`px-7 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 ${
-                activeTab === "smart"
-                  ? "bg-primary text-white shadow-md"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              Smart Learning
-            </button>
-            <button
-              onClick={() => setActiveTab("custom")}
-              className={`px-7 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 ${
-                activeTab === "custom"
-                  ? "bg-primary text-white shadow-md"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              Grade-wise Plans
-            </button>
-          </div>
-
-          <h2 className="text-3xl font-black text-heading mb-2 tracking-tight text-center">
-            {activeTab === "smart" ? (
-              <>Premium Learning <span className="gradient-text">Packages</span></>
-            ) : (
-              <>Structured <span className="gradient-text">Grade-wise</span> Plans</>
-            )}
+          <h2 className="text-4xl font-black text-heading mb-4 tracking-tight text-center">
+            Premium Learning <span className="gradient-text">Packages</span>
           </h2>
-          <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8">
-            {activeTab === "smart"
-              ? "Choose the perfect plan to unlock premium visual content and accelerate your science journey."
-              : "Complete curricula tailored for your specific grade level with full access to all features."}
+          <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8 font-medium">
+            Choose the perfect plan to unlock premium visual content and accelerate your science journey.
           </p>
 
           {/* Billing Cycle Toggle */}
-          <div className="flex items-center justify-center p-1 bg-white border border-gray-200 rounded-xl shadow-sm mb-2">
+          <div className="flex items-center justify-center p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm mb-4">
             <button
               onClick={() => setBillingCycle("monthly")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+              className={`px-8 py-2.5 rounded-xl text-sm font-black transition-all duration-200 ${
                 billingCycle === "monthly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
               }`}
             >
@@ -218,7 +188,7 @@ export default function CoursesPage() {
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+              className={`px-8 py-2.5 rounded-xl text-sm font-black transition-all duration-200 ${
                 billingCycle === "yearly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
               }`}
             >
@@ -228,8 +198,8 @@ export default function CoursesPage() {
           </div>
         </div>
 
-        {activeTab === "smart" ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="mb-20">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {courses
               .filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey))
               .sort((a, b) => {
@@ -263,8 +233,18 @@ export default function CoursesPage() {
               );
             })}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        </div>
+
+        <div>
+          <div className="flex flex-col items-center mb-10">
+            <h2 className="text-4xl font-black text-heading mb-4 tracking-tight text-center">
+              Structured <span className="gradient-text">Grade-wise</span> Plans
+            </h2>
+            <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8 font-medium">
+              Complete curricula tailored for your specific grade level with full access to all features.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {courses.filter(c => ["CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"].includes(c.planKey)).map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.CLASS_9;
               const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
@@ -285,7 +265,7 @@ export default function CoursesPage() {
               );
             })}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
