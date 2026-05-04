@@ -9,7 +9,7 @@ import {
   Eye, Magnet, Orbit, FlaskConical, Thermometer, Wind, Gauge, Activity, Radiation, CircuitBoard,
   Battery, Unplug, Radio, Telescope, Rocket, Dna, Heart, Brain, Leaf, Bug, Flower2, Trees, Droplets,
   Shell, Egg, Bone, Ribbon, Sprout, Apple, Footprints, TestTube, FlaskRound, Gem, Pipette, Hexagon,
-  Snowflake, SunDim, Moon, Mountain, Cloudy, type LucideIcon
+  Snowflake, SunDim, Moon, Mountain, Cloudy, BookOpen, Mail, CheckCircle, type LucideIcon
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/lib/auth";
@@ -25,7 +25,8 @@ const iconMap: Record<string, any> = {
   Dna, Heart, Brain, Leaf, Bug, Flower2, Trees, Droplets,
   Shell, Egg, Bone, Ribbon, Sprout, Apple, Footprints,
   TestTube, FlaskRound, Gem, Pipette, Hexagon, Snowflake,
-  SunDim, Moon, Mountain, Cloudy, Monitor, Unplug
+  SunDim, Moon, Mountain, Cloudy, Monitor, Unplug,
+  BookOpen, Mail, CheckCircle, PlayCircle, FileText
 };
 
 function getChapterIcon(title: string, fallbackIcon?: string): LucideIcon {
@@ -241,13 +242,29 @@ const getCourseTheme = (courseId: string) => {
     accentColor: isFoundation ? "#60A5FA" : isAcademic ? "#38BDF8" : isElite ? "#D8B4FE" : "#818CF8",
     animationType: isFoundation ? "atom" : isAcademic ? "magnet" : isElite ? "circuit" : "book",
     themeIcon: isFoundation ? "Zap" : isAcademic ? "GraduationCap" : isElite ? "Crown" : "Atom",
-    learningOutcomes: [
-      "Understand the core concepts of Mechanics and Kinematics",
-      "Simulate and visualize complex physics problems",
-      "Master the mathematical tools required for competitive exams",
-      "Apply theories to real-world physical phenomena",
-      "Solve advanced numerical problems with ease",
-      "Learn how to use virtual labs for practical experiments"
+    learningOutcomes: isFoundation ? [
+      { text: "Grasp core concepts of Motion, Force & Energy", icon: "Gauge" },
+      { text: "Understand basic Chemical Reactions & Bonding", icon: "FlaskConical" },
+      { text: "Explore Cell Biology & Life Processes", icon: "Microscope" },
+      { text: "Watch 3D animated concept videos", icon: "PlayCircle" },
+      { text: "Track your progress across chapters", icon: "Activity" },
+      { text: "Learn at your own pace on any device", icon: "Monitor" },
+    ] : isAcademic ? [
+      { text: "Master complete Class 9-10 Physics, Chemistry & Biology", icon: "GraduationCap" },
+      { text: "Selected Class 11-12 Physics & Chemistry chapters", icon: "Atom" },
+      { text: "Download chapter notes & formula sheets (PDF)", icon: "FileText" },
+      { text: "Solve MCQ quizzes with detailed solutions", icon: "CheckCircle" },
+      { text: "Track performance with analytics dashboard", icon: "Activity" },
+      { text: "Get email support within 24 hours", icon: "Mail" },
+    ] : [
+      { text: "Complete Physics, Chemistry & Biology for Class 9-12", icon: "Crown" },
+      { text: "Access 64+ Virtual Labs with 3D simulations", icon: "Beaker" },
+      { text: "Interactive 3D Visual Learning tools", icon: "Eye" },
+      { text: "Board exam practice with past papers", icon: "FileText" },
+      { text: "Notes, formula sheets & revision material", icon: "BookOpen" },
+      { text: "Priority WhatsApp support from faculty", icon: "Zap" },
+      { text: "Deep concept exploration tools", icon: "Brain" },
+      { text: "Performance analytics & progress tracking", icon: "Activity" },
     ],
   };
 };
@@ -355,15 +372,27 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
           <div className={`${isSubscribed ? "lg:col-span-3" : "lg:col-span-2"} pt-8 space-y-12 order-2 lg:order-1`}>
             
             {/* What you'll learn */}
-            <div className="bg-white rounded-xl border shadow-sm p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">What you&apos;ll learn</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {theme.learningOutcomes.map((outcome, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-                    <span className="text-gray-700 text-sm leading-relaxed">{outcome}</span>
-                  </div>
-                ))}
+            <div className="rounded-2xl overflow-hidden border" style={{ borderColor: `${theme.accentColor}20` }}>
+              <div className="px-6 md:px-8 py-5 flex items-center gap-3" style={{ background: `linear-gradient(135deg, ${theme.bgColor}, ${theme.bgColor}dd)` }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${theme.accentColor}25` }}>
+                  <Sparkles className="w-5 h-5" style={{ color: theme.accentColor }} />
+                </div>
+                <h2 className="text-xl font-black text-white tracking-tight">What you&apos;ll learn</h2>
+              </div>
+              <div className="bg-white p-5 md:p-7">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {theme.learningOutcomes.map((outcome: { text: string; icon: string }, idx: number) => {
+                    const OutcomeIcon = iconMap[outcome.icon] || Check;
+                    return (
+                      <div key={idx} className="flex items-center gap-3.5 rounded-xl p-3 transition-colors hover:bg-gray-50/80 group">
+                        <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${theme.accentColor}12` }}>
+                          <OutcomeIcon className="w-5 h-5" style={{ color: theme.accentColor }} />
+                        </div>
+                        <span className="text-[13px] font-semibold text-gray-700 leading-snug">{outcome.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
