@@ -139,7 +139,7 @@ export default function CoursesPage() {
 
       {/* Page Header */}
       <div className="mb-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-500 to-[#05BFDB] drop-shadow-sm py-1">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] via-[#a855f7] to-[#0ea5e9] drop-shadow-sm py-1">
           VisualLearning Courses
         </h1>
         <p className="text-lg text-text-muted max-w-2xl mx-auto font-medium">
