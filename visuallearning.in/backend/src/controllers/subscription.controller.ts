@@ -309,7 +309,7 @@ export async function verifyPayment(req: Request, res: Response) {
 
     if (amount < 100) amount = 100;
 
-    const { subjectsAccess } = req.body;
+
     let resolvedSubjectsAccess: string[] = [];
     let resolvedClassesAccess: string[] = [];
 

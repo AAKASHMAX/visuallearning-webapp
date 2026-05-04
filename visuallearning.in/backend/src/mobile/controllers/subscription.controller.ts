@@ -32,14 +32,22 @@ async function validateCoupon(code: string, planKey?: string): Promise<{ valid: 
 }
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
-async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+async function getPlanConfig(planKey: string): Promise<{ monthlyAmount: number; yearlyAmount: number; durationMonthly: number; durationYearly: number; label: string; classSelection: number; amount?: number; duration?: number }> {
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
   if (setting) {
     const plans = JSON.parse(setting.value);
     if (plans[planKey]) return plans[planKey];
   }
   const fallback = config.plans[planKey as keyof typeof config.plans];
-  return { amount: fallback.amount, duration: fallback.duration, label: fallback.label, classSelection: 0 };
+  if (!fallback) return { monthlyAmount: 0, yearlyAmount: 0, durationMonthly: 30, durationYearly: 365, label: planKey, classSelection: 0 };
+  return { 
+    monthlyAmount: fallback.monthlyAmount, 
+    yearlyAmount: fallback.yearlyAmount, 
+    durationMonthly: fallback.durationMonthly, 
+    durationYearly: fallback.durationYearly, 
+    label: fallback.label, 
+    classSelection: 0 
+  };
 }
 
 // GET /api/subscription-plan — list plans with features, classSelection, classes (matches webapp)
@@ -54,10 +62,10 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
       plansConfig = JSON.parse(setting.value);
     } else {
       plansConfig = {
-        FOUNDATION_PASS: { amount: config.plans.FOUNDATION_PASS.amount, label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        ACADEMIC_PLUS:   { amount: config.plans.ACADEMIC_PLUS.amount,   label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        ELITE_LEARNING:  { amount: config.plans.ELITE_LEARNING.amount,  label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        FLEXI_PLAN:      { amount: config.plans.FLEXI_PLAN.amount,      label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        FOUNDATION_PASS: { monthlyAmount: config.plans.FOUNDATION_PASS.monthlyAmount, yearlyAmount: config.plans.FOUNDATION_PASS.yearlyAmount, label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        ACADEMIC_PLUS:   { monthlyAmount: config.plans.ACADEMIC_PLUS.monthlyAmount, yearlyAmount: config.plans.ACADEMIC_PLUS.yearlyAmount, label: "Academic Plus", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        ELITE_LEARNING:  { monthlyAmount: config.plans.ELITE_LEARNING.monthlyAmount, yearlyAmount: config.plans.ELITE_LEARNING.yearlyAmount, label: "Elite Learning", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+        FLEXI_PLAN:      { monthlyAmount: config.plans.FLEXI_PLAN.monthlyAmount, yearlyAmount: config.plans.FLEXI_PLAN.yearlyAmount, label: "FlexiLearn", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
       };
     }
 
@@ -66,9 +74,9 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
       .map(([key, v]: [string, any]) => ({
         id: key,
         name: v.label,
-        price: v.amount / 100,
-        duration: v.duration,
-        billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
+        price: (v.yearlyAmount !== undefined ? v.yearlyAmount : (v.amount || 0)) / 100,
+        duration: v.durationYearly !== undefined ? v.durationYearly : (v.duration || 365),
+        billingCycle: v.billingCycle || "yearly",
         features: featureMap[key] || [],
         classSelection: v.classSelection || 0,
         popular: key === "MULTI_CLASS",
@@ -154,7 +162,11 @@ export async function generateOrderId(req: Request, res: Response) {
       }
     }
 
-    let amount = planConfig.amount;
+    const isMonthly = req.body.billingCycle === "monthly";
+    let amount = isMonthly 
+      ? (planConfig.monthlyAmount !== undefined ? planConfig.monthlyAmount : (planConfig.amount ? Math.round(planConfig.amount / 10) : 0))
+      : (planConfig.yearlyAmount !== undefined ? planConfig.yearlyAmount : (planConfig.amount || 0));
+    
     let couponDiscount = 0;
 
     // Apply coupon if provided
@@ -178,7 +190,7 @@ export async function generateOrderId(req: Request, res: Response) {
       currency: order.currency,
       plan_key: planKey,
       classesAccess,
-      originalAmount: planConfig.amount,
+      originalAmount: amount + couponDiscount,
       couponDiscount,
       couponCode,
     });
@@ -204,7 +216,11 @@ export async function purchasePlan(req: Request, res: Response) {
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
     const planConfig = await getPlanConfig(planKey);
-    let amount = planConfig.amount;
+    const isMonthly = req.body.billingCycle === "monthly";
+    let amount = isMonthly 
+      ? (planConfig.monthlyAmount !== undefined ? planConfig.monthlyAmount : (planConfig.amount ? Math.round(planConfig.amount / 10) : 0))
+      : (planConfig.yearlyAmount !== undefined ? planConfig.yearlyAmount : (planConfig.amount || 0));
+    
     let discountAmount = 0;
 
     // Apply coupon discount
@@ -225,8 +241,12 @@ export async function purchasePlan(req: Request, res: Response) {
 
     if (amount < 100) amount = 100;
 
+    const duration = isMonthly 
+      ? (planConfig.durationMonthly !== undefined ? planConfig.durationMonthly : 30)
+      : (planConfig.durationYearly !== undefined ? planConfig.durationYearly : (planConfig.duration || 365));
+
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
+    expiryDate.setDate(expiryDate.getDate() + duration);
 
     // Resolve classesAccess: if plan has classSelection > 0, use provided; otherwise grant all
     let resolvedClassesAccess: string[] = [];
