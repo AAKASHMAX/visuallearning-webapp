@@ -448,10 +448,10 @@ export async function getCourseBySlug(req: Request, res: Response) {
         const config = plans[course.planKey] || null;
         if (config) {
           planConfig = {
-            monthlyPrice: course.price !== null ? course.price : (config.monthlyAmount / 100),
-            yearlyPrice: course.price !== null ? course.price : (config.yearlyAmount / 100),
-            durationMonthly: config.durationMonthly || 30,
-            durationYearly: config.durationYearly || 365,
+            monthlyPrice: ((config.monthlyAmount !== undefined ? config.monthlyAmount : (config.amount || 0) / 10) / 100),
+            yearlyPrice: ((config.yearlyAmount !== undefined ? config.yearlyAmount : (config.amount || 0)) / 100),
+            durationMonthly: config.durationMonthly !== undefined ? config.durationMonthly : 30,
+            durationYearly: config.durationYearly !== undefined ? config.durationYearly : (config.duration || 365),
           };
         }
       }
@@ -563,10 +563,10 @@ export async function getCourses(_req: Request, res: Response) {
         icon: c.icon,
         planKey: c.planKey,
         chapterCount: c._count.chapters,
-        monthlyPrice: planConfig ? planConfig.monthlyAmount / 100 : 0,
-        yearlyPrice: planConfig ? planConfig.yearlyAmount / 100 : 0,
-        durationMonthly: planConfig ? planConfig.durationMonthly : 30,
-        durationYearly: planConfig ? planConfig.durationYearly : 365,
+        monthlyPrice: planConfig ? ((planConfig.monthlyAmount !== undefined ? planConfig.monthlyAmount : (planConfig.amount || 0) / 10) / 100) : 0,
+        yearlyPrice: planConfig ? ((planConfig.yearlyAmount !== undefined ? planConfig.yearlyAmount : (planConfig.amount || 0)) / 100) : 0,
+        durationMonthly: planConfig ? (planConfig.durationMonthly !== undefined ? planConfig.durationMonthly : 30) : 30,
+        durationYearly: planConfig ? (planConfig.durationYearly !== undefined ? planConfig.durationYearly : (planConfig.duration || 365)) : 365,
         features: c.planKey ? (featureMap[c.planKey] || []) : [],
         enabled: planConfig ? planConfig.enabled : true,
       };
