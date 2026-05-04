@@ -124,6 +124,22 @@ export default function CoursesPage() {
     return selectedSubjects.reduce((sum, id) => sum + (idToPrice.get(id) ?? 0), 0);
   }, [selectedSubjects, classesData]);
 
+  const maxDiscount = useMemo(() => {
+    let max = 0;
+    courses.forEach(c => {
+      const monthly = c.monthlyPrice || 0;
+      const yearly = c.yearlyPrice || 0;
+      if (monthly > 0 && yearly > 0) {
+        const expectedYearly = monthly * 12;
+        if (expectedYearly > yearly) {
+          const discount = Math.round(((expectedYearly - yearly) / expectedYearly) * 100);
+          if (discount > max) max = discount;
+        }
+      }
+    });
+    return max > 0 ? max : 20; // fallback to 20% if no dynamic calculation is possible
+  }, [courses]);
+
   const toggleSubject = (subId: string) => {
     setSelectedSubjects((prev) =>
       prev.includes(subId) ? prev.filter((id) => id !== subId) : [...prev, subId]
@@ -207,7 +223,7 @@ export default function CoursesPage() {
               }`}
             >
               Yearly
-              <span className="ml-2 inline-flex items-center justify-center bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Save 20%</span>
+              <span className="ml-2 inline-flex items-center justify-center bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Save {maxDiscount}%</span>
             </button>
           </div>
         </div>
