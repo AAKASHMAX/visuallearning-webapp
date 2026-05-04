@@ -182,7 +182,13 @@ export default function CoursesPage() {
 
         {activeTab === "smart" ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {courses.filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey)).map((course) => {
+            {courses
+              .filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey))
+              .sort((a, b) => {
+                const order = ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"];
+                return order.indexOf(a.planKey) - order.indexOf(b.planKey);
+              })
+              .map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
               const priceStr = course.price === 0 ? "FREE" : `₹${course.price.toLocaleString("en-IN")}`;
               const isElite = course.planKey === "ELITE_LEARNING";
