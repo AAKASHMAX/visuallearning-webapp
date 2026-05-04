@@ -137,6 +137,16 @@ export default function CoursesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
 
+      {/* Page Header */}
+      <div className="mb-10 text-center">
+        <h1 className="text-4xl md:text-5xl font-black text-heading tracking-tight mb-4">
+          VisualLearning <span className="text-primary">Courses</span>
+        </h1>
+        <p className="text-lg text-text-muted max-w-2xl mx-auto font-medium">
+          Unlock your potential with our immersive 3D science curriculum. Choose a plan that fits your learning style.
+        </p>
+      </div>
+
       <ConceptCarousel />
 
       {/* ALL PRICING PLANS */}
@@ -299,7 +309,7 @@ function ConceptCarousel() {
     <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary-dark via-primary to-primary-dark py-14 mb-10">
       <div className="absolute inset-0 bg-grid-dark opacity-30 pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#05BFDB]/10 rounded-full blur-[150px]" />
-      <div className="relative z-10 text-center mb-8">
+      <div className="relative z-10 text-center mb-16">
         <h2 className="text-2xl font-black text-white tracking-tight mb-1.5">
           Explore Science in <span className="text-[#05BFDB]">3D</span>
         </h2>
