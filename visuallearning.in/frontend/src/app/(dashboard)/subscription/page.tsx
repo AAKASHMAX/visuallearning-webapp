@@ -418,7 +418,11 @@ export default function SubscriptionPage() {
             const meta = PLAN_METADATA[plan.id];
             const type = getPlanType(plan.name);
             const info = PLAN_INFO[type] || PLAN_INFO.flexi;
-            const discountedPrice = Math.round(plan.price * (1 - (couponApplied ? couponDiscount / 100 : 0)));
+            const currentPrice = billingCycle === "monthly" 
+              ? (plan.monthlyPrice !== undefined ? plan.monthlyPrice : (plan.price ? Math.round(plan.price / 10) : 0))
+              : (plan.yearlyPrice !== undefined ? plan.yearlyPrice : (plan.price || 0));
+
+            const discountedPrice = Math.round(currentPrice * (1 - (couponApplied ? couponDiscount / 100 : 0)));
 
             return (
               <div key={plan.id} className={cn("relative flex flex-col rounded-3xl border-2 p-8 transition-all hover:-translate-y-2 shadow-lg bg-white", plan.popular ? "border-primary scale-[1.03] z-10" : "border-gray-100")}>
@@ -427,7 +431,7 @@ export default function SubscriptionPage() {
                 <h3 className="text-2xl font-black text-heading mb-1">{plan.name}</h3>
                 <div className="mb-8">
                   <span className="text-4xl font-black">₹{discountedPrice}</span>
-                  <span className="text-text-muted text-sm font-bold ml-1">/year</span>
+                  <span className="text-text-muted text-sm font-bold ml-1">/{billingCycle === "monthly" ? "month" : "year"}</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {(meta?.included || plan.features || []).slice(0, 5).map((f: string, i: number) => (

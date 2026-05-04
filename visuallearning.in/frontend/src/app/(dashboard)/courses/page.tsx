@@ -238,7 +238,9 @@ export default function CoursesPage() {
               })
               .map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
-              const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
+              const currentPrice = billingCycle === "monthly" 
+                ? (course.monthlyPrice !== undefined ? course.monthlyPrice : (course.price ? Math.round(course.price / 10) : 0))
+                : (course.yearlyPrice !== undefined ? course.yearlyPrice : (course.price || 0));
               const isFree = currentPrice === 0 && course.planKey !== "FLEXI_PLAN" && course.planKey !== "ACADEMIC_PLUS" && course.planKey !== "ELITE_LEARNING"; // Only free if genuinely 0, handle fallbacks gracefully
               const priceStr = isFree ? "FREE" : `₹${(currentPrice || 0).toLocaleString("en-IN")}`;
               const isElite = course.planKey === "ELITE_LEARNING";

@@ -140,8 +140,8 @@ export async function getPlans(req: Request, res: Response) {
       return {
         id: key,
         name: v.label,
-        monthlyPrice: livePrice !== undefined ? livePrice : (v.monthlyAmount || 0) / 100,
-        yearlyPrice: livePrice !== undefined ? livePrice : (v.yearlyAmount || 0) / 100,
+        monthlyPrice: livePrice !== undefined ? livePrice : ((v.monthlyAmount !== undefined ? v.monthlyAmount : (v.amount || 0) / 10) / 100),
+        yearlyPrice: livePrice !== undefined ? livePrice : ((v.yearlyAmount !== undefined ? v.yearlyAmount : (v.amount || 0)) / 100),
         durationMonthly: v.durationMonthly || 30,
         durationYearly: v.durationYearly || 365,
         features: featureMap[key] || [],
