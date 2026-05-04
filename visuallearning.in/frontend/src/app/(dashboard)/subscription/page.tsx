@@ -359,6 +359,7 @@ export default function SubscriptionPage() {
                     label={planName}
                     subjectsAccess={isFlexi ? subjectIds : undefined}
                     couponCode={couponApplied ? couponCode : undefined}
+                    billingCycle={billingCycle as any}
                     onSuccess={() => router.push("/dashboard")}
                     className="w-full py-4 rounded-xl text-sm font-black text-white bg-primary shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
                   />

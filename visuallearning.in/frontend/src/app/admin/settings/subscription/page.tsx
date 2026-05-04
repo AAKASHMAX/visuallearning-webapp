@@ -12,12 +12,13 @@ import {
 } from "lucide-react";
 
 interface PlanConfig {
-  amount: number;
+  monthlyAmount: number;
+  yearlyAmount: number;
   label: string;
-  duration: number;
+  durationMonthly: number;
+  durationYearly: number;
   enabled: boolean;
   classSelection: number;
-  billingCycle: "monthly" | "yearly";
 }
 
 function getPlanTheme(key: string, label: string) {
@@ -49,10 +50,11 @@ export default function SubscriptionSettingsPage() {
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [newPlanKey, setNewPlanKey] = useState("");
   const [newPlanLabel, setNewPlanLabel] = useState("");
-  const [newPlanRupees, setNewPlanRupees] = useState(2999);
-  const [newPlanDuration, setNewPlanDuration] = useState(365);
+  const [newPlanMonthlyRupees, setNewPlanMonthlyRupees] = useState(299);
+  const [newPlanYearlyRupees, setNewPlanYearlyRupees] = useState(2999);
+  const [newPlanDurationMonthly, setNewPlanDurationMonthly] = useState(30);
+  const [newPlanDurationYearly, setNewPlanDurationYearly] = useState(365);
   const [newPlanClassSelection, setNewPlanClassSelection] = useState(0);
-  const [newPlanBillingCycle, setNewPlanBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
   const [savingDiscount, setSavingDiscount] = useState(false);
 
@@ -96,8 +98,11 @@ export default function SubscriptionSettingsPage() {
   const updatePlan = (key: string, field: string, value: any) =>
     setPlansConfig((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
 
-  const updatePlanRupees = (key: string, rupees: number) =>
-    updatePlan(key, "amount", Math.round(rupees * 100));
+  const updatePlanMonthlyRupees = (key: string, rupees: number) =>
+    updatePlan(key, "monthlyAmount", Math.round(rupees * 100));
+
+  const updatePlanYearlyRupees = (key: string, rupees: number) =>
+    updatePlan(key, "yearlyAmount", Math.round(rupees * 100));
 
   const addPlan = () => {
     const key = newPlanKey.toUpperCase().replace(/[^A-Z0-9_]/g, "");
@@ -105,10 +110,10 @@ export default function SubscriptionSettingsPage() {
     if (plansConfig[key]) { toast.error("Plan key already exists"); return; }
     setPlansConfig({
       ...plansConfig,
-      [key]: { label: newPlanLabel.trim(), amount: Math.round(newPlanRupees * 100), duration: newPlanDuration, enabled: true, classSelection: newPlanClassSelection, billingCycle: newPlanBillingCycle },
+      [key]: { label: newPlanLabel.trim(), monthlyAmount: Math.round(newPlanMonthlyRupees * 100), yearlyAmount: Math.round(newPlanYearlyRupees * 100), durationMonthly: newPlanDurationMonthly, durationYearly: newPlanDurationYearly, enabled: true, classSelection: newPlanClassSelection },
     });
-    setNewPlanKey(""); setNewPlanLabel(""); setNewPlanRupees(2999);
-    setNewPlanDuration(365); setNewPlanClassSelection(0); setNewPlanBillingCycle("yearly"); setShowAddPlan(false);
+    setNewPlanKey(""); setNewPlanLabel(""); setNewPlanMonthlyRupees(299); setNewPlanYearlyRupees(2999);
+    setNewPlanDurationMonthly(30); setNewPlanDurationYearly(365); setNewPlanClassSelection(0); setShowAddPlan(false);
   };
 
   const removePlan = (key: string) => {
@@ -170,13 +175,13 @@ export default function SubscriptionSettingsPage() {
               <Plus className="w-4 h-4 text-primary" /> New Plan
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              {[
                 { label: "Plan Key", el: <input value={newPlanKey} onChange={(e) => setNewPlanKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))} placeholder="e.g. PREMIUM" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Display Name", el: <input value={newPlanLabel} onChange={(e) => setNewPlanLabel(e.target.value)} placeholder="e.g. Premium Plan" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
-                { label: "Price (₹)", el: <input type="number" value={newPlanRupees} onChange={(e) => setNewPlanRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
-                { label: "Duration (days)", el: <input type="number" value={newPlanDuration} onChange={(e) => setNewPlanDuration(parseInt(e.target.value) || 1)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Class Access (0=all)", el: <input type="number" min={0} value={newPlanClassSelection} onChange={(e) => setNewPlanClassSelection(parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
-                { label: "Billing Tab", el: <select value={newPlanBillingCycle} onChange={(e) => setNewPlanBillingCycle(e.target.value as "monthly" | "yearly")} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select> },
+                { label: "Monthly Price (₹)", el: <input type="number" value={newPlanMonthlyRupees} onChange={(e) => setNewPlanMonthlyRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Monthly Duration (days)", el: <input type="number" value={newPlanDurationMonthly} onChange={(e) => setNewPlanDurationMonthly(parseInt(e.target.value) || 30)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Yearly Price (₹)", el: <input type="number" value={newPlanYearlyRupees} onChange={(e) => setNewPlanYearlyRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Yearly Duration (days)", el: <input type="number" value={newPlanDurationYearly} onChange={(e) => setNewPlanDurationYearly(parseInt(e.target.value) || 365)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
               ].map(({ label, el }) => (
                 <div key={label}>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{label}</label>
@@ -226,31 +231,36 @@ export default function SubscriptionSettingsPage() {
                       <input type="text" value={plan.label} onChange={(e) => updatePlan(key, "label", e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Price (₹)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">₹</span>
-                        <input type="number" value={Math.round(plan.amount / 100)} onChange={(e) => updatePlanRupees(key, parseFloat(e.target.value) || 0)}
-                          className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Duration (days)</label>
-                      <input type="number" value={plan.duration} onChange={(e) => updatePlan(key, "duration", parseInt(e.target.value) || 1)}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access</label>
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access (0=All)</label>
                       <input type="number" min={0} value={plan.classSelection} onChange={(e) => updatePlan(key, "classSelection", parseInt(e.target.value) || 0)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Billing Tab</label>
-                      <select value={plan.billingCycle || "yearly"} onChange={(e) => updatePlan(key, "billingCycle", e.target.value)}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none">
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                      </select>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Monthly Price (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">₹</span>
+                        <input type="number" value={Math.round((plan.monthlyAmount || 0) / 100)} onChange={(e) => updatePlanMonthlyRupees(key, parseFloat(e.target.value) || 0)}
+                          className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Monthly Dur. (days)</label>
+                      <input type="number" value={plan.durationMonthly || 30} onChange={(e) => updatePlan(key, "durationMonthly", parseInt(e.target.value) || 30)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Yearly Price (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">₹</span>
+                        <input type="number" value={Math.round((plan.yearlyAmount || 0) / 100)} onChange={(e) => updatePlanYearlyRupees(key, parseFloat(e.target.value) || 0)}
+                          className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Yearly Dur. (days)</label>
+                      <input type="number" value={plan.durationYearly || 365} onChange={(e) => updatePlan(key, "durationYearly", parseInt(e.target.value) || 365)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div className="flex items-end">
                       <button onClick={() => updatePlan(key, "enabled", !plan.enabled)}

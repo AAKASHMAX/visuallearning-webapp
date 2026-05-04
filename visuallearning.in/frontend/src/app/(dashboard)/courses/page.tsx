@@ -96,6 +96,7 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [activeClassId, setActiveClassId] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
 
   useEffect(() => {
     setLoading(true);
@@ -183,11 +184,32 @@ export default function CoursesPage() {
               <>Structured <span className="gradient-text">Grade-wise</span> Plans</>
             )}
           </h2>
-          <p className="text-text-muted max-w-lg mx-auto text-sm text-center">
+          <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8">
             {activeTab === "smart"
               ? "Choose the perfect plan to unlock premium visual content and accelerate your science journey."
               : "Complete curricula tailored for your specific grade level with full access to all features."}
           </p>
+
+          {/* Billing Cycle Toggle */}
+          <div className="flex items-center justify-center p-1 bg-white border border-gray-200 rounded-xl shadow-sm mb-2">
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                billingCycle === "monthly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                billingCycle === "yearly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
+              }`}
+            >
+              Yearly
+              <span className="ml-2 inline-flex items-center justify-center bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Save 20%</span>
+            </button>
+          </div>
         </div>
 
         {activeTab === "smart" ? (
@@ -200,7 +222,9 @@ export default function CoursesPage() {
               })
               .map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
-              const priceStr = course.price === 0 ? "FREE" : `₹${course.price.toLocaleString("en-IN")}`;
+              const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
+              const isFree = currentPrice === 0 && course.planKey !== "FLEXI_PLAN" && course.planKey !== "ACADEMIC_PLUS" && course.planKey !== "ELITE_LEARNING"; // Only free if genuinely 0, handle fallbacks gracefully
+              const priceStr = isFree ? "FREE" : `₹${(currentPrice || 0).toLocaleString("en-IN")}`;
               const isElite = course.planKey === "ELITE_LEARNING";
               return (
                 <PlanCard
@@ -209,14 +233,14 @@ export default function CoursesPage() {
                   accentColor={theme.accentColor}
                   planName={course.name}
                   price={priceStr}
-                  originalPrice={course.price === 0 ? "₹3999" : undefined}
-                  period={`/${course.billingCycle === "monthly" ? "mo" : "yr"}`}
-                  showCountdown={course.price === 0}
+                  originalPrice={isFree ? "₹3999" : undefined}
+                  period={`/${billingCycle === "monthly" ? "mo" : "yr"}`}
+                  showCountdown={isFree}
                   animation={theme.animation}
                   badge={isElite ? "Most Popular" : undefined}
                   included={course.features}
                   excluded={theme.excluded}
-                  ctaLink={`/course-details/${course.slug}`}
+                  ctaLink={`/course-details/${course.slug}?billing=${billingCycle}`}
                 />
               );
             })}
@@ -225,7 +249,8 @@ export default function CoursesPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {courses.filter(c => ["CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"].includes(c.planKey)).map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.CLASS_9;
-              const priceStr = `₹${course.price.toLocaleString("en-IN")}`;
+              const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
+              const priceStr = `₹${(currentPrice || 0).toLocaleString("en-IN")}`;
               return (
                 <PlanCard
                   key={course.id}
@@ -233,11 +258,11 @@ export default function CoursesPage() {
                   accentColor={theme.accentColor}
                   planName={course.name}
                   price={priceStr}
-                  period={`/${course.billingCycle === "monthly" ? "mo" : "yr"}`}
+                  period={`/${billingCycle === "monthly" ? "mo" : "yr"}`}
                   animation={theme.animation}
                   included={course.features}
                   excluded={theme.excluded}
-                  ctaLink={`/course-details/${course.slug}`}
+                  ctaLink={`/course-details/${course.slug}?billing=${billingCycle}`}
                 />
               );
             })}

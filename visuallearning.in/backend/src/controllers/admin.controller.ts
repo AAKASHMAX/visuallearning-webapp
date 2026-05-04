@@ -487,10 +487,10 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     { key: "TELUGU", label: "Telugu" },
   ]),
   plans_config: JSON.stringify({
-    FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-    ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-    ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-    FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+    FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+    ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+    ELITE_LEARNING:  { monthlyAmount: 159900, yearlyAmount: 1599900,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+    FLEXI_PLAN:      { monthlyAmount: 0, yearlyAmount: 0,             label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
   }),
   contact_info: JSON.stringify({
     companyName: "VISUALLEARNING AI PRIVATE LIMITED",

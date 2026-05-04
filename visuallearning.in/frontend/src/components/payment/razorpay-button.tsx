@@ -12,6 +12,7 @@ interface RazorpayButtonProps {
   classesAccess?: string[];
   subjectsAccess?: string[];
   couponCode?: string;
+  billingCycle?: "monthly" | "yearly";
   onSuccess?: () => void;
   className?: string;
 }
@@ -33,7 +34,7 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAccess, couponCode, onSuccess, className }: RazorpayButtonProps) {
+export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAccess, couponCode, billingCycle, onSuccess, className }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -48,6 +49,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAcc
         classesAccess,
         subjectsAccess,
         couponCode: couponCode || undefined,
+        billingCycle,
       });
       const order = data.data;
 
@@ -70,6 +72,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAcc
               classesAccess,
               subjectsAccess,
               couponCode: couponCode || undefined,
+              billingCycle,
             });
             toast.success("Subscription activated!");
             onSuccess?.();

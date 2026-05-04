@@ -27,9 +27,9 @@ export const config = {
     templateId: process.env.HMS_TEMPLATE_ID || "",
   },
   plans: {
-    FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, billingCycle: "yearly" },
-    ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, billingCycle: "yearly" },
-    ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, billingCycle: "yearly" },
-    FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, billingCycle: "yearly" },
+    FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365 },
+    ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365 },
+    ELITE_LEARNING:  { monthlyAmount: 159900, yearlyAmount: 1599900,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365 },
+    FLEXI_PLAN:      { monthlyAmount: 0, yearlyAmount: 0,             label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365 },
   },
 };

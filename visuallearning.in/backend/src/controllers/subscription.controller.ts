@@ -11,6 +11,7 @@ export const createOrderSchema = z.object({
   classesAccess: z.array(z.string()).optional(),
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
+  billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
 });
 
 export const verifyPaymentSchema = z.object({
@@ -21,10 +22,11 @@ export const verifyPaymentSchema = z.object({
   classesAccess: z.array(z.string()).optional(),
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
+  billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
 });
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
-async function getPlanConfig(planKey: string): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
   // 1. Check Course table first for price updates from admin panel
   const course = await prisma.course.findFirst({ where: { planKey } });
   
@@ -38,9 +40,12 @@ async function getPlanConfig(planKey: string): Promise<{ amount: number; duratio
   const configFromSetting = plans[planKey];
 
   if (course) {
+    // If course price exists, calculate monthly arbitrarily (price/10) if monthly is requested
+    const basePrice = (course as any).price || 0;
+    const amount = billingCycle === "monthly" ? Math.round(basePrice * 100 / 10) : basePrice * 100;
     return {
-      amount: course.price * 100, // Course price is in Rs, convert to paise
-      duration: configFromSetting?.duration || 365,
+      amount,
+      duration: billingCycle === "monthly" ? (configFromSetting?.durationMonthly || 30) : (configFromSetting?.durationYearly || 365),
       label: course.name,
       classSelection: configFromSetting?.classSelection || 0
     };
@@ -48,14 +53,19 @@ async function getPlanConfig(planKey: string): Promise<{ amount: number; duratio
 
   // 3. Fallback to settings DB if no course record linked
   if (configFromSetting) {
-    return configFromSetting;
+    return {
+      amount: billingCycle === "monthly" ? configFromSetting.monthlyAmount : configFromSetting.yearlyAmount,
+      duration: billingCycle === "monthly" ? configFromSetting.durationMonthly : configFromSetting.durationYearly,
+      label: configFromSetting.label,
+      classSelection: configFromSetting.classSelection || 0
+    };
   }
   
   // 4. Last fallback to hardcoded config
   const fallback = (config.plans as any)[planKey];
   return { 
-    amount: fallback?.amount || 0, 
-    duration: fallback?.duration || 365, 
+    amount: billingCycle === "monthly" ? fallback?.monthlyAmount || 0 : fallback?.yearlyAmount || 0, 
+    duration: billingCycle === "monthly" ? fallback?.durationMonthly || 30 : fallback?.durationYearly || 365, 
     label: fallback?.label || planKey, 
     classSelection: 0 
   };
@@ -101,16 +111,16 @@ export async function getPlans(req: Request, res: Response) {
   } else {
     // Fallback to hardcoded defaults
     plansConfig = {
-      FOUNDATION_PASS: { amount: config.plans.FOUNDATION_PASS.amount, label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      ACADEMIC_PLUS:   { amount: config.plans.ACADEMIC_PLUS.amount,   label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      ELITE_LEARNING:  { amount: config.plans.ELITE_LEARNING.amount,  label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      FLEXI_PLAN:      { amount: config.plans.FLEXI_PLAN.amount,      label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
+      FOUNDATION_PASS: { monthlyAmount: config.plans.FOUNDATION_PASS.monthlyAmount, yearlyAmount: config.plans.FOUNDATION_PASS.yearlyAmount, label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+      ACADEMIC_PLUS:   { monthlyAmount: config.plans.ACADEMIC_PLUS.monthlyAmount,   yearlyAmount: config.plans.ACADEMIC_PLUS.yearlyAmount,   label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+      ELITE_LEARNING:  { monthlyAmount: config.plans.ELITE_LEARNING.monthlyAmount,  yearlyAmount: config.plans.ELITE_LEARNING.yearlyAmount,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+      FLEXI_PLAN:      { monthlyAmount: config.plans.FLEXI_PLAN.monthlyAmount,      yearlyAmount: config.plans.FLEXI_PLAN.yearlyAmount,      label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
     };
   }
 
   // Also fetch courses to get live prices
   const courses = await prisma.course.findMany({ where: { planKey: { not: null } } });
-  const coursePriceMap = new Map(courses.map(c => [c.planKey, c.price]));
+  const coursePriceMap = new Map(courses.map(c => [c.planKey, (c as any).price]));
 
   const featureMap: Record<string, string[]> = {
     FOUNDATION_PASS: ["Selected chapters (9–12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
@@ -130,9 +140,10 @@ export async function getPlans(req: Request, res: Response) {
       return {
         id: key,
         name: v.label,
-        price: livePrice !== undefined ? livePrice : v.amount / 100,
-        duration: `${v.duration} days`,
-        billingCycle: v.billingCycle || (v.duration <= 30 ? "monthly" : "yearly"),
+        monthlyPrice: livePrice !== undefined ? livePrice : (v.monthlyAmount || 0) / 100,
+        yearlyPrice: livePrice !== undefined ? livePrice : (v.yearlyAmount || 0) / 100,
+        durationMonthly: v.durationMonthly || 30,
+        durationYearly: v.durationYearly || 365,
         features: featureMap[key] || [],
         classSelection: v.classSelection || 0,
         popular: key === "ELITE_LEARNING",
@@ -163,8 +174,8 @@ export async function validateCouponCode(req: Request, res: Response) {
 
 export async function createSubscriptionOrder(req: Request, res: Response) {
   try {
-    const { plan, classesAccess, couponCode } = req.body;
-    const planConfig = await getPlanConfig(plan);
+    const { plan, classesAccess, couponCode, billingCycle = "yearly" } = req.body;
+    const planConfig = await getPlanConfig(plan, billingCycle);
 
     // Validate classesAccess based on plan's classSelection setting
     if (planConfig.classSelection > 0) {
@@ -184,7 +195,10 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
         where: { id: { in: subjectsAccess } },
         select: { price: true }
       });
-      amount = subjects.reduce((sum, s) => sum + s.price, 0);
+      amount = subjects.reduce((sum, s) => sum + s.price * 100, 0); // Price is in Rs
+      if (billingCycle === "monthly") {
+        amount = Math.round(amount / 10);
+      }
     }
 
     let couponDiscount = 0;
@@ -226,6 +240,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       classesAccess,
       subjectsAccess,
       couponCode,
+      billingCycle,
       originalAmount: planConfig.amount,
       upgradeDiscount,
       couponDiscount,
@@ -240,18 +255,30 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
 export async function verifyPayment(req: Request, res: Response) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, couponCode } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, couponCode, billingCycle = "yearly" } = req.body;
 
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
 
-    const planConfig = await getPlanConfig(plan);
+    const planConfig = await getPlanConfig(plan, billingCycle);
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
 
     // Calculate actual amount paid
     let amount = planConfig.amount;
     let discountAmount = 0;
+
+    const { subjectsAccess } = req.body;
+    if (plan === "FLEXI_PLAN" && subjectsAccess && subjectsAccess.length > 0) {
+      const subjects = await prisma.subject.findMany({
+        where: { id: { in: subjectsAccess } },
+        select: { price: true }
+      });
+      amount = subjects.reduce((sum, s) => sum + s.price * 100, 0);
+      if (billingCycle === "monthly") {
+        amount = Math.round(amount / 10);
+      }
+    }
 
     const existing = await prisma.subscription.findFirst({
       where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },

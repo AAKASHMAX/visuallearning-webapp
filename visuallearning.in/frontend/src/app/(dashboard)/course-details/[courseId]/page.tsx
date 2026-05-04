@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Sparkles, Check, Play, Monitor, Download, Trophy, FileText, Star, Globe, Calendar, Award, PlayCircle,
@@ -272,6 +272,8 @@ const getCourseTheme = (courseId: string) => {
 export default function CourseDetailsPage({ params }: { params: { courseId: string } }) {
   const { courseId } = params;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const billingCycle = searchParams.get("billing") || "yearly";
   const { user, isAuthenticated } = useAuth();
   
   const [course, setCourse] = useState<any>(null);
@@ -495,19 +497,19 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                 <div className="p-6">
                   <div className="mb-6">
                     <h3 className="text-2xl font-black text-gray-900 flex items-end gap-2">
-                      {course?.planConfig?.price === 0 ? "FREE" : (course?.planConfig?.price ? `₹${course.planConfig.price.toLocaleString("en-IN")}` : theme.price)}
+                      {course?.planConfig?.monthlyPrice === 0 ? "FREE" : (course?.planConfig ? `₹${(billingCycle === "monthly" ? course.planConfig.monthlyPrice : course.planConfig.yearlyPrice).toLocaleString("en-IN")}` : theme.price)}
                       {((course?.planConfig?.price === 0) || (!course)) && theme.originalPrice && (
                         <span className="text-sm text-gray-500 line-through font-medium mb-1">
                           {theme.originalPrice}
                         </span>
                       )}
                       <span className="text-sm font-medium text-gray-600 mb-1">
-                        {course?.planConfig?.billingCycle === "monthly" ? "/mo" : "/year"}
+                        {billingCycle === "monthly" ? "/mo" : "/year"}
                       </span>
                     </h3>
                   </div>
   
-                  <Link href={`/subscription?plan=${courseId}`} className="block w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold text-center rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4">
+                  <Link href={`/subscription?plan=${courseId}&billing=${billingCycle}`} className="block w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold text-center rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4">
                     Start subscription
                   </Link>
   
