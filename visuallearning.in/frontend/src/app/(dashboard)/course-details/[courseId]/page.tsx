@@ -68,26 +68,26 @@ function getChapterIcon(title: string, fallbackIcon?: string): LucideIcon {
 
 const GRADIENTS: Record<string, { bg: string; light: string }[]> = {
   physics: [
-    { bg: "from-blue-500 to-indigo-600", light: "from-blue-50 to-indigo-50" },
-    { bg: "from-sky-500 to-blue-600", light: "from-sky-50 to-blue-50" },
-    { bg: "from-indigo-500 to-violet-600", light: "from-indigo-50 to-violet-50" },
-    { bg: "from-cyan-500 to-blue-600", light: "from-cyan-50 to-blue-50" },
+    { bg: "from-blue-500 to-indigo-600", light: "from-blue-100 to-indigo-100" },
+    { bg: "from-sky-500 to-blue-600", light: "from-sky-100 to-blue-100" },
+    { bg: "from-indigo-500 to-violet-600", light: "from-indigo-100 to-violet-100" },
+    { bg: "from-cyan-500 to-blue-600", light: "from-cyan-100 to-blue-100" },
   ],
   chemistry: [
-    { bg: "from-emerald-500 to-teal-600", light: "from-emerald-50 to-teal-50" },
-    { bg: "from-green-500 to-emerald-600", light: "from-green-50 to-emerald-50" },
-    { bg: "from-teal-500 to-cyan-600", light: "from-teal-50 to-cyan-50" },
-    { bg: "from-lime-500 to-green-600", light: "from-lime-50 to-green-50" },
+    { bg: "from-emerald-500 to-teal-600", light: "from-emerald-100 to-teal-100" },
+    { bg: "from-green-500 to-emerald-600", light: "from-green-100 to-emerald-100" },
+    { bg: "from-teal-500 to-cyan-600", light: "from-teal-100 to-cyan-100" },
+    { bg: "from-lime-500 to-green-600", light: "from-lime-100 to-green-100" },
   ],
   biology: [
-    { bg: "from-rose-500 to-pink-600", light: "from-rose-50 to-pink-50" },
-    { bg: "from-pink-500 to-fuchsia-600", light: "from-pink-50 to-fuchsia-50" },
-    { bg: "from-red-500 to-rose-600", light: "from-red-50 to-rose-50" },
-    { bg: "from-orange-500 to-rose-600", light: "from-orange-50 to-rose-50" },
+    { bg: "from-rose-500 to-pink-600", light: "from-rose-100 to-pink-100" },
+    { bg: "from-pink-500 to-fuchsia-600", light: "from-pink-100 to-fuchsia-100" },
+    { bg: "from-red-500 to-rose-600", light: "from-red-100 to-rose-100" },
+    { bg: "from-orange-500 to-rose-600", light: "from-orange-100 to-rose-100" },
   ],
   default: [
-    { bg: "from-violet-500 to-purple-600", light: "from-violet-50 to-purple-50" },
-    { bg: "from-purple-500 to-fuchsia-600", light: "from-purple-50 to-fuchsia-50" },
+    { bg: "from-violet-500 to-purple-600", light: "from-violet-100 to-purple-100" },
+    { bg: "from-purple-500 to-fuchsia-600", light: "from-purple-100 to-fuchsia-100" },
   ],
 };
 function getSubjectGradients(name: string) {

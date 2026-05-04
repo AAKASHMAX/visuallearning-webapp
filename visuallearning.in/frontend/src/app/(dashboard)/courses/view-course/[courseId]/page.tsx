@@ -94,26 +94,26 @@ function getChapterIcon(title: string, fallbackIcon?: string): LucideIcon {
 // Gradient palette — cycles through for variety within each subject
 const GRADIENTS = {
   physics: [
-    { bg: "from-blue-500 to-indigo-600", light: "from-blue-50 to-indigo-50", text: "text-blue-600" },
-    { bg: "from-sky-500 to-blue-600", light: "from-sky-50 to-blue-50", text: "text-sky-600" },
-    { bg: "from-indigo-500 to-violet-600", light: "from-indigo-50 to-violet-50", text: "text-indigo-600" },
-    { bg: "from-cyan-500 to-blue-600", light: "from-cyan-50 to-blue-50", text: "text-cyan-600" },
+    { bg: "from-blue-500 to-indigo-600", light: "from-blue-100 to-indigo-100", text: "text-blue-600" },
+    { bg: "from-sky-500 to-blue-600", light: "from-sky-100 to-blue-100", text: "text-sky-600" },
+    { bg: "from-indigo-500 to-violet-600", light: "from-indigo-100 to-violet-100", text: "text-indigo-600" },
+    { bg: "from-cyan-500 to-blue-600", light: "from-cyan-100 to-blue-100", text: "text-cyan-600" },
   ],
   chemistry: [
-    { bg: "from-emerald-500 to-teal-600", light: "from-emerald-50 to-teal-50", text: "text-emerald-600" },
-    { bg: "from-green-500 to-emerald-600", light: "from-green-50 to-emerald-50", text: "text-green-600" },
-    { bg: "from-teal-500 to-cyan-600", light: "from-teal-50 to-cyan-50", text: "text-teal-600" },
-    { bg: "from-lime-500 to-green-600", light: "from-lime-50 to-green-50", text: "text-lime-600" },
+    { bg: "from-emerald-500 to-teal-600", light: "from-emerald-100 to-teal-100", text: "text-emerald-600" },
+    { bg: "from-green-500 to-emerald-600", light: "from-green-100 to-emerald-100", text: "text-green-600" },
+    { bg: "from-teal-500 to-cyan-600", light: "from-teal-100 to-cyan-100", text: "text-teal-600" },
+    { bg: "from-lime-500 to-green-600", light: "from-lime-100 to-green-100", text: "text-lime-600" },
   ],
   biology: [
-    { bg: "from-rose-500 to-pink-600", light: "from-rose-50 to-pink-50", text: "text-rose-600" },
-    { bg: "from-pink-500 to-fuchsia-600", light: "from-pink-50 to-fuchsia-50", text: "text-pink-600" },
-    { bg: "from-red-500 to-rose-600", light: "from-red-50 to-rose-50", text: "text-red-600" },
-    { bg: "from-orange-500 to-rose-600", light: "from-orange-50 to-rose-50", text: "text-orange-600" },
+    { bg: "from-rose-500 to-pink-600", light: "from-rose-100 to-pink-100", text: "text-rose-600" },
+    { bg: "from-pink-500 to-fuchsia-600", light: "from-pink-100 to-fuchsia-100", text: "text-pink-600" },
+    { bg: "from-red-500 to-rose-600", light: "from-red-100 to-rose-100", text: "text-red-600" },
+    { bg: "from-orange-500 to-rose-600", light: "from-orange-100 to-rose-100", text: "text-orange-600" },
   ],
   default: [
-    { bg: "from-violet-500 to-purple-600", light: "from-violet-50 to-purple-50", text: "text-violet-600" },
-    { bg: "from-purple-500 to-fuchsia-600", light: "from-purple-50 to-fuchsia-50", text: "text-purple-600" },
+    { bg: "from-violet-500 to-purple-600", light: "from-violet-100 to-purple-100", text: "text-violet-600" },
+    { bg: "from-purple-500 to-fuchsia-600", light: "from-purple-100 to-fuchsia-100", text: "text-purple-600" },
   ],
 };
 
