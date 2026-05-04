@@ -399,17 +399,40 @@ export async function grantSubscription(req: Request, res: Response) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return error(res, "User not found", 404);
 
-    // Expire existing active subscriptions
+    // NOTE: We no longer auto-expire old subscriptions to allow multiple active plans
+    /*
     await prisma.subscription.updateMany({
       where: { userId, status: "ACTIVE" },
       data: { status: "EXPIRED" },
     });
+    */
 
-    // Resolve classesAccess for full access plans
+    // Fetch plan config to determine class access
+    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+    let planConfig: any = null;
+    if (setting) {
+      const plans = JSON.parse(setting.value);
+      planConfig = plans[plan];
+    }
+
+    // Resolve classesAccess based on plan configuration
     let resolvedClasses = classesAccess || [];
-    if (["MONTHLY", "YEARLY", "FULL_ACCESS"].includes(plan)) {
+    if (plan === "FLEXI_PLAN") {
+       // Custom plan logic (handled below if subjects are passed)
+    } else if (planConfig && planConfig.classSelection > 0) {
+      // Plan requires specific classes, use what was provided
+      resolvedClasses = classesAccess || [];
+    } else {
+      // Full access plan
       const allClasses = await prisma.class.findMany({ select: { id: true } });
       resolvedClasses = allClasses.map((c) => c.id);
+    }
+
+    // Link subscription to a course if a matching course exists
+    let courseId: string | null = null;
+    if (plan !== "FLEXI_PLAN") {
+      const course = await prisma.course.findFirst({ where: { planKey: plan } });
+      if (course) courseId = course.id;
     }
 
     const expiryDate = new Date();
@@ -419,6 +442,7 @@ export async function grantSubscription(req: Request, res: Response) {
       data: {
         userId,
         plan,
+        courseId,
         classesAccess: resolvedClasses,
         subjectsAccess: req.body.subjectsAccess || [],
         expiryDate,
