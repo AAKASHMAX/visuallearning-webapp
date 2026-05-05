@@ -11,7 +11,7 @@ import {
   Dna, Heart, Brain, Leaf, Bug, Flower2, Trees, Droplets,
   Shell, Egg, Bone, Ribbon, Sprout, Apple, Footprints,
   TestTube, FlaskRound, Gem, Pipette, Hexagon, Snowflake,
-  SunDim, Moon, Mountain, Cloudy, type LucideIcon
+  SunDim, Moon, Mountain, Cloudy, Lock, type LucideIcon
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PageLoader } from "@/components/ui/loading";
@@ -159,6 +159,21 @@ export default function CourseContentPage({ params }: { params: { courseId: stri
       <div className="text-center">
         <h2 className="text-xl font-bold mb-2">Course not found</h2>
         <Link href="/courses" className="text-primary hover:underline">Back to all courses</Link>
+      </div>
+    </div>
+  );
+
+  if (!course.userHasAccess) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f5f7fb] px-4">
+      <div className="max-w-md text-center rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+          <Lock className="h-6 w-6" />
+        </div>
+        <h2 className="text-xl font-black text-gray-900 mb-2">Course not active</h2>
+        <p className="text-sm text-gray-500 mb-6">This course is not assigned to your account.</p>
+        <Link href="/dashboard" className="inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-black text-white hover:opacity-90">
+          Back to dashboard
+        </Link>
       </div>
     </div>
   );

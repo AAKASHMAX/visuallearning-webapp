@@ -497,16 +497,6 @@ export async function getCourseBySlug(req: Request, res: Response) {
             userHasAccess = true;
             break;
           }
-          // Also handle Elite Learning which covers multiple grade courses
-          if (sub.plan === "ELITE_LEARNING") {
-            userHasAccess = true;
-            break;
-          }
-          // Handle specific class access
-          if (sub.classesAccess && (sub.classesAccess as string[]).includes(course.id)) {
-             userHasAccess = true;
-             break;
-          }
         }
       }
     }
