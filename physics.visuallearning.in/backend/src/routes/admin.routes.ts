@@ -2,11 +2,11 @@ import { Router } from "express";
 import { authenticate, requireAdmin } from "../middleware/auth";
 import {
   getStats, getUsers, toggleBlockUser,
-  createCourse, updateCourse, deleteCourse,
-  createChapter, updateChapter, deleteChapter,
+  createCourse, updateCourse, deleteCourse, getAdminCourse, addChapterToCourse, removeChapterFromCourse,
+  createChapter, updateChapter, deleteChapter, getChaptersList,
   createVideo, updateVideo, deleteVideo,
   createNote, updateNote, deleteNote,
-  createQuestion, updateQuestion, deleteQuestion,
+  createQuestion, updateQuestion, deleteQuestion, getChapterQuestionsAdmin,
   getSubscriptions, grantSubscription, cancelSubscription,
   getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan,
   getCoupons, createCoupon, toggleCoupon, deleteCoupon,
@@ -31,11 +31,15 @@ router.get("/users", getUsers);
 router.patch("/users/:id/block", toggleBlockUser);
 
 // Courses
+router.get("/courses/:id", getAdminCourse);
 router.post("/courses", createCourse);
 router.put("/courses/:id", updateCourse);
 router.delete("/courses/:id", deleteCourse);
+router.post("/courses/:id/chapters", addChapterToCourse);
+router.delete("/courses/:id/chapters/:chapterId", removeChapterFromCourse);
 
 // Chapters
+router.get("/chapters-list", getChaptersList);
 router.post("/chapters", createChapter);
 router.put("/chapters/:id", updateChapter);
 router.delete("/chapters/:id", deleteChapter);
@@ -51,6 +55,7 @@ router.put("/notes/:id", updateNote);
 router.delete("/notes/:id", deleteNote);
 
 // Questions
+router.get("/questions/chapter/:chapterId", getChapterQuestionsAdmin);
 router.post("/questions", createQuestion);
 router.put("/questions/:id", updateQuestion);
 router.delete("/questions/:id", deleteQuestion);

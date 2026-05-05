@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Atom, BookOpen, Plus, Edit2, Trash2, ChevronRight, ChevronLeft, Video, FileText, HelpCircle, X } from "lucide-react";
+import { Atom, BookOpen, Plus, Edit2, Trash2, ChevronRight, ChevronLeft, Video, FileText, HelpCircle, X, Library, Search, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
@@ -51,10 +51,13 @@ export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ContentView>("courses");
   const [contentTab, setContentTab] = useState<ContentTab>("videos");
+  const [showAttachModal, setShowAttachModal] = useState(false);
+  const [chapterSearch, setChapterSearch] = useState("");
 
   // Chapter content
   const [videos, setVideos] = useState<VideoItem[]>([]);
@@ -96,7 +99,7 @@ export default function AdminCoursesPage() {
   const [noteFree, setNoteFree] = useState(false);
   const [noteOrder, setNoteOrder] = useState(0);
 
-  useEffect(() => { fetchCourses(); }, []);
+  useEffect(() => { fetchCourses(); fetchAllChapters(); }, []);
 
   async function fetchCourses() {
     try {
@@ -111,6 +114,13 @@ export default function AdminCoursesPage() {
       const res = await api.get(`/courses/${courseId}`);
       setChapters(res.data.chapters || []);
     } catch { toast.error("Failed to load chapters"); }
+  }
+
+  async function fetchAllChapters() {
+    try {
+      const res = await api.get("/admin/chapters-list");
+      setAllChapters(res.data);
+    } catch { setAllChapters([]); }
   }
 
   async function fetchChapterContent(chapterId: string) {
@@ -163,17 +173,30 @@ export default function AdminCoursesPage() {
       resetChapterForm();
       fetchChapters(selectedCourse!.id);
       fetchCourses();
+      fetchAllChapters();
     } catch { toast.error("Failed to save chapter"); }
   }
 
   async function deleteChapter(id: string) {
-    if (!confirm("Delete this chapter and all its content?")) return;
+    if (!confirm("Remove this chapter from the course? The chapter stays in Content Management.")) return;
     try {
-      await api.delete(`/admin/chapters/${id}`);
-      toast.success("Chapter deleted");
+      await api.delete(`/admin/courses/${selectedCourse!.id}/chapters/${id}`);
+      toast.success("Chapter removed from course");
       fetchChapters(selectedCourse!.id);
       fetchCourses();
     } catch { toast.error("Failed to delete"); }
+  }
+
+  async function attachChapter(chapterId: string) {
+    try {
+      await api.post(`/admin/courses/${selectedCourse!.id}/chapters`, { chapterId, order: chapters.length + 1 });
+      toast.success("Chapter added to course");
+      fetchChapters(selectedCourse!.id);
+      fetchCourses();
+      fetchAllChapters();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to add chapter");
+    }
   }
 
   // Video CRUD
@@ -253,6 +276,8 @@ export default function AdminCoursesPage() {
     BRIDGE: "bg-orange-500/10 text-orange-400",
   };
   const getAnimationLabel = (key?: string | null) => chapterAnimationOptions.find((option) => option.key === key)?.label || "Auto by chapter name";
+  const filteredLibraryChapters = allChapters.filter((chapter) => chapter.name.toLowerCase().includes(chapterSearch.toLowerCase()));
+  const isChapterInCourse = (chapterId: string) => chapters.some((chapter) => chapter.id === chapterId);
 
   return (
     <div>
@@ -276,7 +301,10 @@ export default function AdminCoursesPage() {
           <Button onClick={() => { resetCourseForm(); setShowCourseForm(true); }}><Plus className="w-4 h-4 mr-2" />Add Course</Button>
         )}
         {view === "chapters" && (
-          <Button onClick={() => { resetChapterForm(); setShowChapterForm(true); }}><Plus className="w-4 h-4 mr-2" />Add Chapter</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => { fetchAllChapters(); setShowAttachModal(true); }}><Library className="w-4 h-4 mr-2" />Add From Content</Button>
+            <Button onClick={() => { resetChapterForm(); setShowChapterForm(true); }}><Plus className="w-4 h-4 mr-2" />Create Chapter</Button>
+          </div>
         )}
         {view === "content" && contentTab === "videos" && (
           <Button onClick={() => { resetVideoForm(); setVideoOrder(videos.length + 1); setShowVideoForm(true); }}><Plus className="w-4 h-4 mr-2" />Add Video</Button>
@@ -323,7 +351,7 @@ export default function AdminCoursesPage() {
       {view === "chapters" && (
         chapters.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-8 text-center">
-            <p className="text-text-muted text-sm">No chapters. Add the first one!</p>
+            <p className="text-text-muted text-sm">No chapters. Add from Content Management or create a new one.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -341,7 +369,7 @@ export default function AdminCoursesPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <button onClick={(e) => { e.stopPropagation(); setEditingChapter(ch); setChapterName(ch.name); setChapterAnimationKey(ch.animationKey || ""); setChapterOrder(ch.displayOrder); setShowChapterForm(true); }} className="p-1.5 hover:bg-surface-light rounded-lg"><Edit2 className="w-3.5 h-3.5 text-text-muted" /></button>
-                    <button onClick={(e) => { e.stopPropagation(); deleteChapter(ch.id); }} className="p-1.5 hover:bg-danger/10 rounded-lg"><Trash2 className="w-3.5 h-3.5 text-danger" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); deleteChapter(ch.id); }} className="p-1.5 hover:bg-danger/10 rounded-lg" title="Remove from course"><Trash2 className="w-3.5 h-3.5 text-danger" /></button>
                     <ChevronRight className="w-4 h-4 text-text-muted ml-1" />
                   </div>
                 </div>
@@ -544,6 +572,53 @@ export default function AdminCoursesPage() {
               </div>
             </div>
             <div className="flex gap-3 mt-6"><Button onClick={saveNote} className="flex-1">Save</Button><Button variant="ghost" onClick={resetNoteForm} className="flex-1">Cancel</Button></div>
+          </div>
+        </div>
+      )}
+
+      {showAttachModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] flex flex-col">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-text-bright">Add Chapters to Course</h2>
+                <p className="text-sm text-text-muted mt-1">Select chapters from Content Management for {selectedCourse?.name}</p>
+              </div>
+              <button onClick={() => setShowAttachModal(false)}><X className="w-5 h-5 text-text-muted" /></button>
+            </div>
+
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+              <Input value={chapterSearch} onChange={(e) => setChapterSearch(e.target.value)} placeholder="Search chapters..." className="pl-10" />
+            </div>
+
+            <div className="overflow-y-auto space-y-2 pr-1">
+              {filteredLibraryChapters.length === 0 ? (
+                <div className="rounded-xl border border-border bg-surface p-8 text-center text-text-muted">No chapters found. Create chapters from Content Management first.</div>
+              ) : filteredLibraryChapters.map((chapter) => {
+                const alreadyIn = isChapterInCourse(chapter.id);
+                return (
+                  <div key={chapter.id} className={`rounded-xl border p-4 transition-colors ${alreadyIn ? "border-success/25 bg-success/10" : "border-border bg-surface hover:border-accent/30"}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h4 className="font-semibold text-text-bright text-sm">{chapter.name}</h4>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-text-muted flex-wrap">
+                          <span className="flex items-center gap-1"><Video className="w-3 h-3" />{chapter._count?.videos || 0}</span>
+                          <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{chapter._count?.notes || 0}</span>
+                          <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" />{chapter._count?.questions || 0}</span>
+                          <span className="flex items-center gap-1 text-accent"><Atom className="w-3 h-3" />{getAnimationLabel(chapter.animationKey)}</span>
+                        </div>
+                      </div>
+                      {alreadyIn ? (
+                        <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => attachChapter(chapter.id)}>Add</Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

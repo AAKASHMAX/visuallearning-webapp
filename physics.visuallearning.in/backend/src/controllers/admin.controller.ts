@@ -112,12 +112,78 @@ export async function deleteCourse(req: AuthRequest, res: Response) {
 }
 
 // ─── Chapter Management ──────────────────────────────────────────
+export async function getAdminCourse(req: AuthRequest, res: Response) {
+  try {
+    const course = await prisma.course.findUnique({
+      where: { id: req.params.id },
+      include: {
+        courseChapters: {
+          orderBy: { order: "asc" },
+          include: { chapter: { include: { _count: { select: { videos: true, notes: true, questions: true } } } } },
+        },
+        chapters: {
+          orderBy: { displayOrder: "asc" },
+          include: { _count: { select: { videos: true, notes: true, questions: true } } },
+        },
+      },
+    });
+
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const linkedChapters = course.courseChapters.map((link) => ({
+      ...link.chapter,
+      displayOrder: link.order,
+      chapterId: link.chapterId,
+    }));
+
+    res.json({ ...course, chapters: linkedChapters.length ? linkedChapters : course.chapters });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch course" });
+  }
+}
+
+export async function addChapterToCourse(req: AuthRequest, res: Response) {
+  try {
+    const { chapterId, order } = req.body;
+    if (!chapterId) return res.status(400).json({ message: "Chapter is required" });
+
+    const link = await prisma.courseChapter.create({
+      data: { courseId: req.params.id, chapterId, order: order || 0 },
+    });
+    clearCourseCache();
+    res.status(201).json(link);
+  } catch (error: any) {
+    res.status(error.code === "P2002" ? 409 : 500).json({
+      message: error.code === "P2002" ? "Chapter already added to this course" : "Failed to add chapter",
+    });
+  }
+}
+
+export async function removeChapterFromCourse(req: AuthRequest, res: Response) {
+  try {
+    await prisma.courseChapter.delete({
+      where: { courseId_chapterId: { courseId: req.params.id, chapterId: req.params.chapterId } },
+    });
+    clearCourseCache();
+    res.json({ message: "Chapter removed from course" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to remove chapter" });
+  }
+}
+
 export async function createChapter(req: AuthRequest, res: Response) {
   try {
     const { name, courseId, displayOrder, animationKey } = req.body;
     const chapter = await prisma.chapter.create({
-      data: { name, courseId, displayOrder: displayOrder || 0, animationKey: animationKey || null },
+      data: { name, courseId: courseId || null, displayOrder: displayOrder || 0, animationKey: animationKey || null },
     });
+    if (courseId) {
+      await prisma.courseChapter.upsert({
+        where: { courseId_chapterId: { courseId, chapterId: chapter.id } },
+        update: { order: displayOrder || 0 },
+        create: { courseId, chapterId: chapter.id, order: displayOrder || 0 },
+      });
+    }
     clearCourseCache();
     res.status(201).json(chapter);
   } catch (error) {
@@ -150,6 +216,22 @@ export async function deleteChapter(req: AuthRequest, res: Response) {
 }
 
 // ─── Video Management ────────────────────────────────────────────
+export async function getChaptersList(req: AuthRequest, res: Response) {
+  try {
+    const chapters = await prisma.chapter.findMany({
+      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+      include: {
+        _count: { select: { videos: true, notes: true, questions: true, courseLinks: true } },
+        course: { select: { id: true, name: true, tier: true } },
+        courseLinks: { include: { course: { select: { id: true, name: true, tier: true } } } },
+      },
+    });
+    res.json(chapters);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch chapters" });
+  }
+}
+
 export async function createVideo(req: AuthRequest, res: Response) {
   try {
     const { title, youtubeUrl, videoType, language, isFree, displayOrder, chapterId } = req.body;
@@ -251,6 +333,18 @@ export async function deleteQuestion(req: AuthRequest, res: Response) {
     res.json({ message: "Question deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete question" });
+  }
+}
+
+export async function getChapterQuestionsAdmin(req: AuthRequest, res: Response) {
+  try {
+    const questions = await prisma.question.findMany({
+      where: { chapterId: req.params.chapterId },
+      orderBy: { displayOrder: "asc" },
+    });
+    res.json(questions);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch questions" });
   }
 }
 

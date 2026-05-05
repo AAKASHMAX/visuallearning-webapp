@@ -6,6 +6,7 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   BookOpen,
+  Library,
   Users,
   CreditCard,
   Settings,
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Courses", href: "/admin/courses", icon: BookOpen },
+  { label: "Content", href: "/admin/content", icon: Library },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Coupons", href: "/admin/coupons", icon: Tag },

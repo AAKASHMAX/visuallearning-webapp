@@ -145,9 +145,23 @@ model Course {
   updatedAt    DateTime  @updatedAt
 
   chapters     Chapter[]
+  courseChapters CourseChapter[]
   planCourses  PlanCourse[]
 
   @@index([tier])
+}
+
+model CourseChapter {
+  courseId  String
+  chapterId String
+  order     Int    @default(0)
+
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, chapterId])
+  @@index([courseId])
+  @@index([chapterId])
 }
 
 model Chapter {
@@ -155,14 +169,15 @@ model Chapter {
   name         String
   animationKey String?
   displayOrder Int       @default(0)
-  courseId      String
-  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId      String?
+  course       Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   videos       Video[]
   notes        Note[]
   questions    Question[]
+  courseLinks  CourseChapter[]
 
   @@index([courseId])
 }

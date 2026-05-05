@@ -122,11 +122,15 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
   await ensureDefaultPlans(prisma);
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (user?.role === "ADMIN") {
-    return prisma.course.findMany({
+    const courses = await prisma.course.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
-      include: { _count: { select: { chapters: true } } },
+      include: { _count: { select: { chapters: true, courseChapters: true } } },
     });
+    return courses.map((course: any) => ({
+      ...course,
+      _count: { ...course._count, chapters: course._count.courseChapters || course._count.chapters },
+    }));
   }
 
   const subscriptions = await getActiveUserSubscriptions(prisma, userId);
@@ -138,7 +142,7 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
 
   const assignedCourseIds = plans.flatMap((plan) => plan.courses.map((item) => item.courseId));
 
-  return prisma.course.findMany({
+  const courses = await prisma.course.findMany({
     where: {
       isActive: true,
       OR: [
@@ -147,6 +151,10 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
       ],
     },
     orderBy: { displayOrder: "asc" },
-    include: { _count: { select: { chapters: true } } },
+    include: { _count: { select: { chapters: true, courseChapters: true } } },
   });
+  return courses.map((course: any) => ({
+    ...course,
+    _count: { ...course._count, chapters: course._count.courseChapters || course._count.chapters },
+  }));
 }

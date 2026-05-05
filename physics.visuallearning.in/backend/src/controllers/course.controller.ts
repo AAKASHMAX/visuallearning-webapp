@@ -20,6 +20,49 @@ export function clearCourseCache() {
   cache.delete("courses_all");
 }
 
+function formatCourseChapters(course: any) {
+  const linkedChapters = (course.courseChapters || []).map((link: any) => ({
+    ...link.chapter,
+    displayOrder: link.order,
+  }));
+  const chapters = linkedChapters.length > 0 ? linkedChapters : (course.chapters || []);
+  const { courseChapters, ...rest } = course;
+  return { ...rest, chapters };
+}
+
+async function userHasChapterAccess(chapter: any, userId?: string) {
+  const courses = [
+    ...(chapter.course ? [chapter.course] : []),
+    ...((chapter.courseLinks || []).map((link: any) => link.course)),
+  ].filter(Boolean);
+
+  if (courses.length === 0) return false;
+  for (const course of courses) {
+    if (await userHasCourseAccess(prisma, userId, course)) return true;
+  }
+  return false;
+}
+
+async function isFirstChapterInAnyCourse(chapter: any) {
+  if (chapter.courseId) {
+    const firstChapter = await prisma.chapter.findFirst({
+      where: { courseId: chapter.courseId },
+      orderBy: { displayOrder: "asc" },
+    });
+    if (firstChapter?.id === chapter.id) return true;
+  }
+
+  const links = chapter.courseLinks || [];
+  for (const link of links) {
+    const firstLink = await prisma.courseChapter.findFirst({
+      where: { courseId: link.courseId },
+      orderBy: { order: "asc" },
+    });
+    if (firstLink?.chapterId === chapter.id) return true;
+  }
+  return false;
+}
+
 export async function getCourses(req: AuthRequest, res: Response) {
   try {
     const cacheKey = "courses_all";
@@ -30,12 +73,20 @@ export async function getCourses(req: AuthRequest, res: Response) {
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
       include: {
-        _count: { select: { chapters: true } },
+        _count: { select: { chapters: true, courseChapters: true } },
       },
     });
 
-    setCache(cacheKey, courses);
-    res.json(courses);
+    const formatted = courses.map((course: any) => ({
+      ...course,
+      _count: {
+        ...course._count,
+        chapters: course._count.courseChapters || course._count.chapters,
+      },
+    }));
+
+    setCache(cacheKey, formatted);
+    res.json(formatted);
   } catch (error) {
     console.error("Get courses error:", error);
     res.status(500).json({ message: "Failed to fetch courses" });
@@ -53,6 +104,16 @@ export async function getCourseById(req: AuthRequest, res: Response) {
             _count: { select: { videos: true, notes: true, questions: true } },
           },
         },
+        courseChapters: {
+          orderBy: { order: "asc" },
+          include: {
+            chapter: {
+              include: {
+                _count: { select: { videos: true, notes: true, questions: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -60,7 +121,7 @@ export async function getCourseById(req: AuthRequest, res: Response) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    res.json(course);
+    res.json(formatCourseChapters(course));
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch course" });
   }
@@ -70,7 +131,10 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { id: true, tier: true } } },
+      include: {
+        course: { select: { id: true, tier: true } },
+        courseLinks: { include: { course: { select: { id: true, tier: true } } } },
+      },
     });
 
     if (!chapter) {
@@ -82,14 +146,8 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
       orderBy: { displayOrder: "asc" },
     });
 
-    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
-
-    // If first chapter, all videos are free
-    const firstChapter = await prisma.chapter.findFirst({
-      where: { courseId: chapter.courseId },
-      orderBy: { displayOrder: "asc" },
-    });
-    const isFirstChapter = firstChapter?.id === chapter.id;
+    const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
+    const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
 
     const videosWithAccess = videos.map((v: any) => ({
       ...v,
@@ -107,14 +165,21 @@ export async function getVideoById(req: AuthRequest, res: Response) {
   try {
     const video = await prisma.video.findUnique({
       where: { id: req.params.id },
-      include: { chapter: { include: { course: { select: { id: true, tier: true } } } } },
+      include: {
+        chapter: {
+          include: {
+            course: { select: { id: true, tier: true } },
+            courseLinks: { include: { course: { select: { id: true, tier: true } } } },
+          },
+        },
+      },
     });
 
     if (!video) {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    const hasAccess = video.isFree || await userHasCourseAccess(prisma, req.user?.id, video.chapter.course);
+    const hasAccess = video.isFree || await userHasChapterAccess(video.chapter, req.user?.id);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Subscription required to access this video" });
@@ -138,7 +203,10 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { id: true, tier: true } } },
+      include: {
+        course: { select: { id: true, tier: true } },
+        courseLinks: { include: { course: { select: { id: true, tier: true } } } },
+      },
     });
 
     if (!chapter) {
@@ -150,7 +218,7 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
       orderBy: { displayOrder: "asc" },
     });
 
-    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
+    const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
 
     const notesWithAccess = notes.map((n: any, i: number) => ({
       ...n,
@@ -168,21 +236,18 @@ export async function getChapterQuestions(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { id: true, tier: true } } },
+      include: {
+        course: { select: { id: true, tier: true } },
+        courseLinks: { include: { course: { select: { id: true, tier: true } } } },
+      },
     });
 
     if (!chapter) {
       return res.status(404).json({ message: "Chapter not found" });
     }
 
-    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
-
-    // First chapter quiz is free
-    const firstChapter = await prisma.chapter.findFirst({
-      where: { courseId: chapter.courseId },
-      orderBy: { displayOrder: "asc" },
-    });
-    const isFirstChapter = firstChapter?.id === chapter.id;
+    const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
+    const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
 
     if (!isFirstChapter && !hasAccess) {
       return res.status(403).json({ message: "Subscription required to access quizzes" });
