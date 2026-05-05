@@ -649,7 +649,7 @@ function PlanCard({
   const featureItems = getDetailedFeatures(planKey, included);
   return (
     <div
-      className={`relative flex flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+      className={`group/card relative flex flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
         isPopular
           ? "border-purple-300/60 ring-1 ring-purple-200/50 shadow-purple-100/60"
           : "border-card-border"
@@ -745,7 +745,7 @@ function PlanCard({
                 return (
                 <li
                   key={`i-${i}`}
-                  className="group flex gap-3 rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
+                  className="feature-row group flex gap-3 rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
                 >
                   <div
                     className="shrink-0 flex h-9 w-9 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-105"
@@ -755,7 +755,9 @@ function PlanCard({
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-[13px] font-black leading-snug text-gray-900">{feature.title}</h4>
-                    <p className="mt-0.5 text-[11.5px] font-medium leading-snug text-gray-500">{feature.detail}</p>
+                    <p className="feature-detail mt-0 max-h-0 overflow-hidden text-[11.5px] font-medium leading-snug text-gray-500 opacity-0 transition-all duration-300 group-hover/card:mt-0.5 group-hover/card:max-h-12 group-hover/card:opacity-100">
+                      {feature.detail}
+                    </p>
                   </div>
                 </li>
               );
