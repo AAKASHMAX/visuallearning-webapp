@@ -92,6 +92,7 @@ model Course {
 model Chapter {
   id           String    @id @default(cuid())
   name         String
+  animationKey String?
   displayOrder Int       @default(0)
   courseId      String
   course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)

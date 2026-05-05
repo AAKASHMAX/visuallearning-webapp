@@ -113,9 +113,9 @@ export async function deleteCourse(req: AuthRequest, res: Response) {
 // ─── Chapter Management ──────────────────────────────────────────
 export async function createChapter(req: AuthRequest, res: Response) {
   try {
-    const { name, courseId, displayOrder } = req.body;
+    const { name, courseId, displayOrder, animationKey } = req.body;
     const chapter = await prisma.chapter.create({
-      data: { name, courseId, displayOrder: displayOrder || 0 },
+      data: { name, courseId, displayOrder: displayOrder || 0, animationKey: animationKey || null },
     });
     clearCourseCache();
     res.status(201).json(chapter);
@@ -126,11 +126,12 @@ export async function createChapter(req: AuthRequest, res: Response) {
 
 export async function updateChapter(req: AuthRequest, res: Response) {
   try {
-    const { name, displayOrder } = req.body;
+    const { name, displayOrder, animationKey } = req.body;
     const chapter = await prisma.chapter.update({
       where: { id: req.params.id },
-      data: { name, displayOrder },
+      data: { name, displayOrder, animationKey: animationKey || null },
     });
+    clearCourseCache();
     res.json(chapter);
   } catch (error) {
     res.status(500).json({ message: "Failed to update chapter" });

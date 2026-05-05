@@ -44,6 +44,7 @@ interface Course {
 interface Chapter {
   id: string;
   name: string;
+  animationKey?: string | null;
   displayOrder: number;
   _count: { videos: number; notes: number; questions: number };
 }
@@ -190,7 +191,7 @@ export default function TierCoursePage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                   {(course.chapters || []).map((chapter, idx) => {
                     const ChapterIcon = getChapterIcon(chapter.name);
-                    const AnimationComponent = getChapterAnimation(chapter.name);
+                    const AnimationComponent = getChapterAnimation(chapter.name, chapter.animationKey);
 
                     return (
                       <Link

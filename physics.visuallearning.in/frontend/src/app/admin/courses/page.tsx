@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, Plus, Edit2, Trash2, ChevronRight, ChevronLeft, Video, FileText, HelpCircle, X } from "lucide-react";
+import { Atom, BookOpen, Plus, Edit2, Trash2, ChevronRight, ChevronLeft, Video, FileText, HelpCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { chapterAnimationOptions } from "@/components/chapter-animations";
 
 interface Course {
   id: string;
@@ -20,6 +21,7 @@ interface Course {
 interface Chapter {
   id: string;
   name: string;
+  animationKey?: string | null;
   displayOrder: number;
   _count: { videos: number; notes: number; questions: number };
 }
@@ -77,6 +79,7 @@ export default function AdminCoursesPage() {
 
   // Chapter form
   const [chapterName, setChapterName] = useState("");
+  const [chapterAnimationKey, setChapterAnimationKey] = useState("");
   const [chapterOrder, setChapterOrder] = useState(0);
 
   // Video form
@@ -149,7 +152,7 @@ export default function AdminCoursesPage() {
   // Chapter CRUD
   async function saveChapter() {
     try {
-      const data = { name: chapterName, courseId: selectedCourse!.id, displayOrder: chapterOrder };
+      const data = { name: chapterName, courseId: selectedCourse!.id, displayOrder: chapterOrder, animationKey: chapterAnimationKey || null };
       if (editingChapter) {
         await api.put(`/admin/chapters/${editingChapter.id}`, data);
         toast.success("Chapter updated");
@@ -229,7 +232,7 @@ export default function AdminCoursesPage() {
 
   // Reset helpers
   function resetCourseForm() { setShowCourseForm(false); setEditingCourse(null); setCourseName(""); setCourseDesc(""); setCourseTier("FREE"); setCourseOrder(0); }
-  function resetChapterForm() { setShowChapterForm(false); setEditingChapter(null); setChapterName(""); setChapterOrder(0); }
+  function resetChapterForm() { setShowChapterForm(false); setEditingChapter(null); setChapterName(""); setChapterAnimationKey(""); setChapterOrder(0); }
   function resetVideoForm() { setShowVideoForm(false); setEditingVideo(null); setVideoTitle(""); setVideoUrl(""); setVideoType("ANIMATED_VIDEO"); setVideoLang("HINDI"); setVideoFree(false); setVideoOrder(0); }
   function resetNoteForm() { setShowNoteForm(false); setEditingNote(null); setNoteTitle(""); setNoteUrl(""); setNoteFree(false); setNoteOrder(0); }
 
@@ -243,7 +246,13 @@ export default function AdminCoursesPage() {
     else if (view === "chapters") { setView("courses"); setSelectedCourse(null); }
   }
 
-  const tierColors: Record<string, string> = { FREE: "bg-emerald-500/10 text-emerald-400", BASIC: "bg-accent/10 text-accent", ADVANCE: "bg-secondary/10 text-secondary-light" };
+  const tierColors: Record<string, string> = {
+    FREE: "bg-emerald-500/10 text-emerald-400",
+    BASIC: "bg-accent/10 text-accent",
+    ADVANCE: "bg-secondary/10 text-secondary-light",
+    BRIDGE: "bg-orange-500/10 text-orange-400",
+  };
+  const getAnimationLabel = (key?: string | null) => chapterAnimationOptions.find((option) => option.key === key)?.label || "Auto by chapter name";
 
   return (
     <div>
@@ -327,10 +336,11 @@ export default function AdminCoursesPage() {
                       <span className="flex items-center gap-1"><Video className="w-3 h-3" />{ch._count.videos}</span>
                       <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{ch._count.notes}</span>
                       <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" />{ch._count.questions}</span>
+                      <span className="flex items-center gap-1 text-accent"><Atom className="w-3 h-3" />{getAnimationLabel(ch.animationKey)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={(e) => { e.stopPropagation(); setEditingChapter(ch); setChapterName(ch.name); setChapterOrder(ch.displayOrder); setShowChapterForm(true); }} className="p-1.5 hover:bg-surface-light rounded-lg"><Edit2 className="w-3.5 h-3.5 text-text-muted" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); setEditingChapter(ch); setChapterName(ch.name); setChapterAnimationKey(ch.animationKey || ""); setChapterOrder(ch.displayOrder); setShowChapterForm(true); }} className="p-1.5 hover:bg-surface-light rounded-lg"><Edit2 className="w-3.5 h-3.5 text-text-muted" /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteChapter(ch.id); }} className="p-1.5 hover:bg-danger/10 rounded-lg"><Trash2 className="w-3.5 h-3.5 text-danger" /></button>
                     <ChevronRight className="w-4 h-4 text-text-muted ml-1" />
                   </div>
@@ -435,7 +445,7 @@ export default function AdminCoursesPage() {
               <div><label className="block text-sm text-text-muted mb-1">Description</label><Input value={courseDesc} onChange={(e) => setCourseDesc(e.target.value)} placeholder="Course description" /></div>
               <div><label className="block text-sm text-text-muted mb-1">Tier</label>
                 <select value={courseTier} onChange={(e) => setCourseTier(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
-                  <option value="FREE">Free</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option>
+                  <option value="FREE">Free</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option><option value="BRIDGE">Bridge</option>
                 </select>
               </div>
               <div><label className="block text-sm text-text-muted mb-1">Display Order</label><Input type="number" value={courseOrder} onChange={(e) => setCourseOrder(parseInt(e.target.value) || 0)} /></div>
@@ -455,6 +465,18 @@ export default function AdminCoursesPage() {
             </div>
             <div className="space-y-4">
               <div><label className="block text-sm text-text-muted mb-1">Chapter Name</label><Input value={chapterName} onChange={(e) => setChapterName(e.target.value)} placeholder="e.g. Newton's Laws" /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Animation Graphic</label>
+                <select value={chapterAnimationKey} onChange={(e) => setChapterAnimationKey(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
+                  <option value="">Auto by chapter name</option>
+                  {chapterAnimationOptions.map((option) => (
+                    <option key={option.key} value={option.key}>{option.label}</option>
+                  ))}
+                </select>
+                <div className="mt-2 flex items-center gap-2 text-xs text-text-muted">
+                  <Atom className="w-3.5 h-3.5 text-accent" />
+                  <span>This controls the animated visual on the chapter card.</span>
+                </div>
+              </div>
               <div><label className="block text-sm text-text-muted mb-1">Display Order</label><Input type="number" value={chapterOrder} onChange={(e) => setChapterOrder(parseInt(e.target.value) || 0)} /></div>
             </div>
             <div className="flex gap-3 mt-6"><Button onClick={saveChapter} className="flex-1">Save</Button><Button variant="ghost" onClick={resetChapterForm} className="flex-1">Cancel</Button></div>

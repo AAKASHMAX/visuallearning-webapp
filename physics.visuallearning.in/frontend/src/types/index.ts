@@ -20,6 +20,7 @@ export interface Course {
 export interface Chapter {
   id: string;
   name: string;
+  animationKey?: string | null;
   displayOrder: number;
   courseId: string;
   _count?: {
