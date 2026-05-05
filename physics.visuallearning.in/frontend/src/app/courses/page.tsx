@@ -3,7 +3,9 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Lightbulb,
   BookOpen,
@@ -16,7 +18,33 @@ import {
   Target,
 } from "lucide-react";
 
-const courses = [
+type CoursePlan = {
+  tier: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  features: string[];
+  icon: typeof Lightbulb;
+  gradient: string;
+  borderColor: string;
+  glowColor: string;
+  tag: string;
+  tagColor: string;
+  price: string;
+  period: string;
+  locked: boolean;
+};
+
+type ApiPlan = {
+  code: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  durationDays: number;
+  features: string[];
+};
+
+const defaultCourses: CoursePlan[] = [
   {
     tier: "FREE",
     title: "Free Course",
@@ -112,7 +140,82 @@ const courses = [
   },
 ];
 
+const planVisuals: Record<string, Omit<CoursePlan, "tier" | "title" | "description" | "features" | "price" | "period" | "locked">> = {
+  FREE: {
+    subtitle: "Get Started",
+    icon: Lightbulb,
+    gradient: "from-emerald-500 to-teal-600",
+    borderColor: "border-emerald-500/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]",
+    tag: "Free Forever",
+    tagColor: "bg-emerald-500/10 text-emerald-400",
+  },
+  BASIC: {
+    subtitle: "Build Foundation",
+    icon: BookOpen,
+    gradient: "from-accent to-blue-600",
+    borderColor: "border-accent/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(0,212,255,0.15)]",
+    tag: "Most Popular",
+    tagColor: "bg-accent/10 text-accent",
+  },
+  ADVANCE: {
+    subtitle: "Go Beyond",
+    icon: Rocket,
+    gradient: "from-secondary to-purple-600",
+    borderColor: "border-secondary/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]",
+    tag: "Best Value",
+    tagColor: "bg-secondary/10 text-secondary-light",
+  },
+  BRIDGE: {
+    subtitle: "Master the Basics",
+    icon: Target,
+    gradient: "from-orange-500 to-red-600",
+    borderColor: "border-orange-500/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]",
+    tag: "Premium",
+    tagColor: "bg-orange-500/10 text-orange-400",
+  },
+};
+
+function planPeriod(durationDays: number, price: number) {
+  if (price <= 0 || durationDays <= 0) return "forever";
+  if (durationDays >= 365) return "/year";
+  if (durationDays === 30) return "/month";
+  return `/${durationDays} days`;
+}
+
+function mergePlan(plan: ApiPlan): CoursePlan {
+  const fallback = defaultCourses.find((course) => course.tier === plan.code) || defaultCourses[0];
+  const visual = planVisuals[plan.code] || planVisuals.FREE;
+
+  return {
+    ...fallback,
+    ...visual,
+    tier: plan.code,
+    title: plan.name,
+    description: plan.description || fallback.description,
+    features: plan.features?.length ? plan.features : fallback.features,
+    price: String(plan.price ?? 0),
+    period: planPeriod(plan.durationDays, plan.price),
+    locked: plan.price > 0,
+  };
+}
+
 export default function CoursesPage() {
+  const [courses, setCourses] = useState<CoursePlan[]>(defaultCourses);
+
+  useEffect(() => {
+    api.get("/subscription/plans")
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setCourses(res.data.map(mergePlan));
+        }
+      })
+      .catch(() => setCourses(defaultCourses));
+  }, []);
+
   return (
     <main className="min-h-screen bg-primary">
       <Navbar />

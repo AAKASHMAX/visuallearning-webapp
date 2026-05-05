@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -510,8 +511,21 @@ function TopicsShowcase() {
 /* ------------------------------------------------------------------ */
 
 function PricingSection() {
-  const plans = [
+  type PricingPlan = {
+    code: string;
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    cta: string;
+    variant: "primary" | "secondary" | "outline";
+    popular: boolean;
+  };
+
+  const fallbackPlans: PricingPlan[] = [
     {
+      code: "FREE",
       name: "Free",
       price: "0",
       period: "forever",
@@ -527,6 +541,7 @@ function PricingSection() {
       popular: false,
     },
     {
+      code: "BASIC",
       name: "Basic",
       price: "299",
       period: "/month",
@@ -543,6 +558,7 @@ function PricingSection() {
       popular: true,
     },
     {
+      code: "ADVANCE",
       name: "Advance",
       price: "499",
       period: "/month",
@@ -560,6 +576,46 @@ function PricingSection() {
       popular: false,
     },
   ];
+
+  const [plans, setPlans] = useState<PricingPlan[]>(fallbackPlans);
+
+  useEffect(() => {
+    api.get("/subscription/plans")
+      .then((res) => {
+        if (!Array.isArray(res.data) || res.data.length === 0) return;
+
+        const nextPlans = res.data.slice(0, 3).map((plan: {
+          code: string;
+          name: string;
+          description?: string | null;
+          price: number;
+          durationDays: number;
+          features: string[];
+        }) => {
+          const fallback = fallbackPlans.find((item) => item.code === plan.code) || fallbackPlans[0];
+          const period = plan.price <= 0 || plan.durationDays <= 0
+            ? "forever"
+            : plan.durationDays >= 365
+              ? "/year"
+              : plan.durationDays === 30
+                ? "/month"
+                : `/${plan.durationDays} days`;
+
+          return {
+            ...fallback,
+            code: plan.code,
+            name: plan.name,
+            price: String(plan.price ?? 0),
+            period,
+            description: plan.description || fallback.description,
+            features: plan.features?.length ? plan.features : fallback.features,
+          };
+        });
+
+        setPlans(nextPlans);
+      })
+      .catch(() => setPlans(fallbackPlans));
+  }, []);
 
   return (
     <section id="pricing" className="py-24 relative bg-surface/50">
