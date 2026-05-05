@@ -19,6 +19,18 @@ function getRazorpayClient() {
   });
 }
 
+function isCouponUsable(coupon: any, planCode: string) {
+  const now = new Date();
+  return Boolean(
+    coupon &&
+    coupon.isActive &&
+    coupon.usedCount < coupon.maxUses &&
+    now >= coupon.validFrom &&
+    now <= coupon.validUntil &&
+    (coupon.applicablePlans.length === 0 || coupon.applicablePlans.includes(planCode))
+  );
+}
+
 export async function getPlans(req: AuthRequest, res: Response) {
   try {
     await ensureDefaultPlans(prisma);
@@ -121,9 +133,10 @@ export async function createOrder(req: AuthRequest, res: Response) {
     // Apply coupon
     if (couponCode) {
       const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive && coupon.usedCount < coupon.maxUses) {
-        amount = Math.round(amount * (1 - coupon.discountPercent / 100));
+      if (!isCouponUsable(coupon, plan)) {
+        return res.status(400).json({ message: "Invalid coupon code" });
       }
+      amount = Math.round(amount * (1 - coupon!.discountPercent / 100));
     }
 
     if (amount <= 0) {
@@ -175,13 +188,14 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     let discountAmount = 0;
     if (couponCode) {
       const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon) {
-        discountAmount = Math.round(planConfig.price * coupon.discountPercent / 100);
-        await prisma.coupon.update({
-          where: { id: coupon.id },
-          data: { usedCount: { increment: 1 } },
-        });
+      if (!isCouponUsable(coupon, plan)) {
+        return res.status(400).json({ message: "Invalid coupon code" });
       }
+      discountAmount = Math.round(planConfig.price * coupon!.discountPercent / 100);
+      await prisma.coupon.update({
+        where: { id: coupon!.id },
+        data: { usedCount: { increment: 1 } },
+      });
     }
 
     const expiryDate = new Date();

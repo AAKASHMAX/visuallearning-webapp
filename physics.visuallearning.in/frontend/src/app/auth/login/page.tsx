@@ -30,7 +30,8 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", { email, password });
       login(res.data.user, res.data.token);
       toast.success("Welcome back!");
-      router.push("/");
+      const redirect = new URLSearchParams(window.location.search).get("redirect");
+      router.push(redirect || "/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {

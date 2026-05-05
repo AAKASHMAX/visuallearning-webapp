@@ -278,13 +278,13 @@ export default function CoursesPage() {
                 ))}
               </ul>
 
-              <Link href={`/courses/${course.tier.toLowerCase()}`}>
+              <Link href={course.locked ? `/subscription?plan=${course.tier}` : `/courses/${course.tier.toLowerCase()}`}>
                 <Button
                   variant={i === 1 ? "primary" : i === 2 ? "secondary" : "outline"}
                   className="w-full"
                 >
                   {course.locked && <Lock className="w-4 h-4 mr-2" />}
-                  Start Learning
+                  {course.locked ? "Subscribe Now" : "Start Learning"}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>

@@ -46,7 +46,7 @@ export function Footer() {
               {[
                 { label: "Courses", href: "/#courses" },
                 { label: "Features", href: "/#features" },
-                { label: "Pricing", href: "/#pricing" },
+                { label: "Pricing", href: "/subscription" },
                 { label: "Contact", href: "/contact" },
               ].map((link) => (
                 <li key={link.href}>

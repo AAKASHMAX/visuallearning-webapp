@@ -67,7 +67,7 @@ export function Navbar() {
               Features
             </Link>
             <Link
-              href="/#pricing"
+              href="/subscription"
               className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
             >
               Pricing
@@ -153,7 +153,7 @@ export function Navbar() {
                 Features
               </Link>
               <Link
-                href="/#pricing"
+                href="/subscription"
                 className="text-text-muted hover:text-accent transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

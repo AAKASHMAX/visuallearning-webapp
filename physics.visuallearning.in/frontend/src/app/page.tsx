@@ -676,7 +676,7 @@ function PricingSection() {
                 ))}
               </ul>
 
-              <Link href="/auth/signup">
+              <Link href={plan.price === "0" ? "/auth/signup" : `/subscription?plan=${plan.code}`}>
                 <Button variant={plan.variant} className="w-full">
                   {plan.cta}
                 </Button>
