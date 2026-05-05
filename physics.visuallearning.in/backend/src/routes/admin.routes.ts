@@ -10,6 +10,7 @@ import {
   getSubscriptions, grantSubscription, cancelSubscription,
   getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan,
   getCoupons, createCoupon, toggleCoupon, deleteCoupon,
+  getAdminNotifications, createNotification, updateNotification, publishNotification, deleteNotification,
   getSettings, updateSettings, getAnalytics, getPublicSettings,
 } from "../controllers/admin.controller";
 
@@ -70,6 +71,13 @@ router.get("/coupons", getCoupons);
 router.post("/coupons", createCoupon);
 router.patch("/coupons/:id/toggle", toggleCoupon);
 router.delete("/coupons/:id", deleteCoupon);
+
+// Notifications
+router.get("/notifications", getAdminNotifications);
+router.post("/notifications", createNotification);
+router.put("/notifications/:id", updateNotification);
+router.patch("/notifications/:id/publish", publishNotification);
+router.delete("/notifications/:id", deleteNotification);
 
 // Settings
 router.get("/settings", getSettings);

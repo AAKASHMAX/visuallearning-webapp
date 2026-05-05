@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Menu, X, LogIn, User, LogOut, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function Navbar() {
   const { isAuthenticated, user, logout, hydrate } = useAuth();
@@ -74,6 +75,7 @@ export function Navbar() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
+                <NotificationBell />
                 {user?.role === "ADMIN" && (
                   <Link href="/admin/dashboard">
                     <Button variant="outline" size="sm" className="border-accent text-accent hover:bg-accent hover:text-primary">
@@ -160,6 +162,10 @@ export function Navbar() {
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
                 {isAuthenticated ? (
                   <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted text-sm">Notifications</span>
+                      <NotificationBell />
+                    </div>
                     {user?.role === "ADMIN" && (
                       <Link href="/admin/dashboard">
                         <Button variant="outline" size="sm" className="w-full border-accent text-accent hover:bg-accent hover:text-primary">

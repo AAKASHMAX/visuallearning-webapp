@@ -11,6 +11,7 @@ import {
   Settings,
   BarChart3,
   Tag,
+  Bell,
   LogOut,
   ChevronLeft,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Coupons", href: "/admin/coupons", icon: Tag },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

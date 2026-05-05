@@ -448,6 +448,86 @@ export async function deleteCoupon(req: AuthRequest, res: Response) {
 }
 
 // ─── Settings ────────────────────────────────────────────────────
+// ─── Notification Management ─────────────────────────────────────
+export async function getAdminNotifications(req: AuthRequest, res: Response) {
+  try {
+    const notifications = await prisma.notification.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      include: { _count: { select: { reads: true } } },
+    });
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+}
+
+export async function createNotification(req: AuthRequest, res: Response) {
+  try {
+    const { title, message, type = "INFO", isPublished = false } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ message: "Title and message are required" });
+    }
+
+    const notification = await prisma.notification.create({
+      data: {
+        title,
+        message,
+        type,
+        isPublished,
+        publishedAt: isPublished ? new Date() : null,
+      },
+    });
+
+    res.status(201).json(notification);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create notification" });
+  }
+}
+
+export async function updateNotification(req: AuthRequest, res: Response) {
+  try {
+    const { title, message, type, isPublished } = req.body;
+    const existing = await prisma.notification.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ message: "Notification not found" });
+
+    const notification = await prisma.notification.update({
+      where: { id: req.params.id },
+      data: {
+        title,
+        message,
+        type,
+        isPublished,
+        publishedAt: isPublished && !existing.publishedAt ? new Date() : existing.publishedAt,
+      },
+    });
+
+    res.json(notification);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update notification" });
+  }
+}
+
+export async function publishNotification(req: AuthRequest, res: Response) {
+  try {
+    const notification = await prisma.notification.update({
+      where: { id: req.params.id },
+      data: { isPublished: true, publishedAt: new Date() },
+    });
+    res.json(notification);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to publish notification" });
+  }
+}
+
+export async function deleteNotification(req: AuthRequest, res: Response) {
+  try {
+    await prisma.notification.delete({ where: { id: req.params.id } });
+    res.json({ message: "Notification deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete notification" });
+  }
+}
+
 export async function getSettings(req: AuthRequest, res: Response) {
   try {
     const settings = await prisma.setting.findMany();
