@@ -286,7 +286,7 @@ export default function CoursesPage() {
         </div>
 
         <div className="mb-20">
-          <div className="mx-auto grid max-w-[900px] grid-cols-1 gap-6 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {courses
               .filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey))
               .sort((a, b) => {
@@ -332,7 +332,7 @@ export default function CoursesPage() {
               Complete curricula tailored for your specific grade level with full access to all features.
             </p>
           </div>
-          <div className="mx-auto grid max-w-[900px] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {courses.filter(c => ["CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"].includes(c.planKey)).map((course) => {
               const theme = COURSE_THEME[course.planKey] || COURSE_THEME.CLASS_9;
               const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
@@ -739,22 +739,22 @@ function PlanCard({
                 {featureItems.length} tools
               </span>
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {featureItems.map((feature, i) => {
                 const Icon = feature.icon;
                 return (
                 <li
                   key={`i-${i}`}
-                  className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
+                  className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 px-2.5 py-2 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
                 >
                   <div
-                    className="shrink-0 flex h-9 w-9 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-105"
+                    className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg shadow-sm transition-transform group-hover:scale-105"
                     style={{ backgroundColor: `${accentColor}14`, border: `1px solid ${accentColor}26`, color: accentColor }}
                   >
-                    <Icon className="h-4 w-4" strokeWidth={2.4} />
+                    <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[13px] font-black leading-snug text-gray-900">{feature.title}</h4>
+                    <h4 className="text-[11.5px] font-black leading-tight text-gray-900">{feature.title}</h4>
                   </div>
                 </li>
               );
