@@ -474,6 +474,7 @@ export async function grantSubscription(req: Request, res: Response) {
       },
     });
 
+    cacheInvalidate(`access:${userId}:`);
     return success(res, subscription, "Course plan assigned successfully", 201);
   } catch (e) {
     console.error("Grant subscription error:", e);
@@ -506,6 +507,7 @@ export async function updateSubscription(req: Request, res: Response) {
       },
     });
 
+    cacheInvalidate(`access:${existing.userId}:`);
     return success(res, subscription, "Subscription updated");
   } catch (e) {
     console.error("Update subscription error:", e);
@@ -516,14 +518,34 @@ export async function updateSubscription(req: Request, res: Response) {
 export async function cancelSubscription(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const subscription = await prisma.subscription.update({
+
+    const existing = await prisma.subscription.findUnique({
       where: { id },
+      select: { userId: true },
+    });
+    if (!existing) return error(res, "Subscription not found", 404);
+
+    const result = await prisma.subscription.updateMany({
+      where: {
+        userId: existing.userId,
+        status: "ACTIVE",
+      },
       data: { status: "CANCELLED" },
     });
-    return success(res, subscription, "Subscription cancelled");
+
+    const subscription = await prisma.subscription.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        course: { select: { id: true, name: true, slug: true, planKey: true, accentColor: true, icon: true } },
+      },
+    });
+
+    cacheInvalidate(`access:${existing.userId}:`);
+    return success(res, { subscription, cancelled: result.count }, `Cancelled ${result.count} active subscription${result.count === 1 ? "" : "s"} for this user`);
   } catch (e: any) {
     console.error("Cancel subscription error:", e);
-    return error(res, e.code === "P2025" ? "Subscription not found" : "Failed to cancel");
+    return error(res, "Failed to cancel");
   }
 }
 

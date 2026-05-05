@@ -371,27 +371,12 @@ export async function verifyPayment(req: Request, res: Response) {
 export async function getMySubscription(req: Request, res: Response) {
   try {
     const subscriptions = await prisma.subscription.findMany({
-      where: { userId: req.user!.id, status: "ACTIVE" },
+      where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
       orderBy: { createdAt: "desc" },
       include: { course: { select: { id: true, name: true, slug: true, accentColor: true, icon: true, planKey: true } } },
     });
 
-    // Auto-expire and filter out if past expiry date
-    const now = new Date();
-    const activeSubs = [];
-
-    for (const sub of subscriptions) {
-      if (sub.expiryDate < now) {
-        await prisma.subscription.update({
-          where: { id: sub.id },
-          data: { status: "EXPIRED" },
-        });
-      } else {
-        activeSubs.push(sub);
-      }
-    }
-
-    return success(res, activeSubs);
+    return success(res, subscriptions);
   } catch (e) {
     console.error("Get subscription error:", e);
     return error(res, "Failed to fetch subscription");

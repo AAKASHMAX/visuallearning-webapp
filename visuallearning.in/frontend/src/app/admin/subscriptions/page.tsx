@@ -174,8 +174,12 @@ export default function AdminSubscriptionsPage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Cancel this subscription?")) return;
-    try { await api.delete(`/admin/subscriptions/${id}`); toast.success("Cancelled"); load(); }
+    if (!confirm("Cancel all active subscriptions for this user?")) return;
+    try {
+      const { data } = await api.delete(`/admin/subscriptions/${id}`);
+      toast.success(data.message || "Subscriptions cancelled");
+      load();
+    }
     catch { toast.error("Failed"); }
   };
 
