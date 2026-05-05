@@ -182,10 +182,11 @@ export async function getVideos(req: Request, res: Response) {
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    const allChapterVideos = await prisma.video.findMany({
+    const chapterVideos = await prisma.video.findMany({
       where: { chapterId: id, ...(type ? { type } : {}) },
       orderBy: { order: "asc" },
     });
+    const allChapterVideos = chapterVideos.filter((v) => !!(v.youtubeVideoId || v.vimeoVideoId));
 
     let videos = [];
     let usingFallback = false;
@@ -197,16 +198,6 @@ export async function getVideos(req: Request, res: Response) {
       if (videos.length === 0 && language !== "ENGLISH") {
         videos = allChapterVideos.filter((v) => v.language === "ENGLISH");
         usingFallback = true;
-      }
-    }
-
-    if (language !== "ENGLISH" && !usingFallback) {
-      const existingOrders = new Set(videos.map((v) => v.order));
-      const comingSoon = allChapterVideos.filter(
-        (v) => v.language === "ENGLISH" && !v.youtubeVideoId && !v.vimeoVideoId && !existingOrders.has(v.order)
-      );
-      if (comingSoon.length > 0) {
-        videos = [...videos, ...comingSoon].sort((a, b) => a.order - b.order);
       }
     }
 

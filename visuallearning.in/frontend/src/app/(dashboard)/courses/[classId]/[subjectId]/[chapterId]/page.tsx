@@ -7,7 +7,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/components/ui/loading";
 import { VideoPlayer } from "@/components/video/video-player";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -23,7 +22,6 @@ import {
   CheckCircle2, 
   X, 
   Globe,
-  Clock,
   Crown
 } from "lucide-react";
 import { Video, Note, Question, BoardPaper } from "@/types";
@@ -256,40 +254,32 @@ export default function UnifiedChapterPage() {
                 ) : (
                   filteredVideos.map((video, idx) => {
                     const isActive = selectedVideo?.id === video.id;
-                    const isComingSoon = !video.youtubeVideoId && !video.vimeoVideoId;
                     
                     return (
                       <div 
                         key={video.id} 
                         onClick={() => {
-                          if (isComingSoon) return;
                           if (video.locked) { setShowLockedModal(true); return; }
                           setSelectedVideo(video);
                         }}
                         className={`group flex items-center gap-4 rounded-xl border p-3.5 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
                       >
                         <div className="relative w-36 h-20 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
-                          {isComingSoon ? (
-                            <Clock className="w-6 h-6 text-gray-300" />
+                          {video.vimeoVideoId ? (
+                            <img
+                              src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`}
+                              alt={video.title}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
                           ) : (
-                            <>
-                              {video.vimeoVideoId ? (
-                                <img 
-                                  src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`} 
-                                  alt={video.title}
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
-                                  <Play className="w-4 h-4 fill-current ml-0.5" />
-                                </div>
-                              )}
-                              {video.locked && (
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                  <Lock className="w-6 h-6 text-white" />
-                                </div>
-                              )}
-                            </>
+                            <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            </div>
+                          )}
+                          {video.locked && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Lock className="w-6 h-6 text-white" />
+                            </div>
                           )}
                           {video.isFree && <span className="absolute top-0 right-0 px-1.5 py-0.5 bg-success text-[9px] font-bold text-white rounded-bl-lg z-20">FREE</span>}
                         </div>
@@ -298,11 +288,7 @@ export default function UnifiedChapterPage() {
                             {idx + 1}. {video.title}
                           </h3>
                           <div className="flex items-center gap-2 mt-1.5">
-                            {isComingSoon ? (
-                              <Badge className="text-[10px] px-2 py-0.5">Coming Soon</Badge>
-                            ) : (
-                              <span className="text-[11px] text-gray-500">{video.duration || "Animated"}</span>
-                            )}
+                            <span className="text-[11px] text-gray-500">{video.duration || "Animated"}</span>
                           </div>
                         </div>
                       </div>
