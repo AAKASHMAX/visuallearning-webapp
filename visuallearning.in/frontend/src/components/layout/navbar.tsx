@@ -4,9 +4,20 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Bell, Menu, X, User, LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import api from "@/lib/api";
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  linkUrl?: string | null;
+  publishedAt?: string | null;
+  read: boolean;
+}
 
 export function Navbar() {
   const { user, isAuthenticated, logout, hydrate } = useAuth();
@@ -61,6 +72,7 @@ export function Navbar() {
 
             {mounted && isAuthenticated ? (
               <div className="flex items-center gap-4 ml-2">
+                <NotificationBell />
                 <Link href={user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"}>
                   <Button variant="accent" size="sm">Dashboard</Button>
                 </Link>
@@ -86,10 +98,12 @@ export function Navbar() {
             ) : null}
           </div>
 
-          {/* Mobile toggle */}
-          <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex items-center gap-3">
+            {mounted && isAuthenticated && <NotificationBell />}
+            <button onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -114,6 +128,9 @@ export function Navbar() {
 
             {mounted && isAuthenticated ? (
               <>
+                <div className="px-4 py-2">
+                  <NotificationBell align="left" />
+                </div>
                 <Link 
                   href={user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} 
                   className={cn(
@@ -147,5 +164,114 @@ export function Navbar() {
       </div>
     </nav>
     </>
+  );
+}
+
+function NotificationBell({ align = "right" }: { align?: "left" | "right" }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get("/notifications");
+      setNotifications(data.data.notifications || []);
+      setUnreadCount(data.data.unreadCount || 0);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    const timer = window.setInterval(loadNotifications, 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const markRead = async () => {
+    if (unreadCount <= 0) return;
+    try {
+      await api.post("/notifications/mark-read");
+      setUnreadCount(0);
+      setNotifications((items) => items.map((item) => ({ ...item, read: true })));
+    } catch {
+      // Keep the dot if marking fails.
+    }
+  };
+
+  const toggleOpen = () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen) markRead();
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={toggleOpen}
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        aria-label="Notifications"
+      >
+        <Bell className="h-4 w-4" />
+        {unreadCount > 0 && (
+          <span className="absolute right-1.5 top-1.5 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className={cn(
+          "absolute top-11 z-[60] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-2xl",
+          align === "right" ? "right-0" : "left-0"
+        )}>
+          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-black">Notifications</p>
+              <p className="text-[11px] text-gray-500">{notifications.length} published updates</p>
+            </div>
+            <button onClick={() => setOpen(false)} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-400">Loading notifications...</div>
+            ) : notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-400">No notifications yet.</div>
+            ) : (
+              notifications.map((notification) => (
+                <div key={notification.id} className="border-b border-gray-50 px-4 py-3 last:border-0">
+                  <div className="mb-1 flex items-start gap-2">
+                    <span className={cn(
+                      "mt-1 h-2 w-2 shrink-0 rounded-full",
+                      notification.type === "ALERT" ? "bg-red-500" :
+                      notification.type === "WARNING" ? "bg-amber-500" :
+                      notification.type === "SUCCESS" ? "bg-emerald-500" : "bg-sky-500"
+                    )} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900">{notification.title}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-gray-500">{notification.message}</p>
+                      {notification.linkUrl && (
+                        <a href={notification.linkUrl} className="mt-2 inline-block text-xs font-bold text-primary hover:underline">
+                          Open link
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

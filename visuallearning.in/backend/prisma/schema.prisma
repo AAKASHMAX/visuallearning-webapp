@@ -33,9 +33,41 @@ model User {
 
   subscriptions     Subscription[]
   watchProgress     WatchProgress[]
+  notificationReads NotificationRead[]
 
   @@index([email])
   @@index([role])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  type        String   @default("INFO")
+  linkUrl     String?
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reads       NotificationRead[]
+
+  @@index([published, publishedAt])
+  @@index([createdAt])
+}
+
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  userId         String
+  readAt         DateTime     @default(now())
+
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+  @@index([notificationId])
 }
 
 model Subscription {

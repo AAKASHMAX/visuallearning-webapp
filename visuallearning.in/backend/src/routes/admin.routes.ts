@@ -22,6 +22,9 @@ import {
   getAllCoupons, createCoupon, toggleCoupon, deleteCoupon, couponSchema,
   clearAllSubscriptions,
 } from "../controllers/admin.controller";
+import {
+  getAllNotifications, createNotification, updateNotification, toggleNotificationPublish, deleteNotification, notificationSchema,
+} from "../controllers/notification.controller";
 
 const router = Router();
 
@@ -37,6 +40,13 @@ router.get("/stats", getStats);
 // Users
 router.get("/users", getAllUsers);
 router.patch("/users/:id/block", toggleBlockUser);
+
+// Notifications
+router.get("/notifications", getAllNotifications);
+router.post("/notifications", validate(notificationSchema), createNotification);
+router.put("/notifications/:id", validate(notificationSchema), updateNotification);
+router.patch("/notifications/:id/toggle", toggleNotificationPublish);
+router.delete("/notifications/:id", deleteNotification);
 
 // Subscriptions
 router.get("/subscriptions", getAllSubscriptions);
