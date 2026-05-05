@@ -102,11 +102,8 @@ const DETAILED_FEATURES: Record<string, FeatureDetail[]> = {
     { title: "Core Chapters That Build Real Understanding", detail: "Master the most important physics concepts needed for school success", icon: Target },
     { title: "3D Animated Concept Videos", detail: "Learn visually with engaging animations that make complex ideas simple", icon: MonitorPlay },
     { title: "Step-by-Step Beginner Learning Path", detail: "Perfect for students who want to rebuild or strengthen their basics", icon: Route },
-    { title: "Interactive Learning Experience", detail: "Stay engaged with intuitive explanations and visual storytelling", icon: Sparkles },
     { title: "Smart Notes for Quick Revision", detail: "Clear, concise notes designed for fast recall before exams", icon: FileText },
     { title: "Practice Quizzes for Exam Preparation", detail: "Test your understanding and improve performance with targeted questions", icon: ClipboardCheck },
-    { title: "Progress Tracking Dashboard", detail: "See your improvement and stay motivated throughout your journey", icon: BarChart3 },
-    { title: "Learn Anytime, Anywhere", detail: "Access your course seamlessly on mobile and desktop", icon: Smartphone },
   ],
   ACADEMIC_PLUS: [
     { title: "Complete Class 9-10 PCB Coverage", detail: "Build strong school foundations with structured Physics, Chemistry and Biology lessons", icon: GraduationCap },
@@ -754,7 +751,7 @@ function PlanCard({
                     <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[11.5px] font-black leading-tight text-gray-900">{feature.title}</h4>
+                    <h4 className="text-[14px] font-normal leading-tight text-gray-900">{feature.title}</h4>
                   </div>
                 </li>
               );
