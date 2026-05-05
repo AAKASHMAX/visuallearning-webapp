@@ -67,7 +67,10 @@ export default function AdminSubscriptionsPage() {
   const [savingPrice,     setSavingPrice]     = useState(false);
 
   // Grant form
-  const [grantForm, setGrantForm] = useState({ userId: "", plan: "", durationDays: 365, classesAccess: [] as string[] });
+  const [grantForm, setGrantForm] = useState({ userId: "", plan: "", durationDays: 365, billingCycle: "monthly" as string, classesAccess: [] as string[] });
+  const [userSearch, setUserSearch] = useState("");
+  const [userResults, setUserResults] = useState<{id:string;name:string;email:string}[]>([]);
+  const [selectedUser, setSelectedUser] = useState<{id:string;name:string;email:string}|null>(null);
   // Edit form
   const [editForm,  setEditForm]  = useState({ plan: "", status: "", expiryDate: "", classesAccess: [] as string[] });
 
@@ -113,11 +116,23 @@ export default function AdminSubscriptionsPage() {
   };
   useEffect(load, [page, statusFilter]);
 
+  const searchUsers = async (q: string) => {
+    setUserSearch(q);
+    if (q.length < 2) { setUserResults([]); return; }
+    try {
+      const { data } = await api.get(`/admin/users?search=${q}&limit=5`);
+      setUserResults(data.data.users.map((u:any) => ({ id: u.id, name: u.name, email: u.email })));
+    } catch { setUserResults([]); }
+  };
+
   const handleGrant = async () => {
+    if (!grantForm.userId) { toast.error("Please select a user"); return; }
     try {
       await api.post("/admin/subscriptions", grantForm);
-      toast.success("Subscription granted");
+      toast.success("Subscription granted!");
       setShowGrant(false);
+      setSelectedUser(null);
+      setUserSearch("");
       load();
     } catch (err: any) { toast.error(err.response?.data?.message || "Failed to grant"); }
   };
@@ -199,26 +214,64 @@ export default function AdminSubscriptionsPage() {
           <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2">
             <Plus className="w-4 h-4 text-primary" /> Grant New Subscription
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">User ID</label>
-              <input value={grantForm.userId} onChange={(e) => setGrantForm({ ...grantForm, userId: e.target.value })}
-                placeholder="Paste user ID" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* User Search */}
+            <div className="relative sm:col-span-2 lg:col-span-1">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Search User</label>
+              {selectedUser ? (
+                <div className="flex items-center gap-2 border border-emerald-200 bg-emerald-50 rounded-xl px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">{selectedUser.name}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{selectedUser.email}</p>
+                  </div>
+                  <button onClick={() => { setSelectedUser(null); setGrantForm({...grantForm, userId: ""}); setUserSearch(""); }}
+                    className="text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <>
+                  <input value={userSearch} onChange={(e) => searchUsers(e.target.value)}
+                    placeholder="Type name or email…" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50" />
+                  {userResults.length > 0 && (
+                    <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {userResults.map((u) => (
+                        <button key={u.id} onClick={() => { setSelectedUser(u); setGrantForm({...grantForm, userId: u.id}); setUserResults([]); setUserSearch(""); }}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0">
+                          <p className="text-sm font-bold text-gray-900">{u.name}</p>
+                          <p className="text-[10px] text-gray-400">{u.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+            {/* Plan */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Plan</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Course Plan</label>
               <select value={grantForm.plan} onChange={(e) => setGrantForm({ ...grantForm, plan: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
                 {planKeys.map((k) => <option key={k} value={k}>{planLabels[k] || k}</option>)}
               </select>
             </div>
+            {/* Billing Cycle */}
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Billing Cycle</label>
+              <select value={grantForm.billingCycle} onChange={(e) => setGrantForm({ ...grantForm, billingCycle: e.target.value, durationDays: e.target.value === "monthly" ? 30 : 365 })}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                <option value="monthly">Monthly (30 days)</option>
+                <option value="yearly">Yearly (365 days)</option>
+              </select>
+            </div>
+            {/* Duration */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Duration (days)</label>
-              <input type="number" value={grantForm.durationDays} onChange={(e) => setGrantForm({ ...grantForm, durationDays: parseInt(e.target.value) || 365 })}
+              <input type="number" value={grantForm.durationDays} onChange={(e) => setGrantForm({ ...grantForm, durationDays: parseInt(e.target.value) || 30 })}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
             </div>
           </div>
-          <Button onClick={handleGrant} className="rounded-xl font-bold">Grant Access</Button>
+          <Button onClick={handleGrant} className="rounded-xl font-bold">
+            <CheckCircle2 className="w-4 h-4 mr-2" /> Grant Access
+          </Button>
         </div>
       )}
 
