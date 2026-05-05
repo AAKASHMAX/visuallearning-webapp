@@ -21,9 +21,9 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      if (data.data.user.role !== "ADMIN" && data.data.user.role !== "TEACHER") { toast.error("Admin or Teacher access only"); return; }
+      if (data.data.user.role !== "ADMIN") { toast.error("Admin access only"); return; }
       login(data.data.user, data.data.token);
-      router.push(data.data.user.role === "TEACHER" ? "/admin/live-classes" : "/admin/dashboard");
+      router.push("/admin/dashboard");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {
@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <Shield className="w-12 h-12 text-primary mx-auto mb-3" />
-            <h1 className="text-2xl font-bold text-primary">Admin / Teacher Panel</h1>
+            <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
             <p className="text-gray-500">VisualLearning Management</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">

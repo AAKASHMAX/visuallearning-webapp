@@ -8,13 +8,22 @@ import toast from "react-hot-toast";
 import {
   Plus, X, Pencil, Ban, Save, Users, CheckCircle2,
   Clock, IndianRupee, Search, ChevronLeft, ChevronRight,
-  Atom, FlaskConical, Dna, Calculator, Sparkles
+  Atom, FlaskConical, Dna, Calculator, Sparkles, Trash2
 } from "lucide-react";
 
 interface SubRow {
   id: string; plan: string; classesAccess: string[];
   status: string; expiryDate: string; amount: number;
   createdAt: string; user: { id: string; name: string; email: string };
+  course?: { id: string; name: string; slug: string; planKey?: string; accentColor?: string; icon?: string } | null;
+}
+
+interface CourseOption {
+  id: string;
+  name: string;
+  slug: string;
+  planKey?: string | null;
+  _count?: { chapters: number };
 }
 
 function statusColor(s: string) {
@@ -56,6 +65,7 @@ export default function AdminSubscriptionsPage() {
   const [showGrant,     setShowGrant]     = useState(false);
   const [editingSub,    setEditingSub]    = useState<SubRow | null>(null);
   const [classes,       setClasses]       = useState<{ id: string; name: string }[]>([]);
+  const [courses,       setCourses]       = useState<CourseOption[]>([]);
   const [planLabels,    setPlanLabels]    = useState<Record<string, string>>({});
   const [planKeys,      setPlanKeys]      = useState<string[]>([]);
   const [activeClassTab, setActiveClassTab] = useState<string>("");
@@ -67,7 +77,7 @@ export default function AdminSubscriptionsPage() {
   const [savingPrice,     setSavingPrice]     = useState(false);
 
   // Grant form
-  const [grantForm, setGrantForm] = useState({ userId: "", plan: "", durationDays: 365, billingCycle: "monthly" as string, classesAccess: [] as string[] });
+  const [grantForm, setGrantForm] = useState({ userId: "", courseId: "", plan: "", durationDays: 365, billingCycle: "yearly" as string, classesAccess: [] as string[] });
   const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState<{id:string;name:string;email:string}[]>([]);
   const [selectedUser, setSelectedUser] = useState<{id:string;name:string;email:string}|null>(null);
@@ -87,6 +97,15 @@ export default function AdminSubscriptionsPage() {
       setPlanLabels(labels);
       setPlanKeys(Object.keys(plans));
       setGrantForm((f) => ({ ...f, plan: Object.keys(plans)[0] ?? "" }));
+    });
+    api.get("/admin/courses").then(({ data }) => {
+      const courseList = data.data || [];
+      setCourses(courseList);
+      setGrantForm((f) => ({
+        ...f,
+        courseId: courseList[0]?.id ?? "",
+        plan: courseList[0]?.planKey || courseList[0]?.slug || f.plan,
+      }));
     });
     loadSubjectPricing();
   }, []);
@@ -127,9 +146,16 @@ export default function AdminSubscriptionsPage() {
 
   const handleGrant = async () => {
     if (!grantForm.userId) { toast.error("Please select a user"); return; }
+    if (!grantForm.courseId) { toast.error("Please select a course plan"); return; }
     try {
-      await api.post("/admin/subscriptions", grantForm);
-      toast.success("Subscription granted!");
+      const selectedCourse = courses.find((course) => course.id === grantForm.courseId);
+      await api.post("/admin/subscriptions", {
+        userId: grantForm.userId,
+        courseId: grantForm.courseId,
+        plan: selectedCourse?.planKey || selectedCourse?.slug || grantForm.plan,
+        durationDays: grantForm.durationDays,
+      });
+      toast.success("Course plan assigned!");
       setShowGrant(false);
       setSelectedUser(null);
       setUserSearch("");
@@ -151,6 +177,21 @@ export default function AdminSubscriptionsPage() {
     if (!confirm("Cancel this subscription?")) return;
     try { await api.delete(`/admin/subscriptions/${id}`); toast.success("Cancelled"); load(); }
     catch { toast.error("Failed"); }
+  };
+
+  const handleClearAllSubscriptions = async () => {
+    const first = confirm("This will permanently delete every subscription record for every user. Continue?");
+    if (!first) return;
+    const second = prompt('Type DELETE SUBSCRIPTIONS to confirm.');
+    if (second !== "DELETE SUBSCRIPTIONS") return;
+    try {
+      const { data } = await api.delete("/admin/subscriptions");
+      toast.success(data.message || "Subscriptions cleared");
+      setPage(1);
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to clear subscriptions");
+    }
   };
 
   const startEdit = (sub: SubRow) => {
@@ -183,10 +224,16 @@ export default function AdminSubscriptionsPage() {
           <h1 className="text-2xl font-black text-gray-900">Subscription Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage user subscriptions and grant access</p>
         </div>
-        <Button onClick={() => { setShowGrant(!showGrant); setEditingSub(null); }}
-          className="flex items-center gap-2 rounded-xl font-bold shadow-sm">
-          {showGrant ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Grant Subscription</>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleClearAllSubscriptions}
+            className="flex items-center gap-2 rounded-xl font-bold border-rose-200 text-rose-600 hover:bg-rose-50">
+            <Trash2 className="w-4 h-4" /> Clear All
+          </Button>
+          <Button onClick={() => { setShowGrant(!showGrant); setEditingSub(null); }}
+            className="flex items-center gap-2 rounded-xl font-bold shadow-sm">
+            {showGrant ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Assign Course Plan</>}
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -245,12 +292,15 @@ export default function AdminSubscriptionsPage() {
                 </>
               )}
             </div>
-            {/* Plan */}
+            {/* Course */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Course Plan</label>
-              <select value={grantForm.plan} onChange={(e) => setGrantForm({ ...grantForm, plan: e.target.value })}
+              <select value={grantForm.courseId} onChange={(e) => {
+                const selected = courses.find((course) => course.id === e.target.value);
+                setGrantForm({ ...grantForm, courseId: e.target.value, plan: selected?.planKey || selected?.slug || "" });
+              }}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                {planKeys.map((k) => <option key={k} value={k}>{planLabels[k] || k}</option>)}
+                {courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}
               </select>
             </div>
             {/* Billing Cycle */}
@@ -270,7 +320,7 @@ export default function AdminSubscriptionsPage() {
             </div>
           </div>
           <Button onClick={handleGrant} className="rounded-xl font-bold">
-            <CheckCircle2 className="w-4 h-4 mr-2" /> Grant Access
+            <CheckCircle2 className="w-4 h-4 mr-2" /> Assign Access
           </Button>
         </div>
       )}
@@ -367,7 +417,7 @@ export default function AdminSubscriptionsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${planColor(planLabels[sub.plan] || sub.plan)}`}>
-                        {planLabels[sub.plan] || sub.plan}
+                        {sub.course?.name || planLabels[sub.plan] || sub.plan}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">

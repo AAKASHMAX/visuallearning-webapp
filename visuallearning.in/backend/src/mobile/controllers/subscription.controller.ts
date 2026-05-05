@@ -6,12 +6,10 @@ import { mobileSuccess, mobileError } from "../utils/response";
 
 // Feature list per plan type (same as webapp)
 const featureMap: Record<string, string[]> = {
-  SINGLE_CLASS: ["3D Animated Videos", "Any 1 class of your choice", "All subjects in that class", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-  MULTI_CLASS: ["3D Animated Videos", "Any 2 classes of your choice", "All subjects in selected classes", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-  FULL_ACCESS: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Best value", "Quiz", "Solved Board Question Papers"],
-  MONTHLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Quiz", "Solved Board Question Papers"],
-  YEARLY: ["3D Animated Videos", "All classes (9-12)", "All subjects", "Video lectures in all languages", "Notes & PDFs", "Save 33%", "Quiz", "Solved Board Question Papers"],
-  LIVE_CLASS: ["3D Animated Videos", "1 class of your choice (9-12)", "Small group of 10-15 students", "Live doubt clearing with expert teachers", "Weekly interactive sessions", "Session recordings access", "Quiz", "Solved Board Question Papers"],
+  FOUNDATION_PASS: ["Selected chapters", "Animated concept videos", "Progress tracking", "Mobile and desktop access"],
+  ACADEMIC_PLUS: ["Class 9-10 science", "Selected senior content", "Chapter notes", "MCQ quizzes", "Performance analytics"],
+  ELITE_LEARNING: ["Full 9-12 science", "Virtual labs", "3D visual learning", "Board exam practice", "Priority support"],
+  FLEXI_PLAN: ["Choose your own subjects", "Animated videos", "Chapter notes", "MCQ quizzes", "Flexible pricing"],
 };
 
 // Helper: validate coupon code, optionally checking if it applies to a specific plan
@@ -79,7 +77,7 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
         billingCycle: v.billingCycle || "yearly",
         features: featureMap[key] || [],
         classSelection: v.classSelection || 0,
-        popular: key === "MULTI_CLASS",
+        popular: key === "ELITE_LEARNING",
       }));
 
     return mobileSuccess(res, { plans, classes });

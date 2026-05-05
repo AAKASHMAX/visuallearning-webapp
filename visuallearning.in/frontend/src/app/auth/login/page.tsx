@@ -24,7 +24,7 @@ export default function LoginPage() {
       const { data } = await api.post("/auth/login", { email, password });
       login(data.data.user, data.data.token);
       toast.success("Welcome back!");
-      router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : data.data.user.role === "TEACHER" ? "/admin/live-classes" : "/dashboard");
+      router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
     } catch (err: any) {
       const apiMsg = err.response?.data?.message;
       const validation =

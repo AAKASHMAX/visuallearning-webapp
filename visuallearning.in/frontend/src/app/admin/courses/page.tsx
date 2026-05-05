@@ -34,6 +34,8 @@ export default function AdminCoursesPage() {
         slug: formData.slug || formData.name?.toLowerCase().replace(/\s+/g, "-"),
         description: formData.description,
         accentColor: formData.accentColor,
+        icon: formData.icon,
+        planKey: formData.planKey || null,
       };
 
       if (editing) {
@@ -112,6 +114,18 @@ export default function AdminCoursesPage() {
                 value={formData.accentColor || ""} 
                 onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })} 
                 placeholder="e.g. #3b82f6" 
+              />
+              <Input
+                label="Icon Key"
+                value={formData.icon || ""}
+                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                placeholder="e.g. Crown, Atom, GraduationCap"
+              />
+              <Input
+                label="Plan Key"
+                value={formData.planKey || ""}
+                onChange={(e) => setFormData({ ...formData, planKey: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") })}
+                placeholder="e.g. ELITE_LEARNING"
               />
             </div>
             <div className="mt-6 flex justify-end">

@@ -36,6 +36,7 @@ export const courseSchema = z.object({
   description: z.string().optional(),
   accentColor: z.string().optional(),
   icon: z.string().optional(),
+  planKey: z.string().optional().nullable(),
   vimeoVideoId: z.string().optional().nullable(),
 });
 
@@ -352,7 +353,8 @@ export async function getChaptersGroupedBySubject(_req: Request, res: Response) 
 // --- Subscriptions Management ---
 export const grantSubscriptionSchema = z.object({
   userId: z.string(),
-  plan: z.string().min(1),
+  courseId: z.string().optional(),
+  plan: z.string().optional(),
   classesAccess: z.array(z.string()).optional(),
   subjectsAccess: z.array(z.string()).optional(),
   durationDays: z.number().int().min(1),
@@ -361,7 +363,9 @@ export const grantSubscriptionSchema = z.object({
 
 export const updateSubscriptionSchema = z.object({
   plan: z.string().optional(),
+  courseId: z.string().optional().nullable(),
   classesAccess: z.array(z.string()).optional(),
+  subjectsAccess: z.array(z.string()).optional(),
   status: z.enum(["ACTIVE", "EXPIRED", "CANCELLED"]).optional(),
   expiryDate: z.string().optional(),
 });
@@ -380,7 +384,10 @@ export async function getAllSubscriptions(req: Request, res: Response) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          course: { select: { id: true, name: true, slug: true, planKey: true, accentColor: true, icon: true } },
+        },
       }),
       prisma.subscription.count({ where }),
     ]);
@@ -394,45 +401,57 @@ export async function getAllSubscriptions(req: Request, res: Response) {
 
 export async function grantSubscription(req: Request, res: Response) {
   try {
-    const { userId, plan, classesAccess, durationDays, amount } = req.body;
+    const { userId, courseId, plan, classesAccess, subjectsAccess, durationDays, amount } = req.body;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return error(res, "User not found", 404);
 
-    // NOTE: We no longer auto-expire old subscriptions to allow multiple active plans
-    /*
-    await prisma.subscription.updateMany({
-      where: { userId, status: "ACTIVE" },
-      data: { status: "EXPIRED" },
-    });
-    */
+    const course = courseId
+      ? await prisma.course.findUnique({
+          where: { id: courseId },
+          include: {
+            chapters: {
+              include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
+            },
+          },
+        })
+      : null;
 
-    // Fetch plan config to determine class access
-    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    let planConfig: any = null;
-    if (setting) {
-      const plans = JSON.parse(setting.value);
-      planConfig = plans[plan];
-    }
+    if (courseId && !course) return error(res, "Course not found", 404);
 
-    // Resolve classesAccess based on plan configuration
+    const resolvedPlan = course?.planKey || plan || course?.slug;
+    if (!resolvedPlan) return error(res, "Select a course plan", 400);
+
     let resolvedClasses = classesAccess || [];
-    if (plan === "FLEXI_PLAN") {
-       // Custom plan logic (handled below if subjects are passed)
-    } else if (planConfig && planConfig.classSelection > 0) {
-      // Plan requires specific classes, use what was provided
-      resolvedClasses = classesAccess || [];
-    } else {
-      // Full access plan
-      const allClasses = await prisma.class.findMany({ select: { id: true } });
-      resolvedClasses = allClasses.map((c) => c.id);
-    }
+    let resolvedSubjects = subjectsAccess || [];
 
-    // Link subscription to a course if a matching course exists
-    let courseId: string | null = null;
-    if (plan !== "FLEXI_PLAN") {
-      const course = await prisma.course.findFirst({ where: { planKey: plan } });
-      if (course) courseId = course.id;
+    let assignedCourseId: string | null = course?.id || null;
+
+    if (course) {
+      resolvedClasses = Array.from(new Set(course.chapters.map((cc) => cc.chapter.subject.classId)));
+      resolvedSubjects = Array.from(new Set(course.chapters.map((cc) => cc.chapter.subjectId)));
+    } else if (resolvedPlan === "FLEXI_PLAN") {
+      if (resolvedSubjects.length > 0) {
+        const subjects = await prisma.subject.findMany({
+          where: { id: { in: resolvedSubjects } },
+          select: { classId: true },
+        });
+        resolvedClasses = Array.from(new Set(subjects.map((s) => s.classId)));
+      }
+    } else {
+      const matchingCourse = await prisma.course.findFirst({ where: { planKey: resolvedPlan } });
+      if (matchingCourse) {
+        assignedCourseId = matchingCourse.id;
+        const courseChapters = await prisma.courseChapter.findMany({
+          where: { courseId: matchingCourse.id },
+          include: { chapter: { select: { subjectId: true, subject: { select: { classId: true } } } } },
+        });
+        resolvedClasses = Array.from(new Set(courseChapters.map((cc) => cc.chapter.subject.classId)));
+        resolvedSubjects = Array.from(new Set(courseChapters.map((cc) => cc.chapter.subjectId)));
+      } else if (resolvedClasses.length === 0) {
+        const allClasses = await prisma.class.findMany({ select: { id: true } });
+        resolvedClasses = allClasses.map((c) => c.id);
+      }
     }
 
     const expiryDate = new Date();
@@ -441,18 +460,21 @@ export async function grantSubscription(req: Request, res: Response) {
     const subscription = await prisma.subscription.create({
       data: {
         userId,
-        plan,
-        courseId,
+        plan: resolvedPlan,
+        courseId: assignedCourseId,
         classesAccess: resolvedClasses,
-        subjectsAccess: req.body.subjectsAccess || [],
+        subjectsAccess: resolvedSubjects,
         expiryDate,
         status: "ACTIVE",
         amount: amount || 0,
       },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        course: { select: { id: true, name: true, slug: true, planKey: true, accentColor: true, icon: true } },
+      },
     });
 
-    return success(res, subscription, "Subscription granted successfully", 201);
+    return success(res, subscription, "Course plan assigned successfully", 201);
   } catch (e) {
     console.error("Grant subscription error:", e);
     return error(res, "Failed to grant subscription");
@@ -462,21 +484,26 @@ export async function grantSubscription(req: Request, res: Response) {
 export async function updateSubscription(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { plan, classesAccess, status: newStatus, expiryDate } = req.body;
+    const { plan, courseId, classesAccess, subjectsAccess, status: newStatus, expiryDate } = req.body;
 
     const existing = await prisma.subscription.findUnique({ where: { id } });
     if (!existing) return error(res, "Subscription not found", 404);
 
     const updateData: any = {};
     if (plan) updateData.plan = plan;
+    if (courseId !== undefined) updateData.courseId = courseId || null;
     if (classesAccess) updateData.classesAccess = classesAccess;
+    if (subjectsAccess) updateData.subjectsAccess = subjectsAccess;
     if (newStatus) updateData.status = newStatus;
     if (expiryDate) updateData.expiryDate = new Date(expiryDate);
 
     const subscription = await prisma.subscription.update({
       where: { id },
       data: updateData,
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        course: { select: { id: true, name: true, slug: true, planKey: true, accentColor: true, icon: true } },
+      },
     });
 
     return success(res, subscription, "Subscription updated");
@@ -500,9 +527,18 @@ export async function cancelSubscription(req: Request, res: Response) {
   }
 }
 
+export async function clearAllSubscriptions(_req: Request, res: Response) {
+  try {
+    const result = await prisma.subscription.deleteMany({});
+    return success(res, { deleted: result.count }, `Deleted ${result.count} subscriptions`);
+  } catch (e) {
+    console.error("Clear subscriptions error:", e);
+    return error(res, "Failed to clear subscriptions");
+  }
+}
+
 // --- Settings Management ---
 const DEFAULT_SETTINGS: Record<string, string> = {
-  live_classes_enabled: "true",
   enabled_languages: JSON.stringify([
     { key: "ENGLISH", label: "English" },
     { key: "HINDI", label: "Hindi" },
@@ -531,18 +567,16 @@ async function getSetting(key: string): Promise<string> {
 
 export async function getSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig, contactInfo, liveClassesEnabled] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
       getSetting("contact_info"),
-      getSetting("live_classes_enabled"),
     ]);
 
     return success(res, {
       enabledLanguages: JSON.parse(enabledLanguages),
       plansConfig: JSON.parse(plansConfig),
       contactInfo: JSON.parse(contactInfo),
-      liveClassesEnabled: liveClassesEnabled === "true",
     });
   } catch (e) {
     console.error("Get settings error:", e);
@@ -617,32 +651,13 @@ export async function updateContactInfo(req: Request, res: Response) {
   }
 }
 
-export async function updateFeatureSettings(req: Request, res: Response) {
-  try {
-    const { liveClassesEnabled } = req.body;
-    if (typeof liveClassesEnabled !== "boolean") {
-      return error(res, "liveClassesEnabled must be a boolean", 400);
-    }
-    await prisma.setting.upsert({
-      where: { key: "live_classes_enabled" },
-      update: { value: String(liveClassesEnabled) },
-      create: { key: "live_classes_enabled", value: String(liveClassesEnabled) },
-    });
-    return success(res, { liveClassesEnabled }, "Feature settings updated");
-  } catch (e) {
-    console.error("Update feature settings error:", e);
-    return error(res, "Failed to update feature settings");
-  }
-}
-
 // --- Public settings (no auth needed) ---
 export async function getPublicSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig, contactInfo, liveClassesEnabled] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
       getSetting("contact_info"),
-      getSetting("live_classes_enabled"),
     ]);
 
     const rawLanguages = JSON.parse(enabledLanguages);
@@ -659,13 +674,13 @@ export async function getPublicSettings(_req: Request, res: Response) {
       .map(([key, v]: [string, any]) => ({
         id: key,
         name: v.label,
-        price: v.amount / 100,
-        duration: `${v.duration} days`,
+        price: ((v.yearlyAmount !== undefined ? v.yearlyAmount : v.amount || 0) / 100),
+        duration: `${v.durationYearly !== undefined ? v.durationYearly : v.duration || 365} days`,
         classSelection: v.classSelection || 0,
         enabled: v.enabled,
       }));
 
-    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo), liveClassesEnabled: liveClassesEnabled === "true" });
+    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo) });
   } catch (e) {
     console.error("Get public settings error:", e);
     return error(res, "Failed to fetch settings");

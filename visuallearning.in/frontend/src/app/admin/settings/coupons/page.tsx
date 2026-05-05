@@ -9,15 +9,6 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { Ticket, Plus, Trash2, X, Copy } from "lucide-react";
 
-const ALL_PLANS = [
-  { key: "SINGLE_CLASS", label: "Single Class Plan" },
-  { key: "MULTI_CLASS", label: "Multi Class Pack" },
-  { key: "FULL_ACCESS", label: "Full Access Plan" },
-  { key: "MONTHLY", label: "Monthly Plan" },
-  { key: "YEARLY", label: "Yearly Plan" },
-  { key: "LIVE_CLASS", label: "Live Classes" },
-];
-
 interface Coupon {
   id: string;
   code: string;
@@ -36,6 +27,7 @@ export default function CouponSettingsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [plans, setPlans] = useState<{ key: string; label: string }[]>([]);
 
   // New coupon form
   const [newCode, setNewCode] = useState("");
@@ -50,7 +42,13 @@ export default function CouponSettingsPage() {
     }).finally(() => setLoading(false));
   };
 
-  useEffect(loadCoupons, []);
+  useEffect(() => {
+    loadCoupons();
+    api.get("/admin/settings").then(({ data }) => {
+      const planConfig = data.data.plansConfig || {};
+      setPlans(Object.entries(planConfig).map(([key, value]: [string, any]) => ({ key, label: value.label || key })));
+    });
+  }, []);
 
   const togglePlanSelection = (planKey: string) => {
     setNewApplicablePlans((prev) =>
@@ -176,7 +174,7 @@ export default function CouponSettingsPage() {
               <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-500 mb-2">Applicable Plans (leave empty for all plans)</label>
                 <div className="flex flex-wrap gap-2">
-                  {ALL_PLANS.map((plan) => (
+                  {plans.map((plan) => (
                     <button
                       key={plan.key}
                       type="button"
@@ -207,7 +205,7 @@ export default function CouponSettingsPage() {
               const isExpired = new Date(coupon.validUntil) < new Date();
               const isLimitReached = coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses;
               const planLabels = (coupon.applicablePlans || []).map(
-                (k) => ALL_PLANS.find((p) => p.key === k)?.label || k
+                (k) => plans.find((p) => p.key === k)?.label || k
               );
               return (
                 <div

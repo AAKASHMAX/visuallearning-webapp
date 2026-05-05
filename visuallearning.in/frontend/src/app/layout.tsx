@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://visuallearning.in"),
   title: "VisualLearning - Animated Education for Class 9-12",
   description: "Learn Physics, Chemistry, Biology & Mathematics through animated video lectures for Class 9 to 12.",
   icons: {

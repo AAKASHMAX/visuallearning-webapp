@@ -17,9 +17,10 @@ import {
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
   getSettings, updateLanguageSettings, updatePlanSettings, updateContactInfo,
-  getPublicSettings, updateFeatureSettings,
+  getPublicSettings,
   getSubscriptionSettings, updateSubscriptionSettings,
   getAllCoupons, createCoupon, toggleCoupon, deleteCoupon, couponSchema,
+  clearAllSubscriptions,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -42,13 +43,13 @@ router.get("/subscriptions", getAllSubscriptions);
 router.post("/subscriptions", validate(grantSubscriptionSchema), grantSubscription);
 router.put("/subscriptions/:id", updateSubscription);
 router.delete("/subscriptions/:id", cancelSubscription);
+router.delete("/subscriptions", clearAllSubscriptions);
 
 // Settings
 router.get("/settings", getSettings);
 router.put("/settings/languages", updateLanguageSettings);
 router.put("/settings/plans", updatePlanSettings);
 router.put("/settings/contact", updateContactInfo);
-router.put("/settings/features", updateFeatureSettings);
 
 // Subscription Settings (upgrade discount)
 router.get("/settings/subscription", getSubscriptionSettings);

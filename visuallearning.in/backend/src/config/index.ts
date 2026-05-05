@@ -21,11 +21,6 @@ export const config = {
     pass: process.env.SMTP_PASS || "",
   },
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-  hms: {
-    accessKey: process.env.HMS_ACCESS_KEY || "",
-    secret: process.env.HMS_SECRET || "",
-    templateId: process.env.HMS_TEMPLATE_ID || "",
-  },
   plans: {
     FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365 },
     ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365 },
