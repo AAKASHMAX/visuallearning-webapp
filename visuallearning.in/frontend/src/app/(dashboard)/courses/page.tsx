@@ -9,8 +9,16 @@ import {
   Sparkles, Zap, GraduationCap,
   CheckCircle2, XCircle, ArrowRight,
   Orbit, Flame, Lightbulb, Microscope, Beaker, Dna, Waves, Atom,
-  AlertCircle, Calculator, FlaskConical, Sparkle
+  AlertCircle, Calculator, FlaskConical, Sparkle, BookOpen, Brain, BarChart3,
+  MonitorPlay, FileText, MessageCircle, Trophy, Smartphone, Target, Route,
+  ShieldCheck, ClipboardCheck, Layers3
 } from "lucide-react";
+
+type FeatureDetail = {
+  title: string;
+  detail: string;
+  icon: LucideIcon;
+};
 
 const iconByKey: Record<string, LucideIcon> = {
   atom: Atom,
@@ -88,6 +96,85 @@ const COURSE_THEME: Record<string, { bgColor: string; accentColor: string; anima
   CLASS_11: { bgColor: "#312e81", accentColor: "#818cf8", animation: "circuit", excluded: [] },
   CLASS_12: { bgColor: "#312e81", accentColor: "#818cf8", animation: "book", excluded: [] },
 };
+
+const DETAILED_FEATURES: Record<string, FeatureDetail[]> = {
+  FOUNDATION_PASS: [
+    { title: "Core Chapters That Build Real Understanding", detail: "Master the most important physics concepts needed for school success", icon: Target },
+    { title: "3D Animated Concept Videos", detail: "Learn visually with engaging animations that make complex ideas simple", icon: MonitorPlay },
+    { title: "Step-by-Step Beginner Learning Path", detail: "Perfect for students who want to rebuild or strengthen their basics", icon: Route },
+    { title: "Interactive Learning Experience", detail: "Stay engaged with intuitive explanations and visual storytelling", icon: Sparkles },
+    { title: "Smart Notes for Quick Revision", detail: "Clear, concise notes designed for fast recall before exams", icon: FileText },
+    { title: "Practice Quizzes for Exam Preparation", detail: "Test your understanding and improve performance with targeted questions", icon: ClipboardCheck },
+    { title: "Progress Tracking Dashboard", detail: "See your improvement and stay motivated throughout your journey", icon: BarChart3 },
+    { title: "Learn Anytime, Anywhere", detail: "Access your course seamlessly on mobile and desktop", icon: Smartphone },
+  ],
+  ACADEMIC_PLUS: [
+    { title: "Complete Class 9-10 PCB Coverage", detail: "Build strong school foundations with structured Physics, Chemistry and Biology lessons", icon: GraduationCap },
+    { title: "Selected Senior Science Chapters", detail: "Get an early edge with important Class 11-12 Physics and Chemistry concepts", icon: Atom },
+    { title: "3D Animated Concept Videos", detail: "Understand difficult topics faster through visual explanations and motion-based learning", icon: MonitorPlay },
+    { title: "Chapter Notes and Formula Support", detail: "Revise quickly with clear notes, key points and exam-friendly summaries", icon: FileText },
+    { title: "MCQ Practice With Solutions", detail: "Prepare for school tests with targeted questions and guided answers", icon: ClipboardCheck },
+    { title: "Performance Analytics", detail: "Track learning activity and identify where to improve next", icon: BarChart3 },
+    { title: "Email Support Within 24 Hours", detail: "Get help when you are stuck and keep your study momentum going", icon: MessageCircle },
+  ],
+  ELITE_LEARNING: [
+    { title: "Complete Class 9-12 Science Access", detail: "Learn Physics, Chemistry and Biology across all major school grades", icon: Trophy },
+    { title: "64+ Virtual Labs", detail: "Explore experiments and simulations that make abstract concepts feel practical", icon: FlaskConical },
+    { title: "Deep 3D Visual Learning Tools", detail: "Use immersive visuals to understand mechanisms, structures and processes", icon: Layers3 },
+    { title: "Board Exam Practice", detail: "Prepare with exam-focused practice, past-paper style work and chapter revision", icon: ClipboardCheck },
+    { title: "Notes, Formula Sheets and Revision Material", detail: "Keep every important idea close with organized study resources", icon: BookOpen },
+    { title: "Priority WhatsApp Support", detail: "Get faster guidance from the learning team whenever you need help", icon: MessageCircle },
+    { title: "Progress and Performance Tracking", detail: "Stay aware of your learning path with activity and completion insights", icon: BarChart3 },
+  ],
+  CLASS_9: [
+    { title: "Full Class 9 Curriculum", detail: "Study the complete grade plan with chapter-by-chapter structure", icon: GraduationCap },
+    { title: "3D Animated Videos", detail: "Learn core science topics through visual storytelling", icon: MonitorPlay },
+    { title: "Virtual Labs and Simulations", detail: "Experiment with concepts instead of only reading them", icon: FlaskConical },
+    { title: "Board Exam Preparation", detail: "Practice the style of questions that matter for school exams", icon: ClipboardCheck },
+    { title: "Chapter Notes", detail: "Revise faster with crisp, organized notes", icon: FileText },
+    { title: "Expert Support", detail: "Get learning help when a concept needs one more explanation", icon: MessageCircle },
+  ],
+  CLASS_10: [
+    { title: "Full Class 10 Curriculum", detail: "Cover the complete syllabus with a clear learning sequence", icon: GraduationCap },
+    { title: "3D Animated Videos", detail: "Make complex board topics easier to remember", icon: MonitorPlay },
+    { title: "Virtual Labs and Simulations", detail: "Understand experiments and applications visually", icon: FlaskConical },
+    { title: "Board Exam Preparation", detail: "Practice chapter concepts with exam-focused learning", icon: ClipboardCheck },
+    { title: "Chapter Notes", detail: "Use concise revision material before tests", icon: FileText },
+    { title: "Expert Support", detail: "Keep doubts from slowing down your preparation", icon: MessageCircle },
+  ],
+  CLASS_11: [
+    { title: "Full Class 11 Curriculum", detail: "Build the advanced science base needed for higher studies", icon: GraduationCap },
+    { title: "Advanced 3D Visuals", detail: "Visualize deeper mechanisms, equations and models", icon: Layers3 },
+    { title: "Complex Simulations", detail: "Explore how advanced concepts behave in motion", icon: FlaskConical },
+    { title: "Competitive Exam Base", detail: "Strengthen fundamentals used in school and entrance-level preparation", icon: Target },
+    { title: "Formula Sheets", detail: "Revise important relations and shortcuts faster", icon: BookOpen },
+    { title: "Priority Support", detail: "Get help with difficult topics before they pile up", icon: ShieldCheck },
+  ],
+  CLASS_12: [
+    { title: "Full Class 12 Curriculum", detail: "Study senior-grade concepts with structured chapter coverage", icon: GraduationCap },
+    { title: "Advanced 3D Visuals", detail: "Understand abstract physics, chemistry and biology topics visually", icon: Layers3 },
+    { title: "Complex Simulations", detail: "See advanced concepts in action with interactive learning", icon: FlaskConical },
+    { title: "Board and Competitive Preparation", detail: "Prepare for school exams while strengthening entrance-level basics", icon: Trophy },
+    { title: "Formula Sheets", detail: "Keep high-value revision material ready before exams", icon: BookOpen },
+    { title: "Priority Support", detail: "Get faster help for critical topics and doubts", icon: ShieldCheck },
+  ],
+  FLEXI_PLAN: [
+    { title: "Choose Your Own Subjects", detail: "Pay only for the subjects you want to study", icon: Target },
+    { title: "3D Animated Videos", detail: "Learn each selected subject through visual explanations", icon: MonitorPlay },
+    { title: "Chapter Notes", detail: "Revise selected chapters with clean PDF material", icon: FileText },
+    { title: "MCQ Quizzes", detail: "Practice and test your understanding chapter by chapter", icon: ClipboardCheck },
+    { title: "Flexible Pricing", detail: "Build a custom learning plan around your needs", icon: Sparkles },
+  ],
+};
+
+function getDetailedFeatures(planKey: string, fallback: string[] = []): FeatureDetail[] {
+  if (DETAILED_FEATURES[planKey]) return DETAILED_FEATURES[planKey];
+  return fallback.map((title) => ({
+    title,
+    detail: "Included in this course plan to support your learning progress",
+    icon: CheckCircle2,
+  }));
+}
 
 export default function CoursesPage() {
   const [loading, setLoading] = useState(false);
@@ -219,6 +306,7 @@ export default function CoursesPage() {
                   key={course.id}
                   bgColor={theme.bgColor}
                   accentColor={theme.accentColor}
+                  planKey={course.planKey}
                   planName={course.name}
                   price={priceStr}
                   originalPrice={isFree ? "₹3999" : undefined}
@@ -254,6 +342,7 @@ export default function CoursesPage() {
                   key={course.id}
                   bgColor={theme.bgColor}
                   accentColor={theme.accentColor}
+                  planKey={course.planKey}
                   planName={course.name}
                   price={priceStr}
                   period={`/${billingCycle === "monthly" ? "mo" : "yr"}`}
@@ -542,6 +631,7 @@ function BookAnimation({ accent }: { accent: string }) {
 function PlanCard({
   bgColor,
   accentColor,
+  planKey,
   planName,
   price,
   originalPrice,
@@ -556,6 +646,7 @@ function PlanCard({
   onCtaClick,
 }: any) {
   const isPopular = !!badge;
+  const featureItems = getDetailedFeatures(planKey, included);
   return (
     <div
       className={`relative flex flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
@@ -631,30 +722,44 @@ function PlanCard({
       </div>
 
       {/* WHITE BODY */}
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-        <div className="flex-1 space-y-2.5 mb-3">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
+        <div className="flex-1 space-y-3 mb-4">
 
           {/* Included list */}
           <div>
-            <p className="mb-1.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary/80">
-              <Sparkles className="h-2.5 w-2.5 text-[#00b4d8]" />
-              What&apos;s included
-            </p>
-            <ul className="space-y-1">
-              {included.map((f: string, i: number) => (
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary/80">
+                <Sparkles className="h-3 w-3 text-[#00b4d8]" />
+                What&apos;s included
+              </p>
+              <span
+                className="rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest"
+                style={{ color: accentColor, backgroundColor: `${accentColor}12` }}
+              >
+                {featureItems.length} tools
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {featureItems.map((feature, i) => {
+                const Icon = feature.icon;
+                return (
                 <li
                   key={`i-${i}`}
-                  className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50/80 py-1.5 px-2.5"
+                  className="group flex gap-3 rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
                 >
                   <div
-                    className="shrink-0 flex h-5 w-5 items-center justify-center rounded-md"
-                    style={{ backgroundColor: `${accentColor}18`, border: `1px solid ${accentColor}35` }}
+                    className="shrink-0 flex h-9 w-9 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-105"
+                    style={{ backgroundColor: `${accentColor}14`, border: `1px solid ${accentColor}26`, color: accentColor }}
                   >
-                    <CheckCircle2 className="h-3 w-3" style={{ color: accentColor }} strokeWidth={2.5} />
+                    <Icon className="h-4 w-4" strokeWidth={2.4} />
                   </div>
-                  <span className="text-[13.5px] font-semibold leading-tight text-heading">{f}</span>
+                  <div className="min-w-0">
+                    <h4 className="text-[13px] font-black leading-snug text-gray-900">{feature.title}</h4>
+                    <p className="mt-0.5 text-[11.5px] font-medium leading-snug text-gray-500">{feature.detail}</p>
+                  </div>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           </div>
 
