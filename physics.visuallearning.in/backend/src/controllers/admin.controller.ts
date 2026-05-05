@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
+import { ensureDefaultPlans, getPlanByCode } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -259,7 +260,8 @@ export async function getSubscriptions(req: AuthRequest, res: Response) {
     const { page = "1", limit = "20" } = req.query;
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-    const [subscriptions, total] = await Promise.all([
+    await ensureDefaultPlans(prisma);
+    const [subscriptions, total, plans] = await Promise.all([
       prisma.subscription.findMany({
         skip,
         take: parseInt(limit as string),
@@ -267,9 +269,11 @@ export async function getSubscriptions(req: AuthRequest, res: Response) {
         include: { user: { select: { name: true, email: true } } },
       }),
       prisma.subscription.count(),
+      prisma.subscriptionPlan.findMany({ select: { code: true, name: true, price: true, durationDays: true } }),
     ]);
 
-    res.json({ subscriptions, total });
+    const planMap = new Map(plans.map((plan) => [plan.code, plan]));
+    res.json({ subscriptions: subscriptions.map((sub) => ({ ...sub, planDetails: planMap.get(sub.plan) || null })), total });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch subscriptions" });
   }
@@ -277,20 +281,104 @@ export async function getSubscriptions(req: AuthRequest, res: Response) {
 
 export async function grantSubscription(req: AuthRequest, res: Response) {
   try {
-    const { userId, plan, days } = req.body;
+    const { userId, plan, planCode, days } = req.body;
+    const resolvedPlanCode = planCode || plan;
+    const selectedPlan = await getPlanByCode(prisma, resolvedPlanCode);
+
+    if (!selectedPlan) {
+      return res.status(400).json({ message: "Invalid subscription plan" });
+    }
 
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + (days || 30));
+    expiryDate.setDate(expiryDate.getDate() + (days || selectedPlan.durationDays || 30));
 
     const subscription = await prisma.subscription.upsert({
       where: { userId },
-      update: { plan, status: "ACTIVE", startDate: new Date(), expiryDate },
-      create: { userId, plan, status: "ACTIVE", expiryDate, amount: 0 },
+      update: { plan: selectedPlan.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount: selectedPlan.price },
+      create: { userId, plan: selectedPlan.code, status: "ACTIVE", expiryDate, amount: selectedPlan.price },
     });
 
     res.json({ message: "Subscription granted", subscription });
   } catch (error) {
     res.status(500).json({ message: "Failed to grant subscription" });
+  }
+}
+
+// ─── Subscription Plan Management ──────────────────────────────────────────
+export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
+  try {
+    await ensureDefaultPlans(prisma);
+    const plans = await prisma.subscriptionPlan.findMany({
+      orderBy: { displayOrder: "asc" },
+      include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
+    });
+    res.json(plans.map((plan) => ({
+      ...plan,
+      courseIds: plan.courses.map((item) => item.courseId),
+      assignedCourses: plan.courses.map((item) => item.course),
+    })));
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch subscription plans" });
+  }
+}
+
+export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
+  try {
+    const { code, name, description, price, durationDays, features, isActive, displayOrder, courseIds } = req.body;
+    const planCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+    if (!planCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
+
+    const plan = await prisma.subscriptionPlan.create({
+      data: {
+        code: planCode,
+        name,
+        description,
+        price: price || 0,
+        durationDays: durationDays || 30,
+        features: Array.isArray(features) ? features : [],
+        isActive: isActive ?? true,
+        displayOrder: displayOrder || 0,
+        courses: { create: (courseIds || []).map((courseId: string) => ({ courseId })) },
+      },
+    });
+    res.status(201).json(plan);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create subscription plan" });
+  }
+}
+
+export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
+  try {
+    const { code, name, description, price, durationDays, features, isActive, displayOrder, courseIds } = req.body;
+    const plan = await prisma.subscriptionPlan.update({
+      where: { id: req.params.id },
+      data: {
+        code,
+        name,
+        description,
+        price,
+        durationDays,
+        features: Array.isArray(features) ? features : [],
+        isActive,
+        displayOrder,
+        courses: {
+          deleteMany: {},
+          create: (courseIds || []).map((courseId: string) => ({ courseId })),
+        },
+      },
+    });
+    res.json(plan);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update subscription plan" });
+  }
+}
+
+export async function deleteSubscriptionPlan(req: AuthRequest, res: Response) {
+  try {
+    await prisma.subscriptionPlan.delete({ where: { id: req.params.id } });
+    res.json({ message: "Subscription plan deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete subscription plan" });
   }
 }
 

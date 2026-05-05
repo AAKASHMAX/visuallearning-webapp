@@ -2,8 +2,9 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { config, PLANS } from "../config";
+import { config } from "../config";
 import { AuthRequest } from "../middleware/auth";
+import { ensureDefaultPlans, getAccessibleCoursesForUser, getPlanByCode } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -20,12 +21,22 @@ function getRazorpayClient() {
 
 export async function getPlans(req: AuthRequest, res: Response) {
   try {
-    // Try to get plans from database settings first
-    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    if (setting) {
-      return res.json(JSON.parse(setting.value));
-    }
-    res.json(PLANS);
+    await ensureDefaultPlans(prisma);
+    const plans = await prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: "asc" },
+      include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
+    });
+    res.json(plans.map((plan) => ({
+      id: plan.code,
+      code: plan.code,
+      name: plan.name,
+      description: plan.description,
+      price: plan.price,
+      durationDays: plan.durationDays,
+      features: plan.features,
+      courses: plan.courses.map((item) => item.course),
+    })));
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plans" });
   }
@@ -82,6 +93,15 @@ export async function getMySubscription(req: AuthRequest, res: Response) {
   }
 }
 
+export async function getMyCourses(req: AuthRequest, res: Response) {
+  try {
+    const courses = await getAccessibleCoursesForUser(prisma, req.user!.id);
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch course access" });
+  }
+}
+
 export async function createOrder(req: AuthRequest, res: Response) {
   try {
     const { plan, couponCode } = req.body;
@@ -91,11 +111,12 @@ export async function createOrder(req: AuthRequest, res: Response) {
       return res.status(503).json({ message: "Payment gateway is not configured" });
     }
 
-    if (!plan || !PLANS[plan]) {
+    const planConfig = plan ? await getPlanByCode(prisma, plan) : null;
+    if (!plan || !planConfig) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
-    let amount = PLANS[plan].price;
+    let amount = planConfig.price;
 
     // Apply coupon
     if (couponCode) {
@@ -146,7 +167,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
-    const planConfig = PLANS[plan];
+    const planConfig = await getPlanByCode(prisma, plan);
     if (!planConfig) {
       return res.status(400).json({ message: "Invalid plan" });
     }
@@ -164,7 +185,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     }
 
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + planConfig.duration);
+    expiryDate.setDate(expiryDate.getDate() + planConfig.durationDays);
 
     // Create or update subscription
     const subscription = await prisma.subscription.upsert({

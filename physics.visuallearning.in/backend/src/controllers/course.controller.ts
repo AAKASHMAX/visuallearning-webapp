@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/auth";
+import { userHasCourseAccess } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -17,31 +18,6 @@ function setCache(key: string, data: any, ttlMs = 300000) {
 }
 export function clearCourseCache() {
   cache.delete("courses_all");
-}
-
-// Check if user has access based on subscription
-async function checkAccess(userId?: string, requiredTier?: string): Promise<boolean> {
-  if (!requiredTier || requiredTier === "FREE") return true;
-  if (!userId) return false;
-
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (user?.role === "ADMIN") return true;
-
-  const subscription = await prisma.subscription.findUnique({ where: { userId } });
-  if (!subscription || subscription.status !== "ACTIVE" || subscription.expiryDate < new Date()) {
-    return false;
-  }
-
-  // BRIDGE plan has access to everything
-  if (subscription.plan === "BRIDGE") return true;
-
-  // ADVANCE plan has access to everything EXCEPT BRIDGE
-  if ((subscription.plan === "ADVANCE" || subscription.plan === "ADVANCE_YEARLY") && requiredTier !== "BRIDGE") return true;
-
-  // BASIC plan has access to BASIC and FREE
-  if ((subscription.plan === "BASIC" || subscription.plan === "BASIC_YEARLY") && (requiredTier === "BASIC" || requiredTier === "FREE")) return true;
-
-  return false;
 }
 
 export async function getCourses(req: AuthRequest, res: Response) {
@@ -94,7 +70,7 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { tier: true } } },
+      include: { course: { select: { id: true, tier: true } } },
     });
 
     if (!chapter) {
@@ -106,7 +82,7 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
       orderBy: { displayOrder: "asc" },
     });
 
-    const hasAccess = await checkAccess(req.user?.id, chapter.course.tier);
+    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
 
     // If first chapter, all videos are free
     const firstChapter = await prisma.chapter.findFirst({
@@ -131,14 +107,14 @@ export async function getVideoById(req: AuthRequest, res: Response) {
   try {
     const video = await prisma.video.findUnique({
       where: { id: req.params.id },
-      include: { chapter: { include: { course: { select: { tier: true } } } } },
+      include: { chapter: { include: { course: { select: { id: true, tier: true } } } } },
     });
 
     if (!video) {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    const hasAccess = video.isFree || await checkAccess(req.user?.id, video.chapter.course.tier);
+    const hasAccess = video.isFree || await userHasCourseAccess(prisma, req.user?.id, video.chapter.course);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Subscription required to access this video" });
@@ -162,7 +138,7 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { tier: true } } },
+      include: { course: { select: { id: true, tier: true } } },
     });
 
     if (!chapter) {
@@ -174,7 +150,7 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
       orderBy: { displayOrder: "asc" },
     });
 
-    const hasAccess = await checkAccess(req.user?.id, chapter.course.tier);
+    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
 
     const notesWithAccess = notes.map((n: any, i: number) => ({
       ...n,
@@ -192,14 +168,14 @@ export async function getChapterQuestions(req: AuthRequest, res: Response) {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
-      include: { course: { select: { tier: true } } },
+      include: { course: { select: { id: true, tier: true } } },
     });
 
     if (!chapter) {
       return res.status(404).json({ message: "Chapter not found" });
     }
 
-    const hasAccess = await checkAccess(req.user?.id, chapter.course.tier);
+    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, chapter.course);
 
     // First chapter quiz is free
     const firstChapter = await prisma.chapter.findFirst({

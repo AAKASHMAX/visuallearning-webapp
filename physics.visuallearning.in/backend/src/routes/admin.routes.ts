@@ -8,6 +8,7 @@ import {
   createNote, updateNote, deleteNote,
   createQuestion, updateQuestion, deleteQuestion,
   getSubscriptions, grantSubscription, cancelSubscription,
+  getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan,
   getCoupons, createCoupon, toggleCoupon, deleteCoupon,
   getSettings, updateSettings, getAnalytics, getPublicSettings,
 } from "../controllers/admin.controller";
@@ -57,6 +58,12 @@ router.delete("/questions/:id", deleteQuestion);
 router.get("/subscriptions", getSubscriptions);
 router.post("/subscriptions", grantSubscription);
 router.delete("/subscriptions/:id", cancelSubscription);
+
+// Subscription plans
+router.get("/subscription-plans", getSubscriptionPlans);
+router.post("/subscription-plans", createSubscriptionPlan);
+router.put("/subscription-plans/:id", updateSubscriptionPlan);
+router.delete("/subscription-plans/:id", deleteSubscriptionPlan);
 
 // Coupons
 router.get("/coupons", getCoupons);

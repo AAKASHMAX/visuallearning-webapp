@@ -59,6 +59,35 @@ model Subscription {
   @@index([expiryDate])
 }
 
+model SubscriptionPlan {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  description  String?
+  price        Int          @default(0)
+  durationDays Int          @default(30)
+  features     String[]     @default([])
+  isActive     Boolean      @default(true)
+  displayOrder Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  courses      PlanCourse[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model PlanCourse {
+  planId   String
+  courseId String
+  plan     SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  course   Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([planId, courseId])
+  @@index([courseId])
+}
+
 model Coupon {
   id            String   @id @default(cuid())
   code          String   @unique
@@ -85,6 +114,7 @@ model Course {
   updatedAt    DateTime  @updatedAt
 
   chapters     Chapter[]
+  planCourses  PlanCourse[]
 
   @@index([tier])
 }
