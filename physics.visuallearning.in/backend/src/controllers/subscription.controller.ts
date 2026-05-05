@@ -7,10 +7,16 @@ import { AuthRequest } from "../middleware/auth";
 
 const prisma = new PrismaClient();
 
-const razorpay = new Razorpay({
-  key_id: config.razorpay.keyId,
-  key_secret: config.razorpay.keySecret,
-});
+function getRazorpayClient() {
+  if (!config.razorpay.keyId || !config.razorpay.keySecret) {
+    return null;
+  }
+
+  return new Razorpay({
+    key_id: config.razorpay.keyId,
+    key_secret: config.razorpay.keySecret,
+  });
+}
 
 export async function getPlans(req: AuthRequest, res: Response) {
   try {
@@ -79,6 +85,11 @@ export async function getMySubscription(req: AuthRequest, res: Response) {
 export async function createOrder(req: AuthRequest, res: Response) {
   try {
     const { plan, couponCode } = req.body;
+    const razorpay = getRazorpayClient();
+
+    if (!razorpay) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
 
     if (!plan || !PLANS[plan]) {
       return res.status(400).json({ message: "Invalid plan" });
@@ -119,6 +130,10 @@ export async function createOrder(req: AuthRequest, res: Response) {
 export async function verifyPayment(req: AuthRequest, res: Response) {
   try {
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, plan, couponCode } = req.body;
+
+    if (!config.razorpay.keySecret) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
 
     // Verify signature
     const body = razorpayOrderId + "|" + razorpayPaymentId;
