@@ -25,7 +25,7 @@ services:
     plan: free
     rootDir: physics.visuallearning.in/backend
     buildCommand: npm install --include=dev && npm run build
-    startCommand: npx prisma migrate deploy && node dist/index.js
+    startCommand: npx prisma db push --skip-generate && node dist/index.js
     envVars:
       - key: DATABASE_URL
         sync: false
