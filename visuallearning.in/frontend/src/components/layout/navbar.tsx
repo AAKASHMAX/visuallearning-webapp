@@ -217,10 +217,10 @@ function NotificationBell({ align = "right" }: { align?: "left" | "right" }) {
     <div className="relative">
       <button
         onClick={toggleOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 via-orange-400 to-orange-600 text-primary-dark shadow-lg shadow-orange-500/30 ring-1 ring-white/30 transition-all hover:scale-105 hover:shadow-orange-400/50"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
         aria-label="Notifications"
       >
-        <Bell className="h-5 w-5 text-white drop-shadow-sm" strokeWidth={2.6} />
+        <Bell className="h-4 w-4" />
         {totalCount > 0 && (
           <span
             className={cn(
