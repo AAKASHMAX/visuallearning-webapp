@@ -215,10 +215,8 @@ function FeaturesSection() {
   const features = [
     { icon: Monitor, title: "3D Animated Videos", description: "Watch complex concepts come alive with stunning 3D animations. Visualize molecular structures, electromagnetic waves, and more.", gradient: "from-[#05BFDB] to-blue-600" },
     { icon: FlaskConical, title: "Virtual Lab Experiments", description: "Conduct virtual experiments in your browser. From optics to electricity — safe, interactive, and always available.", gradient: "from-purple-500 to-purple-700" },
-    { icon: Play, title: "Expert Video Lectures", description: "Learn from experienced teachers with clear, concept-focused lectures in Hindi and English.", gradient: "from-cta to-orange-600" },
     { icon: BookOpen, title: "Detailed Chapter Notes", description: "Download comprehensive PDF notes for every chapter. Revise formulas, derivations, and key concepts anytime.", gradient: "from-emerald-500 to-teal-600" },
     { icon: Target, title: "MCQ Practice Quizzes", description: "Test your understanding with chapter-wise quizzes. Get instant feedback and track your progress.", gradient: "from-rose-500 to-pink-600" },
-    { icon: Trophy, title: "Board Exam Ready", description: "Practice with previous year papers and important questions. Be fully prepared for your board exams.", gradient: "from-amber-500 to-yellow-600" },
   ];
 
   return (
