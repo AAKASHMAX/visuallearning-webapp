@@ -226,8 +226,17 @@ export async function getChapterVideos(req: Request, res: Response) {
   }
 }
 
-export async function addVideo(req: Request, res: Response) { return crudCreate(prisma.video, req.body, res); }
-export async function updateVideo(req: Request, res: Response) { return crudUpdate(prisma.video, req.params.id, req.body, res); }
+function cleanVideoData(data: any) {
+  const { id, createdAt, updatedAt, chapter, ...cleanData } = data;
+  return {
+    ...cleanData,
+    title: String(cleanData.title || "").replace(/^\s*\d+([.)]|[-:]|\s)+\s*/, "").trim(),
+    type: "ANIMATED_VIDEO",
+  };
+}
+
+export async function addVideo(req: Request, res: Response) { return crudCreate(prisma.video, cleanVideoData(req.body), res); }
+export async function updateVideo(req: Request, res: Response) { return crudUpdate(prisma.video, req.params.id, cleanVideoData(req.body), res); }
 export async function deleteVideo(req: Request, res: Response) { return crudDelete(prisma.video, req.params.id, res); }
 
 // --- Notes ---
