@@ -2,6 +2,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
+import { clearCourseCache } from "./course.controller";
 
 const prisma = new PrismaClient();
 
@@ -78,6 +79,7 @@ export async function createCourse(req: AuthRequest, res: Response) {
     const course = await prisma.course.create({
       data: { name, description, tier: tier || "FREE", displayOrder: displayOrder || 0 },
     });
+    clearCourseCache();
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to create course" });
@@ -91,6 +93,7 @@ export async function updateCourse(req: AuthRequest, res: Response) {
       where: { id: req.params.id },
       data: { name, description, tier, displayOrder, isActive },
     });
+    clearCourseCache();
     res.json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to update course" });
@@ -100,6 +103,7 @@ export async function updateCourse(req: AuthRequest, res: Response) {
 export async function deleteCourse(req: AuthRequest, res: Response) {
   try {
     await prisma.course.delete({ where: { id: req.params.id } });
+    clearCourseCache();
     res.json({ message: "Course deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete course" });
@@ -113,6 +117,7 @@ export async function createChapter(req: AuthRequest, res: Response) {
     const chapter = await prisma.chapter.create({
       data: { name, courseId, displayOrder: displayOrder || 0 },
     });
+    clearCourseCache();
     res.status(201).json(chapter);
   } catch (error) {
     res.status(500).json({ message: "Failed to create chapter" });
@@ -135,6 +140,7 @@ export async function updateChapter(req: AuthRequest, res: Response) {
 export async function deleteChapter(req: AuthRequest, res: Response) {
   try {
     await prisma.chapter.delete({ where: { id: req.params.id } });
+    clearCourseCache();
     res.json({ message: "Chapter deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete chapter" });

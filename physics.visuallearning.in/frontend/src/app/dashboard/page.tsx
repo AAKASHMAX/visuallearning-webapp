@@ -17,6 +17,7 @@ import {
   Check,
   ChevronRight,
   Lock,
+  Target,
 } from "lucide-react";
 
 const courses = [
@@ -77,6 +78,25 @@ const courses = [
     tagColor: "bg-secondary/10 text-secondary-light",
     locked: true,
   },
+  {
+    tier: "bridge",
+    title: "Physics Bridge Course",
+    subtitle: "Master the Basics",
+    description: "Strengthen core physics concepts before moving into advanced chapters.",
+    features: [
+      "Core physics concepts",
+      "Interactive foundational modules",
+      "Conceptual doubt clearing",
+      "Foundation strengthening tests",
+    ],
+    icon: Target,
+    gradient: "from-orange-500 to-red-600",
+    borderColor: "border-orange-500/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]",
+    tag: "Premium",
+    tagColor: "bg-orange-500/10 text-orange-400",
+    locked: true,
+  },
 ];
 
 export default function DashboardPage() {
@@ -134,7 +154,7 @@ export default function DashboardPage() {
           <p className="text-text-muted text-sm">Pick a course and start learning</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {courses.map((course, i) => (
             <div
               key={i}

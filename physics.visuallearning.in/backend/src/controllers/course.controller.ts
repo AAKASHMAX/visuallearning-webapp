@@ -15,6 +15,9 @@ function getCached(key: string) {
 function setCache(key: string, data: any, ttlMs = 300000) {
   cache.set(key, { data, expiry: Date.now() + ttlMs });
 }
+export function clearCourseCache() {
+  cache.delete("courses_all");
+}
 
 // Check if user has access based on subscription
 async function checkAccess(userId?: string, requiredTier?: string): Promise<boolean> {
