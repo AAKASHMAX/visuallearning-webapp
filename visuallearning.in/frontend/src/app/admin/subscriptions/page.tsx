@@ -185,12 +185,13 @@ export default function AdminSubscriptionsPage() {
     const second = prompt('Type DELETE SUBSCRIPTIONS to confirm.');
     if (second !== "DELETE SUBSCRIPTIONS") return;
     try {
-      const { data } = await api.delete("/admin/subscriptions");
+      const { data } = await api.post("/admin/subscriptions/clear");
       toast.success(data.message || "Subscriptions cleared");
       setPage(1);
       load();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to clear subscriptions");
+      const status = err.response?.status ? ` (${err.response.status})` : "";
+      toast.error(`${err.response?.data?.message || "Failed to clear subscriptions"}${status}`);
     }
   };
 

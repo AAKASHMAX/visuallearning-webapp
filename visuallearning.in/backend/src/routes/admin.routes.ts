@@ -41,9 +41,10 @@ router.patch("/users/:id/block", toggleBlockUser);
 // Subscriptions
 router.get("/subscriptions", getAllSubscriptions);
 router.post("/subscriptions", validate(grantSubscriptionSchema), grantSubscription);
+router.post("/subscriptions/clear", clearAllSubscriptions);
+router.delete("/subscriptions", clearAllSubscriptions);
 router.put("/subscriptions/:id", updateSubscription);
 router.delete("/subscriptions/:id", cancelSubscription);
-router.delete("/subscriptions", clearAllSubscriptions);
 
 // Settings
 router.get("/settings", getSettings);
