@@ -25,6 +25,7 @@ import {
 import {
   getAllNotifications, createNotification, updateNotification, toggleNotificationPublish, deleteNotification, notificationSchema,
 } from "../controllers/notification.controller";
+import { deleteFeedback, getFeedbacks, markFeedbackRead } from "../controllers/feedback.controller";
 
 const router = Router();
 
@@ -47,6 +48,11 @@ router.post("/notifications", validate(notificationSchema), createNotification);
 router.put("/notifications/:id", validate(notificationSchema), updateNotification);
 router.patch("/notifications/:id/toggle", toggleNotificationPublish);
 router.delete("/notifications/:id", deleteNotification);
+
+// Feedback
+router.get("/feedback", getFeedbacks);
+router.patch("/feedback/:id/read", markFeedbackRead);
+router.delete("/feedback/:id", deleteFeedback);
 
 // Subscriptions
 router.get("/subscriptions", getAllSubscriptions);

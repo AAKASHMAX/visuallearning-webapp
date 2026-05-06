@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
+import { FeedbackPopup } from "@/components/layout/feedback-popup";
+import { FloatingContact } from "@/components/layout/floating-contact";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,6 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {children}
+        <FeedbackPopup />
+        <FloatingContact />
       </body>
     </html>
   );
