@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag, Zap } from "lucide-react";
+import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag, Zap } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -60,6 +59,17 @@ function planPeriod(durationDays: number, price: number) {
   if (durationDays >= 365) return "per year";
   if (durationDays === 30) return "per month";
   return `${durationDays} days access`;
+}
+
+function accessPeriod(durationDays: number) {
+  if (durationDays >= 365) return `${Math.round(durationDays / 365)} year access`;
+  if (durationDays === 30) return "30 days monthly access";
+  if (durationDays > 0) return `${durationDays} days access`;
+  return "Free access";
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function SubscriptionContent() {
@@ -114,6 +124,15 @@ function SubscriptionContent() {
     if (!selected) return 0;
     return Math.max(0, Math.round(selected.price * (1 - discountPercent / 100)));
   }, [selected, discountPercent]);
+  const accessDates = useMemo(() => {
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(start.getDate() + Math.max(selected?.durationDays || 0, 0));
+    return { start, end };
+  }, [selected?.code, selected?.durationDays]);
+  const courseNames = selected?.courses?.length
+    ? selected.courses.map((course) => course.name).join(", ")
+    : selected?.name || "Selected course";
 
   async function validateCoupon() {
     if (!couponCode.trim() || !selected) {
@@ -227,10 +246,10 @@ function SubscriptionContent() {
               <span className="text-sm text-text-muted">Secure Subscription</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-text-bright mb-4">
-              Choose Your <span className="gradient-text">Physics Plan</span>
+              Complete Your <span className="gradient-text">Subscription</span>
             </h1>
             <p className="text-text-muted max-w-2xl mx-auto">
-              Plans, prices, features, and course access are controlled from the admin panel.
+              Review your selected course plan before activating access.
             </p>
           </div>
 
@@ -252,65 +271,89 @@ function SubscriptionContent() {
           )}
 
           {loading ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, index) => <div key={index} className="h-96 rounded-2xl bg-card animate-pulse" />)}
+            <div className="grid lg:grid-cols-[1fr_22rem] gap-8 items-start">
+              <div className="h-[28rem] rounded-2xl bg-card animate-pulse" />
+              <div className="h-80 rounded-2xl bg-card animate-pulse" />
             </div>
           ) : (
             <div className="grid lg:grid-cols-[1fr_22rem] gap-8 items-start">
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {plans.map((plan, index) => {
-                  const selectedCard = selectedPlan === plan.code;
-                  const isCurrentPlan = activePlan === plan.code;
+              <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xl shadow-black/10">
+                {selected ? (
+                  <>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-accent">{selected.code}</p>
+                        <h2 className="mt-2 text-3xl font-black text-text-bright">{selected.name}</h2>
+                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-muted">
+                          {selected.description || "A structured physics learning plan with animated concept videos, notes, practice, and guided course access."}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-accent/25 bg-accent/10 px-4 py-3 text-sm font-bold text-accent">
+                        Selected Plan
+                      </div>
+                    </div>
 
-                  return (
-                    <button
-                      key={plan.id || plan.code}
-                      onClick={() => { setSelectedPlan(plan.code); setDiscountPercent(0); }}
-                      className={cn(
-                        "text-left rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40",
-                        selectedCard ? "border-accent/60 shadow-xl shadow-accent/10" : "border-border",
-                        index === 1 && "lg:scale-[1.02]"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-5">
-                        <div>
-                          <p className="text-xs font-bold tracking-widest text-accent uppercase">{plan.code}</p>
-                          <h3 className="text-xl font-bold text-text-bright mt-1">{plan.name}</h3>
+                    <div className="mt-8 grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-border bg-surface/60 p-5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Course Name</p>
+                        <p className="mt-2 text-lg font-bold text-text-bright">{courseNames}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-surface/60 p-5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Price</p>
+                        <div className="mt-2">
+                          {selected.isFreeOfferActive && (selected.originalPrice || 0) > selected.price && (
+                            <p className="text-sm font-bold text-text-muted line-through">&#8377;{selected.originalPrice}</p>
+                          )}
+                          {selected.price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
+                          {selected.price > 0 ? (
+                            <span className="text-3xl font-black text-text-bright">{selected.price.toLocaleString("en-IN")}</span>
+                          ) : (
+                            <FreePriceHighlight size="md" />
+                          )}
+                          <span className="ml-2 text-sm text-text-muted">{planPeriod(selected.durationDays, selected.price)}</span>
+                          {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} />}
                         </div>
-                        {isCurrentPlan ? (
-                          <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-success/10 text-success">Active</span>
-                        ) : selectedCard ? (
-                          <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-accent/10 text-accent">Selected</span>
-                        ) : null}
                       </div>
-
-                      <p className="text-sm text-text-muted leading-relaxed min-h-12">{plan.description}</p>
-
-                      <div className="my-6">
-                        {plan.isFreeOfferActive && (plan.originalPrice || 0) > plan.price && (
-                          <p className="text-sm font-bold text-text-muted line-through">&#8377;{plan.originalPrice}</p>
-                        )}
-                        {plan.price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
-                        {plan.price > 0 ? (
-                          <span className="text-4xl font-extrabold text-text-bright">{plan.price.toLocaleString("en-IN")}</span>
-                        ) : (
-                          <FreePriceHighlight />
-                        )}
-                        <span className="text-text-muted text-sm ml-2">{planPeriod(plan.durationDays, plan.price)}</span>
-                        {plan.isFreeOfferActive && <FreeOfferCountdown until={plan.freeOfferUntil} />}
+                      <div className="rounded-2xl border border-border bg-surface/60 p-5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Time Period</p>
+                        <p className="mt-2 text-lg font-bold text-text-bright">{accessPeriod(selected.durationDays)}</p>
                       </div>
+                      <div className="rounded-2xl border border-border bg-surface/60 p-5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Start & End Date</p>
+                        <div className="mt-3 flex items-start gap-3 text-sm text-text-muted">
+                          <CalendarDays className="h-4 w-4 text-accent" />
+                          <div className="space-y-1">
+                            <p>Start: <span className="font-bold text-text-bright">{formatDate(accessDates.start)}</span></p>
+                            <p>End: <span className="font-bold text-text-bright">{formatDate(accessDates.end)}</span></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                      <ul className="space-y-3">
-                        {(plan.features || []).slice(0, 6).map((feature) => (
-                          <li key={feature} className="flex items-start gap-3 text-sm">
-                            <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                            <span className="text-text-muted">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </button>
-                  );
-                })}
+                    {(selected.features || []).length > 0 && (
+                      <div className="mt-8">
+                        <h3 className="mb-4 text-lg font-bold text-text-bright">What You Get</h3>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {selected.features.slice(0, 6).map((feature) => (
+                            <div key={feature} className="flex items-start gap-3 rounded-xl border border-border bg-surface/60 px-4 py-3 text-sm">
+                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                              <span className="text-text-muted">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-16 text-center">
+                    <Sparkles className="mx-auto mb-3 h-10 w-10 text-accent/60" />
+                    <h2 className="text-xl font-bold text-text-bright">No plan selected</h2>
+                    <p className="mt-2 text-sm text-text-muted">Please choose a course plan before checkout.</p>
+                    <Link href="/courses" className="mt-5 inline-block">
+                      <Button>Explore Courses</Button>
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <aside className="rounded-2xl border border-border bg-card p-6 sticky top-24">
