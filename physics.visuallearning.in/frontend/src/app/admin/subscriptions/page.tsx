@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CreditCard, Edit2, Plus, Save, Trash2, X } from "lucide-react";
+import { CheckCircle2, CreditCard, Edit2, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
@@ -38,6 +38,13 @@ interface PlanItem {
   assignedCourses: CourseOption[];
 }
 
+interface UserSuggestion {
+  id: string;
+  name: string;
+  email: string;
+  subscription?: { plan: string; status: string; expiryDate: string } | null;
+}
+
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState<SubItem[]>([]);
   const [plans, setPlans] = useState<PlanItem[]>([]);
@@ -46,7 +53,10 @@ export default function AdminSubscriptionsPage() {
   const [showGrant, setShowGrant] = useState(false);
   const [showPlanForm, setShowPlanForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PlanItem | null>(null);
-  const [grantEmail, setGrantEmail] = useState("");
+  const [grantUserSearch, setGrantUserSearch] = useState("");
+  const [selectedGrantUser, setSelectedGrantUser] = useState<UserSuggestion | null>(null);
+  const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [grantPlan, setGrantPlan] = useState("BASIC");
   const [grantDays, setGrantDays] = useState(30);
   const [planForm, setPlanForm] = useState({
@@ -66,6 +76,39 @@ export default function AdminSubscriptionsPage() {
     fetchPlans();
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    if (!showGrant || selectedGrantUser) {
+      setUserSuggestions([]);
+      setSearchingUsers(false);
+      return;
+    }
+
+    const query = grantUserSearch.trim();
+    if (query.length < 2) {
+      setUserSuggestions([]);
+      setSearchingUsers(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setSearchingUsers(true);
+      try {
+        const res = await api.get(`/admin/users?search=${encodeURIComponent(query)}&limit=8`);
+        if (!cancelled) setUserSuggestions(res.data.users || []);
+      } catch {
+        if (!cancelled) setUserSuggestions([]);
+      } finally {
+        if (!cancelled) setSearchingUsers(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [grantUserSearch, selectedGrantUser, showGrant]);
 
   async function fetchSubs() {
     try {
@@ -95,17 +138,24 @@ export default function AdminSubscriptionsPage() {
 
   async function grantSub() {
     try {
-      // Find user by email first
-      const usersRes = await api.get(`/admin/users?search=${grantEmail}&limit=1`);
-      const user = usersRes.data.users[0];
-      if (!user) { toast.error("User not found"); return; }
+      if (!selectedGrantUser) {
+        toast.error("Select a user from suggestions");
+        return;
+      }
 
-      await api.post("/admin/subscriptions", { userId: user.id, planCode: grantPlan, days: grantDays });
+      await api.post("/admin/subscriptions", { userId: selectedGrantUser.id, planCode: grantPlan, days: grantDays });
       toast.success("Subscription granted!");
-      setShowGrant(false);
-      setGrantEmail("");
+      resetGrantForm();
       fetchSubs();
     } catch { toast.error("Failed to grant"); }
+  }
+
+  function resetGrantForm() {
+    setShowGrant(false);
+    setGrantUserSearch("");
+    setSelectedGrantUser(null);
+    setUserSuggestions([]);
+    setSearchingUsers(false);
   }
 
   function resetPlanForm() {
@@ -300,11 +350,59 @@ export default function AdminSubscriptionsPage() {
       {showGrant && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-text-bright mb-4">Grant Subscription</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-text-bright">Grant Subscription</h2>
+              <button onClick={resetGrantForm}><X className="w-5 h-5 text-text-muted" /></button>
+            </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-text-muted mb-1">User Email</label>
-                <Input value={grantEmail} onChange={(e) => setGrantEmail(e.target.value)} placeholder="student@example.com" />
+              <div className="relative">
+                <label className="block text-sm text-text-muted mb-1">Search User</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <Input
+                    value={grantUserSearch}
+                    onChange={(e) => {
+                      setGrantUserSearch(e.target.value);
+                      setSelectedGrantUser(null);
+                    }}
+                    placeholder="Type name or email"
+                    className="pl-10 pr-10"
+                  />
+                  {selectedGrantUser && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-success" />}
+                </div>
+                {(searchingUsers || userSuggestions.length > 0 || grantUserSearch.trim().length >= 2) && !selectedGrantUser && (
+                  <div className="absolute left-0 right-0 top-full mt-2 max-h-64 overflow-y-auto rounded-xl border border-border bg-surface shadow-2xl z-20">
+                    {searchingUsers ? (
+                      <div className="px-4 py-3 text-sm text-text-muted">Searching users...</div>
+                    ) : userSuggestions.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-text-muted">No matching user found</div>
+                    ) : userSuggestions.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedGrantUser(user);
+                          setGrantUserSearch(`${user.name} - ${user.email}`);
+                          setUserSuggestions([]);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-card transition-colors border-b border-border last:border-b-0"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+                            <UserRound className="w-4 h-4 text-accent" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-text-bright truncate">{user.name}</p>
+                            <p className="text-xs text-text-muted truncate">{user.email}</p>
+                            {user.subscription && (
+                              <p className="text-[10px] text-text-muted mt-1">{user.subscription.plan} - {user.subscription.status}</p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm text-text-muted mb-1">Plan</label>
@@ -326,7 +424,7 @@ export default function AdminSubscriptionsPage() {
             </div>
             <div className="flex gap-3 mt-6">
               <Button onClick={grantSub} className="flex-1">Grant</Button>
-              <Button variant="ghost" onClick={() => setShowGrant(false)} className="flex-1">Cancel</Button>
+              <Button variant="ghost" onClick={resetGrantForm} className="flex-1">Cancel</Button>
             </div>
           </div>
         </div>
