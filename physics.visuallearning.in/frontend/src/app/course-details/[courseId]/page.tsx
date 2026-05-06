@@ -147,7 +147,7 @@ export default function CourseDetailsPage() {
     <main className="min-h-screen bg-primary">
       <Navbar />
 
-      <section className="relative pt-28 pb-20 lg:pb-32 overflow-hidden bg-grid">
+      <section className="relative pt-28 pb-20 lg:pb-32 overflow-visible bg-grid">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-secondary/10 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Link href="/courses" className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors mb-8">
@@ -195,8 +195,8 @@ export default function CourseDetailsPage() {
               </div>
 
             </div>
-            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:absolute lg:right-4 lg:top-0 lg:w-72 z-30 rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} overflow-hidden`}>
-              <div className="relative aspect-video bg-black overflow-hidden group">
+            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:absolute lg:right-4 lg:-top-20 xl:-top-24 lg:w-72 z-50 rounded-2xl border border-accent/20 bg-card/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${theme.glow} overflow-hidden`}>
+              <div className="relative h-32 bg-black overflow-hidden group">
                 {getPreviewEmbedUrl(details.previewVideoUrl) ? (
                   <iframe
                     src={getPreviewEmbedUrl(details.previewVideoUrl)}
@@ -216,10 +216,10 @@ export default function CourseDetailsPage() {
                 )}
               </div>
 
-              <div className="p-4">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
-                    <ThemeIcon className="w-5 h-5 text-white" />
+              <div className="p-3.5">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
+                    <ThemeIcon className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{details.code}</p>
@@ -227,7 +227,7 @@ export default function CourseDetailsPage() {
                   </div>
                 </div>
 
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="inline-flex rounded-xl border border-border bg-surface p-1">
                     <button
                       onClick={() => setBilling("monthly")}
@@ -244,8 +244,8 @@ export default function CourseDetailsPage() {
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <p className="text-3xl font-black text-text-bright">{formatPrice(price)}</p>
+                <div className="mb-3">
+                  <p className="text-2xl font-black text-text-bright">{formatPrice(price)}</p>
                   <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
                 </div>
 
@@ -256,8 +256,8 @@ export default function CourseDetailsPage() {
                   </Button>
                 </Link>
 
-                <div className="mt-4 space-y-2">
-                  {(details.features || []).slice(0, 3).map((feature) => (
+                <div className="mt-3 space-y-1.5">
+                  {(details.features || []).slice(0, 2).map((feature) => (
                     <div key={feature} className="flex items-start gap-2 text-xs">
                       <Check className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
                       <span className="text-text-muted">{feature}</span>
