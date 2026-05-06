@@ -53,6 +53,7 @@ type PlanDetails = {
   name: string;
   description?: string | null;
   features: string[];
+  previewVideoUrl?: string | null;
   variants: PlanVariant[];
   courses: Course[];
 };
@@ -76,6 +77,19 @@ function formatPrice(price: number) {
 function planPeriod(billing: BillingCycle, price: number) {
   if (price <= 0) return "free access";
   return billing === "monthly" ? "per month" : "per year";
+}
+
+function getPreviewEmbedUrl(url?: string | null) {
+  if (!url) return "";
+  if (url.includes("player.vimeo.com/video/")) return url;
+  const vimeo = url.match(/vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?/);
+  if (vimeo) {
+    return `https://player.vimeo.com/video/${vimeo[1]}${vimeo[2] ? `?h=${vimeo[2]}&` : "?"}badge=0&autopause=0&title=0&byline=0&portrait=0&dnt=1`;
+  }
+  if (url.includes("youtube.com/embed/")) return url;
+  const youtube = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
+  if (youtube) return `https://www.youtube.com/embed/${youtube[1]}?rel=0`;
+  return url;
 }
 
 function ChapterVisual({ chapter }: { chapter: Chapter }) {
@@ -133,7 +147,7 @@ export default function CourseDetailsPage() {
     <main className="min-h-screen bg-primary">
       <Navbar />
 
-      <section className="relative pt-28 pb-14 overflow-hidden bg-grid">
+      <section className="relative pt-28 pb-20 lg:pb-32 overflow-hidden bg-grid">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-secondary/10 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Link href="/courses" className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors mb-8">
@@ -179,48 +193,78 @@ export default function CourseDetailsPage() {
                 </div>
               </div>
 
-              <aside className={`rounded-2xl border border-border bg-card p-6 shadow-2xl ${theme.glow} sticky top-24`}>
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center mb-5`}>
-                  <ThemeIcon className="w-7 h-7 text-white" />
-                </div>
-                <div className="mb-5">
-                  <p className="text-sm text-text-muted mb-1">Selected billing</p>
-                  <div className="inline-flex rounded-xl border border-border bg-surface p-1">
-                    <button
-                      onClick={() => setBilling("monthly")}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => setBilling("yearly")}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                    >
-                      Yearly
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <p className="text-4xl font-black text-text-bright">{formatPrice(price)}</p>
-                  <p className="text-sm text-text-muted mt-1">{planPeriod(billing, price)}</p>
-                </div>
-
-                <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
-                  <Button variant={price > 0 ? "primary" : "outline"} size="lg" className="w-full">
-                    {price > 0 && <Lock className="w-5 h-5 mr-2" />}
-                    {price > 0 ? "Start Subscription" : "Start Learning"}
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-
-                <div className="mt-5 space-y-3">
-                  {(details.features || []).slice(0, 5).map((feature) => (
-                    <div key={feature} className="flex items-start gap-3 text-sm">
-                      <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      <span className="text-text-muted">{feature}</span>
+              <aside className={`rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} sticky top-24 overflow-hidden z-20 lg:translate-y-16`}>
+                <div className="relative aspect-video bg-black overflow-hidden group">
+                  {getPreviewEmbedUrl(details.previewVideoUrl) ? (
+                    <iframe
+                      src={getPreviewEmbedUrl(details.previewVideoUrl)}
+                      className="absolute inset-0 w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-gradient-to-br from-surface via-primary to-black">
+                      <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${theme.gradient}`} />
+                      <div className="absolute inset-0 bg-grid-dark opacity-30" />
+                      <div className="relative w-16 h-16 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(0,212,255,0.18)]">
+                        <Play className="w-8 h-8 text-white fill-white ml-1" />
+                      </div>
+                      <p className="relative text-white font-bold text-sm">Course Preview</p>
+                      <p className="relative text-white/55 text-[11px] mt-1">3D physics preview</p>
                     </div>
-                  ))}
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
+                      <ThemeIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-accent">{details.code}</p>
+                      <h2 className="text-base font-bold text-text-bright">{details.name}</h2>
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <p className="text-sm text-text-muted mb-1">Selected billing</p>
+                    <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+                      <button
+                        onClick={() => setBilling("monthly")}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        onClick={() => setBilling("yearly")}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                      >
+                        Yearly
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <p className="text-4xl font-black text-text-bright">{formatPrice(price)}</p>
+                    <p className="text-sm text-text-muted mt-1">{planPeriod(billing, price)}</p>
+                  </div>
+
+                  <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
+                    <Button variant={price > 0 ? "primary" : "outline"} size="lg" className="w-full">
+                      {price > 0 && <Lock className="w-5 h-5 mr-2" />}
+                      {price > 0 ? "Start Subscription" : "Start Learning"}
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+
+                  <div className="mt-5 space-y-3">
+                    {(details.features || []).slice(0, 5).map((feature) => (
+                      <div key={feature} className="flex items-start gap-3 text-sm">
+                        <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                        <span className="text-text-muted">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </aside>
             </div>
