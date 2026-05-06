@@ -145,10 +145,21 @@ export function clearDefaultPlansEnsureCache() {
 
 export async function getPlanByCode(prisma: PrismaClient, code: string) {
   await ensureDefaultPlans(prisma);
-  return prisma.subscriptionPlan.findUnique({
-    where: { code },
-    include: { courses: { include: { course: true } } },
-  });
+  const normalizedCode = code.trim().toUpperCase();
+  const baseCode = normalizedCode.replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
+  const candidates = normalizedCode.endsWith("_YEARLY")
+    ? [normalizedCode, `${baseCode}_YEARLY`]
+    : [normalizedCode, `${baseCode}_MONTHLY`, baseCode];
+
+  for (const candidate of Array.from(new Set(candidates))) {
+    const plan = await prisma.subscriptionPlan.findUnique({
+      where: { code: candidate },
+      include: { courses: { include: { course: true } } },
+    });
+    if (plan) return plan;
+  }
+
+  return null;
 }
 
 export async function getActiveUserSubscriptions(prisma: PrismaClient, userId: string) {

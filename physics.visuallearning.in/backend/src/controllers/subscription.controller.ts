@@ -91,6 +91,10 @@ function isCouponUsable(coupon: any, planCode: string) {
   );
 }
 
+function getRazorpayErrorMessage(error: any) {
+  return error?.error?.description || error?.description || error?.message || "Razorpay rejected the order request";
+}
+
 export async function getPlans(req: AuthRequest, res: Response) {
   try {
     const cacheKey = "subscription_plans_public";
@@ -314,20 +318,24 @@ export async function createOrder(req: AuthRequest, res: Response) {
     }
 
     const order = await razorpay.orders.create({
-      amount: amount * 100, // in paise
+      amount: Math.round(amount * 100), // in paise
       currency: "INR",
-      receipt: `phy_${req.user!.id}_${Date.now()}`,
+      receipt: `phy_${Date.now()}_${req.user!.id.slice(-6)}`,
+      notes: {
+        userId: req.user!.id,
+        plan: planConfig.code,
+      },
     });
 
     res.json({
       orderId: order.id,
       amount: amount,
       currency: "INR",
-      plan,
+      plan: planConfig.code,
     });
   } catch (error) {
     console.error("Create order error:", error);
-    res.status(500).json({ message: "Failed to create order" });
+    res.status(502).json({ message: getRazorpayErrorMessage(error) });
   }
 }
 
@@ -376,7 +384,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     const subscription = await prisma.subscription.upsert({
       where: { userId: req.user!.id },
       update: {
-        plan,
+        plan: planConfig.code,
         status: "ACTIVE",
         startDate: new Date(),
         expiryDate,
@@ -388,7 +396,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       },
       create: {
         userId: req.user!.id,
-        plan,
+        plan: planConfig.code,
         status: "ACTIVE",
         expiryDate,
         razorpayOrderId,
