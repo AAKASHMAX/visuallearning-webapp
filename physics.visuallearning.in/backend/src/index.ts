@@ -11,6 +11,7 @@ import courseRoutes from "./routes/course.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import adminRoutes from "./routes/admin.routes";
 import notificationRoutes from "./routes/notification.routes";
+import feedbackRoutes from "./routes/feedback.routes";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", courseRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Error handling

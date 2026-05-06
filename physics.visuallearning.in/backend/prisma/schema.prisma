@@ -35,6 +35,7 @@ model User {
   subscription      Subscription?
   watchProgress     WatchProgress[]
   notificationReads NotificationRead[]
+  feedback          Feedback[]
 
   @@index([email])
 }
@@ -67,6 +68,23 @@ model NotificationRead {
   @@unique([userId, notificationId])
   @@index([userId])
   @@index([notificationId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  rating    Int?
+  message   String
+  pageUrl   String?
+  isRead    Boolean  @default(false)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@index([userId])
 }
 
 model Subscription {

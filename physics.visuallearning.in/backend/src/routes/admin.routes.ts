@@ -13,6 +13,7 @@ import {
   getAdminNotifications, createNotification, updateNotification, publishNotification, deleteNotification,
   getSettings, updateSettings, getAnalytics, getPublicSettings,
 } from "../controllers/admin.controller";
+import { deleteFeedback, getFeedbacks, markFeedbackRead } from "../controllers/feedback.controller";
 
 const router = Router();
 
@@ -85,6 +86,11 @@ router.post("/notifications", createNotification);
 router.put("/notifications/:id", updateNotification);
 router.patch("/notifications/:id/publish", publishNotification);
 router.delete("/notifications/:id", deleteNotification);
+
+// Feedback
+router.get("/feedback", getFeedbacks);
+router.patch("/feedback/:id/read", markFeedbackRead);
+router.delete("/feedback/:id", deleteFeedback);
 
 // Settings
 router.get("/settings", getSettings);

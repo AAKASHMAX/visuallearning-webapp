@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
+import { FeedbackPopup } from "@/components/layout/feedback-popup";
 import { FloatingContact } from "@/components/layout/floating-contact";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         {children}
+        <FeedbackPopup />
         <FloatingContact />
         <Toaster
           position="top-right"
