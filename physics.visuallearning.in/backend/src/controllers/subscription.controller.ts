@@ -7,6 +7,22 @@ import { AuthRequest } from "../middleware/auth";
 import { ensureDefaultPlans, getAccessibleCoursesForUser, getPlanByCode } from "../services/plan.service";
 
 const prisma = new PrismaClient();
+const publicPlanCache = new Map<string, { data: any; expiry: number }>();
+
+function getCached(key: string) {
+  const item = publicPlanCache.get(key);
+  if (item && item.expiry > Date.now()) return item.data;
+  publicPlanCache.delete(key);
+  return null;
+}
+
+function setCached(key: string, data: any, ttlMs = 60000) {
+  publicPlanCache.set(key, { data, expiry: Date.now() + ttlMs });
+}
+
+export function clearSubscriptionPlanCache() {
+  publicPlanCache.clear();
+}
 
 function getBillingCycle(plan: { code: string; durationDays: number }) {
   return plan.code.endsWith("_YEARLY") || plan.durationDays >= 365 ? "yearly" : "monthly";
@@ -57,13 +73,26 @@ function isCouponUsable(coupon: any, planCode: string) {
 
 export async function getPlans(req: AuthRequest, res: Response) {
   try {
-    await ensureDefaultPlans(prisma);
-    const plans = await prisma.subscriptionPlan.findMany({
+    const cacheKey = "subscription_plans_public";
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    let plans = await prisma.subscriptionPlan.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
-    res.json(plans.map((plan) => ({
+
+    if (plans.length === 0) {
+      await ensureDefaultPlans(prisma);
+      plans = await prisma.subscriptionPlan.findMany({
+        where: { isActive: true },
+        orderBy: { displayOrder: "asc" },
+        include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
+      });
+    }
+
+    const response = plans.map((plan) => ({
       id: plan.code,
       code: plan.code,
       baseCode: getBasePlanCode(plan.code),
@@ -74,7 +103,10 @@ export async function getPlans(req: AuthRequest, res: Response) {
       durationDays: plan.durationDays,
       features: plan.features,
       courses: plan.courses.map((item) => item.course),
-    })));
+    }));
+
+    setCached(cacheKey, response);
+    res.json(response);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plans" });
   }
@@ -82,15 +114,27 @@ export async function getPlans(req: AuthRequest, res: Response) {
 
 export async function getPlanDetails(req: AuthRequest, res: Response) {
   try {
-    await ensureDefaultPlans(prisma);
     const baseCode = normalizePlanParam(req.params.code);
+    const cacheKey = `subscription_plan_details_${baseCode}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
     const planCodes = [baseCode, `${baseCode}_YEARLY`];
 
-    const variants = await prisma.subscriptionPlan.findMany({
+    let variants = await prisma.subscriptionPlan.findMany({
       where: { code: { in: planCodes }, isActive: true },
       orderBy: { durationDays: "asc" },
       include: { courses: { select: { courseId: true } } },
     });
+
+    if (variants.length === 0) {
+      await ensureDefaultPlans(prisma);
+      variants = await prisma.subscriptionPlan.findMany({
+        where: { code: { in: planCodes }, isActive: true },
+        orderBy: { durationDays: "asc" },
+        include: { courses: { select: { courseId: true } } },
+      });
+    }
 
     if (variants.length === 0) {
       return res.status(404).json({ message: "Plan not found" });
@@ -118,7 +162,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       },
     });
 
-    res.json({
+    const response = {
       code: baseCode,
       name: primary.name,
       description: primary.description,
@@ -130,7 +174,10 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
         durationDays: plan.durationDays,
       })),
       courses: courses.map(formatCourseChapters),
-    });
+    };
+
+    setCached(cacheKey, response);
+    res.json(response);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plan details" });
   }

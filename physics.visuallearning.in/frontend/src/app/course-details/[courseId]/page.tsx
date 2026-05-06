@@ -164,7 +164,7 @@ export default function CourseDetailsPage() {
               <p className="text-sm text-text-muted">This course plan is not available right now.</p>
             </div>
           ) : (
-            <div className="grid lg:grid-cols-[1fr_24rem] gap-8 items-start">
+            <div className="max-w-3xl">
               <div>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${theme.accent} bg-card border border-border mb-5`}>
                   <Sparkles className="w-4 h-4" />
@@ -193,7 +193,16 @@ export default function CourseDetailsPage() {
                 </div>
               </div>
 
-              <aside className={`rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} sticky top-24 overflow-hidden z-20 lg:translate-y-16`}>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {details && (
+        <section className="pb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[18rem_1fr] items-start">
+              <aside className={`relative z-30 rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} overflow-hidden lg:-mt-24`}>
                 <div className="relative aspect-video bg-black overflow-hidden group">
                   {getPreviewEmbedUrl(details.previewVideoUrl) ? (
                     <iframe
@@ -203,84 +212,75 @@ export default function CourseDetailsPage() {
                       allowFullScreen
                     />
                   ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-gradient-to-br from-surface via-primary to-black">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-gradient-to-br from-surface via-primary to-black">
                       <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${theme.gradient}`} />
-                      <div className="absolute inset-0 bg-grid-dark opacity-30" />
-                      <div className="relative w-16 h-16 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(0,212,255,0.18)]">
-                        <Play className="w-8 h-8 text-white fill-white ml-1" />
+                      <div className="relative w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_24px_rgba(0,212,255,0.18)]">
+                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
                       </div>
-                      <p className="relative text-white font-bold text-sm">Course Preview</p>
-                      <p className="relative text-white/55 text-[11px] mt-1">3D physics preview</p>
+                      <p className="relative text-white font-bold text-xs">Course Preview</p>
+                      <p className="relative text-white/55 text-[10px] mt-0.5">3D physics preview</p>
                     </div>
                   )}
                 </div>
 
-                <div className="p-6">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
-                      <ThemeIcon className="w-6 h-6 text-white" />
+                <div className="p-4">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
+                      <ThemeIcon className="w-5 h-5 text-white" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-accent">{details.code}</p>
-                      <h2 className="text-base font-bold text-text-bright">{details.name}</h2>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{details.code}</p>
+                      <h2 className="text-sm font-bold text-text-bright truncate">{details.name}</h2>
                     </div>
                   </div>
 
-                  <div className="mb-5">
-                    <p className="text-sm text-text-muted mb-1">Selected billing</p>
+                  <div className="mb-4">
                     <div className="inline-flex rounded-xl border border-border bg-surface p-1">
                       <button
                         onClick={() => setBilling("monthly")}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
                       >
                         Monthly
                       </button>
                       <button
                         onClick={() => setBilling("yearly")}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
                       >
                         Yearly
                       </button>
                     </div>
                   </div>
 
-                  <div className="mb-6">
-                    <p className="text-4xl font-black text-text-bright">{formatPrice(price)}</p>
-                    <p className="text-sm text-text-muted mt-1">{planPeriod(billing, price)}</p>
+                  <div className="mb-4">
+                    <p className="text-3xl font-black text-text-bright">{formatPrice(price)}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
                   </div>
 
                   <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
-                    <Button variant={price > 0 ? "primary" : "outline"} size="lg" className="w-full">
-                      {price > 0 && <Lock className="w-5 h-5 mr-2" />}
+                    <Button variant={price > 0 ? "primary" : "outline"} className="w-full">
+                      {price > 0 && <Lock className="w-4 h-4 mr-2" />}
                       {price > 0 ? "Start Subscription" : "Start Learning"}
-                      <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>
 
-                  <div className="mt-5 space-y-3">
-                    {(details.features || []).slice(0, 5).map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-sm">
-                        <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                  <div className="mt-4 space-y-2">
+                    {(details.features || []).slice(0, 3).map((feature) => (
+                      <div key={feature} className="flex items-start gap-2 text-xs">
+                        <Check className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
                         <span className="text-text-muted">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </aside>
-            </div>
-          )}
-        </div>
-      </section>
 
-      {details && (
-        <section className="pb-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
-              <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
-            </div>
+              <div>
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
+                  <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
+                </div>
 
-            <div className="space-y-10">
+                <div className="space-y-10">
               {details.courses.map((course) => (
                 <div key={course.id}>
                   <div className="flex items-center justify-between gap-4 mb-4">
@@ -317,6 +317,8 @@ export default function CourseDetailsPage() {
                   </div>
                 </div>
               ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>

@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
+import { clearSubscriptionPlanCache } from "./subscription.controller";
 import { ensureDefaultPlans, getPlanByCode } from "../services/plan.service";
 
 const prisma = new PrismaClient();
@@ -462,6 +463,7 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
         courses: { create: (courseIds || []).map((courseId: string) => ({ courseId })) },
       },
     });
+    clearSubscriptionPlanCache();
     res.status(201).json(plan);
   } catch (error) {
     res.status(500).json({ message: "Failed to create subscription plan" });
@@ -488,6 +490,7 @@ export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
         },
       },
     });
+    clearSubscriptionPlanCache();
     res.json(plan);
   } catch (error) {
     res.status(500).json({ message: "Failed to update subscription plan" });
@@ -497,6 +500,7 @@ export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
 export async function deleteSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
     await prisma.subscriptionPlan.delete({ where: { id: req.params.id } });
+    clearSubscriptionPlanCache();
     res.json({ message: "Subscription plan deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete subscription plan" });
