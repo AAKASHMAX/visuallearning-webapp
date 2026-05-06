@@ -53,7 +53,6 @@ export default function AdminSettingsPage() {
       await api.put("/admin/settings", {
         key: "plans_config",
         value: {
-          FREE: { name: "Free", price: 0, duration: 0, features: ["First chapter free", "Selected animations", "Basic notes"] },
           BASIC: { name: "Basic", price: basicPrice, duration: 30, features: ["All animated videos", "Complete notes", "MCQ quizzes", "Progress tracking"] },
           ADVANCE: { name: "Advance", price: advancePrice, duration: 30, features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board papers", "Priority support"] },
           BASIC_YEARLY: { name: "Basic Yearly", price: basicYearlyPrice, duration: 365, features: ["All Basic features", "1 year access", "Save 30%"] },

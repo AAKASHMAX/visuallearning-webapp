@@ -92,7 +92,7 @@ export default function AdminCoursesPage() {
   const [courseName, setCourseName] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
   const [courseVimeoVideoId, setCourseVimeoVideoId] = useState("");
-  const [courseTier, setCourseTier] = useState("FREE");
+  const [courseTier, setCourseTier] = useState("BASIC");
   const [courseOrder, setCourseOrder] = useState(0);
 
   // Chapter form
@@ -275,7 +275,7 @@ export default function AdminCoursesPage() {
   }
 
   // Reset helpers
-  function resetCourseForm() { setShowCourseForm(false); setEditingCourse(null); setCourseName(""); setCourseDesc(""); setCourseVimeoVideoId(""); setCourseTier("FREE"); setCourseOrder(0); }
+  function resetCourseForm() { setShowCourseForm(false); setEditingCourse(null); setCourseName(""); setCourseDesc(""); setCourseVimeoVideoId(""); setCourseTier("BASIC"); setCourseOrder(0); }
   function resetChapterForm() { setShowChapterForm(false); setEditingChapter(null); setChapterName(""); setChapterAnimationKey(""); setChapterOrder(0); }
   function resetVideoForm() { setShowVideoForm(false); setEditingVideo(null); setVideoTitle(""); setVideoUrl(""); setVideoType("ANIMATED_VIDEO"); setVideoLang("HINDI"); setVideoFree(false); setVideoOrder(0); }
   function resetNoteForm() { setShowNoteForm(false); setEditingNote(null); setNoteTitle(""); setNoteUrl(""); setNoteFree(false); setNoteOrder(0); }
@@ -301,7 +301,6 @@ export default function AdminCoursesPage() {
   }
 
   const tierColors: Record<string, string> = {
-    FREE: "bg-emerald-500/10 text-emerald-400",
     BASIC: "bg-accent/10 text-accent",
     ADVANCE: "bg-secondary/10 text-secondary-light",
     BRIDGE: "bg-orange-500/10 text-orange-400",
@@ -510,7 +509,7 @@ export default function AdminCoursesPage() {
               </div>
               <div><label className="block text-sm text-text-muted mb-1">Tier</label>
                 <select value={courseTier} onChange={(e) => setCourseTier(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
-                  <option value="FREE">Free</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option><option value="BRIDGE">Bridge</option>
+                  <option value="BRIDGE">Bridge</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option>
                 </select>
               </div>
               <div><label className="block text-sm text-text-muted mb-1">Display Order</label><Input type="number" value={courseOrder} onChange={(e) => setCourseOrder(parseInt(e.target.value) || 0)} /></div>

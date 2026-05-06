@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
 import { clearSubscriptionPlanCache } from "./subscription.controller";
-import { clearDefaultPlansEnsureCache, ensureDefaultPlans, getPlanByCode } from "../services/plan.service";
+import { clearDefaultPlansEnsureCache, ensureDefaultPlans, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -92,7 +92,7 @@ export async function createCourse(req: AuthRequest, res: Response) {
   try {
     const { name, description, tier, displayOrder, vimeoVideoId } = req.body;
     const course = await prisma.course.create({
-      data: { name, description, tier: tier || "FREE", displayOrder: displayOrder || 0, vimeoVideoId: normalizeVimeoVideoId(vimeoVideoId) },
+      data: { name, description, tier: tier || "BASIC", displayOrder: displayOrder || 0, vimeoVideoId: normalizeVimeoVideoId(vimeoVideoId) },
     });
     clearCourseCache();
     clearDefaultPlansEnsureCache();
@@ -415,10 +415,10 @@ export async function getSubscriptions(req: AuthRequest, res: Response) {
         include: { user: { select: { name: true, email: true } } },
       }),
       prisma.subscription.count(),
-      prisma.subscriptionPlan.findMany({ select: { code: true, name: true, price: true, durationDays: true } }),
+      prisma.subscriptionPlan.findMany({ where: { code: { not: "FREE" } }, select: { code: true, name: true, price: true, durationDays: true, freeOfferEnabled: true, freeOfferUntil: true } }),
     ]);
 
-    const planMap = new Map(plans.map((plan) => [plan.code, plan]));
+    const planMap = new Map(plans.map((plan) => [plan.code, { ...plan, effectivePrice: getEffectivePlanPrice(plan) }]));
     res.json({ subscriptions: subscriptions.map((sub) => ({ ...sub, planDetails: planMap.get(sub.plan) || null })), total });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch subscriptions" });
@@ -438,10 +438,11 @@ export async function grantSubscription(req: AuthRequest, res: Response) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + (days || selectedPlan.durationDays || 30));
 
+    const amount = getEffectivePlanPrice(selectedPlan);
     const subscription = await prisma.subscription.upsert({
       where: { userId },
-      update: { plan: selectedPlan.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount: selectedPlan.price },
-      create: { userId, plan: selectedPlan.code, status: "ACTIVE", expiryDate, amount: selectedPlan.price },
+      update: { plan: selectedPlan.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount },
+      create: { userId, plan: selectedPlan.code, status: "ACTIVE", expiryDate, amount },
     });
 
     res.json({ message: "Subscription granted", subscription });
@@ -455,11 +456,14 @@ export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
   try {
     await ensureDefaultPlans(prisma);
     const plans = await prisma.subscriptionPlan.findMany({
+      where: { code: { not: "FREE" } },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
     res.json(plans.map((plan) => ({
       ...plan,
+      effectivePrice: getEffectivePlanPrice(plan),
+      isFreeOfferActive: isFreeOfferActive(plan),
       courseIds: plan.courses.map((item) => item.courseId),
       assignedCourses: plan.courses.map((item) => item.course),
     })));
@@ -470,7 +474,7 @@ export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
 
 export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
-    const { code, name, description, price, durationDays, features, isActive, displayOrder, courseIds } = req.body;
+    const { code, name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
     const planCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
     if (!planCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
 
@@ -482,6 +486,8 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
         price: price || 0,
         durationDays: durationDays || 30,
         features: Array.isArray(features) ? features : [],
+        freeOfferEnabled: freeOfferEnabled ?? false,
+        freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : null,
         isActive: isActive ?? true,
         displayOrder: displayOrder || 0,
         courses: { create: (courseIds || []).map((courseId: string) => ({ courseId })) },
@@ -496,7 +502,7 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
 
 export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
-    const { code, name, description, price, durationDays, features, isActive, displayOrder, courseIds } = req.body;
+    const { code, name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
     const plan = await prisma.subscriptionPlan.update({
       where: { id: req.params.id },
       data: {
@@ -506,6 +512,8 @@ export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
         price,
         durationDays,
         features: Array.isArray(features) ? features : [],
+        freeOfferEnabled,
+        freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : null,
         isActive,
         displayOrder,
         courses: {

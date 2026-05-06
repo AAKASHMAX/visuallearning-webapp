@@ -7,7 +7,6 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Lightbulb,
   BookOpen,
   Rocket,
   Check,
@@ -28,6 +27,9 @@ type ApiPlan = {
   name: string;
   description?: string | null;
   price: number;
+  originalPrice?: number;
+  isFreeOfferActive?: boolean;
+  freeOfferUntil?: string | null;
   durationDays: number;
   features: string[];
 };
@@ -38,7 +40,7 @@ type CoursePlan = {
   subtitle: string;
   description: string;
   features: string[];
-  icon: typeof Lightbulb;
+  icon: typeof BookOpen;
   gradient: string;
   borderColor: string;
   glowColor: string;
@@ -48,27 +50,36 @@ type CoursePlan = {
   yearlyCode: string;
   monthlyPrice: number;
   yearlyPrice: number;
+  monthlyOriginalPrice: number;
+  yearlyOriginalPrice: number;
+  monthlyFreeOfferActive: boolean;
+  yearlyFreeOfferActive: boolean;
+  freeOfferUntil?: string | null;
   locked: boolean;
 };
 
 const defaultPlans: CoursePlan[] = [
   {
-    tier: "FREE",
-    title: "Free Course",
-    subtitle: "Get Started",
-    description: "Explore physics with free animated videos, basic notes, and introductory quizzes.",
-    features: ["First chapter previews", "Selected 3D animations", "Basic chapter notes", "Introductory MCQ quizzes"],
-    icon: Lightbulb,
-    gradient: "from-emerald-500 to-teal-600",
-    borderColor: "border-emerald-500/30",
-    glowColor: "hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]",
-    tag: "Free Forever",
-    tagColor: "bg-emerald-500/10 text-emerald-400",
-    monthlyCode: "FREE",
-    yearlyCode: "FREE",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    locked: false,
+    tier: "BRIDGE",
+    title: "Physics Bridge Course",
+    subtitle: "Master the Basics",
+    description: "Strengthen core physics concepts before advanced chapters.",
+    features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
+    icon: Target,
+    gradient: "from-orange-500 to-red-600",
+    borderColor: "border-orange-500/30",
+    glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]",
+    tag: "Premium",
+    tagColor: "bg-orange-500/10 text-orange-400",
+    monthlyCode: "BRIDGE",
+    yearlyCode: "BRIDGE_YEARLY",
+    monthlyPrice: 999,
+    yearlyPrice: 9990,
+    monthlyOriginalPrice: 999,
+    yearlyOriginalPrice: 9990,
+    monthlyFreeOfferActive: false,
+    yearlyFreeOfferActive: false,
+    locked: true,
   },
   {
     tier: "BASIC",
@@ -86,6 +97,10 @@ const defaultPlans: CoursePlan[] = [
     yearlyCode: "BASIC_YEARLY",
     monthlyPrice: 299,
     yearlyPrice: 2990,
+    monthlyOriginalPrice: 299,
+    yearlyOriginalPrice: 2990,
+    monthlyFreeOfferActive: false,
+    yearlyFreeOfferActive: false,
     locked: true,
   },
   {
@@ -104,33 +119,18 @@ const defaultPlans: CoursePlan[] = [
     yearlyCode: "ADVANCE_YEARLY",
     monthlyPrice: 499,
     yearlyPrice: 4990,
-    locked: true,
-  },
-  {
-    tier: "BRIDGE",
-    title: "Physics Bridge Course",
-    subtitle: "Master the Basics",
-    description: "Strengthen core physics concepts before advanced chapters.",
-    features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
-    icon: Target,
-    gradient: "from-orange-500 to-red-600",
-    borderColor: "border-orange-500/30",
-    glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]",
-    tag: "Premium",
-    tagColor: "bg-orange-500/10 text-orange-400",
-    monthlyCode: "BRIDGE",
-    yearlyCode: "BRIDGE_YEARLY",
-    monthlyPrice: 999,
-    yearlyPrice: 9990,
+    monthlyOriginalPrice: 499,
+    yearlyOriginalPrice: 4990,
+    monthlyFreeOfferActive: false,
+    yearlyFreeOfferActive: false,
     locked: true,
   },
 ];
 
 const planVisuals: Record<string, Pick<CoursePlan, "subtitle" | "icon" | "gradient" | "borderColor" | "glowColor" | "tag" | "tagColor">> = {
-  FREE: defaultPlans[0],
+  BRIDGE: defaultPlans[0],
   BASIC: defaultPlans[1],
   ADVANCE: defaultPlans[2],
-  BRIDGE: defaultPlans[3],
 };
 
 function baseCodeFor(plan: ApiPlan) {
@@ -148,20 +148,21 @@ function detailSlug(baseCode: string) {
 function groupPlans(apiPlans: ApiPlan[]): CoursePlan[] {
   if (!apiPlans.length) return defaultPlans;
   const grouped = new Map<string, ApiPlan[]>();
-  for (const plan of apiPlans) {
+  for (const plan of apiPlans.filter((item) => baseCodeFor(item) !== "FREE")) {
     const base = baseCodeFor(plan);
     grouped.set(base, [...(grouped.get(base) || []), plan]);
   }
 
   return Array.from(grouped.entries())
-    .filter(([base]) => base !== "FREE" || grouped.size === 1 || apiPlans.some((plan) => plan.code === "FREE"))
     .map(([base, variants]) => {
       const fallback = defaultPlans.find((plan) => plan.tier === base) || defaultPlans[0];
-      const visual = planVisuals[base] || planVisuals.FREE;
+      const visual = planVisuals[base] || planVisuals.BASIC;
       const monthly = variants.find((plan) => billingFor(plan) === "monthly") || variants[0];
       const yearly = variants.find((plan) => billingFor(plan) === "yearly");
       const monthlyPrice = monthly?.price ?? fallback.monthlyPrice;
       const yearlyPrice = yearly?.price ?? (monthlyPrice > 0 ? Math.round(monthlyPrice * 10) : 0);
+      const monthlyOriginalPrice = monthly?.originalPrice ?? monthlyPrice;
+      const yearlyOriginalPrice = yearly?.originalPrice ?? yearlyPrice;
 
       return {
         ...fallback,
@@ -174,18 +175,23 @@ function groupPlans(apiPlans: ApiPlan[]): CoursePlan[] {
         yearlyCode: yearly?.code || fallback.yearlyCode || monthly?.code || fallback.monthlyCode,
         monthlyPrice,
         yearlyPrice,
-        locked: monthlyPrice > 0 || yearlyPrice > 0,
+        monthlyOriginalPrice,
+        yearlyOriginalPrice,
+        monthlyFreeOfferActive: Boolean(monthly?.isFreeOfferActive),
+        yearlyFreeOfferActive: Boolean(yearly?.isFreeOfferActive),
+        freeOfferUntil: monthly?.freeOfferUntil || yearly?.freeOfferUntil || null,
+        locked: true,
       };
     })
     .sort((a, b) => {
-      const order = ["FREE", "BASIC", "ADVANCE", "BRIDGE"];
+      const order = ["BRIDGE", "BASIC", "ADVANCE"];
       return (order.indexOf(a.tier) === -1 ? 99 : order.indexOf(a.tier)) - (order.indexOf(b.tier) === -1 ? 99 : order.indexOf(b.tier));
     });
 }
 
 function formatPrice(price: number) {
   if (price <= 0) return "FREE";
-  return `₹${price.toLocaleString("en-IN")}`;
+  return `Rs ${price.toLocaleString("en-IN")}`;
 }
 
 export default function CoursesPage() {
@@ -245,10 +251,12 @@ export default function CoursesPage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {plans.map((course, index) => {
             const Icon = course.icon;
             const price = billing === "monthly" ? course.monthlyPrice : course.yearlyPrice;
+            const originalPrice = billing === "monthly" ? course.monthlyOriginalPrice : course.yearlyOriginalPrice;
+            const isFreeOffer = billing === "monthly" ? course.monthlyFreeOfferActive : course.yearlyFreeOfferActive;
             const planCode = billing === "monthly" ? course.monthlyCode : course.yearlyCode;
             const period = price <= 0 ? "" : billing === "monthly" ? "/mo" : "/yr";
 
@@ -269,9 +277,15 @@ export default function CoursesPage() {
                 <p className="text-sm text-accent mb-4">{course.subtitle}</p>
 
                 <div className="mb-4">
-                  {price > 0 && <span className="text-text-muted text-lg">₹</span>}
-                  <span className="text-3xl font-extrabold text-text-bright">{price > 0 ? price.toLocaleString("en-IN") : "FREE"}</span>
+                  {isFreeOffer && originalPrice > 0 && (
+                    <div className="mb-1 text-sm font-bold text-text-muted line-through">&#8377;{originalPrice.toLocaleString("en-IN")}</div>
+                  )}
+                  {price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
+                  <span className={`text-3xl font-extrabold ${price <= 0 ? "text-success" : "text-text-bright"}`}>{price > 0 ? price.toLocaleString("en-IN") : "FREE"}</span>
                   <span className="text-text-muted text-sm ml-1">{period}</span>
+                  {isFreeOffer && course.freeOfferUntil && (
+                    <p className="mt-1 text-xs text-success">Free until {new Date(course.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                  )}
                 </div>
 
                 <p className="text-text-muted text-sm leading-relaxed mb-6">{course.description}</p>
@@ -292,10 +306,10 @@ export default function CoursesPage() {
                       <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>
-                  <Link href={course.locked ? `/subscription?plan=${planCode}&billing=${billing}` : `/courses/${course.tier.toLowerCase()}`} className="block">
+                  <Link href={`/subscription?plan=${planCode}&billing=${billing}`} className="block">
                     <Button variant="ghost" className="w-full">
-                      {course.locked && <Lock className="w-4 h-4 mr-2" />}
-                      {course.locked ? `Subscribe ${formatPrice(price)}` : "Start Learning"}
+                      <Lock className="w-4 h-4 mr-2" />
+                      {price > 0 ? `Subscribe ${formatPrice(price)}` : "Start Free"}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>

@@ -97,7 +97,7 @@ export default function AdminDashboardPage() {
           </h3>
           <div className="space-y-3">
             {[
-              { tier: "FREE", desc: "First chapter, selected animations", color: "text-emerald-400" },
+              { tier: "BRIDGE", desc: "Foundation strengthening before advanced chapters", color: "text-orange-400" },
               { tier: "BASIC", desc: "All animated videos, notes, quizzes", color: "text-accent" },
               { tier: "ADVANCE", desc: "Everything + expert lectures, labs, board papers", color: "text-secondary-light" },
             ].map((t, i) => (

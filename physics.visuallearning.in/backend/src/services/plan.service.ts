@@ -2,62 +2,12 @@ import { PrismaClient } from "@prisma/client";
 
 export const defaultPlanSeeds = [
   {
-    code: "FREE",
-    name: "Free Course",
-    description: "Preview physics chapters with selected free videos, notes, and quizzes.",
-    price: 0,
-    durationDays: 3650,
-    displayOrder: 0,
-    tier: "FREE",
-    features: ["First chapter previews", "Selected 3D animations", "Basic notes", "Introductory quizzes"],
-  },
-  {
-    code: "BASIC",
-    name: "Basic Course",
-    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
-    price: 299,
-    durationDays: 30,
-    displayOrder: 1,
-    tier: "BASIC",
-    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
-  },
-  {
-    code: "BASIC_YEARLY",
-    name: "Basic Course",
-    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
-    price: 2990,
-    durationDays: 365,
-    displayOrder: 1,
-    tier: "BASIC",
-    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
-  },
-  {
-    code: "ADVANCE",
-    name: "Advance Course",
-    description: "Advanced physics learning with expert lectures and virtual labs.",
-    price: 499,
-    durationDays: 30,
-    displayOrder: 2,
-    tier: "ADVANCE",
-    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
-  },
-  {
-    code: "ADVANCE_YEARLY",
-    name: "Advance Course",
-    description: "Advanced physics learning with expert lectures and virtual labs.",
-    price: 4990,
-    durationDays: 365,
-    displayOrder: 2,
-    tier: "ADVANCE",
-    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
-  },
-  {
     code: "BRIDGE",
     name: "Physics Bridge Course",
     description: "Strengthen core physics concepts before advanced chapters.",
     price: 999,
     durationDays: 30,
-    displayOrder: 3,
+    displayOrder: 1,
     tier: "BRIDGE",
     features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
   },
@@ -67,11 +17,61 @@ export const defaultPlanSeeds = [
     description: "Strengthen core physics concepts before advanced chapters.",
     price: 9990,
     durationDays: 365,
-    displayOrder: 3,
+    displayOrder: 1,
     tier: "BRIDGE",
     features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
   },
+  {
+    code: "BASIC",
+    name: "Basic Course",
+    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
+    price: 299,
+    durationDays: 30,
+    displayOrder: 2,
+    tier: "BASIC",
+    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
+  },
+  {
+    code: "BASIC_YEARLY",
+    name: "Basic Course",
+    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
+    price: 2990,
+    durationDays: 365,
+    displayOrder: 2,
+    tier: "BASIC",
+    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
+  },
+  {
+    code: "ADVANCE",
+    name: "Advance Course",
+    description: "Advanced physics learning with expert lectures and virtual labs.",
+    price: 499,
+    durationDays: 30,
+    displayOrder: 3,
+    tier: "ADVANCE",
+    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
+  },
+  {
+    code: "ADVANCE_YEARLY",
+    name: "Advance Course",
+    description: "Advanced physics learning with expert lectures and virtual labs.",
+    price: 4990,
+    durationDays: 365,
+    displayOrder: 3,
+    tier: "ADVANCE",
+    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
+  },
 ];
+
+export function isFreeOfferActive(plan: { freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
+  if (!plan.freeOfferEnabled) return false;
+  if (!plan.freeOfferUntil) return true;
+  return new Date(plan.freeOfferUntil).getTime() > Date.now();
+}
+
+export function getEffectivePlanPrice(plan: { price: number; freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
+  return isFreeOfferActive(plan) ? 0 : plan.price;
+}
 
 function courseChapterCount(course: any) {
   if (course.chapters || course.courseChapters) {
@@ -157,7 +157,6 @@ export async function getActiveUserSubscriptions(prisma: PrismaClient, userId: s
 }
 
 export async function userHasCourseAccess(prisma: PrismaClient, userId: string | undefined, course: { id: string; tier: string }) {
-  if (course.tier === "FREE") return true;
   if (!userId) return false;
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
@@ -183,7 +182,7 @@ export async function userHasCourseAccess(prisma: PrismaClient, userId: string |
     .map((plan) => plan.code);
   if (unmappedPlanCodes.includes("BRIDGE")) return true;
   if ((unmappedPlanCodes.includes("ADVANCE") || unmappedPlanCodes.includes("ADVANCE_YEARLY")) && course.tier !== "BRIDGE") return true;
-  if ((unmappedPlanCodes.includes("BASIC") || unmappedPlanCodes.includes("BASIC_YEARLY")) && (course.tier === "BASIC" || course.tier === "FREE")) return true;
+  if ((unmappedPlanCodes.includes("BASIC") || unmappedPlanCodes.includes("BASIC_YEARLY")) && course.tier === "BASIC") return true;
 
   return false;
 }
@@ -219,10 +218,8 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
   const courses = await prisma.course.findMany({
     where: {
       isActive: true,
-      OR: [
-        { tier: "FREE" },
-        { id: { in: assignedCourseIds } },
-      ],
+      tier: { not: "FREE" },
+      id: { in: assignedCourseIds },
     },
     orderBy: { displayOrder: "asc" },
     include: {

@@ -25,6 +25,9 @@ interface PlanItem {
   name: string;
   description?: string | null;
   price: number;
+  originalPrice?: number;
+  isFreeOfferActive?: boolean;
+  freeOfferUntil?: string | null;
   durationDays: number;
   features: string[];
   courses?: { id: string; name: string; tier: string }[];
@@ -134,7 +137,20 @@ function SubscriptionContent() {
 
   async function startPayment(plan: PlanItem) {
     if (plan.price <= 0) {
-      router.push("/courses/free");
+      if (!isAuthenticated) {
+        router.push(`/auth/login?redirect=/subscription?plan=${plan.code}`);
+        return;
+      }
+      setPaying(true);
+      try {
+        await api.post("/subscription/activate-free", { plan: plan.code });
+        toast.success("Free access activated");
+        router.push("/dashboard");
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to activate free access");
+      } finally {
+        setPaying(false);
+      }
       return;
     }
 
@@ -270,9 +286,15 @@ function SubscriptionContent() {
                       <p className="text-sm text-text-muted leading-relaxed min-h-12">{plan.description}</p>
 
                       <div className="my-6">
-                        <span className="text-text-muted text-lg">&#8377;</span>
-                        <span className="text-4xl font-extrabold text-text-bright">{plan.price}</span>
+                        {plan.isFreeOfferActive && (plan.originalPrice || 0) > plan.price && (
+                          <p className="text-sm font-bold text-text-muted line-through">&#8377;{plan.originalPrice}</p>
+                        )}
+                        {plan.price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
+                        <span className={`text-4xl font-extrabold ${plan.price <= 0 ? "text-success" : "text-text-bright"}`}>{plan.price > 0 ? plan.price : "FREE"}</span>
                         <span className="text-text-muted text-sm ml-2">{planPeriod(plan.durationDays, plan.price)}</span>
+                        {plan.isFreeOfferActive && plan.freeOfferUntil && (
+                          <p className="mt-1 text-xs text-success">Free until {new Date(plan.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                        )}
                       </div>
 
                       <ul className="space-y-3">
@@ -305,7 +327,12 @@ function SubscriptionContent() {
                           {discountPercent > 0 && (
                             <p className="text-xs text-success text-right">{discountPercent}% off applied</p>
                           )}
-                          <p className="text-2xl font-black text-text-bright">&#8377;{discountedPrice}</p>
+                          {selected.isFreeOfferActive && (selected.originalPrice || 0) > selected.price && (
+                            <p className="text-xs text-text-muted line-through text-right">&#8377;{selected.originalPrice}</p>
+                          )}
+                          <p className={`text-2xl font-black ${discountedPrice <= 0 ? "text-success" : "text-text-bright"}`}>
+                            {discountedPrice > 0 ? <>&#8377;{discountedPrice}</> : "FREE"}
+                          </p>
                         </div>
                       </div>
                     </div>

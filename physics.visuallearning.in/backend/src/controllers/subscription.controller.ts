@@ -4,7 +4,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { config } from "../config";
 import { AuthRequest } from "../middleware/auth";
-import { ensureDefaultPlans, getAccessibleCoursesForUser, getPlanByCode } from "../services/plan.service";
+import { ensureDefaultPlans, getAccessibleCoursesForUser, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 const publicPlanCache = new Map<string, { data: any; expiry: number }>();
@@ -30,6 +30,26 @@ function getBillingCycle(plan: { code: string; durationDays: number }) {
 
 function getBasePlanCode(code: string) {
   return code.replace(/_YEARLY$/, "");
+}
+
+function formatPlan(plan: any) {
+  const effectivePrice = getEffectivePlanPrice(plan);
+  return {
+    id: plan.code,
+    code: plan.code,
+    baseCode: getBasePlanCode(plan.code),
+    billingCycle: getBillingCycle(plan),
+    name: plan.name,
+    description: plan.description,
+    price: effectivePrice,
+    originalPrice: plan.price,
+    durationDays: plan.durationDays,
+    features: plan.features,
+    freeOfferEnabled: plan.freeOfferEnabled,
+    freeOfferUntil: plan.freeOfferUntil,
+    isFreeOfferActive: isFreeOfferActive(plan),
+    courses: plan.courses?.map((item: any) => item.course) || [],
+  };
 }
 
 function normalizePlanParam(value: string) {
@@ -81,7 +101,7 @@ export async function getPlans(req: AuthRequest, res: Response) {
     }
 
     let plans = await prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
+      where: { isActive: true, code: { not: "FREE" } },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
@@ -89,24 +109,13 @@ export async function getPlans(req: AuthRequest, res: Response) {
     if (plans.length === 0) {
       await ensureDefaultPlans(prisma);
       plans = await prisma.subscriptionPlan.findMany({
-        where: { isActive: true },
+        where: { isActive: true, code: { not: "FREE" } },
         orderBy: { displayOrder: "asc" },
         include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
       });
     }
 
-    const response = plans.map((plan) => ({
-      id: plan.code,
-      code: plan.code,
-      baseCode: getBasePlanCode(plan.code),
-      billingCycle: getBillingCycle(plan),
-      name: plan.name,
-      description: plan.description,
-      price: plan.price,
-      durationDays: plan.durationDays,
-      features: plan.features,
-      courses: plan.courses.map((item) => item.course),
-    }));
+    const response = plans.map(formatPlan);
 
     setCached(cacheKey, response);
     res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
@@ -119,6 +128,9 @@ export async function getPlans(req: AuthRequest, res: Response) {
 export async function getPlanDetails(req: AuthRequest, res: Response) {
   try {
     const baseCode = normalizePlanParam(req.params.code);
+    if (baseCode === "FREE") {
+      return res.status(404).json({ message: "Plan not found" });
+    }
     const cacheKey = `subscription_plan_details_${baseCode}`;
     const cached = getCached(cacheKey);
     if (cached) {
@@ -178,8 +190,12 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       variants: variants.map((plan) => ({
         code: plan.code,
         billingCycle: getBillingCycle(plan),
-        price: plan.price,
+        price: getEffectivePlanPrice(plan),
+        originalPrice: plan.price,
         durationDays: plan.durationDays,
+        freeOfferEnabled: plan.freeOfferEnabled,
+        freeOfferUntil: plan.freeOfferUntil,
+        isFreeOfferActive: isFreeOfferActive(plan),
       })),
       courses: courses.map(formatCourseChapters),
     };
@@ -225,7 +241,7 @@ export async function getMySubscription(req: AuthRequest, res: Response) {
     });
 
     if (!subscription) {
-      return res.json({ plan: "FREE", status: "ACTIVE" });
+      return res.json(null);
     }
 
     // Check expiry
@@ -266,7 +282,7 @@ export async function createOrder(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
-    let amount = planConfig.price;
+    let amount = getEffectivePlanPrice(planConfig);
 
     // Apply coupon
     if (couponCode) {
@@ -278,7 +294,7 @@ export async function createOrder(req: AuthRequest, res: Response) {
     }
 
     if (amount <= 0) {
-      return res.status(400).json({ message: "Invalid amount" });
+      return res.status(400).json({ message: "This plan is currently free. Use free activation." });
     }
 
     const order = await razorpay.orders.create({
@@ -323,13 +339,14 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
+    const effectivePrice = getEffectivePlanPrice(planConfig);
     let discountAmount = 0;
     if (couponCode) {
       const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
       if (!isCouponUsable(coupon, plan)) {
         return res.status(400).json({ message: "Invalid coupon code" });
       }
-      discountAmount = Math.round(planConfig.price * coupon!.discountPercent / 100);
+      discountAmount = Math.round(effectivePrice * coupon!.discountPercent / 100);
       await prisma.coupon.update({
         where: { id: coupon!.id },
         data: { usedCount: { increment: 1 } },
@@ -351,7 +368,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         razorpayPaymentId,
         couponCode,
         discountAmount,
-        amount: planConfig.price - discountAmount,
+        amount: effectivePrice - discountAmount,
       },
       create: {
         userId: req.user!.id,
@@ -362,7 +379,7 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         razorpayPaymentId,
         couponCode,
         discountAmount,
-        amount: planConfig.price - discountAmount,
+        amount: effectivePrice - discountAmount,
       },
     });
 
@@ -370,5 +387,32 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
   } catch (error) {
     console.error("Verify payment error:", error);
     res.status(500).json({ message: "Failed to verify payment" });
+  }
+}
+
+export async function activateFreePlan(req: AuthRequest, res: Response) {
+  try {
+    const { plan } = req.body;
+    const planConfig = plan ? await getPlanByCode(prisma, plan) : null;
+    if (!plan || !planConfig || !planConfig.isActive) {
+      return res.status(400).json({ message: "Invalid plan" });
+    }
+
+    if (getEffectivePlanPrice(planConfig) > 0) {
+      return res.status(400).json({ message: "This plan is not free right now" });
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + (planConfig.durationDays || 30));
+
+    const subscription = await prisma.subscription.upsert({
+      where: { userId: req.user!.id },
+      update: { plan: planConfig.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount: 0 },
+      create: { userId: req.user!.id, plan: planConfig.code, status: "ACTIVE", expiryDate, amount: 0 },
+    });
+
+    res.json({ message: "Free access activated", subscription });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to activate free access" });
   }
 }

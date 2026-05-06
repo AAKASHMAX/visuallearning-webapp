@@ -515,6 +515,9 @@ function PricingSection() {
     code: string;
     name: string;
     price: string;
+    originalPrice?: string;
+    isFreeOfferActive?: boolean;
+    freeOfferUntil?: string | null;
     period: string;
     description: string;
     features: string[];
@@ -525,18 +528,18 @@ function PricingSection() {
 
   const fallbackPlans: PricingPlan[] = [
     {
-      code: "FREE",
-      name: "Free",
-      price: "0",
-      period: "forever",
-      description: "Perfect for exploring physics concepts",
+      code: "BRIDGE",
+      name: "Physics Bridge Course",
+      price: "999",
+      period: "/month",
+      description: "Strengthen core physics concepts before advanced chapters",
       features: [
-        "First chapter free in all classes",
-        "Selected 3D animations",
-        "Basic notes access",
-        "Limited MCQ quizzes",
+        "Core concept modules",
+        "Animated explanations",
+        "Foundation strengthening",
+        "Bridge tests",
       ],
-      cta: "Start Free",
+      cta: "Get Bridge",
       variant: "outline" as const,
       popular: false,
     },
@@ -584,15 +587,20 @@ function PricingSection() {
       .then((res) => {
         if (!Array.isArray(res.data) || res.data.length === 0) return;
 
-        const nextPlans = res.data.slice(0, 3).map((plan: {
+        const monthlyPlans = res.data.filter((plan: { code: string; durationDays: number }) => !plan.code.endsWith("_YEARLY") && plan.durationDays < 365);
+        const nextPlans = monthlyPlans.slice(0, 3).map((plan: {
           code: string;
           name: string;
           description?: string | null;
           price: number;
+          originalPrice?: number;
+          isFreeOfferActive?: boolean;
+          freeOfferUntil?: string | null;
           durationDays: number;
           features: string[];
         }) => {
-          const fallback = fallbackPlans.find((item) => item.code === plan.code) || fallbackPlans[0];
+          const baseCode = plan.code.replace(/_YEARLY$/, "");
+          const fallback = fallbackPlans.find((item) => item.code === baseCode) || fallbackPlans[0];
           const period = plan.price <= 0 || plan.durationDays <= 0
             ? "forever"
             : plan.durationDays >= 365
@@ -603,9 +611,12 @@ function PricingSection() {
 
           return {
             ...fallback,
-            code: plan.code,
+            code: baseCode,
             name: plan.name,
             price: String(plan.price ?? 0),
+            originalPrice: plan.originalPrice ? String(plan.originalPrice) : undefined,
+            isFreeOfferActive: plan.isFreeOfferActive,
+            freeOfferUntil: plan.freeOfferUntil,
             period,
             description: plan.description || fallback.description,
             features: plan.features?.length ? plan.features : fallback.features,
@@ -631,8 +642,7 @@ function PricingSection() {
             <span className="gradient-text">Physics Future</span>
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            Affordable plans designed for Indian students. Start free, upgrade
-            when you&apos;re ready.
+            Affordable plans designed for Indian students, with monthly and yearly access controlled from admin.
           </p>
         </div>
 
@@ -658,13 +668,19 @@ function PricingSection() {
               <p className="text-text-muted text-sm mb-6">{plan.description}</p>
 
               <div className="mb-6">
-                <span className="text-text-muted text-lg">&#8377;</span>
+                {plan.isFreeOfferActive && plan.originalPrice && plan.originalPrice !== plan.price && (
+                  <p className="text-sm font-bold text-text-muted line-through">&#8377;{plan.originalPrice}</p>
+                )}
+                {plan.price !== "0" && <span className="text-text-muted text-lg">&#8377;</span>}
                 <span className="text-4xl font-extrabold text-text-bright">
-                  {plan.price}
+                  {plan.price === "0" ? "FREE" : plan.price}
                 </span>
                 <span className="text-text-muted text-sm ml-1">
                   {plan.period}
                 </span>
+                {plan.isFreeOfferActive && plan.freeOfferUntil && (
+                  <p className="mt-1 text-xs text-success">Free until {new Date(plan.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                )}
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -676,7 +692,7 @@ function PricingSection() {
                 ))}
               </ul>
 
-              <Link href={plan.price === "0" ? "/auth/signup" : `/subscription?plan=${plan.code}`}>
+              <Link href={`/subscription?plan=${plan.code}`}>
                 <Button variant={plan.variant} className="w-full">
                   {plan.cta}
                 </Button>

@@ -29,6 +29,9 @@ type PlanVariant = {
   code: string;
   billingCycle: BillingCycle;
   price: number;
+  originalPrice?: number;
+  isFreeOfferActive?: boolean;
+  freeOfferUntil?: string | null;
   durationDays: number;
 };
 
@@ -71,7 +74,7 @@ function normalizeBase(value: string) {
 
 function formatPrice(price: number) {
   if (price <= 0) return "FREE";
-  return `₹${price.toLocaleString("en-IN")}`;
+  return `Rs ${price.toLocaleString("en-IN")}`;
 }
 
 function planPeriod(billing: BillingCycle, price: number) {
@@ -142,6 +145,8 @@ export default function CourseDetailsPage() {
   const yearly = details?.variants.find((variant) => variant.billingCycle === "yearly") || monthly;
   const activeVariant = billing === "monthly" ? monthly : yearly;
   const price = activeVariant?.price || 0;
+  const originalPrice = activeVariant?.originalPrice ?? price;
+  const isFreeOffer = Boolean(activeVariant?.isFreeOfferActive && originalPrice > price);
   const totalChapters = useMemo(() => details?.courses.reduce((sum, course) => sum + (course.chapters?.length || 0), 0) || 0, [details]);
   const totalVideos = useMemo(
     () => details?.courses.reduce((sum, course) => sum + course.chapters.reduce((chapterSum, chapter) => chapterSum + (chapter._count?.videos || 0), 0), 0) || 0,
@@ -250,14 +255,18 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="mb-3">
-                  <p className="text-2xl font-black text-text-bright">{formatPrice(price)}</p>
+                  {isFreeOffer && <p className="text-xs font-bold text-text-muted line-through">{formatPrice(originalPrice)}</p>}
+                  <p className={`text-2xl font-black ${price <= 0 ? "text-success" : "text-text-bright"}`}>{formatPrice(price)}</p>
                   <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
+                  {isFreeOffer && activeVariant?.freeOfferUntil && (
+                    <p className="text-[10px] text-success mt-1">Free until {new Date(activeVariant.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                  )}
                 </div>
 
-                <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
+                <Link href={`/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}`} className="block">
                   <Button variant={price > 0 ? "primary" : "outline"} className="w-full">
                     {price > 0 && <Lock className="w-4 h-4 mr-2" />}
-                    {price > 0 ? "Start Subscription" : "Start Learning"}
+                    {price > 0 ? "Start Subscription" : "Start Free"}
                   </Button>
                 </Link>
 

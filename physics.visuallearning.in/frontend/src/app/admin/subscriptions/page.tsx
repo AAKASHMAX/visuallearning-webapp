@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CreditCard, Edit2, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,13 @@ interface PlanItem {
   name: string;
   description: string | null;
   price: number;
+  effectivePrice?: number;
+  originalPrice?: number;
   durationDays: number;
   features: string[];
+  freeOfferEnabled?: boolean;
+  freeOfferUntil?: string | null;
+  isFreeOfferActive?: boolean;
   isActive: boolean;
   displayOrder: number;
   courseIds: string[];
@@ -45,6 +50,83 @@ interface UserSuggestion {
   subscription?: { plan: string; status: string; expiryDate: string } | null;
 }
 
+interface PlanGroup {
+  baseCode: string;
+  monthly?: PlanItem;
+  yearly?: PlanItem;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  monthlyEffectivePrice: number;
+  yearlyEffectivePrice: number;
+  monthlyDurationDays: number;
+  yearlyDurationDays: number;
+  features: string[];
+  freeOfferEnabled: boolean;
+  freeOfferUntil: string | null;
+  isFreeOfferActive: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  courseIds: string[];
+  assignedCourses: CourseOption[];
+}
+
+function baseCodeFor(code: string) {
+  return code.replace(/_YEARLY$/, "");
+}
+
+function billingLabel(plan: PlanItem) {
+  return plan.code.endsWith("_YEARLY") || plan.durationDays >= 365 ? "Yearly" : "Monthly";
+}
+
+function dateInputValue(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function groupPlans(plans: PlanItem[]) {
+  const grouped = new Map<string, PlanItem[]>();
+  for (const plan of plans.filter((item) => item.code !== "FREE")) {
+    const base = baseCodeFor(plan.code);
+    grouped.set(base, [...(grouped.get(base) || []), plan]);
+  }
+
+  const order = ["BRIDGE", "BASIC", "ADVANCE"];
+  return Array.from(grouped.entries()).map(([baseCode, variants]) => {
+    const monthly = variants.find((plan) => !plan.code.endsWith("_YEARLY") && plan.durationDays < 365) || variants.find((plan) => !plan.code.endsWith("_YEARLY")) || variants[0];
+    const yearly = variants.find((plan) => plan.code.endsWith("_YEARLY") || plan.durationDays >= 365);
+    const source = monthly || yearly || variants[0];
+    return {
+      baseCode,
+      monthly,
+      yearly,
+      name: source?.name || baseCode,
+      description: source?.description || "",
+      monthlyPrice: monthly?.price || 0,
+      yearlyPrice: yearly?.price || 0,
+      monthlyEffectivePrice: monthly?.effectivePrice ?? monthly?.price ?? 0,
+      yearlyEffectivePrice: yearly?.effectivePrice ?? yearly?.price ?? 0,
+      monthlyDurationDays: monthly?.durationDays || 30,
+      yearlyDurationDays: yearly?.durationDays || 365,
+      features: source?.features || [],
+      freeOfferEnabled: Boolean(monthly?.freeOfferEnabled || yearly?.freeOfferEnabled),
+      freeOfferUntil: monthly?.freeOfferUntil || yearly?.freeOfferUntil || null,
+      isFreeOfferActive: Boolean(monthly?.isFreeOfferActive || yearly?.isFreeOfferActive),
+      isActive: Boolean(monthly?.isActive ?? yearly?.isActive ?? true),
+      displayOrder: source?.displayOrder || 0,
+      courseIds: source?.courseIds || [],
+      assignedCourses: source?.assignedCourses || [],
+    };
+  }).sort((a, b) => {
+    const aOrder = order.indexOf(a.baseCode);
+    const bOrder = order.indexOf(b.baseCode);
+    return (aOrder === -1 ? 99 : aOrder) - (bOrder === -1 ? 99 : bOrder);
+  });
+}
+
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState<SubItem[]>([]);
   const [plans, setPlans] = useState<PlanItem[]>([]);
@@ -52,7 +134,7 @@ export default function AdminSubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [showGrant, setShowGrant] = useState(false);
   const [showPlanForm, setShowPlanForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<PlanItem | null>(null);
+  const [editingPlan, setEditingPlan] = useState<PlanGroup | null>(null);
   const [grantUserSearch, setGrantUserSearch] = useState("");
   const [selectedGrantUser, setSelectedGrantUser] = useState<UserSuggestion | null>(null);
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
@@ -63,13 +145,19 @@ export default function AdminSubscriptionsPage() {
     code: "",
     name: "",
     description: "",
-    price: 0,
-    durationDays: 30,
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    monthlyDurationDays: 30,
+    yearlyDurationDays: 365,
     featuresText: "",
+    freeOfferEnabled: false,
+    freeOfferUntil: "",
     isActive: true,
     displayOrder: 0,
     courseIds: [] as string[],
   });
+
+  const planGroups = useMemo(() => groupPlans(plans), [plans]);
 
   useEffect(() => {
     fetchSubs();
@@ -122,9 +210,10 @@ export default function AdminSubscriptionsPage() {
     try {
       const res = await api.get("/admin/subscription-plans");
       setPlans(res.data);
-      if (res.data?.[0]) {
-        setGrantPlan(res.data[0].code);
-        setGrantDays(res.data[0].durationDays || 30);
+      const firstActive = res.data?.find((plan: PlanItem) => plan.isActive && plan.code !== "FREE");
+      if (firstActive) {
+        setGrantPlan(firstActive.code);
+        setGrantDays(firstActive.durationDays || 30);
       }
     } catch { toast.error("Failed to load plans"); }
   }
@@ -132,7 +221,7 @@ export default function AdminSubscriptionsPage() {
   async function fetchCourses() {
     try {
       const res = await api.get("/courses");
-      setCourses(res.data);
+      setCourses((res.data || []).filter((course: CourseOption) => course.tier !== "FREE"));
     } catch { toast.error("Failed to load courses"); }
   }
 
@@ -161,19 +250,23 @@ export default function AdminSubscriptionsPage() {
   function resetPlanForm() {
     setShowPlanForm(false);
     setEditingPlan(null);
-    setPlanForm({ code: "", name: "", description: "", price: 0, durationDays: 30, featuresText: "", isActive: true, displayOrder: 0, courseIds: [] });
+    setPlanForm({ code: "", name: "", description: "", monthlyPrice: 0, yearlyPrice: 0, monthlyDurationDays: 30, yearlyDurationDays: 365, featuresText: "", freeOfferEnabled: false, freeOfferUntil: "", isActive: true, displayOrder: 0, courseIds: [] });
   }
 
-  function openPlanForm(plan?: PlanItem) {
+  function openPlanForm(plan?: PlanGroup) {
     if (plan) {
       setEditingPlan(plan);
       setPlanForm({
-        code: plan.code,
+        code: plan.baseCode,
         name: plan.name,
-        description: plan.description || "",
-        price: plan.price,
-        durationDays: plan.durationDays,
+        description: plan.description,
+        monthlyPrice: plan.monthlyPrice,
+        yearlyPrice: plan.yearlyPrice,
+        monthlyDurationDays: plan.monthlyDurationDays,
+        yearlyDurationDays: plan.yearlyDurationDays,
         featuresText: plan.features.join("\n"),
+        freeOfferEnabled: plan.freeOfferEnabled,
+        freeOfferUntil: dateInputValue(plan.freeOfferUntil),
         isActive: plan.isActive,
         displayOrder: plan.displayOrder,
         courseIds: plan.courseIds || [],
@@ -188,33 +281,46 @@ export default function AdminSubscriptionsPage() {
 
   async function savePlan() {
     try {
-      const payload = {
-        code: planForm.code,
+      const baseCode = planForm.code.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+      if (!baseCode || !planForm.name.trim()) {
+        toast.error("Plan code and name are required");
+        return;
+      }
+
+      const freeOfferUntil = planForm.freeOfferEnabled && planForm.freeOfferUntil
+        ? new Date(planForm.freeOfferUntil).toISOString()
+        : null;
+
+      const sharedPayload = {
         name: planForm.name,
         description: planForm.description,
-        price: planForm.price,
-        durationDays: planForm.durationDays,
         features: planForm.featuresText.split("\n").map((line) => line.trim()).filter(Boolean),
+        freeOfferEnabled: planForm.freeOfferEnabled,
+        freeOfferUntil,
         isActive: planForm.isActive,
         displayOrder: planForm.displayOrder,
         courseIds: planForm.courseIds,
       };
-      if (editingPlan) {
-        await api.put(`/admin/subscription-plans/${editingPlan.id}`, payload);
-        toast.success("Plan updated");
-      } else {
-        await api.post("/admin/subscription-plans", payload);
-        toast.success("Plan created");
-      }
+
+      const monthlyPayload = { ...sharedPayload, code: baseCode, price: planForm.monthlyPrice, durationDays: planForm.monthlyDurationDays };
+      const yearlyPayload = { ...sharedPayload, code: `${baseCode}_YEARLY`, price: planForm.yearlyPrice, durationDays: planForm.yearlyDurationDays };
+
+      if (editingPlan?.monthly) await api.put(`/admin/subscription-plans/${editingPlan.monthly.id}`, monthlyPayload);
+      else await api.post("/admin/subscription-plans", monthlyPayload);
+
+      if (editingPlan?.yearly) await api.put(`/admin/subscription-plans/${editingPlan.yearly.id}`, yearlyPayload);
+      else await api.post("/admin/subscription-plans", yearlyPayload);
+
+      toast.success(editingPlan ? "Plan updated" : "Plan created");
       resetPlanForm();
       fetchPlans();
     } catch { toast.error("Failed to save plan"); }
   }
 
-  async function deletePlan(id: string) {
-    if (!confirm("Delete this subscription plan?")) return;
+  async function deletePlan(group: PlanGroup) {
+    if (!confirm("Delete this monthly/yearly subscription plan group?")) return;
     try {
-      await api.delete(`/admin/subscription-plans/${id}`);
+      await Promise.all([group.monthly, group.yearly].filter(Boolean).map((plan) => api.delete(`/admin/subscription-plans/${plan!.id}`)));
       toast.success("Plan deleted");
       fetchPlans();
     } catch { toast.error("Failed to delete plan"); }
@@ -268,20 +374,43 @@ export default function AdminSubscriptionsPage() {
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {plans.map((plan) => (
-            <div key={plan.id} className="rounded-2xl border border-border bg-card p-5">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {planGroups.map((plan) => (
+            <div key={plan.baseCode} className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-xs font-semibold text-accent">{plan.code}</p>
+                  <p className="text-xs font-semibold text-accent">{plan.baseCode}</p>
                   <h3 className="text-text-bright font-bold">{plan.name}</h3>
                 </div>
                 <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${plan.isActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
                   {plan.isActive ? "ACTIVE" : "OFF"}
                 </span>
               </div>
-              <p className="text-2xl font-black text-text-bright mb-2">&#8377;{plan.price}</p>
-              <p className="text-xs text-text-muted mb-3">{plan.durationDays} days access</p>
+              {plan.isFreeOfferActive && (
+                <div className="mb-3 rounded-xl border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
+                  Free offer active{plan.freeOfferUntil ? ` until ${new Date(plan.freeOfferUntil).toLocaleDateString()}` : ""}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="rounded-xl bg-surface p-3">
+                  <p className="text-[10px] font-bold uppercase text-text-muted">Monthly</p>
+                  <p className="text-lg font-black text-text-bright">
+                    {plan.monthlyEffectivePrice === 0 && plan.monthlyPrice > 0 ? (
+                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.monthlyPrice}</span><span className="text-success">FREE</span></>
+                    ) : <>&#8377;{plan.monthlyPrice}</>}
+                  </p>
+                  <p className="text-[10px] text-text-muted">{plan.monthlyDurationDays} days</p>
+                </div>
+                <div className="rounded-xl bg-surface p-3">
+                  <p className="text-[10px] font-bold uppercase text-text-muted">Yearly</p>
+                  <p className="text-lg font-black text-text-bright">
+                    {plan.yearlyEffectivePrice === 0 && plan.yearlyPrice > 0 ? (
+                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.yearlyPrice}</span><span className="text-success">FREE</span></>
+                    ) : <>&#8377;{plan.yearlyPrice}</>}
+                  </p>
+                  <p className="text-[10px] text-text-muted">{plan.yearlyDurationDays} days</p>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {plan.assignedCourses.length === 0 ? (
                   <span className="text-xs text-text-muted">No courses assigned</span>
@@ -293,7 +422,7 @@ export default function AdminSubscriptionsPage() {
                 <button onClick={() => openPlanForm(plan)} className="flex-1 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text-muted hover:text-accent hover:border-accent/30 transition-colors">
                   <Edit2 className="w-3.5 h-3.5 inline mr-1" /> Edit
                 </button>
-                <button onClick={() => deletePlan(plan.id)} className="rounded-xl border border-border px-3 py-2 text-danger hover:bg-danger/10 transition-colors">
+                <button onClick={() => deletePlan(plan)} className="rounded-xl border border-border px-3 py-2 text-danger hover:bg-danger/10 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -313,13 +442,20 @@ export default function AdminSubscriptionsPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div><label className="block text-sm text-text-muted mb-1">Code</label><Input value={planForm.code} onChange={(e) => setPlanForm({ ...planForm, code: e.target.value.toUpperCase() })} placeholder="BASIC" /></div>
               <div><label className="block text-sm text-text-muted mb-1">Name</label><Input value={planForm.name} onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })} placeholder="Basic Course" /></div>
-              <div><label className="block text-sm text-text-muted mb-1">Price</label><Input type="number" value={planForm.price} onChange={(e) => setPlanForm({ ...planForm, price: parseInt(e.target.value) || 0 })} /></div>
-              <div><label className="block text-sm text-text-muted mb-1">Duration Days</label><Input type="number" value={planForm.durationDays} onChange={(e) => setPlanForm({ ...planForm, durationDays: parseInt(e.target.value) || 30 })} /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Monthly Price</label><Input type="number" value={planForm.monthlyPrice} onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseInt(e.target.value) || 0 })} /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Yearly Price</label><Input type="number" value={planForm.yearlyPrice} onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseInt(e.target.value) || 0 })} /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Monthly Duration Days</label><Input type="number" value={planForm.monthlyDurationDays} onChange={(e) => setPlanForm({ ...planForm, monthlyDurationDays: parseInt(e.target.value) || 30 })} /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Yearly Duration Days</label><Input type="number" value={planForm.yearlyDurationDays} onChange={(e) => setPlanForm({ ...planForm, yearlyDurationDays: parseInt(e.target.value) || 365 })} /></div>
               <div><label className="block text-sm text-text-muted mb-1">Display Order</label><Input type="number" value={planForm.displayOrder} onChange={(e) => setPlanForm({ ...planForm, displayOrder: parseInt(e.target.value) || 0 })} /></div>
               <label className="flex items-end gap-2 pb-3 cursor-pointer">
                 <input type="checkbox" checked={planForm.isActive} onChange={(e) => setPlanForm({ ...planForm, isActive: e.target.checked })} className="w-4 h-4 accent-accent" />
                 <span className="text-sm text-text-muted">Active plan</span>
               </label>
+              <label className="flex items-end gap-2 pb-3 cursor-pointer">
+                <input type="checkbox" checked={planForm.freeOfferEnabled} onChange={(e) => setPlanForm({ ...planForm, freeOfferEnabled: e.target.checked })} className="w-4 h-4 accent-accent" />
+                <span className="text-sm text-text-muted">Make this course free</span>
+              </label>
+              <div><label className="block text-sm text-text-muted mb-1">Free Offer Until</label><Input type="datetime-local" value={planForm.freeOfferUntil} onChange={(e) => setPlanForm({ ...planForm, freeOfferUntil: e.target.value })} disabled={!planForm.freeOfferEnabled} /></div>
               <div className="sm:col-span-2"><label className="block text-sm text-text-muted mb-1">Description</label><Input value={planForm.description} onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })} placeholder="Short plan description" /></div>
               <div className="sm:col-span-2">
                 <label className="block text-sm text-text-muted mb-1">Features</label>
@@ -412,8 +548,8 @@ export default function AdminSubscriptionsPage() {
                   if (plan) setGrantDays(plan.durationDays);
                 }}
                   className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
-                  {plans.filter((plan) => plan.isActive).map((plan) => (
-                    <option key={plan.id} value={plan.code}>{plan.name}</option>
+                  {plans.filter((plan) => plan.isActive && plan.code !== "FREE").map((plan) => (
+                    <option key={plan.id} value={plan.code}>{plan.name} ({billingLabel(plan)})</option>
                   ))}
                 </select>
               </div>

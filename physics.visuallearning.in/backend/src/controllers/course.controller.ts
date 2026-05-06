@@ -104,7 +104,7 @@ export async function getCourses(req: AuthRequest, res: Response) {
     }
 
     const courses = await prisma.course.findMany({
-      where: { isActive: true },
+      where: { isActive: true, tier: { not: "FREE" } },
       orderBy: { displayOrder: "asc" },
       include: {
         _count: { select: { chapters: true, courseChapters: true } },
@@ -130,6 +130,9 @@ export async function getCourses(req: AuthRequest, res: Response) {
 export async function getCoursesByTier(req: AuthRequest, res: Response) {
   try {
     const tier = String(req.params.tier || "").toUpperCase();
+    if (tier === "FREE") {
+      return res.json([]);
+    }
     const cacheKey = !req.user ? `courses_tier_public_${tier}` : "";
     const cached = cacheKey ? getCached(cacheKey) : null;
     if (cached) {

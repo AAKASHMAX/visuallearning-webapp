@@ -98,6 +98,8 @@ model SubscriptionPlan {
   price        Int          @default(0)
   durationDays Int          @default(30)
   features     String[]     @default([])
+  freeOfferEnabled Boolean   @default(false)
+  freeOfferUntil   DateTime?
   isActive     Boolean      @default(true)
   displayOrder Int          @default(0)
   createdAt    DateTime     @default(now())
@@ -139,7 +141,7 @@ model Course {
   name         String
   description  String?
   vimeoVideoId String?
-  tier         String    @default("FREE")
+  tier         String    @default("BASIC")
   displayOrder Int       @default(0)
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
