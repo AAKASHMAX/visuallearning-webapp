@@ -47,7 +47,6 @@ export default function HomePage() {
       <PhysicsCarousel />
       <FeaturesSection />
       <TopicsShowcase />
-      <PricingSection />
       <TestimonialsSection />
       <CTASection />
       <Footer />
@@ -379,13 +378,6 @@ function FeaturesSection() {
       gradient: "from-secondary to-purple-600",
     },
     {
-      icon: Play,
-      title: "Expert Video Lectures",
-      description:
-        "Learn from experienced physics teachers with clear, concept-focused lecture videos in Hindi and English.",
-      gradient: "from-energy to-orange-600",
-    },
-    {
       icon: BookOpen,
       title: "Detailed Chapter Notes",
       description:
@@ -398,13 +390,6 @@ function FeaturesSection() {
       description:
         "Test your understanding with chapter-wise multiple choice quizzes. Get instant feedback and track your progress.",
       gradient: "from-rose-500 to-pink-600",
-    },
-    {
-      icon: Trophy,
-      title: "Board Exam Ready",
-      description:
-        "Practice with previous year board papers and important questions. Be fully prepared for your physics board exam.",
-      gradient: "from-amber-500 to-yellow-600",
     },
   ];
 
