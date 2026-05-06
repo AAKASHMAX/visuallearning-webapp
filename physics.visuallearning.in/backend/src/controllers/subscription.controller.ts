@@ -29,7 +29,7 @@ function getBillingCycle(plan: { code: string; durationDays: number }) {
 }
 
 function getBasePlanCode(code: string) {
-  return code.replace(/_YEARLY$/, "");
+  return code.replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
 }
 
 function formatPlan(plan: any) {
@@ -138,7 +138,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       return res.json(cached);
     }
 
-    const planCodes = [baseCode, `${baseCode}_YEARLY`];
+    const planCodes = [baseCode, `${baseCode}_MONTHLY`, `${baseCode}_YEARLY`];
 
     let variants = await prisma.subscriptionPlan.findMany({
       where: { code: { in: planCodes }, isActive: true },
@@ -156,10 +156,19 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
     }
 
     if (variants.length === 0) {
+      const allPlans = await prisma.subscriptionPlan.findMany({
+        where: { isActive: true, code: { not: "FREE" } },
+        orderBy: { durationDays: "asc" },
+        include: { courses: { select: { courseId: true } } },
+      });
+      variants = allPlans.filter((plan) => normalizePlanParam(plan.code) === baseCode);
+    }
+
+    if (variants.length === 0) {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const primary = variants.find((plan) => plan.code === baseCode) || variants[0];
+    const primary = variants.find((plan) => plan.code === baseCode || plan.code === `${baseCode}_MONTHLY`) || variants[0];
     const courseIds = Array.from(new Set(variants.flatMap((plan) => plan.courses.map((item) => item.courseId))));
 
     const courses = await prisma.course.findMany({
