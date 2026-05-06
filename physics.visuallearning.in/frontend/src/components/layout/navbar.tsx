@@ -4,14 +4,25 @@ import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Menu, X, LogIn, User, LogOut, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { href: "/", label: "Home", activePaths: ["/"] },
+  { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
+  { href: "/#features", label: "Features", activePaths: ["/#features"] },
+  { href: "/subscription", label: "Pricing", activePaths: ["/subscription"] },
+];
 
 export function Navbar() {
   const { isAuthenticated, user, logout, hydrate } = useAuth();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState("");
 
   useEffect(() => {
     hydrate();
@@ -22,6 +33,29 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const updateHash = () => setCurrentHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, [pathname]);
+
+  function isNavItemActive(item: (typeof navItems)[number]) {
+    if (item.href === "/#features") return pathname === "/" && currentHash === "#features";
+    if (item.href === "/") return pathname === "/" && currentHash !== "#features";
+    return item.activePaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  }
+
+  function navLinkClass(active: boolean, mobile = false) {
+    return cn(
+      "rounded-xl font-medium transition-all duration-300",
+      mobile ? "px-4 py-3 text-sm" : "px-3 py-2 text-sm",
+      active
+        ? "border border-accent/25 bg-accent/10 text-accent shadow-[0_0_18px_rgba(0,212,255,0.12)]"
+        : "text-text-muted hover:bg-surface-light/70 hover:text-accent"
+    );
+  }
 
   return (
     <nav
@@ -48,30 +82,13 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/"
-              className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
-            >
-              Home
-            </Link>
-            <Link
-              href="/courses"
-              className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
-            >
-              Courses
-            </Link>
-            <Link
-              href="/#features"
-              className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
-            >
-              Features
-            </Link>
-            <Link
-              href="/subscription"
-              className="text-text-muted hover:text-accent transition-colors duration-300 text-sm font-medium"
-            >
-              Pricing
-            </Link>
+            <div className="flex items-center gap-2">
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} className={navLinkClass(isNavItemActive(item))}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
@@ -84,7 +101,7 @@ export function Navbar() {
                   </Link>
                 )}
                 <Link href="/dashboard">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className={cn(pathname.startsWith("/dashboard") && "border-accent bg-accent/10 text-accent")}>
                     <BookOpen className="w-4 h-4 mr-2" />
                     Dashboard
                   </Button>
@@ -131,34 +148,16 @@ export function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
             <div className="flex flex-col gap-4">
-              <Link
-                href="/"
-                className="text-text-muted hover:text-accent transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/courses"
-                className="text-text-muted hover:text-accent transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Courses
-              </Link>
-              <Link
-                href="/#features"
-                className="text-text-muted hover:text-accent transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Features
-              </Link>
-              <Link
-                href="/subscription"
-                className="text-text-muted hover:text-accent transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Pricing
-              </Link>
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={navLinkClass(isNavItemActive(item), true)}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
                 {isAuthenticated ? (
                   <>
