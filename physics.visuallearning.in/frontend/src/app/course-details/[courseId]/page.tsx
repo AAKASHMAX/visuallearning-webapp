@@ -169,7 +169,7 @@ export default function CourseDetailsPage() {
               <p className="text-sm text-text-muted">This course plan is not available right now.</p>
             </div>
           ) : (
-            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10 xl:gap-14 lg:items-start">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem] lg:gap-10 xl:gap-14 lg:items-start">
             <div className="max-w-3xl lg:pr-0 lg:col-start-1">
               <div>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${theme.accent} bg-card border border-border mb-5`}>
@@ -200,8 +200,8 @@ export default function CourseDetailsPage() {
               </div>
 
             </div>
-            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:w-full lg:max-w-none lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start z-30 rounded-2xl border border-accent/20 bg-card/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${theme.glow} overflow-hidden`}>
-              <div className="relative h-32 bg-black overflow-hidden group">
+            <aside className={`mt-8 w-full max-w-lg lg:mt-0 lg:w-full lg:max-w-none lg:sticky lg:top-28 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start z-30 rounded-2xl border border-accent/20 bg-card/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${theme.glow} overflow-hidden`}>
+              <div className="relative aspect-video min-h-48 bg-black overflow-hidden group">
                 {getPreviewEmbedUrl(details.previewVideoUrl) ? (
                   <iframe
                     src={getPreviewEmbedUrl(details.previewVideoUrl)}
@@ -221,7 +221,7 @@ export default function CourseDetailsPage() {
                 )}
               </div>
 
-              <div className="p-3.5">
+              <div className="p-4">
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
                     <ThemeIcon className="w-4 h-4 text-white" />
