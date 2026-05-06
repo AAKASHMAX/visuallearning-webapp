@@ -112,9 +112,9 @@ function groupPlans(plans: PlanItem[]) {
       monthlyDurationDays: monthly?.durationDays || 30,
       yearlyDurationDays: yearly?.durationDays || 365,
       features: source?.features || [],
-      freeOfferEnabled: Boolean(monthly?.freeOfferEnabled || yearly?.freeOfferEnabled),
-      freeOfferUntil: monthly?.freeOfferUntil || yearly?.freeOfferUntil || null,
-      isFreeOfferActive: Boolean(monthly?.isFreeOfferActive || yearly?.isFreeOfferActive),
+      freeOfferEnabled: Boolean(monthly?.freeOfferEnabled),
+      freeOfferUntil: monthly?.freeOfferUntil || null,
+      isFreeOfferActive: Boolean(monthly?.isFreeOfferActive),
       isActive: Boolean(monthly?.isActive ?? yearly?.isActive ?? true),
       displayOrder: source?.displayOrder || 0,
       courseIds: source?.courseIds || [],
@@ -295,15 +295,13 @@ export default function AdminSubscriptionsPage() {
         name: planForm.name,
         description: planForm.description,
         features: planForm.featuresText.split("\n").map((line) => line.trim()).filter(Boolean),
-        freeOfferEnabled: planForm.freeOfferEnabled,
-        freeOfferUntil,
         isActive: planForm.isActive,
         displayOrder: planForm.displayOrder,
         courseIds: planForm.courseIds,
       };
 
-      const monthlyPayload = { ...sharedPayload, code: baseCode, price: planForm.monthlyPrice, durationDays: planForm.monthlyDurationDays };
-      const yearlyPayload = { ...sharedPayload, code: `${baseCode}_YEARLY`, price: planForm.yearlyPrice, durationDays: planForm.yearlyDurationDays };
+      const monthlyPayload = { ...sharedPayload, code: baseCode, price: planForm.monthlyPrice, durationDays: planForm.monthlyDurationDays, freeOfferEnabled: planForm.freeOfferEnabled, freeOfferUntil };
+      const yearlyPayload = { ...sharedPayload, code: `${baseCode}_YEARLY`, price: planForm.yearlyPrice, durationDays: planForm.yearlyDurationDays, freeOfferEnabled: false, freeOfferUntil: null };
 
       if (editingPlan?.monthly) await api.put(`/admin/subscription-plans/${editingPlan.monthly.id}`, monthlyPayload);
       else await api.post("/admin/subscription-plans", monthlyPayload);
@@ -453,9 +451,9 @@ export default function AdminSubscriptionsPage() {
               </label>
               <label className="flex items-end gap-2 pb-3 cursor-pointer">
                 <input type="checkbox" checked={planForm.freeOfferEnabled} onChange={(e) => setPlanForm({ ...planForm, freeOfferEnabled: e.target.checked })} className="w-4 h-4 accent-accent" />
-                <span className="text-sm text-text-muted">Make this course free</span>
+                <span className="text-sm text-text-muted">Make monthly free</span>
               </label>
-              <div><label className="block text-sm text-text-muted mb-1">Free Offer Until</label><Input type="datetime-local" value={planForm.freeOfferUntil} onChange={(e) => setPlanForm({ ...planForm, freeOfferUntil: e.target.value })} disabled={!planForm.freeOfferEnabled} /></div>
+              <div><label className="block text-sm text-text-muted mb-1">Monthly Free Until</label><Input type="datetime-local" value={planForm.freeOfferUntil} onChange={(e) => setPlanForm({ ...planForm, freeOfferUntil: e.target.value })} disabled={!planForm.freeOfferEnabled} /></div>
               <div className="sm:col-span-2"><label className="block text-sm text-text-muted mb-1">Description</label><Input value={planForm.description} onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })} placeholder="Short plan description" /></div>
               <div className="sm:col-span-2">
                 <label className="block text-sm text-text-muted mb-1">Features</label>

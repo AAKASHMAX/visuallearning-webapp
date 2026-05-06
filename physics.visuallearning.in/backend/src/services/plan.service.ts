@@ -63,13 +63,15 @@ export const defaultPlanSeeds = [
   },
 ];
 
-export function isFreeOfferActive(plan: { freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
+export function isFreeOfferActive(plan: { code?: string; durationDays?: number; freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
+  const isYearly = Boolean(plan.code?.endsWith("_YEARLY") || (plan.durationDays || 0) >= 365);
+  if (isYearly) return false;
   if (!plan.freeOfferEnabled) return false;
   if (!plan.freeOfferUntil) return true;
   return new Date(plan.freeOfferUntil).getTime() > Date.now();
 }
 
-export function getEffectivePlanPrice(plan: { price: number; freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
+export function getEffectivePlanPrice(plan: { code?: string; durationDays?: number; price: number; freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
   return isFreeOfferActive(plan) ? 0 : plan.price;
 }
 
