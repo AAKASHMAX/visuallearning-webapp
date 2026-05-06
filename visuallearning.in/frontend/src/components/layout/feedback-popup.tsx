@@ -8,8 +8,12 @@ import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+const AUTO_OPEN_DELAY_MS = 30_000;
+const LOGIN_AT_KEY = "vl_login_at";
+const AUTO_SHOWN_KEY = "vl_feedback_auto_shown_login_at";
+
 export function FeedbackPopup() {
-  const { user, hydrate } = useAuth();
+  const { user, isAuthenticated, hydrate } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +30,30 @@ export function FeedbackPopup() {
     setName((value) => value || user.name);
     setEmail((value) => value || user.email);
   }, [user]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role === "ADMIN") return;
+
+    const loginAt = localStorage.getItem(LOGIN_AT_KEY);
+    if (!loginAt || localStorage.getItem(AUTO_SHOWN_KEY) === loginAt) return;
+
+    const loginTime = Number(loginAt);
+    if (!Number.isFinite(loginTime)) return;
+
+    const remainingDelay = Math.max(0, AUTO_OPEN_DELAY_MS - (Date.now() - loginTime));
+    const timer = window.setTimeout(() => {
+      if (localStorage.getItem(AUTO_SHOWN_KEY) === loginAt) return;
+      localStorage.setItem(AUTO_SHOWN_KEY, loginAt);
+      setOpen(true);
+    }, remainingDelay);
+
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated, user]);
+
+  function markAutoPromptShown() {
+    const loginAt = localStorage.getItem(LOGIN_AT_KEY);
+    if (loginAt) localStorage.setItem(AUTO_SHOWN_KEY, loginAt);
+  }
 
   async function submitFeedback() {
     if (!name.trim() || !email.trim() || message.trim().length < 10) {
@@ -60,7 +88,10 @@ export function FeedbackPopup() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          markAutoPromptShown();
+          setOpen(true);
+        }}
         className="fixed bottom-24 right-5 z-[68] flex h-12 items-center gap-2 rounded-2xl border border-accent/25 bg-white/95 px-4 text-primary shadow-xl shadow-primary/15 backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-accent/50 hover:bg-primary-light"
         aria-label="Open feedback form"
       >
