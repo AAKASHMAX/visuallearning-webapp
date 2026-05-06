@@ -75,7 +75,10 @@ export async function getPlans(req: AuthRequest, res: Response) {
   try {
     const cacheKey = "subscription_plans_public";
     const cached = getCached(cacheKey);
-    if (cached) return res.json(cached);
+    if (cached) {
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return res.json(cached);
+    }
 
     let plans = await prisma.subscriptionPlan.findMany({
       where: { isActive: true },
@@ -106,6 +109,7 @@ export async function getPlans(req: AuthRequest, res: Response) {
     }));
 
     setCached(cacheKey, response);
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.json(response);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plans" });
@@ -117,7 +121,10 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
     const baseCode = normalizePlanParam(req.params.code);
     const cacheKey = `subscription_plan_details_${baseCode}`;
     const cached = getCached(cacheKey);
-    if (cached) return res.json(cached);
+    if (cached) {
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return res.json(cached);
+    }
 
     const planCodes = [baseCode, `${baseCode}_YEARLY`];
 
@@ -177,6 +184,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
     };
 
     setCached(cacheKey, response);
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.json(response);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plan details" });

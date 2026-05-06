@@ -83,35 +83,62 @@ function courseChapterCount(course: any) {
   return course._count?.courseChapters || course._count?.chapters || 0;
 }
 
+let defaultPlansEnsuredAt = 0;
+const DEFAULT_PLANS_TTL_MS = 10 * 60 * 1000;
+
 export async function ensureDefaultPlans(prisma: PrismaClient) {
+  if (Date.now() - defaultPlansEnsuredAt < DEFAULT_PLANS_TTL_MS) return;
+
+  const seedCodes = defaultPlanSeeds.map((seed) => seed.code);
+  const seedTiers = Array.from(new Set(defaultPlanSeeds.map((seed) => seed.tier)));
+  const [existingPlans, activeCourses] = await Promise.all([
+    prisma.subscriptionPlan.findMany({
+      where: { code: { in: seedCodes } },
+      include: { _count: { select: { courses: true } } },
+    }),
+    prisma.course.findMany({
+      where: { tier: { in: seedTiers }, isActive: true },
+      select: { id: true, tier: true },
+    }),
+  ]);
+
+  const existingByCode = new Map(existingPlans.map((plan) => [plan.code, plan]));
+  const coursesByTier = new Map<string, { id: string }[]>();
+  for (const course of activeCourses) {
+    coursesByTier.set(course.tier, [...(coursesByTier.get(course.tier) || []), course]);
+  }
+
   for (const seed of defaultPlanSeeds) {
-    const plan = await prisma.subscriptionPlan.upsert({
-      where: { code: seed.code },
-      update: {},
-      create: {
-        code: seed.code,
-        name: seed.name,
-        description: seed.description,
-        price: seed.price,
-        durationDays: seed.durationDays,
-        displayOrder: seed.displayOrder,
-        features: seed.features,
-      },
-    });
+    let plan = existingByCode.get(seed.code);
+    if (!plan) {
+      plan = await prisma.subscriptionPlan.create({
+        data: {
+          code: seed.code,
+          name: seed.name,
+          description: seed.description,
+          price: seed.price,
+          durationDays: seed.durationDays,
+          displayOrder: seed.displayOrder,
+          features: seed.features,
+        },
+        include: { _count: { select: { courses: true } } },
+      });
+    }
 
-    const courses = await prisma.course.findMany({
-      where: { tier: seed.tier, isActive: true },
-      select: { id: true },
-    });
-
-    for (const course of courses) {
-      await prisma.planCourse.upsert({
-        where: { planId_courseId: { planId: plan.id, courseId: course.id } },
-        update: {},
-        create: { planId: plan.id, courseId: course.id },
+    const courses = coursesByTier.get(seed.tier) || [];
+    if (courses.length > (plan._count?.courses || 0)) {
+      await prisma.planCourse.createMany({
+        data: courses.map((course) => ({ planId: plan!.id, courseId: course.id })),
+        skipDuplicates: true,
       });
     }
   }
+
+  defaultPlansEnsuredAt = Date.now();
+}
+
+export function clearDefaultPlansEnsureCache() {
+  defaultPlansEnsuredAt = 0;
 }
 
 export async function getPlanByCode(prisma: PrismaClient, code: string) {

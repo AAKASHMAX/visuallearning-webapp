@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   keywords: "physics, learning, 3D animations, CBSE, ICSE, simulations, visual learning",
 };
 
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL
+  ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+  : "";
+
 export default function RootLayout({
   children,
 }: {
@@ -17,6 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {apiOrigin && (
+          <>
+            <link rel="preconnect" href={apiOrigin} crossOrigin="" />
+            <link rel="dns-prefetch" href={apiOrigin} />
+          </>
+        )}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"

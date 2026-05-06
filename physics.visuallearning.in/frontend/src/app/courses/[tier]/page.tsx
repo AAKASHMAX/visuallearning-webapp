@@ -101,25 +101,8 @@ export default function TierCoursePage() {
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const res = await api.get("/courses");
-        // Filter courses by tier
-        const tierUpper = tier.toUpperCase();
-        const filtered = res.data.filter((c: any) => c.tier === tierUpper);
-
-        // Fetch chapters for each course
-        const coursesWithChapters = await Promise.all(
-          filtered.map(async (course: any) => {
-            try {
-              const chRes = await api.get(`/courses/${course.id}`);
-              return chRes.data;
-            } catch (error: any) {
-              if (error.response?.status === 403) return null;
-              return { ...course, chapters: [] };
-            }
-          })
-        );
-
-        setCourses(coursesWithChapters.filter(Boolean));
+        const res = await api.get(`/courses/tier/${tier}`);
+        setCourses(Array.isArray(res.data) ? res.data : []);
       } catch {
         console.error("Failed to fetch courses");
       }

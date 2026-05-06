@@ -17,8 +17,27 @@ function setCache(key: string, data: any, ttlMs = 300000) {
   cache.set(key, { data, expiry: Date.now() + ttlMs });
 }
 export function clearCourseCache() {
-  cache.delete("courses_all");
+  cache.clear();
 }
+
+const courseWithChaptersInclude = {
+  chapters: {
+    orderBy: { displayOrder: "asc" as const },
+    include: {
+      _count: { select: { videos: true, notes: true, questions: true } },
+    },
+  },
+  courseChapters: {
+    orderBy: { order: "asc" as const },
+    include: {
+      chapter: {
+        include: {
+          _count: { select: { videos: true, notes: true, questions: true } },
+        },
+      },
+    },
+  },
+};
 
 function formatCourseChapters(course: any) {
   const linkedChapters = (course.courseChapters || []).map((link: any) => ({
@@ -79,7 +98,10 @@ export async function getCourses(req: AuthRequest, res: Response) {
   try {
     const cacheKey = "courses_all";
     const cached = getCached(cacheKey);
-    if (cached) return res.json(cached);
+    if (cached) {
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return res.json(cached);
+    }
 
     const courses = await prisma.course.findMany({
       where: { isActive: true },
@@ -97,9 +119,46 @@ export async function getCourses(req: AuthRequest, res: Response) {
     }));
 
     setCache(cacheKey, formatted);
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.json(formatted);
   } catch (error) {
     console.error("Get courses error:", error);
+    res.status(500).json({ message: "Failed to fetch courses" });
+  }
+}
+
+export async function getCoursesByTier(req: AuthRequest, res: Response) {
+  try {
+    const tier = String(req.params.tier || "").toUpperCase();
+    const cacheKey = !req.user ? `courses_tier_public_${tier}` : "";
+    const cached = cacheKey ? getCached(cacheKey) : null;
+    if (cached) {
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return res.json(cached);
+    }
+
+    const courses = await prisma.course.findMany({
+      where: { tier, isActive: true },
+      orderBy: { displayOrder: "asc" },
+      include: courseWithChaptersInclude,
+    });
+
+    const visibleCourses = [];
+    for (const course of courses) {
+      if (await userHasCourseAccess(prisma, req.user?.id, course)) {
+        visibleCourses.push(formatCourseChapters(course));
+      }
+    }
+
+    if (cacheKey) {
+      setCache(cacheKey, visibleCourses, 60000);
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    } else {
+      res.set("Cache-Control", "private, max-age=30");
+    }
+
+    res.json(visibleCourses);
+  } catch (error) {
     res.status(500).json({ message: "Failed to fetch courses" });
   }
 }
@@ -108,24 +167,7 @@ export async function getCourseById(req: AuthRequest, res: Response) {
   try {
     const course = await prisma.course.findUnique({
       where: { id: req.params.id },
-      include: {
-        chapters: {
-          orderBy: { displayOrder: "asc" },
-          include: {
-            _count: { select: { videos: true, notes: true, questions: true } },
-          },
-        },
-        courseChapters: {
-          orderBy: { order: "asc" },
-          include: {
-            chapter: {
-              include: {
-                _count: { select: { videos: true, notes: true, questions: true } },
-              },
-            },
-          },
-        },
-      },
+      include: courseWithChaptersInclude,
     });
 
     if (!course) {

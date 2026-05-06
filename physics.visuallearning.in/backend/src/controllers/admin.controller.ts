@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
 import { clearSubscriptionPlanCache } from "./subscription.controller";
-import { ensureDefaultPlans, getPlanByCode } from "../services/plan.service";
+import { clearDefaultPlansEnsureCache, ensureDefaultPlans, getPlanByCode } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -82,6 +82,7 @@ export async function createCourse(req: AuthRequest, res: Response) {
       data: { name, description, tier: tier || "FREE", displayOrder: displayOrder || 0 },
     });
     clearCourseCache();
+    clearDefaultPlansEnsureCache();
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to create course" });
@@ -96,6 +97,7 @@ export async function updateCourse(req: AuthRequest, res: Response) {
       data: { name, description, tier, displayOrder, isActive },
     });
     clearCourseCache();
+    clearDefaultPlansEnsureCache();
     res.json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to update course" });
@@ -106,6 +108,7 @@ export async function deleteCourse(req: AuthRequest, res: Response) {
   try {
     await prisma.course.delete({ where: { id: req.params.id } });
     clearCourseCache();
+    clearDefaultPlansEnsureCache();
     res.json({ message: "Course deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete course" });
