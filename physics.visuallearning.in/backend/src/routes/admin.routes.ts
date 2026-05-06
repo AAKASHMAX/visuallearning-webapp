@@ -4,8 +4,8 @@ import {
   getStats, getUsers, toggleBlockUser,
   createCourse, updateCourse, deleteCourse, getAdminCourse, addChapterToCourse, removeChapterFromCourse,
   createChapter, updateChapter, deleteChapter, getChaptersList,
-  createVideo, updateVideo, deleteVideo,
-  createNote, updateNote, deleteNote,
+  createVideo, updateVideo, deleteVideo, getChapterVideosAdmin,
+  createNote, updateNote, deleteNote, getChapterNotesAdmin,
   createQuestion, updateQuestion, deleteQuestion, getChapterQuestionsAdmin,
   getSubscriptions, grantSubscription, cancelSubscription,
   getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan,
@@ -45,11 +45,13 @@ router.put("/chapters/:id", updateChapter);
 router.delete("/chapters/:id", deleteChapter);
 
 // Videos
+router.get("/videos/chapter/:chapterId", getChapterVideosAdmin);
 router.post("/videos", createVideo);
 router.put("/videos/:id", updateVideo);
 router.delete("/videos/:id", deleteVideo);
 
 // Notes
+router.get("/notes/chapter/:chapterId", getChapterNotesAdmin);
 router.post("/notes", createNote);
 router.put("/notes/:id", updateNote);
 router.delete("/notes/:id", deleteNote);

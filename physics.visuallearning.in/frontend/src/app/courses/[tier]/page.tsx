@@ -112,13 +112,14 @@ export default function TierCoursePage() {
             try {
               const chRes = await api.get(`/courses/${course.id}`);
               return chRes.data;
-            } catch {
+            } catch (error: any) {
+              if (error.response?.status === 403) return null;
               return { ...course, chapters: [] };
             }
           })
         );
 
-        setCourses(coursesWithChapters);
+        setCourses(coursesWithChapters.filter(Boolean));
       } catch {
         console.error("Failed to fetch courses");
       }

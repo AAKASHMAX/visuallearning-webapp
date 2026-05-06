@@ -135,8 +135,11 @@ export async function getAdminCourse(req: AuthRequest, res: Response) {
       displayOrder: link.order,
       chapterId: link.chapterId,
     }));
+    const linkedIds = new Set(linkedChapters.map((chapter) => chapter.id));
+    const legacyChapters = course.chapters.filter((chapter) => !linkedIds.has(chapter.id));
+    const chapters = [...linkedChapters, ...legacyChapters].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-    res.json({ ...course, chapters: linkedChapters.length ? linkedChapters : course.chapters });
+    res.json({ ...course, chapters });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch course" });
   }
@@ -267,6 +270,18 @@ export async function deleteVideo(req: AuthRequest, res: Response) {
 }
 
 // ─── Note Management ─────────────────────────────────────────────
+export async function getChapterVideosAdmin(req: AuthRequest, res: Response) {
+  try {
+    const videos = await prisma.video.findMany({
+      where: { chapterId: req.params.chapterId },
+      orderBy: { displayOrder: "asc" },
+    });
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch videos" });
+  }
+}
+
 export async function createNote(req: AuthRequest, res: Response) {
   try {
     const { title, fileUrl, isFree, displayOrder, chapterId } = req.body;
@@ -302,6 +317,18 @@ export async function deleteNote(req: AuthRequest, res: Response) {
 }
 
 // ─── Question Management ─────────────────────────────────────────
+export async function getChapterNotesAdmin(req: AuthRequest, res: Response) {
+  try {
+    const notes = await prisma.note.findMany({
+      where: { chapterId: req.params.chapterId },
+      orderBy: { displayOrder: "asc" },
+    });
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch notes" });
+  }
+}
+
 export async function createQuestion(req: AuthRequest, res: Response) {
   try {
     const { question, optionA, optionB, optionC, optionD, correctAnswer, solution, displayOrder, chapterId } = req.body;

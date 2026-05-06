@@ -111,7 +111,7 @@ export default function AdminCoursesPage() {
 
   async function fetchChapters(courseId: string) {
     try {
-      const res = await api.get(`/courses/${courseId}`);
+      const res = await api.get(`/admin/courses/${courseId}`);
       setChapters(res.data.chapters || []);
     } catch { toast.error("Failed to load chapters"); }
   }
@@ -126,8 +126,8 @@ export default function AdminCoursesPage() {
   async function fetchChapterContent(chapterId: string) {
     try {
       const [vRes, nRes] = await Promise.all([
-        api.get(`/chapters/${chapterId}/videos`),
-        api.get(`/chapters/${chapterId}/notes`),
+        api.get(`/admin/videos/chapter/${chapterId}`),
+        api.get(`/admin/notes/chapter/${chapterId}`),
       ]);
       setVideos(vRes.data);
       setChapterNotes(nRes.data);

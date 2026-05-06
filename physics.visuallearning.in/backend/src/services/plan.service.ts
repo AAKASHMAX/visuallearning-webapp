@@ -43,6 +43,16 @@ export const defaultPlanSeeds = [
   },
 ];
 
+function courseChapterCount(course: any) {
+  if (course.chapters || course.courseChapters) {
+    return new Set([
+      ...((course.chapters || []).map((chapter: any) => chapter.id)),
+      ...((course.courseChapters || []).map((link: any) => link.chapterId)),
+    ]).size;
+  }
+  return course._count?.courseChapters || course._count?.chapters || 0;
+}
+
 export async function ensureDefaultPlans(prisma: PrismaClient) {
   for (const seed of defaultPlanSeeds) {
     const plan = await prisma.subscriptionPlan.upsert({
@@ -110,10 +120,13 @@ export async function userHasCourseAccess(prisma: PrismaClient, userId: string |
     return true;
   }
 
-  // Legacy fallback for subscriptions created before plan-course assignment existed.
-  if (planCodes.includes("BRIDGE")) return true;
-  if ((planCodes.includes("ADVANCE") || planCodes.includes("ADVANCE_YEARLY")) && course.tier !== "BRIDGE") return true;
-  if ((planCodes.includes("BASIC") || planCodes.includes("BASIC_YEARLY")) && (course.tier === "BASIC" || course.tier === "FREE")) return true;
+  // Legacy fallback only for old plans that were created before plan-course mapping existed.
+  const unmappedPlanCodes = plans
+    .filter((plan) => plan.courses.length === 0)
+    .map((plan) => plan.code);
+  if (unmappedPlanCodes.includes("BRIDGE")) return true;
+  if ((unmappedPlanCodes.includes("ADVANCE") || unmappedPlanCodes.includes("ADVANCE_YEARLY")) && course.tier !== "BRIDGE") return true;
+  if ((unmappedPlanCodes.includes("BASIC") || unmappedPlanCodes.includes("BASIC_YEARLY")) && (course.tier === "BASIC" || course.tier === "FREE")) return true;
 
   return false;
 }
@@ -125,11 +138,15 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
     const courses = await prisma.course.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
-      include: { _count: { select: { chapters: true, courseChapters: true } } },
+      include: {
+        _count: { select: { chapters: true, courseChapters: true } },
+        chapters: { select: { id: true } },
+        courseChapters: { select: { chapterId: true } },
+      },
     });
-    return courses.map((course: any) => ({
+    return courses.map(({ chapters, courseChapters, ...course }: any) => ({
       ...course,
-      _count: { ...course._count, chapters: course._count.courseChapters || course._count.chapters },
+      _count: { ...course._count, chapters: courseChapterCount({ chapters, courseChapters }) },
     }));
   }
 
@@ -151,10 +168,14 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
       ],
     },
     orderBy: { displayOrder: "asc" },
-    include: { _count: { select: { chapters: true, courseChapters: true } } },
+    include: {
+      _count: { select: { chapters: true, courseChapters: true } },
+      chapters: { select: { id: true } },
+      courseChapters: { select: { chapterId: true } },
+    },
   });
-  return courses.map((course: any) => ({
+  return courses.map(({ chapters, courseChapters, ...course }: any) => ({
     ...course,
-    _count: { ...course._count, chapters: course._count.courseChapters || course._count.chapters },
+    _count: { ...course._count, chapters: courseChapterCount({ chapters, courseChapters }) },
   }));
 }

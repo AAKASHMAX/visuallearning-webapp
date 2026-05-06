@@ -25,9 +25,21 @@ function formatCourseChapters(course: any) {
     ...link.chapter,
     displayOrder: link.order,
   }));
-  const chapters = linkedChapters.length > 0 ? linkedChapters : (course.chapters || []);
+  const linkedIds = new Set(linkedChapters.map((chapter: any) => chapter.id));
+  const legacyChapters = (course.chapters || []).filter((chapter: any) => !linkedIds.has(chapter.id));
+  const chapters = [...linkedChapters, ...legacyChapters].sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
   const { courseChapters, ...rest } = course;
   return { ...rest, chapters };
+}
+
+function courseChapterCount(course: any) {
+  if (course.chapters || course.courseChapters) {
+    return new Set([
+      ...((course.chapters || []).map((chapter: any) => chapter.id)),
+      ...((course.courseChapters || []).map((link: any) => link.chapterId)),
+    ]).size;
+  }
+  return course._count?.courseChapters || course._count?.chapters || 0;
 }
 
 async function userHasChapterAccess(chapter: any, userId?: string) {
@@ -74,15 +86,14 @@ export async function getCourses(req: AuthRequest, res: Response) {
       orderBy: { displayOrder: "asc" },
       include: {
         _count: { select: { chapters: true, courseChapters: true } },
+        chapters: { select: { id: true } },
+        courseChapters: { select: { chapterId: true } },
       },
     });
 
-    const formatted = courses.map((course: any) => ({
+    const formatted = courses.map(({ chapters, courseChapters, ...course }: any) => ({
       ...course,
-      _count: {
-        ...course._count,
-        chapters: course._count.courseChapters || course._count.chapters,
-      },
+      _count: { ...course._count, chapters: courseChapterCount({ chapters, courseChapters }) },
     }));
 
     setCache(cacheKey, formatted);
@@ -119,6 +130,11 @@ export async function getCourseById(req: AuthRequest, res: Response) {
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
+    }
+
+    const hasAccess = await userHasCourseAccess(prisma, req.user?.id, course);
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Subscription required to access this course" });
     }
 
     res.json(formatCourseChapters(course));
@@ -179,7 +195,8 @@ export async function getVideoById(req: AuthRequest, res: Response) {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    const hasAccess = video.isFree || await userHasChapterAccess(video.chapter, req.user?.id);
+    const isFirstChapter = await isFirstChapterInAnyCourse(video.chapter);
+    const hasAccess = video.isFree || isFirstChapter || await userHasChapterAccess(video.chapter, req.user?.id);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Subscription required to access this video" });
@@ -219,11 +236,12 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
     });
 
     const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
+    const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
 
     const notesWithAccess = notes.map((n: any, i: number) => ({
       ...n,
-      hasAccess: n.isFree || i === 0 || hasAccess, // first note always free
-      fileUrl: n.isFree || i === 0 || hasAccess ? n.fileUrl : "",
+      hasAccess: n.isFree || (isFirstChapter && i === 0) || hasAccess,
+      fileUrl: n.isFree || (isFirstChapter && i === 0) || hasAccess ? n.fileUrl : "",
     }));
 
     res.json(notesWithAccess);

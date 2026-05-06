@@ -107,8 +107,8 @@ export default function AdminContentPage() {
   async function fetchChapterContent(chapterId: string) {
     try {
       const [vRes, nRes] = await Promise.all([
-        api.get(`/chapters/${chapterId}/videos`),
-        api.get(`/chapters/${chapterId}/notes`),
+        api.get(`/admin/videos/chapter/${chapterId}`),
+        api.get(`/admin/notes/chapter/${chapterId}`),
       ]);
       const qRes = await api.get(`/admin/questions/chapter/${chapterId}`);
       setVideos(vRes.data);
