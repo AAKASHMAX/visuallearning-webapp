@@ -20,6 +20,7 @@ import {
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import { getChapterAnimation } from "@/components/chapter-animations";
 
@@ -256,11 +257,13 @@ export default function CourseDetailsPage() {
 
                 <div className="mb-3">
                   {isFreeOffer && <p className="text-xs font-bold text-text-muted line-through">{formatPrice(originalPrice)}</p>}
-                  <p className={`text-2xl font-black ${price <= 0 ? "text-success" : "text-text-bright"}`}>{formatPrice(price)}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
-                  {isFreeOffer && activeVariant?.freeOfferUntil && (
-                    <p className="text-[10px] text-success mt-1">Free until {new Date(activeVariant.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                  {price > 0 ? (
+                    <p className="text-2xl font-black text-text-bright">{formatPrice(price)}</p>
+                  ) : (
+                    <FreePriceHighlight size="sm" />
                   )}
+                  <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
+                  {isFreeOffer && <FreeOfferCountdown until={activeVariant?.freeOfferUntil} className="mt-2 scale-95 origin-left" />}
                 </div>
 
                 <Link href={`/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}`} className="block">

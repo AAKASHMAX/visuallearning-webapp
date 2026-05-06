@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -672,15 +673,15 @@ function PricingSection() {
                   <p className="text-sm font-bold text-text-muted line-through">&#8377;{plan.originalPrice}</p>
                 )}
                 {plan.price !== "0" && <span className="text-text-muted text-lg">&#8377;</span>}
-                <span className="text-4xl font-extrabold text-text-bright">
-                  {plan.price === "0" ? "FREE" : plan.price}
-                </span>
+                {plan.price === "0" ? (
+                  <FreePriceHighlight />
+                ) : (
+                  <span className="text-4xl font-extrabold text-text-bright">{Number(plan.price).toLocaleString("en-IN")}</span>
+                )}
                 <span className="text-text-muted text-sm ml-1">
                   {plan.period}
                 </span>
-                {plan.isFreeOfferActive && plan.freeOfferUntil && (
-                  <p className="mt-1 text-xs text-success">Free until {new Date(plan.freeOfferUntil).toLocaleDateString("en-IN")}</p>
-                )}
+                {plan.isFreeOfferActive && <FreeOfferCountdown until={plan.freeOfferUntil} />}
               </div>
 
               <ul className="space-y-3 mb-8">

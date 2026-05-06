@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import {
   BookOpen,
   Rocket,
@@ -284,11 +285,13 @@ export default function CoursesPage() {
                     <div className="mb-1 text-sm font-bold text-text-muted line-through">&#8377;{originalPrice.toLocaleString("en-IN")}</div>
                   )}
                   {price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
-                  <span className={`text-3xl font-extrabold ${price <= 0 ? "text-success" : "text-text-bright"}`}>{price > 0 ? price.toLocaleString("en-IN") : "FREE"}</span>
-                  <span className="text-text-muted text-sm ml-1">{period}</span>
-                  {isFreeOffer && course.freeOfferUntil && (
-                    <p className="mt-1 text-xs text-success">Free until {new Date(course.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                  {price > 0 ? (
+                    <span className="text-3xl font-extrabold text-text-bright">{price.toLocaleString("en-IN")}</span>
+                  ) : (
+                    <FreePriceHighlight size="md" />
                   )}
+                  <span className="text-text-muted text-sm ml-1">{period}</span>
+                  {isFreeOffer && <FreeOfferCountdown until={course.freeOfferUntil} />}
                 </div>
 
                 <p className="text-text-muted text-sm leading-relaxed mb-6">{course.description}</p>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CreditCard, Edit2, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -386,7 +387,8 @@ export default function AdminSubscriptionsPage() {
               </div>
               {plan.isFreeOfferActive && (
                 <div className="mb-3 rounded-xl border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
-                  Free offer active{plan.freeOfferUntil ? ` until ${new Date(plan.freeOfferUntil).toLocaleDateString()}` : ""}
+                  <p className="font-bold">Monthly free offer active</p>
+                  <FreeOfferCountdown until={plan.freeOfferUntil} className="mt-2" />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2 mb-3">
@@ -394,7 +396,7 @@ export default function AdminSubscriptionsPage() {
                   <p className="text-[10px] font-bold uppercase text-text-muted">Monthly</p>
                   <p className="text-lg font-black text-text-bright">
                     {plan.monthlyEffectivePrice === 0 && plan.monthlyPrice > 0 ? (
-                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.monthlyPrice}</span><span className="text-success">FREE</span></>
+                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.monthlyPrice}</span><FreePriceHighlight size="sm" /></>
                     ) : <>&#8377;{plan.monthlyPrice}</>}
                   </p>
                   <p className="text-[10px] text-text-muted">{plan.monthlyDurationDays} days</p>
@@ -403,7 +405,7 @@ export default function AdminSubscriptionsPage() {
                   <p className="text-[10px] font-bold uppercase text-text-muted">Yearly</p>
                   <p className="text-lg font-black text-text-bright">
                     {plan.yearlyEffectivePrice === 0 && plan.yearlyPrice > 0 ? (
-                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.yearlyPrice}</span><span className="text-success">FREE</span></>
+                      <><span className="line-through text-text-muted text-sm mr-2">&#8377;{plan.yearlyPrice}</span><FreePriceHighlight size="sm" /></>
                     ) : <>&#8377;{plan.yearlyPrice}</>}
                   </p>
                   <p className="text-[10px] text-text-muted">{plan.yearlyDurationDays} days</p>

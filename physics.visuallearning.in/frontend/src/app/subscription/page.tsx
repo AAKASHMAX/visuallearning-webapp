@@ -9,6 +9,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -290,11 +291,13 @@ function SubscriptionContent() {
                           <p className="text-sm font-bold text-text-muted line-through">&#8377;{plan.originalPrice}</p>
                         )}
                         {plan.price > 0 && <span className="text-text-muted text-lg">&#8377;</span>}
-                        <span className={`text-4xl font-extrabold ${plan.price <= 0 ? "text-success" : "text-text-bright"}`}>{plan.price > 0 ? plan.price : "FREE"}</span>
-                        <span className="text-text-muted text-sm ml-2">{planPeriod(plan.durationDays, plan.price)}</span>
-                        {plan.isFreeOfferActive && plan.freeOfferUntil && (
-                          <p className="mt-1 text-xs text-success">Free until {new Date(plan.freeOfferUntil).toLocaleDateString("en-IN")}</p>
+                        {plan.price > 0 ? (
+                          <span className="text-4xl font-extrabold text-text-bright">{plan.price.toLocaleString("en-IN")}</span>
+                        ) : (
+                          <FreePriceHighlight />
                         )}
+                        <span className="text-text-muted text-sm ml-2">{planPeriod(plan.durationDays, plan.price)}</span>
+                        {plan.isFreeOfferActive && <FreeOfferCountdown until={plan.freeOfferUntil} />}
                       </div>
 
                       <ul className="space-y-3">
@@ -330,11 +333,12 @@ function SubscriptionContent() {
                           {selected.isFreeOfferActive && (selected.originalPrice || 0) > selected.price && (
                             <p className="text-xs text-text-muted line-through text-right">&#8377;{selected.originalPrice}</p>
                           )}
-                          <p className={`text-2xl font-black ${discountedPrice <= 0 ? "text-success" : "text-text-bright"}`}>
-                            {discountedPrice > 0 ? <>&#8377;{discountedPrice}</> : "FREE"}
-                          </p>
+                          <div className={`text-right ${discountedPrice > 0 ? "text-2xl font-black text-text-bright" : ""}`}>
+                            {discountedPrice > 0 ? <>&#8377;{discountedPrice.toLocaleString("en-IN")}</> : <FreePriceHighlight size="sm" />}
+                          </div>
                         </div>
                       </div>
+                      {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} className="mt-3" />}
                     </div>
 
                     {selected.price > 0 && (
