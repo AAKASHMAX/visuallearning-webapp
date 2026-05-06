@@ -15,9 +15,11 @@ import {
   Play,
   FlaskConical,
   FileText,
-  Check,
   ChevronRight,
   Target,
+  CalendarDays,
+  Clock3,
+  ShieldCheck,
 } from "lucide-react";
 
 interface DashboardCourse {
@@ -28,17 +30,42 @@ interface DashboardCourse {
   _count?: { chapters: number };
 }
 
+interface SubscriptionInfo {
+  plan: string;
+  status: string;
+  startDate?: string;
+  expiryDate?: string;
+}
+
 const tierStyles: Record<string, any> = {
-  FREE: { icon: Lightbulb, gradient: "from-emerald-500 to-teal-600", borderColor: "border-emerald-500/30", glowColor: "hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]", tag: "Free Access", tagColor: "bg-emerald-500/10 text-emerald-400", button: "outline" },
-  BASIC: { icon: BookOpen, gradient: "from-accent to-blue-600", borderColor: "border-accent/30", glowColor: "hover:shadow-[0_0_40px_rgba(0,212,255,0.15)]", tag: "Assigned", tagColor: "bg-accent/10 text-accent", button: "primary" },
-  ADVANCE: { icon: Rocket, gradient: "from-secondary to-purple-600", borderColor: "border-secondary/30", glowColor: "hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]", tag: "Assigned", tagColor: "bg-secondary/10 text-secondary-light", button: "secondary" },
-  BRIDGE: { icon: Target, gradient: "from-orange-500 to-red-600", borderColor: "border-orange-500/30", glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]", tag: "Assigned", tagColor: "bg-orange-500/10 text-orange-400", button: "outline" },
+  FREE: { icon: Lightbulb, gradient: "from-emerald-500 to-teal-600", accent: "text-emerald-400", borderColor: "border-emerald-500/30", glowColor: "hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]", tag: "Free Access", tagColor: "bg-emerald-500/10 text-emerald-400", button: "outline" },
+  BASIC: { icon: BookOpen, gradient: "from-accent to-blue-600", accent: "text-accent", borderColor: "border-accent/30", glowColor: "hover:shadow-[0_0_40px_rgba(0,212,255,0.15)]", tag: "Assigned", tagColor: "bg-accent/10 text-accent", button: "primary" },
+  ADVANCE: { icon: Rocket, gradient: "from-secondary to-purple-600", accent: "text-secondary-light", borderColor: "border-secondary/30", glowColor: "hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]", tag: "Assigned", tagColor: "bg-secondary/10 text-secondary-light", button: "secondary" },
+  BRIDGE: { icon: Target, gradient: "from-orange-500 to-red-600", accent: "text-orange-400", borderColor: "border-orange-500/30", glowColor: "hover:shadow-[0_0_40px_rgba(249,115,22,0.15)]", tag: "Assigned", tagColor: "bg-orange-500/10 text-orange-400", button: "outline" },
 };
+
+function formatDate(value?: string) {
+  if (!value) return "Always";
+  return new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function getDaysRemaining(value?: string) {
+  if (!value) return "Unlimited";
+  const remaining = Math.ceil((new Date(value).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (remaining <= 0) return "Expired";
+  return `${remaining} ${remaining === 1 ? "Day" : "Days"}`;
+}
+
+function getStatusLabel(course: DashboardCourse, subscription: SubscriptionInfo | null) {
+  if (course.tier === "FREE" && !subscription?.expiryDate) return "FREE";
+  return subscription?.status || "ACTIVE";
+}
 
 export default function DashboardPage() {
   const { isAuthenticated, user, hydrate } = useAuth();
   const router = useRouter();
   const [courses, setCourses] = useState<DashboardCourse[]>([]);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [coursesLoading, setCoursesLoading] = useState(true);
 
   useEffect(() => {
@@ -55,16 +82,24 @@ export default function DashboardPage() {
     if (!isAuthenticated) return;
     async function loadCourses() {
       try {
-        const { data } = await api.get("/subscription/my-courses");
-        setCourses(data || []);
+        const [coursesRes, subscriptionRes] = await Promise.all([
+          api.get("/subscription/my-courses"),
+          api.get("/subscription/my-subscription"),
+        ]);
+        setCourses(coursesRes.data || []);
+        setSubscription(subscriptionRes.data || null);
       } catch {
         setCourses([]);
+        setSubscription(null);
       } finally {
         setCoursesLoading(false);
       }
     }
     loadCourses();
   }, [isAuthenticated]);
+
+  const assignedCourses = courses.filter((course) => course.tier !== "FREE");
+  const visibleCourses = assignedCourses.length > 0 ? assignedCourses : courses;
 
   if (!isAuthenticated) return null;
 
@@ -103,65 +138,73 @@ export default function DashboardPage() {
 
         {/* Course Cards */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-text-bright mb-2">Your Courses</h2>
-          <p className="text-text-muted text-sm">Pick a course and start learning</p>
+          <h2 className="text-2xl font-bold text-text-bright mb-2">Your Active Courses</h2>
+          <p className="text-text-muted text-sm">Your assigned courses and subscription validity</p>
         </div>
 
         {coursesLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-80 rounded-2xl border border-border bg-card animate-pulse" />)}
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => <div key={i} className="h-72 rounded-2xl border border-border bg-card animate-pulse" />)}
           </div>
-        ) : courses.length === 0 ? (
+        ) : visibleCourses.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center">
             <BookOpen className="w-10 h-10 text-accent/50 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-text-bright mb-1">No courses assigned yet</h3>
             <p className="text-sm text-text-muted">Your assigned course plans will appear here.</p>
           </div>
         ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {courses.map((course) => {
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {visibleCourses.map((course) => {
             const style = tierStyles[course.tier] || tierStyles.FREE;
             const Icon = style.icon;
+            const status = getStatusLabel(course, subscription);
+            const isFreeCourse = status === "FREE";
             return (
             <div
               key={course.id}
-              className={`relative rounded-2xl border ${style.borderColor} bg-card p-8 transition-all duration-500 ${style.glowColor} hover:-translate-y-2 group flex flex-col`}
+              className={`relative overflow-hidden rounded-2xl border ${style.borderColor} bg-card p-7 transition-all duration-500 ${style.glowColor} hover:-translate-y-1 group flex flex-col shadow-[0_18px_60px_rgba(0,0,0,0.18)]`}
             >
-              {/* Tag */}
-              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit ${style.tagColor}`}>
-                {style.tag}
+              <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${style.gradient}`} />
+
+              <div className="flex items-start justify-between gap-4 mb-7 pt-2">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${style.gradient} flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shrink-0`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-text-bright truncate">{course.name}</h3>
+                    <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${style.tagColor}`}>
+                      {course.tier}
+                    </span>
+                  </div>
+                </div>
+                <span className={`text-[11px] font-black uppercase ${status === "ACTIVE" ? "text-success" : isFreeCourse ? style.accent : "text-energy"}`}>
+                  {status}
+                </span>
               </div>
 
-              {/* Icon */}
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${style.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <Icon className="w-7 h-7 text-white" />
-              </div>
-
-              <h3 className="text-xl font-bold text-text-bright mb-1">{course.name}</h3>
-              <p className="text-sm text-accent mb-3">{course.tier}</p>
-              <p className="text-text-muted text-sm leading-relaxed mb-6">{course.description || "Continue learning with your assigned physics course."}</p>
-
-              {/* Features */}
-              <ul className="space-y-3 mb-8 flex-1">
+              <div className="space-y-4 mb-7 flex-1">
                 {[
-                  `${course._count?.chapters || 0} chapter modules`,
-                  "Animated concept visuals",
-                  "Chapter notes and quizzes",
-                  "Access from your dashboard",
-                ].map((feature, j) => (
-                  <li key={j} className="flex items-start gap-3 text-sm">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-text-muted">{feature}</span>
-                  </li>
+                  { label: "Start From", value: isFreeCourse ? "Available" : formatDate(subscription?.startDate), icon: CalendarDays },
+                  { label: "Valid Until", value: isFreeCourse ? "Always" : formatDate(subscription?.expiryDate), icon: ShieldCheck },
+                  { label: "Remaining", value: isFreeCourse ? "Unlimited" : getDaysRemaining(subscription?.expiryDate), icon: Clock3 },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-text-muted">
+                      <item.icon className={`w-3.5 h-3.5 ${style.accent}`} />
+                      {item.label}
+                    </div>
+                    <span className={`text-sm font-black text-right ${item.label === "Remaining" ? style.accent : "text-text-bright"}`}>{item.value}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
 
               <Link href={`/courses/${course.tier.toLowerCase()}`}>
                 <Button
                   variant={style.button}
-                  className="w-full"
+                  className="w-full shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
                 >
-                  Start Learning
+                  Go To Course
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
