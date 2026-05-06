@@ -138,6 +138,7 @@ model Course {
   id           String    @id @default(cuid())
   name         String
   description  String?
+  vimeoVideoId String?
   tier         String    @default("FREE")
   displayOrder Int       @default(0)
   isActive     Boolean   @default(true)

@@ -80,16 +80,21 @@ function planPeriod(billing: BillingCycle, price: number) {
 }
 
 function getPreviewEmbedUrl(url?: string | null) {
-  if (!url) return "";
-  if (url.includes("player.vimeo.com/video/")) return url;
-  const vimeo = url.match(/vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?/);
+  const value = String(url || "").trim();
+  if (!value) return "";
+  if (value.includes("player.vimeo.com/video/")) return value;
+  const vimeoId = value.match(/^(\d+)(?:\/([a-zA-Z0-9]+))?$/);
+  if (vimeoId) {
+    return `https://player.vimeo.com/video/${vimeoId[1]}${vimeoId[2] ? `?h=${vimeoId[2]}&` : "?"}badge=0&autopause=0&title=0&byline=0&portrait=0&dnt=1`;
+  }
+  const vimeo = value.match(/vimeo\.com\/(?:manage\/videos\/|video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?/);
   if (vimeo) {
     return `https://player.vimeo.com/video/${vimeo[1]}${vimeo[2] ? `?h=${vimeo[2]}&` : "?"}badge=0&autopause=0&title=0&byline=0&portrait=0&dnt=1`;
   }
-  if (url.includes("youtube.com/embed/")) return url;
-  const youtube = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
+  if (value.includes("youtube.com/embed/")) return value;
+  const youtube = value.match(/[?&]v=([^&]+)/) || value.match(/youtu\.be\/([^?&]+)/);
   if (youtube) return `https://www.youtube.com/embed/${youtube[1]}?rel=0`;
-  return url;
+  return value;
 }
 
 function ChapterVisual({ chapter }: { chapter: Chapter }) {

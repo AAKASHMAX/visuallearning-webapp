@@ -8,6 +8,19 @@ import { clearDefaultPlansEnsureCache, ensureDefaultPlans, getPlanByCode } from 
 
 const prisma = new PrismaClient();
 
+function normalizeVimeoVideoId(value?: string | null) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return null;
+
+  const match =
+    trimmed.match(/player\.vimeo\.com\/video\/(\d+)(?:\?h=([a-zA-Z0-9]+))?/i) ||
+    trimmed.match(/vimeo\.com\/(?:manage\/videos\/|video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?/i);
+
+  if (!match) return trimmed;
+  const hash = match[2];
+  return hash ? `${match[1]}/${hash}` : match[1];
+}
+
 // ─── Dashboard Stats ─────────────────────────────────────────────
 export async function getStats(req: AuthRequest, res: Response) {
   try {
@@ -77,12 +90,13 @@ export async function toggleBlockUser(req: AuthRequest, res: Response) {
 // ─── Course Management ───────────────────────────────────────────
 export async function createCourse(req: AuthRequest, res: Response) {
   try {
-    const { name, description, tier, displayOrder } = req.body;
+    const { name, description, tier, displayOrder, vimeoVideoId } = req.body;
     const course = await prisma.course.create({
-      data: { name, description, tier: tier || "FREE", displayOrder: displayOrder || 0 },
+      data: { name, description, tier: tier || "FREE", displayOrder: displayOrder || 0, vimeoVideoId: normalizeVimeoVideoId(vimeoVideoId) },
     });
     clearCourseCache();
     clearDefaultPlansEnsureCache();
+    clearSubscriptionPlanCache();
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to create course" });
@@ -91,13 +105,14 @@ export async function createCourse(req: AuthRequest, res: Response) {
 
 export async function updateCourse(req: AuthRequest, res: Response) {
   try {
-    const { name, description, tier, displayOrder, isActive } = req.body;
+    const { name, description, tier, displayOrder, isActive, vimeoVideoId } = req.body;
     const course = await prisma.course.update({
       where: { id: req.params.id },
-      data: { name, description, tier, displayOrder, isActive },
+      data: { name, description, tier, displayOrder, isActive, vimeoVideoId: normalizeVimeoVideoId(vimeoVideoId) },
     });
     clearCourseCache();
     clearDefaultPlansEnsureCache();
+    clearSubscriptionPlanCache();
     res.json(course);
   } catch (error) {
     res.status(500).json({ message: "Failed to update course" });
@@ -109,6 +124,7 @@ export async function deleteCourse(req: AuthRequest, res: Response) {
     await prisma.course.delete({ where: { id: req.params.id } });
     clearCourseCache();
     clearDefaultPlansEnsureCache();
+    clearSubscriptionPlanCache();
     res.json({ message: "Course deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete course" });
@@ -158,6 +174,7 @@ export async function addChapterToCourse(req: AuthRequest, res: Response) {
       data: { courseId: req.params.id, chapterId, order: order || 0 },
     });
     clearCourseCache();
+    clearSubscriptionPlanCache();
     res.status(201).json(link);
   } catch (error: any) {
     res.status(error.code === "P2002" ? 409 : 500).json({
@@ -172,6 +189,7 @@ export async function removeChapterFromCourse(req: AuthRequest, res: Response) {
       where: { courseId_chapterId: { courseId: req.params.id, chapterId: req.params.chapterId } },
     });
     clearCourseCache();
+    clearSubscriptionPlanCache();
     res.json({ message: "Chapter removed from course" });
   } catch (error) {
     res.status(500).json({ message: "Failed to remove chapter" });
@@ -192,6 +210,7 @@ export async function createChapter(req: AuthRequest, res: Response) {
       });
     }
     clearCourseCache();
+    clearSubscriptionPlanCache();
     res.status(201).json(chapter);
   } catch (error) {
     res.status(500).json({ message: "Failed to create chapter" });
@@ -206,6 +225,7 @@ export async function updateChapter(req: AuthRequest, res: Response) {
       data: { name, displayOrder, animationKey: animationKey || null },
     });
     clearCourseCache();
+    clearSubscriptionPlanCache();
     res.json(chapter);
   } catch (error) {
     res.status(500).json({ message: "Failed to update chapter" });
@@ -216,6 +236,7 @@ export async function deleteChapter(req: AuthRequest, res: Response) {
   try {
     await prisma.chapter.delete({ where: { id: req.params.id } });
     clearCourseCache();
+    clearSubscriptionPlanCache();
     res.json({ message: "Chapter deleted" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete chapter" });

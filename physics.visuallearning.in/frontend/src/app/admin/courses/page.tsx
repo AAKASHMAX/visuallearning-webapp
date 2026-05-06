@@ -12,6 +12,7 @@ interface Course {
   id: string;
   name: string;
   description: string | null;
+  vimeoVideoId?: string | null;
   tier: string;
   displayOrder: number;
   isActive: boolean;
@@ -47,6 +48,19 @@ interface NoteItem {
 type ContentView = "courses" | "chapters" | "content";
 type ContentTab = "videos" | "notes" | "questions";
 
+function normalizeVimeoVideoId(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const match =
+    trimmed.match(/player\.vimeo\.com\/video\/(\d+)(?:\?h=([a-zA-Z0-9]+))?/i) ||
+    trimmed.match(/vimeo\.com\/(?:manage\/videos\/|video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?/i);
+
+  if (!match) return trimmed;
+  const hash = match[2];
+  return hash ? `${match[1]}/${hash}` : match[1];
+}
+
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -77,6 +91,7 @@ export default function AdminCoursesPage() {
   // Course form
   const [courseName, setCourseName] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
+  const [courseVimeoVideoId, setCourseVimeoVideoId] = useState("");
   const [courseTier, setCourseTier] = useState("FREE");
   const [courseOrder, setCourseOrder] = useState(0);
 
@@ -137,13 +152,19 @@ export default function AdminCoursesPage() {
   // Course CRUD
   async function saveCourse() {
     try {
-      const data = { name: courseName, description: courseDesc, tier: courseTier, displayOrder: courseOrder };
+      const data = { name: courseName, description: courseDesc, vimeoVideoId: normalizeVimeoVideoId(courseVimeoVideoId), tier: courseTier, displayOrder: courseOrder };
+      let savedCourse: Course | null = null;
       if (editingCourse) {
-        await api.put(`/admin/courses/${editingCourse.id}`, data);
+        const res = await api.put(`/admin/courses/${editingCourse.id}`, data);
+        savedCourse = res.data;
         toast.success("Course updated");
       } else {
-        await api.post("/admin/courses", data);
+        const res = await api.post("/admin/courses", data);
+        savedCourse = res.data;
         toast.success("Course created");
+      }
+      if (selectedCourse && savedCourse?.id === selectedCourse.id) {
+        setSelectedCourse({ ...selectedCourse, ...savedCourse, _count: selectedCourse._count });
       }
       resetCourseForm();
       fetchCourses();
@@ -254,10 +275,20 @@ export default function AdminCoursesPage() {
   }
 
   // Reset helpers
-  function resetCourseForm() { setShowCourseForm(false); setEditingCourse(null); setCourseName(""); setCourseDesc(""); setCourseTier("FREE"); setCourseOrder(0); }
+  function resetCourseForm() { setShowCourseForm(false); setEditingCourse(null); setCourseName(""); setCourseDesc(""); setCourseVimeoVideoId(""); setCourseTier("FREE"); setCourseOrder(0); }
   function resetChapterForm() { setShowChapterForm(false); setEditingChapter(null); setChapterName(""); setChapterAnimationKey(""); setChapterOrder(0); }
   function resetVideoForm() { setShowVideoForm(false); setEditingVideo(null); setVideoTitle(""); setVideoUrl(""); setVideoType("ANIMATED_VIDEO"); setVideoLang("HINDI"); setVideoFree(false); setVideoOrder(0); }
   function resetNoteForm() { setShowNoteForm(false); setEditingNote(null); setNoteTitle(""); setNoteUrl(""); setNoteFree(false); setNoteOrder(0); }
+
+  function openCourseEditor(course: Course) {
+    setEditingCourse(course);
+    setCourseName(course.name);
+    setCourseDesc(course.description || "");
+    setCourseVimeoVideoId(course.vimeoVideoId || "");
+    setCourseTier(course.tier);
+    setCourseOrder(course.displayOrder);
+    setShowCourseForm(true);
+  }
 
   function openEditVideo(v: VideoItem) { setEditingVideo(v); setVideoTitle(v.title); setVideoUrl(v.youtubeUrl); setVideoType(v.videoType); setVideoLang(v.language); setVideoFree(v.isFree); setVideoOrder(v.displayOrder); setShowVideoForm(true); }
   function openEditNote(n: NoteItem) { setEditingNote(n); setNoteTitle(n.title); setNoteUrl(n.fileUrl); setNoteFree(n.isFree); setNoteOrder(n.displayOrder); setShowNoteForm(true); }
@@ -302,6 +333,7 @@ export default function AdminCoursesPage() {
         )}
         {view === "chapters" && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => selectedCourse && openCourseEditor(selectedCourse)}><Edit2 className="w-4 h-4 mr-2" />Course Info</Button>
             <Button variant="outline" onClick={() => { fetchAllChapters(); setShowAttachModal(true); }}><Library className="w-4 h-4 mr-2" />Add From Content</Button>
             <Button onClick={() => { resetChapterForm(); setShowChapterForm(true); }}><Plus className="w-4 h-4 mr-2" />Create Chapter</Button>
           </div>
@@ -336,7 +368,7 @@ export default function AdminCoursesPage() {
                     <p className="text-xs text-text-muted">{course._count.chapters} chapters</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={(e) => { e.stopPropagation(); setEditingCourse(course); setCourseName(course.name); setCourseDesc(course.description || ""); setCourseTier(course.tier); setCourseOrder(course.displayOrder); setShowCourseForm(true); }} className="p-1.5 hover:bg-surface-light rounded-lg"><Edit2 className="w-3.5 h-3.5 text-text-muted" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); openCourseEditor(course); }} className="p-1.5 hover:bg-surface-light rounded-lg"><Edit2 className="w-3.5 h-3.5 text-text-muted" /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteCourse(course.id); }} className="p-1.5 hover:bg-danger/10 rounded-lg"><Trash2 className="w-3.5 h-3.5 text-danger" /></button>
                     <ChevronRight className="w-4 h-4 text-text-muted ml-1" />
                   </div>
@@ -471,6 +503,11 @@ export default function AdminCoursesPage() {
             <div className="space-y-4">
               <div><label className="block text-sm text-text-muted mb-1">Name</label><Input value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="e.g. Basic Physics" /></div>
               <div><label className="block text-sm text-text-muted mb-1">Description</label><Input value={courseDesc} onChange={(e) => setCourseDesc(e.target.value)} placeholder="Course description" /></div>
+              <div>
+                <label className="block text-sm text-text-muted mb-1">Preview Vimeo Link / ID</label>
+                <Input value={courseVimeoVideoId} onChange={(e) => setCourseVimeoVideoId(e.target.value)} placeholder="https://vimeo.com/123456789/abc123" />
+                <p className="mt-1 text-xs text-text-muted">This video appears in the course details preview card. Full Vimeo links and private Vimeo links are supported.</p>
+              </div>
               <div><label className="block text-sm text-text-muted mb-1">Tier</label>
                 <select value={courseTier} onChange={(e) => setCourseTier(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
                   <option value="FREE">Free</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option><option value="BRIDGE">Bridge</option>

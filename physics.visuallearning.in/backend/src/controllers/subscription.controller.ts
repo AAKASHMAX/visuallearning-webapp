@@ -174,6 +174,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       name: primary.name,
       description: primary.description,
       features: primary.features,
+      previewVideoUrl: courses.find((course: any) => course.vimeoVideoId)?.vimeoVideoId || null,
       variants: variants.map((plan) => ({
         code: plan.code,
         billingCycle: getBillingCycle(plan),
