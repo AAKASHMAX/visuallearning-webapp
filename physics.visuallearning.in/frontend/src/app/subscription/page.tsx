@@ -87,8 +87,12 @@ function SubscriptionContent() {
         setSubscription(subRes.data);
 
         const requestedPlan = searchParams.get("plan")?.toUpperCase();
+        const requestedBilling = searchParams.get("billing") === "yearly" ? "yearly" : "monthly";
+        const requestedBasePlan = requestedPlan?.replace(/_YEARLY$/, "");
         const firstPaidPlan = activePlans.find((plan: PlanItem) => plan.price > 0);
-        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === requestedPlan);
+        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
+          || activePlans.find((plan: PlanItem) => requestedBilling === "yearly" && plan.code === `${requestedBasePlan}_YEARLY`)
+          || activePlans.find((plan: PlanItem) => requestedBilling === "monthly" && plan.code === requestedBasePlan);
         setSelectedPlan((matchingPlan || firstPaidPlan || activePlans[0])?.code || "");
       } catch {
         toast.error("Failed to load subscription plans");

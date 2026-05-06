@@ -8,6 +8,30 @@ import { ensureDefaultPlans, getAccessibleCoursesForUser, getPlanByCode } from "
 
 const prisma = new PrismaClient();
 
+function getBillingCycle(plan: { code: string; durationDays: number }) {
+  return plan.code.endsWith("_YEARLY") || plan.durationDays >= 365 ? "yearly" : "monthly";
+}
+
+function getBasePlanCode(code: string) {
+  return code.replace(/_YEARLY$/, "");
+}
+
+function normalizePlanParam(value: string) {
+  return value.trim().toUpperCase().replace(/-/g, "_").replace(/_MONTHLY$/, "").replace(/_YEARLY$/, "");
+}
+
+function formatCourseChapters(course: any) {
+  const linkedChapters = (course.courseChapters || []).map((link: any) => ({
+    ...link.chapter,
+    displayOrder: link.order,
+  }));
+  const linkedIds = new Set(linkedChapters.map((chapter: any) => chapter.id));
+  const legacyChapters = (course.chapters || []).filter((chapter: any) => !linkedIds.has(chapter.id));
+  const chapters = [...linkedChapters, ...legacyChapters].sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  const { courseChapters, ...rest } = course;
+  return { ...rest, chapters };
+}
+
 function getRazorpayClient() {
   if (!config.razorpay.keyId || !config.razorpay.keySecret) {
     return null;
@@ -42,6 +66,8 @@ export async function getPlans(req: AuthRequest, res: Response) {
     res.json(plans.map((plan) => ({
       id: plan.code,
       code: plan.code,
+      baseCode: getBasePlanCode(plan.code),
+      billingCycle: getBillingCycle(plan),
       name: plan.name,
       description: plan.description,
       price: plan.price,
@@ -51,6 +77,62 @@ export async function getPlans(req: AuthRequest, res: Response) {
     })));
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch plans" });
+  }
+}
+
+export async function getPlanDetails(req: AuthRequest, res: Response) {
+  try {
+    await ensureDefaultPlans(prisma);
+    const baseCode = normalizePlanParam(req.params.code);
+    const planCodes = [baseCode, `${baseCode}_YEARLY`];
+
+    const variants = await prisma.subscriptionPlan.findMany({
+      where: { code: { in: planCodes }, isActive: true },
+      orderBy: { durationDays: "asc" },
+      include: { courses: { select: { courseId: true } } },
+    });
+
+    if (variants.length === 0) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
+
+    const primary = variants.find((plan) => plan.code === baseCode) || variants[0];
+    const courseIds = Array.from(new Set(variants.flatMap((plan) => plan.courses.map((item) => item.courseId))));
+
+    const courses = await prisma.course.findMany({
+      where: { id: { in: courseIds }, isActive: true },
+      orderBy: { displayOrder: "asc" },
+      include: {
+        chapters: {
+          orderBy: { displayOrder: "asc" },
+          include: { _count: { select: { videos: true, notes: true, questions: true } } },
+        },
+        courseChapters: {
+          orderBy: { order: "asc" },
+          include: {
+            chapter: {
+              include: { _count: { select: { videos: true, notes: true, questions: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({
+      code: baseCode,
+      name: primary.name,
+      description: primary.description,
+      features: primary.features,
+      variants: variants.map((plan) => ({
+        code: plan.code,
+        billingCycle: getBillingCycle(plan),
+        price: plan.price,
+        durationDays: plan.durationDays,
+      })),
+      courses: courses.map(formatCourseChapters),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch plan details" });
   }
 }
 
