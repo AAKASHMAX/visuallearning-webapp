@@ -79,6 +79,7 @@ function SubscriptionContent() {
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionItem | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
+  const [razorpayKeyId, setRazorpayKeyId] = useState(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
   const [couponCode, setCouponCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -91,14 +92,16 @@ function SubscriptionContent() {
   useEffect(() => {
     async function load() {
       try {
-        const [plansRes, subRes] = await Promise.all([
+        const [plansRes, subRes, paymentConfigRes] = await Promise.all([
           api.get("/subscription/plans"),
           isAuthenticated ? api.get("/subscription/my-subscription") : Promise.resolve({ data: null }),
+          api.get("/subscription/payment-config").catch(() => ({ data: null })),
         ]);
 
         const activePlans = Array.isArray(plansRes.data) ? plansRes.data : [];
         setPlans(activePlans);
         setSubscription(subRes.data);
+        setRazorpayKeyId(paymentConfigRes.data?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
 
         const requestedPlan = searchParams.get("plan")?.toUpperCase();
         const requestedBilling = searchParams.get("billing") === "yearly" ? "yearly" : "monthly";
@@ -179,7 +182,8 @@ function SubscriptionContent() {
       return;
     }
 
-    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+    const paymentKeyId = razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    if (!paymentKeyId) {
       toast.error("Payment key is not configured");
       return;
     }
@@ -198,7 +202,7 @@ function SubscriptionContent() {
       });
 
       const razorpay = new window.Razorpay({
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: paymentKeyId,
         amount: data.amount * 100,
         currency: data.currency || "INR",
         name: "PhysicsLab",

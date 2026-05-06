@@ -208,6 +208,13 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
   }
 }
 
+export function getPaymentConfig(req: AuthRequest, res: Response) {
+  res.json({
+    keyId: config.razorpay.keyId,
+    configured: Boolean(config.razorpay.keyId && config.razorpay.keySecret),
+  });
+}
+
 export async function validateCoupon(req: AuthRequest, res: Response) {
   try {
     const { code, plan } = req.query;
