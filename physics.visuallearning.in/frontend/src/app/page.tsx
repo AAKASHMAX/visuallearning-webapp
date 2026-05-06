@@ -182,10 +182,10 @@ function HeroSection() {
 
 function StatsBar() {
   const stats = [
-    { value: "500+", label: "Video Lectures", icon: Play },
-    { value: "50+", label: "3D Animations", icon: Monitor },
+    { value: "500+", label: "3D Animated Videos", icon: Play },
+    { value: "100+", label: "Chapter Wise Notes", icon: Monitor },
     { value: "10K+", label: "Students", icon: Users },
-    { value: "1000+", label: "Practice MCQs", icon: Target },
+    { value: "1000+", label: "MCQ", icon: Target },
   ];
 
   return (
