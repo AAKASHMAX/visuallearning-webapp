@@ -265,16 +265,19 @@ export default function CoursesPage() {
                 key={course.tier}
                 className={`relative rounded-2xl border ${course.borderColor} bg-card p-8 transition-all duration-500 ${course.glowColor} hover:-translate-y-2 group flex flex-col`}
               >
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mb-6 w-fit ${course.tagColor}`}>
+                <div className={`absolute right-5 top-5 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${course.tagColor}`}>
                   {course.tag}
                 </div>
 
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${course.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="mb-6 flex items-center gap-4 pr-24">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${course.gradient} transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-bold leading-tight text-text-bright">{course.title}</h3>
+                    <p className="mt-1 text-sm text-accent">{course.subtitle}</p>
+                  </div>
                 </div>
-
-                <h3 className="text-xl font-bold text-text-bright mb-1">{course.title}</h3>
-                <p className="text-sm text-accent mb-4">{course.subtitle}</p>
 
                 <div className="mb-4">
                   {isFreeOffer && originalPrice > 0 && (
@@ -290,14 +293,19 @@ export default function CoursesPage() {
 
                 <p className="text-text-muted text-sm leading-relaxed mb-6">{course.description}</p>
 
-                <ul className="space-y-3 mb-8 flex-1">
+                <div className="mb-8 flex-1 space-y-3">
                   {course.features.slice(0, 6).map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm">
-                      <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      <span className="text-text-muted">{feature}</span>
-                    </li>
+                    <div
+                      key={feature}
+                      className="flex items-center gap-3 rounded-xl border border-border/70 bg-surface/70 px-3 py-3 shadow-[0_10px_26px_rgba(0,0,0,0.14)] transition-colors duration-300 group-hover:border-accent/30"
+                    >
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${course.gradient}`}>
+                        <Check className="h-4 w-4 text-white" />
+                      </span>
+                      <span className="text-sm font-medium leading-snug text-text-bright">{feature}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
 
                 <div className="space-y-3">
                   <Link href={`/course-details/${detailSlug(course.tier)}?billing=${billing}`} className="block">
