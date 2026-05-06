@@ -147,7 +147,7 @@ export default function CourseDetailsPage() {
     <main className="min-h-screen bg-primary">
       <Navbar />
 
-      <section className="relative pt-28 pb-20 lg:pb-32 overflow-visible bg-grid">
+      <section className="relative pt-28 pb-0 overflow-visible bg-grid">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-secondary/10 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Link href="/courses" className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors mb-8">
@@ -164,8 +164,8 @@ export default function CourseDetailsPage() {
               <p className="text-sm text-text-muted">This course plan is not available right now.</p>
             </div>
           ) : (
-            <>
-            <div className="max-w-3xl lg:pr-10">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10 xl:gap-14 lg:items-start">
+            <div className="max-w-3xl lg:pr-0 lg:col-start-1">
               <div>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${theme.accent} bg-card border border-border mb-5`}>
                   <Sparkles className="w-4 h-4" />
@@ -195,7 +195,7 @@ export default function CourseDetailsPage() {
               </div>
 
             </div>
-            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:absolute lg:right-4 lg:-top-20 xl:-top-24 lg:w-72 z-50 rounded-2xl border border-accent/20 bg-card/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${theme.glow} overflow-hidden`}>
+            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:w-full lg:max-w-none lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start z-30 rounded-2xl border border-accent/20 bg-card/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${theme.glow} overflow-hidden`}>
               <div className="relative h-32 bg-black overflow-hidden group">
                 {getPreviewEmbedUrl(details.previewVideoUrl) ? (
                   <iframe
@@ -266,60 +266,56 @@ export default function CourseDetailsPage() {
                 </div>
               </div>
             </aside>
-            </>
+
+            <div className="mt-14 pb-16 lg:col-start-1 lg:row-start-2">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
+                <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
+              </div>
+
+              <div className="space-y-10">
+                {details.courses.map((course) => (
+                  <div key={course.id}>
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-text-bright">{course.name}</h3>
+                        {course.description && <p className="text-sm text-text-muted mt-1">{course.description}</p>}
+                      </div>
+                      <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-text-muted">{course.tier}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                      {(course.chapters || []).map((chapter, index) => (
+                        <Link
+                          key={chapter.id}
+                          href={`/courses/${course.tier.toLowerCase()}/${chapter.id}`}
+                          className="group relative rounded-2xl border border-border bg-card p-5 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1"
+                        >
+                          <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center z-10">
+                            <span className="text-xs font-bold text-accent">{chapter.displayOrder || index + 1}</span>
+                          </div>
+
+                          <ChapterVisual chapter={chapter} />
+
+                          <h4 className="text-sm font-semibold text-text-bright mt-4 mb-3 line-clamp-2">{chapter.name}</h4>
+                          <div className="flex items-center justify-center gap-3 text-xs text-text-muted">
+                            {chapter._count?.videos > 0 && <span className="flex items-center gap-1"><Play className="w-3 h-3" />{chapter._count.videos}</span>}
+                            {chapter._count?.notes > 0 && <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{chapter._count.notes}</span>}
+                            {chapter._count?.questions > 0 && <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" />{chapter._count.questions}</span>}
+                          </div>
+
+                          <ChevronRight className="absolute top-3 right-3 w-4 h-4 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            </div>
           )}
         </div>
       </section>
-
-      {details && (
-        <section className="pb-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
-              <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
-            </div>
-
-            <div className="space-y-10">
-              {details.courses.map((course) => (
-                <div key={course.id}>
-                  <div className="flex items-center justify-between gap-4 mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-text-bright">{course.name}</h3>
-                      {course.description && <p className="text-sm text-text-muted mt-1">{course.description}</p>}
-                    </div>
-                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-text-muted">{course.tier}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                    {(course.chapters || []).map((chapter, index) => (
-                      <Link
-                        key={chapter.id}
-                        href={`/courses/${course.tier.toLowerCase()}/${chapter.id}`}
-                        className="group relative rounded-2xl border border-border bg-card p-5 text-center hover:border-accent/30 transition-all duration-500 hover:-translate-y-1"
-                      >
-                        <div className="absolute top-3 left-3 w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center z-10">
-                          <span className="text-xs font-bold text-accent">{chapter.displayOrder || index + 1}</span>
-                        </div>
-
-                        <ChapterVisual chapter={chapter} />
-
-                        <h4 className="text-sm font-semibold text-text-bright mt-4 mb-3 line-clamp-2">{chapter.name}</h4>
-                        <div className="flex items-center justify-center gap-3 text-xs text-text-muted">
-                          {chapter._count?.videos > 0 && <span className="flex items-center gap-1"><Play className="w-3 h-3" />{chapter._count.videos}</span>}
-                          {chapter._count?.notes > 0 && <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{chapter._count.notes}</span>}
-                          {chapter._count?.questions > 0 && <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" />{chapter._count.questions}</span>}
-                        </div>
-
-                        <ChevronRight className="absolute top-3 right-3 w-4 h-4 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       <Footer />
     </main>
