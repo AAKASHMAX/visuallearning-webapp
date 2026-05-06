@@ -282,22 +282,9 @@ export default function CourseDetailsPage() {
             </aside>
 
             <div className="mt-14 pb-16 lg:col-start-1 lg:row-start-2">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
-                <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
-              </div>
-
               <div className="space-y-10">
                 {details.courses.map((course) => (
                   <div key={course.id}>
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-text-bright">{course.name}</h3>
-                        {course.description && <p className="text-sm text-text-muted mt-1">{course.description}</p>}
-                      </div>
-                      <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-text-muted">{course.tier}</span>
-                    </div>
-
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                       {(course.chapters || []).map((chapter, index) => (
                         <Link
