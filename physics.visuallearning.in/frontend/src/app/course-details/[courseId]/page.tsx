@@ -164,7 +164,8 @@ export default function CourseDetailsPage() {
               <p className="text-sm text-text-muted">This course plan is not available right now.</p>
             </div>
           ) : (
-            <div className="max-w-3xl">
+            <>
+            <div className="max-w-3xl lg:pr-10">
               <div>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${theme.accent} bg-card border border-border mb-5`}>
                   <Sparkles className="w-4 h-4" />
@@ -194,6 +195,78 @@ export default function CourseDetailsPage() {
               </div>
 
             </div>
+            <aside className={`mt-8 w-full max-w-sm lg:mt-0 lg:absolute lg:right-4 lg:top-0 lg:w-72 z-30 rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} overflow-hidden`}>
+              <div className="relative aspect-video bg-black overflow-hidden group">
+                {getPreviewEmbedUrl(details.previewVideoUrl) ? (
+                  <iframe
+                    src={getPreviewEmbedUrl(details.previewVideoUrl)}
+                    className="absolute inset-0 w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-gradient-to-br from-surface via-primary to-black">
+                    <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${theme.gradient}`} />
+                    <div className="relative w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_24px_rgba(0,212,255,0.18)]">
+                      <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                    </div>
+                    <p className="relative text-white font-bold text-xs">Course Preview</p>
+                    <p className="relative text-white/55 text-[10px] mt-0.5">3D physics preview</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
+                    <ThemeIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{details.code}</p>
+                    <h2 className="text-sm font-bold text-text-bright truncate">{details.name}</h2>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+                    <button
+                      onClick={() => setBilling("monthly")}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setBilling("yearly")}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
+                    >
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-3xl font-black text-text-bright">{formatPrice(price)}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
+                </div>
+
+                <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
+                  <Button variant={price > 0 ? "primary" : "outline"} className="w-full">
+                    {price > 0 && <Lock className="w-4 h-4 mr-2" />}
+                    {price > 0 ? "Start Subscription" : "Start Learning"}
+                  </Button>
+                </Link>
+
+                <div className="mt-4 space-y-2">
+                  {(details.features || []).slice(0, 3).map((feature) => (
+                    <div key={feature} className="flex items-start gap-2 text-xs">
+                      <Check className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                      <span className="text-text-muted">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+            </>
           )}
         </div>
       </section>
@@ -201,86 +274,12 @@ export default function CourseDetailsPage() {
       {details && (
         <section className="pb-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-8 lg:grid-cols-[18rem_1fr] items-start">
-              <aside className={`relative z-30 rounded-2xl border border-border bg-card shadow-2xl ${theme.glow} overflow-hidden lg:-mt-24`}>
-                <div className="relative aspect-video bg-black overflow-hidden group">
-                  {getPreviewEmbedUrl(details.previewVideoUrl) ? (
-                    <iframe
-                      src={getPreviewEmbedUrl(details.previewVideoUrl)}
-                      className="absolute inset-0 w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-gradient-to-br from-surface via-primary to-black">
-                      <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${theme.gradient}`} />
-                      <div className="relative w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_24px_rgba(0,212,255,0.18)]">
-                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                      </div>
-                      <p className="relative text-white font-bold text-xs">Course Preview</p>
-                      <p className="relative text-white/55 text-[10px] mt-0.5">3D physics preview</p>
-                    </div>
-                  )}
-                </div>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
+              <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
+            </div>
 
-                <div className="p-4">
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center`}>
-                      <ThemeIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{details.code}</p>
-                      <h2 className="text-sm font-bold text-text-bright truncate">{details.name}</h2>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="inline-flex rounded-xl border border-border bg-surface p-1">
-                      <button
-                        onClick={() => setBilling("monthly")}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                      >
-                        Monthly
-                      </button>
-                      <button
-                        onClick={() => setBilling("yearly")}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                      >
-                        Yearly
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-3xl font-black text-text-bright">{formatPrice(price)}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
-                  </div>
-
-                  <Link href={price > 0 ? `/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}` : `/courses/${baseCode.toLowerCase()}`} className="block">
-                    <Button variant={price > 0 ? "primary" : "outline"} className="w-full">
-                      {price > 0 && <Lock className="w-4 h-4 mr-2" />}
-                      {price > 0 ? "Start Subscription" : "Start Learning"}
-                    </Button>
-                  </Link>
-
-                  <div className="mt-4 space-y-2">
-                    {(details.features || []).slice(0, 3).map((feature) => (
-                      <div key={feature} className="flex items-start gap-2 text-xs">
-                        <Check className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
-                        <span className="text-text-muted">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </aside>
-
-              <div>
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-text-bright mb-2">Course Content</h2>
-                  <p className="text-sm text-text-muted">Chapter cards keep the physics animated graphics from this webapp.</p>
-                </div>
-
-                <div className="space-y-10">
+            <div className="space-y-10">
               {details.courses.map((course) => (
                 <div key={course.id}>
                   <div className="flex items-center justify-between gap-4 mb-4">
@@ -317,8 +316,6 @@ export default function CourseDetailsPage() {
                   </div>
                 </div>
               ))}
-                </div>
-              </div>
             </div>
           </div>
         </section>
