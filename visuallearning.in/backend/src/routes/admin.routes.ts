@@ -3,7 +3,7 @@ import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { validate } from "../middleware/validate";
 import {
-  getStats, getAllUsers, toggleBlockUser,
+  getStats, getAllUsers, toggleBlockUser, deleteUser,
   addClass, updateClass, deleteClass, classSchema,
   addSubject, updateSubject, deleteSubject, subjectSchema, toggleSubjectAccess, getSubjectAccessList,
   addChapter, updateChapter, deleteChapter, chapterSchema,
@@ -41,6 +41,7 @@ router.get("/stats", getStats);
 // Users
 router.get("/users", getAllUsers);
 router.patch("/users/:id/block", toggleBlockUser);
+router.delete("/users/:id", deleteUser);
 
 // Notifications
 router.get("/notifications", getAllNotifications);

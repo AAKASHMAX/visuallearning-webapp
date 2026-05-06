@@ -128,6 +128,26 @@ export async function toggleBlockUser(req: Request, res: Response) {
   }
 }
 
+export async function deleteUser(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (!user) return error(res, "User not found", 404);
+    if (user.role === "ADMIN") return error(res, "Cannot delete an admin", 400);
+
+    await prisma.user.delete({ where: { id } });
+    cacheInvalidate(`access:${id}:`);
+
+    return success(res, { id: user.id, email: user.email }, `${user.name || user.email} deleted permanently`);
+  } catch (e: any) {
+    console.error("Delete user error:", e);
+    return error(res, e.code === "P2025" ? "User not found" : "Failed to delete user");
+  }
+}
+
 // --- CRUD Helpers ---
 async function crudCreate(model: any, data: any, res: Response) {
   try {

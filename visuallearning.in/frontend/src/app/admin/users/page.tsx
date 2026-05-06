@@ -19,6 +19,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -36,6 +37,24 @@ export default function AdminUsersPage() {
       toast.success(data.message);
       load();
     } catch { toast.error("Failed to update user"); }
+  };
+
+  const deleteUser = async (user: UserRow) => {
+    const confirmed = window.confirm(
+      `Delete ${user.name} (${user.email}) permanently?\n\nThis removes the user account, subscriptions, watch progress, and notification history from the backend database. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(user.id);
+      const { data } = await api.delete(`/admin/users/${user.id}`);
+      toast.success(data.message || "User deleted");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to delete user");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -68,9 +87,14 @@ export default function AdminUsersPage() {
                     <td className="p-4">{u.subscription ? <Badge variant="success">{u.subscription.plan}</Badge> : <Badge variant="default">None</Badge>}</td>
                     <td className="p-4">{u.blocked ? <Badge variant="danger">Blocked</Badge> : <Badge variant="success">Active</Badge>}</td>
                     <td className="p-4">
-                      <Button variant={u.blocked ? "default" : "destructive"} size="sm" onClick={() => toggleBlock(u.id)}>
-                        {u.blocked ? "Unblock" : "Block"}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant={u.blocked ? "default" : "outline"} size="sm" onClick={() => toggleBlock(u.id)} disabled={deletingId === u.id}>
+                          {u.blocked ? "Unblock" : "Block"}
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => deleteUser(u)} disabled={deletingId === u.id}>
+                          {deletingId === u.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
