@@ -334,22 +334,28 @@ function PhysicsCarousel() {
                     transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
                   }}
                 >
-                  <div className="rounded-2xl border border-border bg-card/90 backdrop-blur-sm p-6 text-center h-full flex flex-col items-center justify-center gap-3 hover:border-accent/40 transition-colors">
-                    <div
-                      className={`w-14 h-14 rounded-xl bg-gradient-to-br ${concept.gradient} flex items-center justify-center shrink-0`}
-                    >
-                      <concept.icon className="w-7 h-7 text-white" />
+                  <Link
+                    href="/courses"
+                    aria-label={`Explore courses for ${concept.name}`}
+                    className="block h-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+                  >
+                    <div className="h-full rounded-2xl border border-border bg-card/90 backdrop-blur-sm p-6 text-center flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 cursor-pointer">
+                      <div
+                        className={`w-14 h-14 rounded-xl bg-gradient-to-br ${concept.gradient} flex items-center justify-center shrink-0`}
+                      >
+                        <concept.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="text-sm font-bold text-text-bright leading-tight">
+                        {concept.name}
+                      </h3>
+                      <p className="text-xs text-text-muted leading-relaxed">
+                        {concept.description}
+                      </p>
+                      <span className="text-xs font-mono text-accent/80 mt-1">
+                        {concept.formula}
+                      </span>
                     </div>
-                    <h3 className="text-sm font-bold text-text-bright leading-tight">
-                      {concept.name}
-                    </h3>
-                    <p className="text-xs text-text-muted leading-relaxed">
-                      {concept.description}
-                    </p>
-                    <span className="text-xs font-mono text-accent/80 mt-1">
-                      {concept.formula}
-                    </span>
-                  </div>
+                  </Link>
                 </div>
               );
             })}

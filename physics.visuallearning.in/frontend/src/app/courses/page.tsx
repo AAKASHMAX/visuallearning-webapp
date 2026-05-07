@@ -7,7 +7,7 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
-import { useRequireAuth } from "@/lib/use-require-auth";
+import { useRequireAuthStatus } from "@/lib/use-require-auth";
 import {
   BookOpen,
   Rocket,
@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Target,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 
 type BillingCycle = "monthly" | "yearly";
@@ -197,7 +198,7 @@ function formatPrice(price: number) {
 }
 
 export default function CoursesPage() {
-  const canViewCourses = useRequireAuth();
+  const { canView: canViewCourses, checking: checkingAuth } = useRequireAuthStatus();
   const [plans, setPlans] = useState<CoursePlan[]>(defaultPlans);
   const [billing, setBilling] = useState<BillingCycle>("monthly");
 
@@ -220,6 +221,23 @@ export default function CoursesPage() {
       .filter((value) => value > 0);
     return discounts.length ? Math.max(...discounts) : 15;
   }, [plans]);
+
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-primary">
+        <Navbar />
+        <div className="min-h-[70vh] pt-28 flex flex-col items-center justify-center px-4 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold text-text-bright">Loading courses</h1>
+          <p className="mt-2 max-w-md text-sm text-text-muted">
+            Checking your account and preparing available course plans.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   if (!canViewCourses) return null;
 

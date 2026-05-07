@@ -20,21 +20,34 @@ function hasStoredAuth() {
 }
 
 export function useRequireAuth() {
+  const { canView } = useRequireAuthStatus();
+
+  return canView;
+}
+
+export function useRequireAuthStatus() {
   const router = useRouter();
   const { hydrate, isAuthenticated } = useAuth();
   const [checked, setChecked] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     hydrate();
 
     if (!hasStoredAuth()) {
+      setRedirecting(true);
       const redirectTo = `${window.location.pathname}${window.location.search}`;
       router.replace(`/auth/login?redirect=${encodeURIComponent(redirectTo)}`);
       return;
     }
 
+    setRedirecting(false);
     setChecked(true);
   }, [hydrate, router]);
 
-  return checked && isAuthenticated;
+  return {
+    canView: checked && isAuthenticated,
+    checking: !checked && !redirecting,
+    redirecting,
+  };
 }
