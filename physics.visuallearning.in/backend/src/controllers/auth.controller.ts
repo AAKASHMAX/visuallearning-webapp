@@ -19,9 +19,14 @@ function generateToken(user: { id: string; email: string; role: string; name: st
 export async function signup(req: AuthRequest, res: Response) {
   try {
     const { name, email, password } = req.body;
+    const phone = String(req.body.phone || req.body.mobile || "").trim();
+    const phoneDigits = phone.replace(/\D/g, "");
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required" });
+    if (!name || !email || !phone || !password) {
+      return res.status(400).json({ message: "Name, email, mobile number, and password are required" });
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      return res.status(400).json({ message: "Enter a valid mobile number" });
     }
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
@@ -39,6 +44,7 @@ export async function signup(req: AuthRequest, res: Response) {
       data: {
         name,
         email: email.toLowerCase(),
+        phone,
         password: hashedPassword,
         verificationToken,
         emailVerified: true, // auto-verify for now
@@ -48,7 +54,7 @@ export async function signup(req: AuthRequest, res: Response) {
     const token = generateToken(user);
     res.status(201).json({
       message: "Account created successfully",
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
       token,
     });
   } catch (error) {
@@ -82,7 +88,7 @@ export async function login(req: AuthRequest, res: Response) {
     const token = generateToken(user);
     res.json({
       message: "Login successful",
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
       token,
     });
   } catch (error) {
@@ -153,7 +159,7 @@ export async function getProfile(req: AuthRequest, res: Response) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
     });
     res.json(user);
   } catch (error) {
@@ -163,11 +169,22 @@ export async function getProfile(req: AuthRequest, res: Response) {
 
 export async function updateProfile(req: AuthRequest, res: Response) {
   try {
-    const { name } = req.body;
+    const { name, phone } = req.body;
+    const data: { name?: string; phone?: string } = {};
+    if (name) data.name = name;
+    if (phone !== undefined) {
+      const normalizedPhone = String(phone || "").trim();
+      const phoneDigits = normalizedPhone.replace(/\D/g, "");
+      if (normalizedPhone && (phoneDigits.length < 10 || phoneDigits.length > 15)) {
+        return res.status(400).json({ message: "Enter a valid mobile number" });
+      }
+      data.phone = normalizedPhone;
+    }
+
     const user = await prisma.user.update({
       where: { id: req.user!.id },
-      data: { name },
-      select: { id: true, name: true, email: true, role: true },
+      data,
+      select: { id: true, name: true, email: true, phone: true, role: true },
     });
     res.json({ message: "Profile updated", user });
   } catch (error) {

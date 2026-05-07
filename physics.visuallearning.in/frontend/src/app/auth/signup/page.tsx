@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Atom, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Atom, Mail, Lock, User, Eye, EyeOff, ArrowRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
@@ -13,14 +13,21 @@ export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    const phoneDigits = phone.replace(/\D/g, "");
+
+    if (!name || !email || !phone || !password) {
       toast.error("Please fill all fields");
+      return;
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      toast.error("Enter a valid mobile number");
       return;
     }
     if (password.length < 6) {
@@ -30,7 +37,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await api.post("/auth/signup", { name, email, password });
+      await api.post("/auth/signup", { name, email, phone: phone.trim(), password });
       toast.success("Account created! Please check your email to verify.");
       router.push("/auth/login");
     } catch (err: any) {
@@ -108,6 +115,7 @@ export default function SignupPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-11"
+                  required
                 />
               </div>
             </div>
@@ -122,6 +130,23 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-11"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-text-muted mb-2">Mobile Number</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+91 9876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="pl-11"
+                  required
                 />
               </div>
             </div>
@@ -136,6 +161,7 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-11 pr-11"
+                  required
                 />
                 <button
                   type="button"
