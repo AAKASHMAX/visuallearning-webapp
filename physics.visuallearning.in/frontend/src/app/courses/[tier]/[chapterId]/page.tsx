@@ -11,6 +11,7 @@ import {
   Play,
   FileText,
   HelpCircle,
+  Loader2,
   Lock,
   ChevronRight,
   Download,
@@ -109,6 +110,34 @@ function getYoutubeEmbedUrl(url: string): string {
   return url;
 }
 
+function ChapterPageLoading() {
+  return (
+    <main className="min-h-screen bg-primary">
+      <Navbar />
+      <section className="bg-grid px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[62vh] max-w-5xl flex-col items-center justify-center rounded-2xl border border-border bg-card/85 px-6 py-16 text-center shadow-[0_24px_80px_rgba(0,0,0,0.24)]">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent shadow-[0_0_28px_rgba(0,212,255,0.16)]">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+          <h1 className="text-xl font-black text-text-bright">Loading chapter</h1>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-text-muted">
+            Preparing videos, notes, and chapter details.
+          </p>
+          <div className="mt-8 grid w-full max-w-3xl gap-4 md:grid-cols-2">
+            <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface/70" />
+            <div className="space-y-3">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="h-16 animate-pulse rounded-xl border border-border bg-surface/70" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+      <Footer />
+    </main>
+  );
+}
+
 export default function ChapterContentPage() {
   const params = useParams();
   const router = useRouter();
@@ -140,49 +169,57 @@ export default function ChapterContentPage() {
 
   useEffect(() => {
     if (!canViewCourses) return;
+    let cancelled = false;
 
-    async function fetchContent() {
+    async function loadChapterPage() {
       setLoading(true);
+      setChapterName("");
+      setSelectedVideo(null);
+
       try {
-        const [videosRes, notesRes] = await Promise.all([
+        const [videosRes, notesRes, coursesRes] = await Promise.all([
           api.get(`/chapters/${chapterId}/videos`),
           api.get(`/chapters/${chapterId}/notes`),
+          api.get(`/courses/tier/${tier}`),
         ]);
-        setAllVideos(videosRes.data);
-        setNotes(notesRes.data);
+
+        if (cancelled) return;
+
+        const fetchedVideos = Array.isArray(videosRes.data) ? videosRes.data : [];
+        const fetchedNotes = Array.isArray(notesRes.data) ? notesRes.data : [];
+        const tierCourses = Array.isArray(coursesRes.data) ? coursesRes.data : [];
+        const chapter = tierCourses
+          .flatMap((course: any) => course.chapters || [])
+          .find((item: any) => item.id === chapterId);
+
+        setAllVideos(fetchedVideos);
+        setNotes(fetchedNotes);
+        setChapterName(chapter?.name || "Chapter");
 
         // Auto-select the first video in the default language
-        const defaultLangVideos = videosRes.data.filter((v: Video) => v.language === language);
-        const firstAccessibleVideo = defaultLangVideos.find((v: Video) => v.hasAccess && v.youtubeUrl);
+        const defaultLangVideos = fetchedVideos.filter((v: Video) => v.language === "HINDI");
+        const firstAccessibleVideo = defaultLangVideos.find((v: Video) => v.hasAccess && v.youtubeUrl)
+          || fetchedVideos.find((v: Video) => v.hasAccess && v.youtubeUrl);
         if (firstAccessibleVideo) {
           setSelectedVideo(firstAccessibleVideo);
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("Failed to fetch content");
+        setAllVideos([]);
+        setNotes([]);
+        setChapterName("Chapter");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     }
 
-    // Fetch chapter info
-    async function fetchChapterInfo() {
-      try {
-        const res = await api.get("/courses");
-        for (const course of res.data) {
-          try {
-            const courseRes = await api.get(`/courses/${course.id}`);
-            const chapter = courseRes.data.chapters?.find((ch: any) => ch.id === chapterId);
-            if (chapter) {
-              setChapterName(chapter.name);
-              break;
-            }
-          } catch {}
-        }
-      } catch {}
-    }
+    loadChapterPage();
 
-    fetchContent();
-    fetchChapterInfo();
-  }, [chapterId, canViewCourses]);
+    return () => {
+      cancelled = true;
+    };
+  }, [chapterId, tier, canViewCourses]);
 
   // When language changes, auto-select first video of that language
   useEffect(() => {
@@ -272,7 +309,7 @@ export default function ChapterContentPage() {
     { key: "quiz", label: "Quiz", icon: HelpCircle, count: questions.length },
   ];
 
-  if (!canViewCourses) return null;
+  if (!canViewCourses || loading) return <ChapterPageLoading />;
 
   return (
     <main className="min-h-screen bg-primary">
@@ -294,7 +331,7 @@ export default function ChapterContentPage() {
                 {tier === "free" ? "Free" : tier === "basic" ? "Basic" : tier === "bridge" ? "Bridge" : "Advance"}
               </p>
               <h1 className="text-base sm:text-lg font-bold text-text-bright truncate">
-                {chapterName || "Loading..."}
+                {chapterName || "Chapter"}
               </h1>
             </div>
             <div className="hidden sm:flex items-center gap-3 text-xs text-text-muted shrink-0 ml-4">
@@ -337,7 +374,7 @@ export default function ChapterContentPage() {
                 </button>
               ))}</div>
             </div>
-            {loading ? (<div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="rounded-xl border border-border bg-card p-4 h-20 animate-pulse" />))}</div>) : (<>
+            <>
               {activeTab === "videos" && (
                 <div className="space-y-2 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1">
                   {videos.length === 0 ? (
@@ -404,7 +441,7 @@ export default function ChapterContentPage() {
                   </>)}
                 </div>
               )}
-            </>)}
+            </>
           </div>
         </div>
       </div>
