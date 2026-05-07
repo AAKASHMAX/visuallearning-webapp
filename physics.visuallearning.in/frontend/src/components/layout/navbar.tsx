@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/", label: "Home", activePaths: ["/"] },
   { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
-  { href: "/#features", label: "Features", activePaths: ["/#features"] },
+  { href: "/contact", label: "Contact Us", activePaths: ["/contact"] },
 ];
 
 export function Navbar() {
@@ -41,7 +41,6 @@ export function Navbar() {
   }, [pathname]);
 
   function isNavItemActive(item: (typeof navItems)[number]) {
-    if (item.href === "/#features") return pathname === "/" && currentHash === "#features";
     if (item.href === "/") return pathname === "/" && currentHash !== "#features";
     return item.activePaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   }
@@ -114,6 +113,12 @@ export function Navbar() {
                     Dashboard
                   </Button>
                 </Link>
+                <Link href="/profile">
+                  <Button variant="outline" size="sm" className={cn(pathname.startsWith("/profile") && "border-accent bg-accent/10 text-accent")}>
+                    <User className="w-4 h-4 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
@@ -183,6 +188,11 @@ export function Navbar() {
                     <Link href="/dashboard">
                       <Button variant="outline" size="sm" className="w-full border-accent/50 bg-surface-light/95 text-accent hover:bg-accent hover:text-primary">
                         Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/profile">
+                      <Button variant="outline" size="sm" className="w-full border-accent/50 bg-surface-light/95 text-accent hover:bg-accent hover:text-primary">
+                        Profile
                       </Button>
                     </Link>
                     <Button variant="ghost" size="sm" onClick={logout} className="w-full border border-border/80 bg-surface-light/95 text-text-bright hover:bg-danger/15 hover:text-danger">
