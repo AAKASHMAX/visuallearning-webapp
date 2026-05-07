@@ -11,6 +11,7 @@ import {
   ChevronRight,
   FileText,
   HelpCircle,
+  Loader2,
   Lock,
   Play,
   Sparkles,
@@ -117,6 +118,25 @@ function ChapterVisual({ chapter }: { chapter: Chapter }) {
   );
 }
 
+function CourseDetailsLoading() {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-2xl border border-border bg-card/80 px-6 py-16 text-center shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent shadow-[0_0_28px_rgba(0,212,255,0.16)]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+      <h2 className="text-xl font-black text-text-bright">Loading course details</h2>
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-text-muted">
+        Preparing the plan, preview, chapters, and pricing for this course.
+      </p>
+      <div className="mt-8 grid w-full max-w-3xl gap-4 sm:grid-cols-3">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="h-24 animate-pulse rounded-2xl border border-border bg-surface/70" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CourseDetailsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -158,7 +178,20 @@ export default function CourseDetailsPage() {
     [details]
   );
 
-  if (!canViewCourses) return null;
+  if (!canViewCourses) {
+    return (
+      <main className="min-h-screen bg-primary">
+        <Navbar />
+        <section className="relative pt-28 pb-16 overflow-visible bg-grid">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-secondary/10 pointer-events-none" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <CourseDetailsLoading />
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-primary">
@@ -173,7 +206,7 @@ export default function CourseDetailsPage() {
           </Link>
 
           {loading ? (
-            <div className="h-96 rounded-2xl border border-border bg-card animate-pulse" />
+            <CourseDetailsLoading />
           ) : !details ? (
             <div className="rounded-2xl border border-border bg-card p-12 text-center">
               <BookOpen className="w-10 h-10 text-accent/50 mx-auto mb-3" />

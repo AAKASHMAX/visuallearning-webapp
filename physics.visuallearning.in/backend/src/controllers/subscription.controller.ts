@@ -416,14 +416,33 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
 
 export async function activateFreePlan(req: AuthRequest, res: Response) {
   try {
-    const { plan } = req.body;
+    const { plan, couponCode } = req.body;
     const planConfig = plan ? await getPlanByCode(prisma, plan) : null;
     if (!plan || !planConfig || !planConfig.isActive) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
-    if (getEffectivePlanPrice(planConfig) > 0) {
+    const effectivePrice = getEffectivePlanPrice(planConfig);
+    let discountAmount = 0;
+    let coupon = null;
+
+    if (couponCode && effectivePrice > 0) {
+      coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (!isCouponUsable(coupon, planConfig.code)) {
+        return res.status(400).json({ message: "Invalid coupon code" });
+      }
+      discountAmount = Math.round(effectivePrice * coupon!.discountPercent / 100);
+    }
+
+    if (effectivePrice - discountAmount > 0) {
       return res.status(400).json({ message: "This plan is not free right now" });
+    }
+
+    if (coupon) {
+      await prisma.coupon.update({
+        where: { id: coupon.id },
+        data: { usedCount: { increment: 1 } },
+      });
     }
 
     const expiryDate = new Date();
@@ -431,8 +450,24 @@ export async function activateFreePlan(req: AuthRequest, res: Response) {
 
     const subscription = await prisma.subscription.upsert({
       where: { userId: req.user!.id },
-      update: { plan: planConfig.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount: 0 },
-      create: { userId: req.user!.id, plan: planConfig.code, status: "ACTIVE", expiryDate, amount: 0 },
+      update: {
+        plan: planConfig.code,
+        status: "ACTIVE",
+        startDate: new Date(),
+        expiryDate,
+        couponCode: coupon?.code || null,
+        discountAmount,
+        amount: 0,
+      },
+      create: {
+        userId: req.user!.id,
+        plan: planConfig.code,
+        status: "ACTIVE",
+        expiryDate,
+        couponCode: coupon?.code || null,
+        discountAmount,
+        amount: 0,
+      },
     });
 
     res.json({ message: "Free access activated", subscription });

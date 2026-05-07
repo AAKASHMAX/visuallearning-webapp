@@ -163,14 +163,19 @@ function SubscriptionContent() {
   }
 
   async function startPayment(plan: PlanItem) {
-    if (plan.price <= 0) {
+    const checkoutAmount = Math.max(0, Math.round(plan.price * (1 - discountPercent / 100)));
+
+    if (checkoutAmount <= 0) {
       if (!isAuthenticated) {
         router.push(`/auth/login?redirect=/subscription?plan=${plan.code}`);
         return;
       }
       setPaying(true);
       try {
-        await api.post("/subscription/activate-free", { plan: plan.code });
+        await api.post("/subscription/activate-free", {
+          plan: plan.code,
+          couponCode: couponCode.trim().toUpperCase() || undefined,
+        });
         toast.success("Free access activated");
         router.push("/dashboard");
       } catch (error: any) {
@@ -407,18 +412,25 @@ function SubscriptionContent() {
                     <Button
                       className="w-full"
                       size="lg"
-                      variant={selected.price > 0 ? "primary" : "outline"}
+                      variant={discountedPrice > 0 ? "primary" : "outline"}
                       onClick={() => startPayment(selected)}
                       disabled={paying || isCurrentPlan(selected, activePlan)}
                     >
-                      {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : selected.price > 0 ? <Lock className="w-5 h-5 mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
-                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : selected.price > 0 ? "Pay Securely" : "Start Free"}
+                      {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : discountedPrice > 0 ? <Lock className="w-5 h-5 mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
+                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : discountedPrice > 0 ? "Pay Securely" : "Start Free"}
                     </Button>
 
-                    <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
-                      <ShieldCheck className="w-4 h-4 text-success" />
-                      <span>Secured by Razorpay</span>
-                    </div>
+                    {discountedPrice > 0 ? (
+                      <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
+                        <ShieldCheck className="w-4 h-4 text-success" />
+                        <span>Secured by Razorpay</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 text-xs text-success mt-4">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>No payment needed for this plan</span>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-sm text-text-muted">Select a plan to continue.</p>
