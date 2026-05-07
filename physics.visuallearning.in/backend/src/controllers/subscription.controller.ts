@@ -291,6 +291,7 @@ export async function getMyCourses(req: AuthRequest, res: Response) {
 export async function createOrder(req: AuthRequest, res: Response) {
   try {
     const { plan, couponCode } = req.body;
+    const normalizedCouponCode = typeof couponCode === "string" ? couponCode.trim().toUpperCase() : "";
     const razorpay = getRazorpayClient();
 
     if (!razorpay) {
@@ -305,33 +306,36 @@ export async function createOrder(req: AuthRequest, res: Response) {
     let amount = getEffectivePlanPrice(planConfig);
 
     // Apply coupon
-    if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (!isCouponUsable(coupon, plan)) {
+    if (normalizedCouponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: normalizedCouponCode } });
+      if (!isCouponUsable(coupon, planConfig.code)) {
         return res.status(400).json({ message: "Invalid coupon code" });
       }
       amount = Math.round(amount * (1 - coupon!.discountPercent / 100));
     }
 
-    if (amount <= 0) {
-      return res.status(400).json({ message: "This plan is currently free. Use free activation." });
-    }
+    const checkoutAmount = amount <= 0 ? 1 : amount;
 
     const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100), // in paise
+      amount: Math.round(checkoutAmount * 100), // in paise
       currency: "INR",
       receipt: `phy_${Date.now()}_${req.user!.id.slice(-6)}`,
       notes: {
         userId: req.user!.id,
         plan: planConfig.code,
+        couponCode: normalizedCouponCode,
+        planAmount: String(amount),
+        checkoutAmount: String(checkoutAmount),
       },
     });
 
     res.json({
       orderId: order.id,
-      amount: amount,
+      amount: checkoutAmount,
       currency: "INR",
       plan: planConfig.code,
+      planAmount: amount,
+      minimumChargeApplied: amount <= 0,
     });
   } catch (error) {
     console.error("Create order error:", error);
@@ -342,6 +346,8 @@ export async function createOrder(req: AuthRequest, res: Response) {
 export async function verifyPayment(req: AuthRequest, res: Response) {
   try {
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, plan, couponCode } = req.body;
+    const normalizedPlan = typeof plan === "string" ? plan.trim().toUpperCase() : "";
+    const normalizedCouponCode = typeof couponCode === "string" ? couponCode.trim().toUpperCase() : "";
 
     if (!config.razorpay.keySecret) {
       return res.status(503).json({ message: "Payment gateway is not configured" });
@@ -358,16 +364,30 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
-    const planConfig = await getPlanByCode(prisma, plan);
+    const razorpay = getRazorpayClient();
+    if (!razorpay) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
+
+    const order = await razorpay.orders.fetch(razorpayOrderId);
+    const orderNotes = (order.notes || {}) as Record<string, any>;
+    const orderPlan = typeof orderNotes.plan === "string" ? orderNotes.plan.trim().toUpperCase() : "";
+    const orderCouponCode = typeof orderNotes.couponCode === "string" ? orderNotes.couponCode.trim().toUpperCase() : "";
+
+    if (orderNotes.userId !== req.user!.id || !orderPlan || orderPlan !== normalizedPlan || orderCouponCode !== normalizedCouponCode) {
+      return res.status(400).json({ message: "Payment order does not match this subscription request" });
+    }
+
+    const planConfig = await getPlanByCode(prisma, orderPlan);
     if (!planConfig) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
     const effectivePrice = getEffectivePlanPrice(planConfig);
     let discountAmount = 0;
-    if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (!isCouponUsable(coupon, plan)) {
+    if (orderCouponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: orderCouponCode } });
+      if (!isCouponUsable(coupon, planConfig.code)) {
         return res.status(400).json({ message: "Invalid coupon code" });
       }
       discountAmount = Math.round(effectivePrice * coupon!.discountPercent / 100);
@@ -375,6 +395,11 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         where: { id: coupon!.id },
         data: { usedCount: { increment: 1 } },
       });
+    }
+
+    const payableAmount = Math.max(1, effectivePrice - discountAmount);
+    if (Number(order.amount) !== Math.round(payableAmount * 100)) {
+      return res.status(400).json({ message: "Payment amount does not match this subscription" });
     }
 
     const expiryDate = new Date();
@@ -390,9 +415,9 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         expiryDate,
         razorpayOrderId,
         razorpayPaymentId,
-        couponCode,
+        couponCode: orderCouponCode || null,
         discountAmount,
-        amount: effectivePrice - discountAmount,
+        amount: payableAmount,
       },
       create: {
         userId: req.user!.id,
@@ -401,9 +426,9 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
         expiryDate,
         razorpayOrderId,
         razorpayPaymentId,
-        couponCode,
+        couponCode: orderCouponCode || null,
         discountAmount,
-        amount: effectivePrice - discountAmount,
+        amount: payableAmount,
       },
     });
 
@@ -415,63 +440,5 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
 }
 
 export async function activateFreePlan(req: AuthRequest, res: Response) {
-  try {
-    const { plan, couponCode } = req.body;
-    const planConfig = plan ? await getPlanByCode(prisma, plan) : null;
-    if (!plan || !planConfig || !planConfig.isActive) {
-      return res.status(400).json({ message: "Invalid plan" });
-    }
-
-    const effectivePrice = getEffectivePlanPrice(planConfig);
-    let discountAmount = 0;
-    let coupon = null;
-
-    if (couponCode && effectivePrice > 0) {
-      coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (!isCouponUsable(coupon, planConfig.code)) {
-        return res.status(400).json({ message: "Invalid coupon code" });
-      }
-      discountAmount = Math.round(effectivePrice * coupon!.discountPercent / 100);
-    }
-
-    if (effectivePrice - discountAmount > 0) {
-      return res.status(400).json({ message: "This plan is not free right now" });
-    }
-
-    if (coupon) {
-      await prisma.coupon.update({
-        where: { id: coupon.id },
-        data: { usedCount: { increment: 1 } },
-      });
-    }
-
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + (planConfig.durationDays || 30));
-
-    const subscription = await prisma.subscription.upsert({
-      where: { userId: req.user!.id },
-      update: {
-        plan: planConfig.code,
-        status: "ACTIVE",
-        startDate: new Date(),
-        expiryDate,
-        couponCode: coupon?.code || null,
-        discountAmount,
-        amount: 0,
-      },
-      create: {
-        userId: req.user!.id,
-        plan: planConfig.code,
-        status: "ACTIVE",
-        expiryDate,
-        couponCode: coupon?.code || null,
-        discountAmount,
-        amount: 0,
-      },
-    });
-
-    res.json({ message: "Free access activated", subscription });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to activate free access" });
-  }
+  res.status(410).json({ message: "Free plans now require Rs 1 Razorpay verification." });
 }

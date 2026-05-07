@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag, Zap } from "lucide-react";
+import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -163,29 +163,6 @@ function SubscriptionContent() {
   }
 
   async function startPayment(plan: PlanItem) {
-    const checkoutAmount = Math.max(0, Math.round(plan.price * (1 - discountPercent / 100)));
-
-    if (checkoutAmount <= 0) {
-      if (!isAuthenticated) {
-        router.push(`/auth/login?redirect=/subscription?plan=${plan.code}`);
-        return;
-      }
-      setPaying(true);
-      try {
-        await api.post("/subscription/activate-free", {
-          plan: plan.code,
-          couponCode: couponCode.trim().toUpperCase() || undefined,
-        });
-        toast.success("Free access activated");
-        router.push("/dashboard");
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to activate free access");
-      } finally {
-        setPaying(false);
-      }
-      return;
-    }
-
     if (!isAuthenticated) {
       router.push(`/auth/login?redirect=/subscription?plan=${plan.code}`);
       return;
@@ -209,13 +186,14 @@ function SubscriptionContent() {
         plan: plan.code,
         couponCode: couponCode.trim().toUpperCase() || undefined,
       });
+      const checkoutAmount = Number(data.amount) || 1;
 
       const razorpay = new window.Razorpay({
         key: paymentKeyId,
-        amount: data.amount * 100,
+        amount: checkoutAmount * 100,
         currency: data.currency || "INR",
         name: "PhysicsLab",
-        description: `${plan.name} subscription`,
+        description: data.minimumChargeApplied ? `${plan.name} verification payment` : `${plan.name} subscription`,
         order_id: data.orderId,
         prefill: {
           name: user?.name,
@@ -392,6 +370,9 @@ function SubscriptionContent() {
                           <div className={`text-right ${discountedPrice > 0 ? "text-2xl font-black text-text-bright" : ""}`}>
                             {discountedPrice > 0 ? <>&#8377;{discountedPrice.toLocaleString("en-IN")}</> : <FreePriceHighlight size="sm" />}
                           </div>
+                          {discountedPrice <= 0 && (
+                            <p className="mt-1 text-right text-xs font-semibold text-accent">Razorpay checkout: &#8377;1</p>
+                          )}
                         </div>
                       </div>
                       {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} className="mt-3" />}
@@ -416,21 +397,14 @@ function SubscriptionContent() {
                       onClick={() => startPayment(selected)}
                       disabled={paying || isCurrentPlan(selected, activePlan)}
                     >
-                      {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : discountedPrice > 0 ? <Lock className="w-5 h-5 mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
-                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : discountedPrice > 0 ? "Pay Securely" : "Start Free"}
+                      {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Lock className="w-5 h-5 mr-2" />}
+                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : discountedPrice > 0 ? "Pay Securely" : "Pay Rs 1 Securely"}
                     </Button>
 
-                    {discountedPrice > 0 ? (
-                      <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
-                        <ShieldCheck className="w-4 h-4 text-success" />
-                        <span>Secured by Razorpay</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2 text-xs text-success mt-4">
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>No payment needed for this plan</span>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
+                      <ShieldCheck className="w-4 h-4 text-success" />
+                      <span>{discountedPrice > 0 ? "Secured by Razorpay" : "Rs 1 verification payment via Razorpay"}</span>
+                    </div>
                   </>
                 ) : (
                   <p className="text-sm text-text-muted">Select a plan to continue.</p>
