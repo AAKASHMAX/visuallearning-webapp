@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate, requireAdmin } from "../middleware/auth";
 import {
-  getStats, getUsers, toggleBlockUser,
+  getStats, getUsers, toggleBlockUser, deleteUser,
   createCourse, updateCourse, deleteCourse, getAdminCourse, addChapterToCourse, removeChapterFromCourse,
   createChapter, updateChapter, deleteChapter, getChaptersList,
   createVideo, updateVideo, deleteVideo, getChapterVideosAdmin,
@@ -30,6 +30,7 @@ router.get("/analytics", getAnalytics);
 // Users
 router.get("/users", getUsers);
 router.patch("/users/:id/block", toggleBlockUser);
+router.delete("/users/:id", deleteUser);
 
 // Courses
 router.get("/courses/:id", getAdminCourse);

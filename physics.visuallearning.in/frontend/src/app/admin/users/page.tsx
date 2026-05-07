@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Search, Ban, CheckCircle } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle, Search, Trash2, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -21,6 +21,8 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<UserItem | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -42,6 +44,26 @@ export default function AdminUsersPage() {
       toast.success(res.data.message);
       fetchUsers();
     } catch { toast.error("Failed to update user"); }
+  }
+
+  async function deleteUser() {
+    if (!deleteCandidate) return;
+
+    setDeletingId(deleteCandidate.id);
+    try {
+      const res = await api.delete(`/admin/users/${deleteCandidate.id}`);
+      toast.success(res.data.message || "User deleted");
+      setDeleteCandidate(null);
+      if (users.length === 1 && page > 1) {
+        setPage((value) => value - 1);
+      } else {
+        fetchUsers();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete user");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const totalPages = Math.ceil(total / 20);
@@ -76,7 +98,7 @@ export default function AdminUsersPage() {
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Plan</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Joined</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Status</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Action</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -117,15 +139,25 @@ export default function AdminUsersPage() {
                       <span className="text-xs text-success flex items-center gap-1"><CheckCircle className="w-3 h-3" />Active</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => toggleBlock(user.id)}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        user.blocked ? "bg-success/10 text-success hover:bg-success/20" : "bg-danger/10 text-danger hover:bg-danger/20"
-                      }`}
-                    >
-                      {user.blocked ? "Unblock" : "Block"}
-                    </button>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => toggleBlock(user.id)}
+                        className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                          user.blocked ? "bg-success/10 text-success hover:bg-success/20" : "bg-danger/10 text-danger hover:bg-danger/20"
+                        }`}
+                      >
+                        {user.blocked ? "Unblock" : "Block"}
+                      </button>
+                      <button
+                        onClick={() => setDeleteCandidate(user)}
+                        disabled={deletingId === user.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-danger/10 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -148,6 +180,50 @@ export default function AdminUsersPage() {
               {i + 1}
             </button>
           ))}
+        </div>
+      )}
+
+      {deleteCandidate && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl border border-danger/30 bg-card p-6 shadow-[0_24px_90px_rgba(0,0,0,0.5)]">
+            <button
+              type="button"
+              onClick={() => setDeleteCandidate(null)}
+              className="absolute right-4 top-4 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-light hover:text-text-bright"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-danger/10 text-danger">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <h2 className="mb-3 pr-8 text-xl font-black text-text-bright">Delete user account?</h2>
+            <p className="mb-5 text-sm leading-relaxed text-text-muted">
+              This will permanently remove the account for <span className="font-bold text-text-bright">{deleteCandidate.name}</span>, including subscription access and watch progress. Feedback messages from this user will stay in admin records but will no longer be linked to the deleted account.
+            </p>
+            <div className="mb-6 rounded-xl border border-border bg-surface/70 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-text-muted">Email</p>
+              <p className="mt-1 break-words text-sm font-semibold text-text-bright">{deleteCandidate.email}</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={deleteUser}
+                disabled={deletingId === deleteCandidate.id}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-danger px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                {deletingId === deleteCandidate.id ? "Deleting..." : "Delete User"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteCandidate(null)}
+                className="flex-1 rounded-xl border-2 border-accent px-5 py-3 text-sm font-bold text-accent transition-colors hover:bg-accent/10"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

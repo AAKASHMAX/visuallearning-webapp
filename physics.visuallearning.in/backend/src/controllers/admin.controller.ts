@@ -88,6 +88,31 @@ export async function toggleBlockUser(req: AuthRequest, res: Response) {
 }
 
 // ─── Course Management ───────────────────────────────────────────
+export async function deleteUser(req: AuthRequest, res: Response) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.id === req.user!.id) return res.status(400).json({ message: "You cannot delete your own account" });
+    if (user.role !== "STUDENT") return res.status(400).json({ message: "Only student accounts can be deleted here" });
+
+    await prisma.$transaction([
+      prisma.watchProgress.deleteMany({ where: { userId: user.id } }),
+      prisma.notificationRead.deleteMany({ where: { userId: user.id } }),
+      prisma.subscription.deleteMany({ where: { userId: user.id } }),
+      prisma.feedback.updateMany({ where: { userId: user.id }, data: { userId: null } }),
+      prisma.user.delete({ where: { id: user.id } }),
+    ]);
+
+    res.json({ message: `Deleted ${user.name || user.email}` });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+}
+
 export async function createCourse(req: AuthRequest, res: Response) {
   try {
     const { name, description, tier, displayOrder, vimeoVideoId } = req.body;
