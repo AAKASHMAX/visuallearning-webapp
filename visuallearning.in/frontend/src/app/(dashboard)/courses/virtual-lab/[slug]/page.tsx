@@ -35,7 +35,7 @@ export default function VirtualLabGamePage() {
 
   const game = virtualLabGames.find((g) => g.slug === slug);
   if (!game) redirect("/courses/virtual-lab");
-  if (checked && !isSubscribed) redirect("/subscription");
+  if (checked && !isSubscribed) redirect("/courses");
   if (!checked) return null;
 
   const handleFullscreen = () => {

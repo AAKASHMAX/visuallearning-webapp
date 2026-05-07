@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import { 
-  CheckCircle2, ArrowRight, Zap, 
+  CheckCircle2, Zap, 
   BookOpen, Video, FileText, HelpCircle, Layout,
   Atom, Lightbulb, Flame, Waves, Cpu, GraduationCap, Crown, Beaker, Microscope, PlayCircle
 } from "lucide-react";
@@ -67,6 +68,7 @@ const getSubjectTheme = (name: string) => {
 
 export default function CustomPlanPreview() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const subjectIds = searchParams.get("subjects")?.split(",") || [];
   
   const [loading, setLoading] = useState(true);
@@ -163,11 +165,16 @@ export default function CustomPlanPreview() {
           <div className="glass-morphism p-8 rounded-[2.5rem] border border-white/10 w-full md:w-80 text-center">
              <span className="text-[10px] font-black text-white/40 uppercase tracking-widest block mb-1">One-time Investment</span>
              <div className="text-5xl font-black text-white mb-6">₹{totalPrice}</div>
-             <Link href={`/subscription?plan=FLEXI_PLAN&subjects=${subjectIds.join(',')}`}>
-               <Button className="w-full py-7 rounded-2xl font-black text-sm shadow-2xl shadow-primary/20 bg-primary hover:bg-[#04A9C4] text-white">
-                 Unlock All Content <ArrowRight className="w-4 h-4 ml-2" />
-               </Button>
-             </Link>
+             <RazorpayButton
+               plan="FLEXI_PLAN"
+               amount={totalPrice}
+               label="FlexiLearn Plan"
+               subjectsAccess={subjectIds}
+               billingCycle="yearly"
+               onSuccess={() => router.push("/dashboard")}
+               buttonLabel="Unlock All Content"
+               className="w-full py-7 rounded-2xl font-black text-sm shadow-2xl shadow-primary/20 bg-primary hover:bg-[#04A9C4] text-white"
+             />
              <p className="mt-4 text-[10px] text-white/30 font-bold uppercase tracking-widest">Secure Payment via Razorpay</p>
           </div>
         </div>

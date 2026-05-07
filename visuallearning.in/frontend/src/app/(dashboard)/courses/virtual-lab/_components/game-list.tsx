@@ -49,7 +49,7 @@ function GameCard({ game, isSubscribed }: { game: VirtualLabGame; isSubscribed: 
   };
 
   return (
-    <Link href={isSubscribed ? `/courses/virtual-lab/${game.slug}` : "/subscription"}>
+    <Link href={isSubscribed ? `/courses/virtual-lab/${game.slug}` : "/courses"}>
       <div
         className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-teal-300 transition-all cursor-pointer h-full"
         onMouseEnter={handleMouseEnter}

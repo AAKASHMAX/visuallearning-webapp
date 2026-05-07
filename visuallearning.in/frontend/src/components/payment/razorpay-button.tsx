@@ -15,6 +15,7 @@ interface RazorpayButtonProps {
   billingCycle?: "monthly" | "yearly";
   onSuccess?: () => void;
   className?: string;
+  buttonLabel?: string;
 }
 
 declare global {
@@ -34,7 +35,18 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAccess, couponCode, billingCycle, onSuccess, className }: RazorpayButtonProps) {
+export function RazorpayButton({
+  plan,
+  amount,
+  label,
+  classesAccess,
+  subjectsAccess,
+  couponCode,
+  billingCycle,
+  onSuccess,
+  className,
+  buttonLabel,
+}: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -94,7 +106,7 @@ export function RazorpayButton({ plan, amount, label, classesAccess, subjectsAcc
 
   return (
     <Button variant="accent" size="lg" onClick={handlePayment} disabled={loading} className={className || "w-full"}>
-      {loading ? "Processing..." : `Subscribe - ₹${amount}`}
+      {loading ? "Processing..." : buttonLabel || `Subscribe - \u20B9${amount}`}
     </Button>
   );
 }

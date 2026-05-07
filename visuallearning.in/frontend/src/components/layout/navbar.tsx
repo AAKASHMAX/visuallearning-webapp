@@ -33,7 +33,6 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/courses", label: "Courses" },
-    { href: "/subscription", label: "Pricing" },
     { href: "/feedback", label: "Feedback" },
     { href: "/contact", label: "Contact Us" },
   ];

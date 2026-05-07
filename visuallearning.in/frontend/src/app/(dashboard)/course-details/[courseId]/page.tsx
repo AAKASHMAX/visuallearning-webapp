@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
+import { RazorpayButton } from "@/components/payment/razorpay-button";
 
 // Map string names to Lucide icons
 const iconMap: Record<string, any> = {
@@ -315,6 +316,11 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
     courseId === "academic-plus"   ? "Academic Plus"   :
     courseId === "elite-learning"  ? "Elite Learning"  :
     courseId;
+  const planKey = course?.planKey || courseId.toUpperCase().replace(/-/g, "_");
+  const checkoutPrice = course?.planConfig
+    ? (billingCycle === "monthly" ? course.planConfig.monthlyPrice : course.planConfig.yearlyPrice)
+    : Number(theme.price.replace(/[^\d]/g, "")) || 0;
+  const checkoutLabel = course?.name ?? planDisplayName;
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -509,9 +515,15 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                     </h3>
                   </div>
   
-                  <Link href={`/subscription?plan=${courseId}&billing=${billingCycle}`} className="block w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold text-center rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4">
-                    Start subscription
-                  </Link>
+                  <RazorpayButton
+                    plan={planKey}
+                    amount={checkoutPrice}
+                    label={checkoutLabel}
+                    billingCycle={billingCycle === "monthly" ? "monthly" : "yearly"}
+                    onSuccess={() => router.push("/dashboard")}
+                    buttonLabel="Start subscription"
+                    className="w-full py-4 bg-[#7e22ce] hover:bg-[#6b21a8] text-white font-bold rounded-lg transition-colors shadow-lg shadow-purple-500/30 mb-4"
+                  />
   
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -525,8 +537,8 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                   </div>
   
                   <div className="text-center">
-                    <Link href="/subscription" className="text-sm font-bold text-blue-600 hover:text-blue-800 underline">
-                      Learn more about plans
+                    <Link href="/courses" className="text-sm font-bold text-blue-600 hover:text-blue-800 underline">
+                      Compare all courses
                     </Link>
                   </div>
   

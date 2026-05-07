@@ -445,8 +445,8 @@ export default function UnifiedChapterPage() {
             <h3 className="text-xl font-bold text-heading mb-2">Unlock Premium Content</h3>
             <p className="text-text-muted text-sm mb-8">This video is part of our premium curriculum. Subscribe to a plan to unlock all 3D animations and expert lessons.</p>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base bg-primary hover:bg-primary-dark text-white font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
-                View Subscription Plans
+              <Button onClick={() => router.push("/courses")} className="w-full py-6 text-base bg-primary hover:bg-primary-dark text-white font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
+                View Courses & Plans
               </Button>
               <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-heading font-medium py-2">
                 Maybe later

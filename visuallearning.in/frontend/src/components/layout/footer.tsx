@@ -17,7 +17,6 @@ export function Footer() {
             <h3 className="font-semibold text-white mb-3">Quick Links</h3>
             <div className="space-y-2 text-sm">
               <Link href="/courses" className="block hover:text-accent">Courses</Link>
-              <Link href="/subscription" className="block hover:text-accent">Pricing</Link>
               <Link href="/auth/signup" className="block hover:text-accent">Get Started</Link>
             </div>
           </div>
