@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag, Zap } from "lucide-react";
@@ -76,6 +76,7 @@ function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, hydrate } = useAuth();
+  const requestedPlanParam = searchParams.get("plan");
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionItem | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
@@ -103,14 +104,13 @@ function SubscriptionContent() {
         setSubscription(subRes.data);
         setRazorpayKeyId(paymentConfigRes.data?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
 
-        const requestedPlan = searchParams.get("plan")?.toUpperCase();
+        const requestedPlan = requestedPlanParam?.toUpperCase();
         const requestedBilling = searchParams.get("billing") === "yearly" ? "yearly" : "monthly";
         const requestedBasePlan = requestedPlan?.replace(/_YEARLY$/, "");
-        const firstPaidPlan = activePlans.find((plan: PlanItem) => plan.price > 0);
         const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
           || activePlans.find((plan: PlanItem) => requestedBilling === "yearly" && plan.code === `${requestedBasePlan}_YEARLY`)
           || activePlans.find((plan: PlanItem) => requestedBilling === "monthly" && (plan.code === requestedBasePlan || plan.code === `${requestedBasePlan}_MONTHLY`));
-        setSelectedPlan((matchingPlan || firstPaidPlan || activePlans[0])?.code || "");
+        setSelectedPlan(matchingPlan?.code || "");
       } catch {
         toast.error("Failed to load subscription plans");
       } finally {
@@ -119,7 +119,7 @@ function SubscriptionContent() {
     }
 
     load();
-  }, [isAuthenticated, searchParams]);
+  }, [isAuthenticated, requestedPlanParam, searchParams]);
 
   const selected = plans.find((plan) => plan.code === selectedPlan);
   const activePlan = subscription?.status === "ACTIVE" ? subscription.plan : "";
@@ -136,6 +136,10 @@ function SubscriptionContent() {
   const courseNames = selected?.courses?.length
     ? selected.courses.map((course) => course.name).join(", ")
     : selected?.name || "Selected course";
+
+  if (!requestedPlanParam) {
+    redirect("/courses");
+  }
 
   async function validateCoupon() {
     if (!couponCode.trim() || !selected) {

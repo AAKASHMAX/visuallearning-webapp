@@ -14,7 +14,6 @@ const navItems = [
   { href: "/", label: "Home", activePaths: ["/"] },
   { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
   { href: "/#features", label: "Features", activePaths: ["/#features"] },
-  { href: "/subscription", label: "Pricing", activePaths: ["/subscription"] },
 ];
 
 export function Navbar() {
