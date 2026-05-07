@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import {
   BookOpen,
   Rocket,
@@ -196,10 +197,13 @@ function formatPrice(price: number) {
 }
 
 export default function CoursesPage() {
+  const canViewCourses = useRequireAuth();
   const [plans, setPlans] = useState<CoursePlan[]>(defaultPlans);
   const [billing, setBilling] = useState<BillingCycle>("monthly");
 
   useEffect(() => {
+    if (!canViewCourses) return;
+
     api.get("/subscription/plans")
       .then((res) => {
         if (Array.isArray(res.data) && res.data.length > 0) {
@@ -207,7 +211,7 @@ export default function CoursesPage() {
         }
       })
       .catch(() => setPlans(defaultPlans));
-  }, []);
+  }, [canViewCourses]);
 
   const maxDiscount = useMemo(() => {
     const discounts = plans
@@ -216,6 +220,8 @@ export default function CoursesPage() {
       .filter((value) => value > 0);
     return discounts.length ? Math.max(...discounts) : 15;
   }, [plans]);
+
+  if (!canViewCourses) return null;
 
   return (
     <main className="min-h-screen bg-primary">

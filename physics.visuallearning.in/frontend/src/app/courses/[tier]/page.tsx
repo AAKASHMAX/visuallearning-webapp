@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,8 @@ import {
   Triangle,
 } from "lucide-react";
 import api from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import { getChapterAnimation } from "@/components/chapter-animations";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 interface Course {
   id: string;
@@ -88,17 +88,16 @@ function getChapterIcon(name: string) {
 
 export default function TierCoursePage() {
   const params = useParams();
-  const router = useRouter();
   const tier = (params.tier as string) || "free";
   const config = tierConfig[tier] || tierConfig.free;
-  const { isAuthenticated, hydrate } = useAuth();
+  const canViewCourses = useRequireAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { hydrate(); }, [hydrate]);
-
   useEffect(() => {
+    if (!canViewCourses) return;
+
     async function fetchCourses() {
       try {
         const res = await api.get(`/courses/tier/${tier}`);
@@ -109,11 +108,13 @@ export default function TierCoursePage() {
       setLoading(false);
     }
     fetchCourses();
-  }, [tier]);
+  }, [tier, canViewCourses]);
 
   const allChapters = courses.flatMap((c) =>
     (c.chapters || []).map((ch) => ({ ...ch, courseName: c.name, courseId: c.id }))
   );
+
+  if (!canViewCourses) return null;
 
   return (
     <main className="min-h-screen bg-primary">

@@ -20,6 +20,34 @@ export function clearCourseCache() {
   cache.clear();
 }
 
+function getVideoThumbnailUrl(url: string) {
+  const value = String(url || "").trim();
+  if (!value) return "";
+
+  const youtubeMatch = value.match(/[?&]v=([^&]+)/) || value.match(/youtu\.be\/([^?&]+)/) || value.match(/youtube\.com\/embed\/([^?&/]+)/);
+  if (youtubeMatch?.[1]) {
+    return `https://img.youtube.com/vi/${youtubeMatch[1]}/mqdefault.jpg`;
+  }
+
+  const vimeoMatch = value.match(/vimeo\.com\/(?:manage\/videos\/|video\/)?(\d+)/) || value.match(/player\.vimeo\.com\/video\/(\d+)/);
+  if (vimeoMatch?.[1]) {
+    return `https://vumbnail.com/${vimeoMatch[1]}.jpg`;
+  }
+
+  return "";
+}
+
+function getFirstVideoIdsByLanguage(videos: Array<{ id: string; language: string }>) {
+  const firstByLanguage = new Map<string, string>();
+  for (const video of videos) {
+    const language = video.language || "DEFAULT";
+    if (!firstByLanguage.has(language)) {
+      firstByLanguage.set(language, video.id);
+    }
+  }
+  return new Set(firstByLanguage.values());
+}
+
 const courseWithChaptersInclude = {
   chapters: {
     orderBy: { displayOrder: "asc" as const },
@@ -92,6 +120,16 @@ async function isFirstChapterInAnyCourse(chapter: any) {
     if (firstLink?.chapterId === chapter.id) return true;
   }
   return false;
+}
+
+async function isFirstVideoInChapter(video: { id: string; chapterId: string; language?: string | null }) {
+  const firstVideo = await prisma.video.findFirst({
+    where: { chapterId: video.chapterId, language: video.language || "HINDI" },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
+    select: { id: true },
+  });
+
+  return firstVideo?.id === video.id;
 }
 
 export async function getCourses(req: AuthRequest, res: Response) {
@@ -199,17 +237,22 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
 
     const videos = await prisma.video.findMany({
       where: { chapterId: req.params.id },
-      orderBy: { displayOrder: "asc" },
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
     });
 
     const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
     const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
+    const firstVideoIds = getFirstVideoIdsByLanguage(videos);
 
-    const videosWithAccess = videos.map((v: any) => ({
-      ...v,
-      hasAccess: isFirstChapter || v.isFree || hasAccess,
-      youtubeUrl: isFirstChapter || v.isFree || hasAccess ? v.youtubeUrl : "",
-    }));
+    const videosWithAccess = videos.map((v: any) => {
+      const canAccessVideo = firstVideoIds.has(v.id) || isFirstChapter || v.isFree || hasAccess;
+      return {
+        ...v,
+        hasAccess: canAccessVideo,
+        thumbnailUrl: getVideoThumbnailUrl(v.youtubeUrl),
+        youtubeUrl: canAccessVideo ? v.youtubeUrl : "",
+      };
+    });
 
     res.json(videosWithAccess);
   } catch (error) {
@@ -236,7 +279,8 @@ export async function getVideoById(req: AuthRequest, res: Response) {
     }
 
     const isFirstChapter = await isFirstChapterInAnyCourse(video.chapter);
-    const hasAccess = video.isFree || isFirstChapter || await userHasChapterAccess(video.chapter, req.user?.id);
+    const isFirstVideo = await isFirstVideoInChapter(video);
+    const hasAccess = video.isFree || isFirstVideo || isFirstChapter || await userHasChapterAccess(video.chapter, req.user?.id);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Subscription required to access this video" });

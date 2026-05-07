@@ -18,12 +18,13 @@ import {
   X,
 } from "lucide-react";
 import api from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 interface Video {
   id: string;
   title: string;
   youtubeUrl: string;
+  thumbnailUrl?: string;
   videoType: string;
   language: string;
   isFree: boolean;
@@ -73,6 +74,10 @@ function getYoutubeThumbnail(url: string, vimeoCache?: Record<string, string>): 
   return "";
 }
 
+function getVideoThumbnail(video: Video, vimeoCache?: Record<string, string>): string {
+  return video.thumbnailUrl || getYoutubeThumbnail(video.youtubeUrl, vimeoCache);
+}
+
 function getYoutubeEmbedUrl(url: string): string {
   // Handle Vimeo URLs
   if (url.includes("vimeo.com")) {
@@ -109,7 +114,7 @@ export default function ChapterContentPage() {
   const router = useRouter();
   const tier = params.tier as string;
   const chapterId = params.chapterId as string;
-  const { isAuthenticated, hydrate } = useAuth();
+  const canViewCourses = useRequireAuth();
 
   const [chapterName, setChapterName] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("videos");
@@ -124,6 +129,7 @@ export default function ChapterContentPage() {
 
   // Video player state
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
 
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -133,10 +139,8 @@ export default function ChapterContentPage() {
   const [vimeoThumbnails, setVimeoThumbnails] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    if (!canViewCourses) return;
 
-  useEffect(() => {
     async function fetchContent() {
       setLoading(true);
       try {
@@ -149,8 +153,9 @@ export default function ChapterContentPage() {
 
         // Auto-select the first video in the default language
         const defaultLangVideos = videosRes.data.filter((v: Video) => v.language === language);
-        if (defaultLangVideos.length > 0 && defaultLangVideos[0].hasAccess) {
-          setSelectedVideo(defaultLangVideos[0]);
+        const firstAccessibleVideo = defaultLangVideos.find((v: Video) => v.hasAccess && v.youtubeUrl);
+        if (firstAccessibleVideo) {
+          setSelectedVideo(firstAccessibleVideo);
         }
       } catch (err) {
         console.error("Failed to fetch content");
@@ -177,20 +182,25 @@ export default function ChapterContentPage() {
 
     fetchContent();
     fetchChapterInfo();
-  }, [chapterId]);
+  }, [chapterId, canViewCourses]);
 
   // When language changes, auto-select first video of that language
   useEffect(() => {
+    if (!canViewCourses) return;
+
     const langVideos = allVideos.filter((v) => v.language === language);
-    if (langVideos.length > 0 && langVideos[0].hasAccess) {
-      setSelectedVideo(langVideos[0]);
+    const firstAccessibleVideo = langVideos.find((v) => v.hasAccess && v.youtubeUrl);
+    if (firstAccessibleVideo) {
+      setSelectedVideo(firstAccessibleVideo);
     } else {
       setSelectedVideo(null);
     }
-  }, [language, allVideos]);
+  }, [language, allVideos, canViewCourses]);
 
   // Fetch Vimeo thumbnails
   useEffect(() => {
+    if (!canViewCourses) return;
+
     if (allVideos.length === 0) return;
     const vimeoIds = new Set<string>();
     for (const v of allVideos) {
@@ -217,7 +227,7 @@ export default function ChapterContentPage() {
       setVimeoThumbnails((prev) => ({ ...prev, ...cache }));
     };
     fetchThumbnails();
-  }, [allVideos]);
+  }, [allVideos, canViewCourses]);
 
   async function loadQuiz() {
     try {
@@ -235,6 +245,24 @@ export default function ChapterContentPage() {
     }
   }
 
+  function handleBack() {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(`/course-details/${tier}?billing=monthly`);
+  }
+
+  function handleVideoSelect(video: Video) {
+    if (video.hasAccess && video.youtubeUrl) {
+      setSelectedVideo(video);
+      return;
+    }
+
+    setShowSubscribePrompt(true);
+  }
+
   const hasHindi = allVideos.some((v) => v.language === "HINDI");
   const hasEnglish = allVideos.some((v) => v.language === "ENGLISH");
 
@@ -244,19 +272,22 @@ export default function ChapterContentPage() {
     { key: "quiz", label: "Quiz", icon: HelpCircle, count: questions.length },
   ];
 
+  if (!canViewCourses) return null;
+
   return (
     <main className="min-h-screen bg-primary">
       <Navbar />
       <div className="pt-20 pb-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back + Chapter Header (compact inline) */}
         <div className="flex items-center gap-4 mb-3">
-          <Link
-            href={`/courses/${tier}`}
+          <button
+            type="button"
+            onClick={handleBack}
             className="inline-flex items-center gap-1.5 text-text-muted hover:text-accent transition-colors shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm hidden sm:inline">Back</span>
-          </Link>
+          </button>
           <div className="rounded-xl border border-border bg-gradient-to-r from-accent/10 via-card to-secondary/10 px-4 py-2.5 flex-1 flex items-center justify-between min-w-0">
             <div className="min-w-0">
               <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">
@@ -312,22 +343,27 @@ export default function ChapterContentPage() {
                   {videos.length === 0 ? (
                     <div className="rounded-2xl border border-border bg-card p-10 text-center"><Play className="w-10 h-10 text-accent/40 mx-auto mb-3" /><h3 className="text-lg font-semibold text-text-bright mb-1">No Videos Yet</h3><p className="text-text-muted text-sm">Videos for this chapter will be added soon.</p></div>
                   ) : (videos.map((video, idx) => {
-                    const thumbnail = getYoutubeThumbnail(video.youtubeUrl, vimeoThumbnails);
+                    const thumbnail = getVideoThumbnail(video, vimeoThumbnails);
                     const isActive = selectedVideo?.id === video.id;
                     return (
-                      <div key={video.id} onClick={() => video.hasAccess ? setSelectedVideo(video) : null}
-                        className={`group flex items-center gap-3 rounded-xl border p-2.5 transition-all duration-300 ${isActive ? "border-accent/40 bg-accent/5" : video.hasAccess ? "border-border bg-card hover:border-accent/30 hover:bg-card-hover cursor-pointer" : "border-border bg-card opacity-70 cursor-not-allowed"}`}>
+                      <div key={video.id} onClick={() => handleVideoSelect(video)}
+                        className={`group flex items-center gap-3 rounded-xl border p-2.5 transition-all duration-300 cursor-pointer ${isActive ? "border-accent/40 bg-accent/5" : video.hasAccess ? "border-border bg-card hover:border-accent/30 hover:bg-card-hover" : "border-border bg-card hover:border-energy/40 hover:bg-card-hover"}`}>
                         <div className="relative w-28 h-16 sm:w-32 sm:h-[72px] rounded-lg overflow-hidden bg-surface-light shrink-0">
                           {thumbnail ? (<img src={thumbnail} alt={video.title} className="w-full h-full object-cover" />) : (<div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-light to-card-hover"><Play className="w-6 h-6 text-accent/40" /></div>)}
                           {video.hasAccess ? (
                             <div className={`absolute inset-0 flex items-center justify-center bg-black/30 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}><div className="w-8 h-8 rounded-full bg-accent/90 flex items-center justify-center shadow-[0_0_12px_rgba(0,212,255,0.5)]"><Play className="w-4 h-4 text-white fill-white ml-0.5" /></div></div>
-                          ) : (<div className="absolute inset-0 flex items-center justify-center bg-black/50"><Lock className="w-4 h-4 text-white/70" /></div>)}
-                          {video.isFree && <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/90 text-white">FREE</span>}
+                          ) : null}
+                          {(video.isFree || (video.hasAccess && idx === 0)) && <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/90 text-white">{video.isFree ? "FREE" : "PREVIEW"}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-xs sm:text-sm font-semibold text-text-bright mb-0.5 line-clamp-2">{idx + 1}. {video.title}</h3>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${video.videoType === "ANIMATED_VIDEO" ? "bg-accent/10 text-accent" : "bg-secondary/10 text-secondary-light"}`}>{video.videoType === "ANIMATED_VIDEO" ? "3D Animation" : "Lecture"}</span>
                         </div>
+                        {!video.hasAccess && (
+                          <span className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-energy/30 bg-energy/10 text-energy">
+                            <Lock className="h-4 w-4" />
+                          </span>
+                        )}
                       </div>);
                   }))}
                 </div>
@@ -372,6 +408,40 @@ export default function ChapterContentPage() {
           </div>
         </div>
       </div>
+      {showSubscribePrompt && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="relative w-full max-w-md rounded-2xl border border-accent/25 bg-card p-6 shadow-[0_24px_90px_rgba(0,0,0,0.5)]">
+            <button
+              type="button"
+              onClick={() => setShowSubscribePrompt(false)}
+              className="absolute right-4 top-4 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-light hover:text-text-bright"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-energy/10 text-energy">
+              <Lock className="h-6 w-6" />
+            </div>
+            <h2 className="mb-3 pr-8 text-xl font-black text-text-bright">
+              Subscribe the plan to access the videos
+            </h2>
+            <p className="mb-6 text-sm leading-relaxed text-text-muted">
+              The first video of each chapter is available as a preview. Subscribe to unlock all remaining videos, notes, and quizzes.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href={`/subscription?plan=${tier.toUpperCase()}&billing=monthly`} className="flex-1">
+                <Button className="w-full">
+                  Subscribe Now
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="outline" className="flex-1" onClick={() => setShowSubscribePrompt(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </main>
   );

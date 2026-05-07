@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import { getChapterAnimation } from "@/components/chapter-animations";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -119,12 +120,15 @@ function ChapterVisual({ chapter }: { chapter: Chapter }) {
 export default function CourseDetailsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const canViewCourses = useRequireAuth();
   const courseId = params.courseId as string;
   const [billing, setBilling] = useState<BillingCycle>((searchParams.get("billing") === "yearly" ? "yearly" : "monthly"));
   const [details, setDetails] = useState<PlanDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!canViewCourses) return;
+
     async function loadDetails() {
       setLoading(true);
       try {
@@ -137,7 +141,7 @@ export default function CourseDetailsPage() {
       }
     }
     loadDetails();
-  }, [courseId]);
+  }, [courseId, canViewCourses]);
 
   const baseCode = normalizeBase(details?.code || courseId);
   const theme = themeByPlan[baseCode] || themeByPlan.BASIC;
@@ -153,6 +157,8 @@ export default function CourseDetailsPage() {
     () => details?.courses.reduce((sum, course) => sum + course.chapters.reduce((chapterSum, chapter) => chapterSum + (chapter._count?.videos || 0), 0), 0) || 0,
     [details]
   );
+
+  if (!canViewCourses) return null;
 
   return (
     <main className="min-h-screen bg-primary">
