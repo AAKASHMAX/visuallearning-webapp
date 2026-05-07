@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -58,7 +59,19 @@ export default function HomePage() {
 /*  HERO                                                               */
 /* ------------------------------------------------------------------ */
 
+function useLearningCtaHref() {
+  const { isAuthenticated, hydrate } = useAuth();
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  return isAuthenticated ? "/courses" : "/auth/signup";
+}
+
 function HeroSection() {
+  const learningCtaHref = useLearningCtaHref();
+
   return (
     <section className="relative min-h-screen flex items-center pt-20 bg-grid">
       {/* Background glow orbs */}
@@ -107,7 +120,7 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-wrap gap-4 mb-10">
-              <Link href="/auth/signup">
+              <Link href={learningCtaHref}>
                 <Button size="lg" className="group">
                   Start Learning Free
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -774,6 +787,8 @@ function TestimonialsSection() {
 /* ------------------------------------------------------------------ */
 
 function CTASection() {
+  const learningCtaHref = useLearningCtaHref();
+
   return (
     <section className="py-24 relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -800,7 +815,7 @@ function CTASection() {
             </p>
 
             <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/auth/signup">
+              <Link href={learningCtaHref}>
                 <Button size="lg" className="group">
                   Start Learning Now
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useAuth } from "@/lib/auth";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -37,9 +39,10 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await api.post("/auth/signup", { name, email, phone: phone.trim(), password });
-      toast.success("Account created! Please check your email to verify.");
-      router.push("/auth/login");
+      const res = await api.post("/auth/signup", { name, email, phone: phone.trim(), password });
+      login(res.data.user, res.data.token);
+      toast.success("Account created. Welcome!");
+      router.push("/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Signup failed");
     } finally {
