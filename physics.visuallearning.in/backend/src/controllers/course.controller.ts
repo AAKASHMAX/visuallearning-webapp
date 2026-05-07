@@ -146,12 +146,7 @@ export async function getCoursesByTier(req: AuthRequest, res: Response) {
       include: courseWithChaptersInclude,
     });
 
-    const visibleCourses = [];
-    for (const course of courses) {
-      if (await userHasCourseAccess(prisma, req.user?.id, course)) {
-        visibleCourses.push(formatCourseChapters(course));
-      }
-    }
+    const visibleCourses = courses.map(formatCourseChapters);
 
     if (cacheKey) {
       setCache(cacheKey, visibleCourses, 60000);
