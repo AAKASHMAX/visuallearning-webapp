@@ -47,9 +47,18 @@ export function Navbar() {
   }
 
   function navLinkClass(active: boolean, mobile = false) {
+    if (mobile) {
+      return cn(
+        "rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-300",
+        active
+          ? "border-accent/60 bg-accent/15 text-accent shadow-[0_0_18px_rgba(0,212,255,0.18)]"
+          : "border-border/80 bg-surface-light/95 text-text-bright hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
+      );
+    }
+
     return cn(
       "rounded-xl font-medium transition-all duration-300",
-      mobile ? "px-4 py-3 text-sm" : "px-3 py-2 text-sm",
+      "px-3 py-2 text-sm",
       active
         ? "border border-accent/25 bg-accent/10 text-accent shadow-[0_0_18px_rgba(0,212,255,0.12)]"
         : "text-text-muted hover:bg-surface-light/70 hover:text-accent"
@@ -59,7 +68,7 @@ export function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
+        isScrolled || isMobileMenuOpen
           ? "glass py-3 shadow-lg shadow-primary/50"
           : "bg-transparent py-5"
       }`}
@@ -145,8 +154,8 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
-            <div className="flex flex-col gap-4">
+          <div className="md:hidden mt-4 rounded-2xl border border-accent/20 bg-primary-dark/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-xl animate-fade-in">
+            <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -157,33 +166,33 @@ export function Navbar() {
                   {item.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-2 border-t border-border">
+              <div className="mt-2 flex flex-col gap-2 border-t border-border/80 pt-3">
                 {isAuthenticated ? (
                   <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-muted text-sm">Notifications</span>
+                    <div className="flex items-center justify-between rounded-xl border border-border/80 bg-surface-light/95 px-4 py-3">
+                      <span className="text-text-bright text-sm font-semibold">Notifications</span>
                       <NotificationBell />
                     </div>
                     {user?.role === "ADMIN" && (
                       <Link href="/admin/dashboard">
-                        <Button variant="outline" size="sm" className="w-full border-accent text-accent hover:bg-accent hover:text-primary">
+                        <Button variant="outline" size="sm" className="w-full border-accent/50 bg-surface-light/95 text-accent hover:bg-accent hover:text-primary">
                           Admin Panel
                         </Button>
                       </Link>
                     )}
                     <Link href="/dashboard">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full border-accent/50 bg-surface-light/95 text-accent hover:bg-accent hover:text-primary">
                         Dashboard
                       </Button>
                     </Link>
-                    <Button variant="ghost" size="sm" onClick={logout} className="w-full">
+                    <Button variant="ghost" size="sm" onClick={logout} className="w-full border border-border/80 bg-surface-light/95 text-text-bright hover:bg-danger/15 hover:text-danger">
                       Logout
                     </Button>
                   </>
                 ) : (
                   <>
                     <Link href="/auth/login">
-                      <Button variant="ghost" size="sm" className="w-full">
+                      <Button variant="ghost" size="sm" className="w-full border border-border/80 bg-surface-light/95 text-text-bright hover:bg-accent/10 hover:text-accent">
                         Login
                       </Button>
                     </Link>
