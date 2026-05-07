@@ -44,7 +44,7 @@ export function Footer() {
             <h4 className="text-text-bright font-semibold mb-4">Quick Links</h4>
             <ul className="flex flex-col gap-2">
               {[
-                { label: "Courses", href: "/#courses" },
+                { label: "Courses", href: "/courses" },
                 { label: "Features", href: "/#features" },
                 { label: "Contact", href: "/contact" },
               ].map((link) => (

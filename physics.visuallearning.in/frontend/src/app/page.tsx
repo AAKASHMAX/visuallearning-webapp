@@ -113,7 +113,7 @@ function HeroSection() {
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="/#courses">
+              <Link href="/courses">
                 <Button variant="outline" size="lg">
                   <Play className="w-5 h-5 mr-2" />
                   Explore Courses
