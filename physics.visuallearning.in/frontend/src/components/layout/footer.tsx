@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
+
+const quickLinks = [
+  { label: "Courses", href: "/courses" },
+  { label: "Features", href: "/#features" },
+  { label: "Contact Us", href: "/contact" },
+];
+
+const legalLinks = [
+  { label: "Privacy Policy", href: "https://www.visuallearning.in/privacy-policy" },
+  { label: "Refund Policy", href: "https://www.visuallearning.in/refund-policy" },
+  { label: "Terms of Service", href: "https://www.visuallearning.in/terms-of-service" },
+];
 
 export function Footer() {
   return (
@@ -43,11 +55,7 @@ export function Footer() {
           <div>
             <h4 className="text-text-bright font-semibold mb-4">Quick Links</h4>
             <ul className="flex flex-col gap-2">
-              {[
-                { label: "Courses", href: "/courses" },
-                { label: "Features", href: "/#features" },
-                { label: "Contact", href: "/contact" },
-              ].map((link) => (
+              {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -64,18 +72,14 @@ export function Footer() {
           <div>
             <h4 className="text-text-bright font-semibold mb-4">Legal</h4>
             <ul className="flex flex-col gap-2">
-              {[
-                { label: "Privacy Policy", href: "/privacy-policy" },
-                { label: "Refund Policy", href: "/refund-policy" },
-                { label: "Terms of Service", href: "/terms" },
-              ].map((link) => (
+              {legalLinks.map((link) => (
                 <li key={link.href}>
-                  <Link
+                  <a
                     href={link.href}
                     className="text-text-muted text-sm hover:text-accent transition-colors duration-300"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
