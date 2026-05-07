@@ -44,7 +44,7 @@ type Subscription = {
 type Plan = {
   code: string;
   baseCode?: string;
-  billingCycle?: "monthly" | "yearly";
+  billingCycle?: "yearly";
   name: string;
   description?: string | null;
   price: number;

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
 import { clearSubscriptionPlanCache } from "./subscription.controller";
-import { clearDefaultPlansEnsureCache, ensureDefaultPlans, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
+import { FREE_TRIAL_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS, clearDefaultPlansEnsureCache, ensureDefaultPlans, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 
@@ -460,10 +460,10 @@ export async function grantSubscription(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid subscription plan" });
     }
 
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + (days || selectedPlan.durationDays || 30));
-
     const amount = getEffectivePlanPrice(selectedPlan);
+    const accessDays = days || (amount <= 0 ? FREE_TRIAL_DURATION_DAYS : selectedPlan.durationDays || YEARLY_PLAN_DURATION_DAYS);
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + accessDays);
     const subscription = await prisma.subscription.upsert({
       where: { userId },
       update: { plan: selectedPlan.code, status: "ACTIVE", startDate: new Date(), expiryDate, amount },
@@ -481,7 +481,10 @@ export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
   try {
     await ensureDefaultPlans(prisma);
     const plans = await prisma.subscriptionPlan.findMany({
-      where: { code: { not: "FREE" } },
+      where: {
+        code: { not: "FREE" },
+        OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+      },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
@@ -500,8 +503,9 @@ export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
 export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
     const { code, name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
-    const planCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
-    if (!planCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
+    const baseCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
+    const planCode = `${baseCode}_YEARLY`;
+    if (!baseCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
 
     const plan = await prisma.subscriptionPlan.create({
       data: {
@@ -509,7 +513,7 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
         name,
         description,
         price: price || 0,
-        durationDays: durationDays || 30,
+        durationDays: Math.max(Number(durationDays) || YEARLY_PLAN_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS),
         features: Array.isArray(features) ? features : [],
         freeOfferEnabled: freeOfferEnabled ?? false,
         freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : null,
@@ -528,14 +532,16 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
 export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
     const { code, name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
+    const baseCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
+    if (!baseCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
     const plan = await prisma.subscriptionPlan.update({
       where: { id: req.params.id },
       data: {
-        code,
+        code: `${baseCode}_YEARLY`,
         name,
         description,
         price,
-        durationDays,
+        durationDays: Math.max(Number(durationDays) || YEARLY_PLAN_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS),
         features: Array.isArray(features) ? features : [],
         freeOfferEnabled,
         freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : null,

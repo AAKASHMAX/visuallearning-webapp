@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -26,11 +26,9 @@ import api from "@/lib/api";
 import { getChapterAnimation } from "@/components/chapter-animations";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
-type BillingCycle = "monthly" | "yearly";
-
 type PlanVariant = {
   code: string;
-  billingCycle: BillingCycle;
+  billingCycle: "yearly";
   price: number;
   originalPrice?: number;
   isFreeOfferActive?: boolean;
@@ -80,9 +78,13 @@ function formatPrice(price: number) {
   return `Rs ${price.toLocaleString("en-IN")}`;
 }
 
-function planPeriod(billing: BillingCycle, price: number) {
-  if (price <= 0) return "free access";
-  return billing === "monthly" ? "per month" : "per year";
+function planPeriod(price: number) {
+  if (price <= 0) return "30-day free trial";
+  return "per year";
+}
+
+function monthlyEquivalent(yearlyPrice: number) {
+  return Math.round(yearlyPrice / 12).toLocaleString("en-IN");
 }
 
 function getPreviewEmbedUrl(url?: string | null) {
@@ -139,10 +141,8 @@ function CourseDetailsLoading() {
 
 export default function CourseDetailsPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const canViewCourses = useRequireAuth();
   const courseId = params.courseId as string;
-  const [billing, setBilling] = useState<BillingCycle>((searchParams.get("billing") === "yearly" ? "yearly" : "monthly"));
   const [details, setDetails] = useState<PlanDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -166,9 +166,8 @@ export default function CourseDetailsPage() {
   const baseCode = normalizeBase(details?.code || courseId);
   const theme = themeByPlan[baseCode] || themeByPlan.BASIC;
   const ThemeIcon = theme.icon;
-  const monthly = details?.variants.find((variant) => variant.billingCycle === "monthly") || details?.variants[0];
-  const yearly = details?.variants.find((variant) => variant.billingCycle === "yearly") || monthly;
-  const activeVariant = billing === "monthly" ? monthly : yearly;
+  const yearly = details?.variants.find((variant) => variant.billingCycle === "yearly" || variant.code.endsWith("_YEARLY") || variant.durationDays >= 365) || details?.variants[0];
+  const activeVariant = yearly;
   const price = activeVariant?.price || 0;
   const originalPrice = activeVariant?.originalPrice ?? price;
   const isFreeOffer = Boolean(activeVariant?.isFreeOfferActive && originalPrice > price);
@@ -233,7 +232,7 @@ export default function CourseDetailsPage() {
                   {[
                     { label: "Chapters", value: totalChapters, icon: BookOpen },
                     { label: "Videos", value: totalVideos, icon: Play },
-                    { label: "Plans", value: details.variants.length, icon: Sparkles },
+                    { label: "Billing", value: "Yearly", icon: Sparkles },
                   ].map((item) => (
                     <div key={item.label} className="rounded-2xl border border-border bg-card p-5">
                       <item.icon className={`w-5 h-5 ${theme.accent} mb-3`} />
@@ -278,37 +277,26 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="mb-3">
-                  <div className="inline-flex rounded-xl border border-border bg-surface p-1">
-                    <button
-                      onClick={() => setBilling("monthly")}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "monthly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => setBilling("yearly")}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${billing === "yearly" ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"}`}
-                    >
-                      Yearly
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-3">
                   {isFreeOffer && <p className="text-xs font-bold text-text-muted line-through">{formatPrice(originalPrice)}</p>}
                   {price > 0 ? (
                     <p className="text-2xl font-black text-text-bright">{formatPrice(price)}</p>
                   ) : (
                     <FreePriceHighlight size="sm" />
                   )}
-                  <p className="text-xs text-text-muted mt-0.5">{planPeriod(billing, price)}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{planPeriod(price)}</p>
+                  {price > 0 && (
+                    <p className="text-xs font-bold text-accent mt-1">Only Rs {monthlyEquivalent(price)}/month</p>
+                  )}
+                  {price <= 0 && (
+                    <p className="text-xs font-bold text-accent mt-1">Expires after 30 days</p>
+                  )}
                   {isFreeOffer && <FreeOfferCountdown until={activeVariant?.freeOfferUntil} className="mt-2 scale-95 origin-left" />}
                 </div>
 
-                <Link href={`/subscription?plan=${activeVariant?.code || details.code}&billing=${billing}`} className="block">
+                <Link href={`/subscription?plan=${activeVariant?.code || details.code}`} className="block">
                   <Button variant={price > 0 ? "primary" : "outline"} className="w-full">
                     {price > 0 && <Lock className="w-4 h-4 mr-2" />}
-                    {price > 0 ? "Start Subscription" : "Start Free"}
+                    {price > 0 ? "Start Yearly Subscription" : "Start 30-Day Trial"}
                   </Button>
                 </Link>
 

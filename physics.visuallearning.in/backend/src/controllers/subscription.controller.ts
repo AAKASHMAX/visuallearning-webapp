@@ -4,7 +4,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { config } from "../config";
 import { AuthRequest } from "../middleware/auth";
-import { ensureDefaultPlans, getAccessibleCoursesForUser, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
+import { FREE_TRIAL_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS, ensureDefaultPlans, getAccessibleCoursesForUser, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
 
 const prisma = new PrismaClient();
 const publicPlanCache = new Map<string, { data: any; expiry: number }>();
@@ -25,7 +25,7 @@ export function clearSubscriptionPlanCache() {
 }
 
 function getBillingCycle(plan: { code: string; durationDays: number }) {
-  return plan.code.endsWith("_YEARLY") || plan.durationDays >= 365 ? "yearly" : "monthly";
+  return "yearly";
 }
 
 function getBasePlanCode(code: string) {
@@ -34,6 +34,7 @@ function getBasePlanCode(code: string) {
 
 function formatPlan(plan: any) {
   const effectivePrice = getEffectivePlanPrice(plan);
+  const accessDurationDays = effectivePrice <= 0 ? FREE_TRIAL_DURATION_DAYS : plan.durationDays;
   return {
     id: plan.code,
     code: plan.code,
@@ -44,6 +45,7 @@ function formatPlan(plan: any) {
     price: effectivePrice,
     originalPrice: plan.price,
     durationDays: plan.durationDays,
+    accessDurationDays,
     features: plan.features,
     freeOfferEnabled: plan.freeOfferEnabled,
     freeOfferUntil: plan.freeOfferUntil,
@@ -105,7 +107,11 @@ export async function getPlans(req: AuthRequest, res: Response) {
     }
 
     let plans = await prisma.subscriptionPlan.findMany({
-      where: { isActive: true, code: { not: "FREE" } },
+      where: {
+        isActive: true,
+        code: { not: "FREE" },
+        OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+      },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
@@ -113,7 +119,11 @@ export async function getPlans(req: AuthRequest, res: Response) {
     if (plans.length === 0) {
       await ensureDefaultPlans(prisma);
       plans = await prisma.subscriptionPlan.findMany({
-        where: { isActive: true, code: { not: "FREE" } },
+        where: {
+          isActive: true,
+          code: { not: "FREE" },
+          OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+        },
         orderBy: { displayOrder: "asc" },
         include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
       });
@@ -142,10 +152,14 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       return res.json(cached);
     }
 
-    const planCodes = [baseCode, `${baseCode}_MONTHLY`, `${baseCode}_YEARLY`];
+    const planCodes = [`${baseCode}_YEARLY`, baseCode];
 
     let variants = await prisma.subscriptionPlan.findMany({
-      where: { code: { in: planCodes }, isActive: true },
+      where: {
+        code: { in: planCodes },
+        isActive: true,
+        OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+      },
       orderBy: { durationDays: "asc" },
       include: { courses: { select: { courseId: true } } },
     });
@@ -153,7 +167,11 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
     if (variants.length === 0) {
       await ensureDefaultPlans(prisma);
       variants = await prisma.subscriptionPlan.findMany({
-        where: { code: { in: planCodes }, isActive: true },
+        where: {
+          code: { in: planCodes },
+          isActive: true,
+          OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+        },
         orderBy: { durationDays: "asc" },
         include: { courses: { select: { courseId: true } } },
       });
@@ -161,7 +179,11 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
 
     if (variants.length === 0) {
       const allPlans = await prisma.subscriptionPlan.findMany({
-        where: { isActive: true, code: { not: "FREE" } },
+        where: {
+          isActive: true,
+          code: { not: "FREE" },
+          OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
+        },
         orderBy: { durationDays: "asc" },
         include: { courses: { select: { courseId: true } } },
       });
@@ -172,7 +194,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const primary = variants.find((plan) => plan.code === baseCode || plan.code === `${baseCode}_MONTHLY`) || variants[0];
+    const primary = variants.find((plan) => plan.code === `${baseCode}_YEARLY`) || variants[0];
     const courseIds = Array.from(new Set(variants.flatMap((plan) => plan.courses.map((item) => item.courseId))));
 
     const courses = await prisma.course.findMany({
@@ -206,6 +228,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
         price: getEffectivePlanPrice(plan),
         originalPrice: plan.price,
         durationDays: plan.durationDays,
+        accessDurationDays: getEffectivePlanPrice(plan) <= 0 ? FREE_TRIAL_DURATION_DAYS : plan.durationDays,
         freeOfferEnabled: plan.freeOfferEnabled,
         freeOfferUntil: plan.freeOfferUntil,
         isFreeOfferActive: isFreeOfferActive(plan),
@@ -397,13 +420,14 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       });
     }
 
-    const payableAmount = Math.max(1, effectivePrice - discountAmount);
+    const planAmount = effectivePrice - discountAmount;
+    const payableAmount = Math.max(1, planAmount);
     if (Number(order.amount) !== Math.round(payableAmount * 100)) {
       return res.status(400).json({ message: "Payment amount does not match this subscription" });
     }
 
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + planConfig.durationDays);
+    expiryDate.setDate(expiryDate.getDate() + (planAmount <= 0 ? FREE_TRIAL_DURATION_DAYS : planConfig.durationDays));
 
     // Create or update subscription
     const subscription = await prisma.subscription.upsert({

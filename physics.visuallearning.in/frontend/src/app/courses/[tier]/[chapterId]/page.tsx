@@ -288,7 +288,7 @@ export default function ChapterContentPage() {
       return;
     }
 
-    router.push(`/course-details/${tier}?billing=monthly`);
+    router.push(`/course-details/${tier}`);
   }
 
   function handleVideoSelect(video: Video) {
@@ -466,7 +466,7 @@ export default function ChapterContentPage() {
               The first video of each chapter is available as a preview. Subscribe to unlock all remaining videos, notes, and quizzes.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href={`/subscription?plan=${tier.toUpperCase()}&billing=monthly`} className="flex-1">
+              <Link href={`/subscription?plan=${tier.toUpperCase()}`} className="flex-1">
                 <Button className="w-full">
                   Subscribe Now
                   <ChevronRight className="ml-1 h-4 w-4" />

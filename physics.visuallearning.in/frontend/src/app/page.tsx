@@ -533,10 +533,10 @@ function PricingSection() {
 
   const fallbackPlans: PricingPlan[] = [
     {
-      code: "BRIDGE",
+      code: "BRIDGE_YEARLY",
       name: "Physics Bridge Course",
-      price: "999",
-      period: "/month",
+      price: "9990",
+      period: "/year",
       description: "Strengthen core physics concepts before advanced chapters",
       features: [
         "Core concept modules",
@@ -549,10 +549,10 @@ function PricingSection() {
       popular: false,
     },
     {
-      code: "BASIC",
+      code: "BASIC_YEARLY",
       name: "Basic",
-      price: "299",
-      period: "/month",
+      price: "2990",
+      period: "/year",
       description: "Complete physics learning experience",
       features: [
         "All animated video lectures",
@@ -566,10 +566,10 @@ function PricingSection() {
       popular: true,
     },
     {
-      code: "ADVANCE",
+      code: "ADVANCE_YEARLY",
       name: "Advance",
-      price: "499",
-      period: "/month",
+      price: "4990",
+      period: "/year",
       description: "Everything you need to top physics",
       features: [
         "Everything in Basic",
@@ -587,13 +587,17 @@ function PricingSection() {
 
   const [plans, setPlans] = useState<PricingPlan[]>(fallbackPlans);
 
+  function monthlyEquivalent(price: string) {
+    return Math.round(Number(price) / 12).toLocaleString("en-IN");
+  }
+
   useEffect(() => {
     api.get("/subscription/plans")
       .then((res) => {
         if (!Array.isArray(res.data) || res.data.length === 0) return;
 
-        const monthlyPlans = res.data.filter((plan: { code: string; durationDays: number }) => !plan.code.endsWith("_YEARLY") && plan.durationDays < 365);
-        const nextPlans = monthlyPlans.slice(0, 3).map((plan: {
+        const yearlyPlans = res.data.filter((plan: { code: string; durationDays: number }) => plan.code.endsWith("_YEARLY") || plan.durationDays >= 365);
+        const nextPlans = yearlyPlans.slice(0, 3).map((plan: {
           code: string;
           name: string;
           description?: string | null;
@@ -605,18 +609,12 @@ function PricingSection() {
           features: string[];
         }) => {
           const baseCode = plan.code.replace(/_YEARLY$/, "");
-          const fallback = fallbackPlans.find((item) => item.code === baseCode) || fallbackPlans[0];
-          const period = plan.price <= 0 || plan.durationDays <= 0
-            ? "forever"
-            : plan.durationDays >= 365
-              ? "/year"
-              : plan.durationDays === 30
-                ? "/month"
-                : `/${plan.durationDays} days`;
+          const fallback = fallbackPlans.find((item) => item.code.replace(/_YEARLY$/, "") === baseCode) || fallbackPlans[0];
+          const period = plan.price <= 0 ? "30 days" : "/year";
 
           return {
             ...fallback,
-            code: baseCode,
+            code: plan.code,
             name: plan.name,
             price: String(plan.price ?? 0),
             originalPrice: plan.originalPrice ? String(plan.originalPrice) : undefined,
@@ -647,7 +645,7 @@ function PricingSection() {
             <span className="gradient-text">Physics Future</span>
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            Affordable plans designed for Indian students, with monthly and yearly access controlled from admin.
+            Affordable yearly plans designed for Indian students, with a monthly equivalent shown for easy comparison.
           </p>
         </div>
 
@@ -685,6 +683,12 @@ function PricingSection() {
                 <span className="text-text-muted text-sm ml-1">
                   {plan.period}
                 </span>
+                {plan.price !== "0" && (
+                  <p className="mt-2 text-sm font-bold text-accent">Only Rs {monthlyEquivalent(plan.price)}/month</p>
+                )}
+                {plan.price === "0" && (
+                  <p className="mt-2 text-sm font-bold text-accent">30-day free trial, then yearly subscription</p>
+                )}
                 {plan.isFreeOfferActive && <FreeOfferCountdown until={plan.freeOfferUntil} />}
               </div>
 

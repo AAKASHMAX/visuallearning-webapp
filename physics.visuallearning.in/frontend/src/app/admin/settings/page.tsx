@@ -17,8 +17,6 @@ export default function AdminSettingsPage() {
   const [address, setAddress] = useState("");
 
   // Plan prices
-  const [basicPrice, setBasicPrice] = useState(299);
-  const [advancePrice, setAdvancePrice] = useState(499);
   const [basicYearlyPrice, setBasicYearlyPrice] = useState(2499);
   const [advanceYearlyPrice, setAdvanceYearlyPrice] = useState(3999);
 
@@ -32,8 +30,6 @@ export default function AdminSettingsPage() {
       }
       if (res.data.plans_config) {
         const plans = res.data.plans_config;
-        if (plans.BASIC) setBasicPrice(plans.BASIC.price || 299);
-        if (plans.ADVANCE) setAdvancePrice(plans.ADVANCE.price || 499);
         if (plans.BASIC_YEARLY) setBasicYearlyPrice(plans.BASIC_YEARLY?.price || 2499);
         if (plans.ADVANCE_YEARLY) setAdvanceYearlyPrice(plans.ADVANCE_YEARLY?.price || 3999);
       }
@@ -53,8 +49,6 @@ export default function AdminSettingsPage() {
       await api.put("/admin/settings", {
         key: "plans_config",
         value: {
-          BASIC: { name: "Basic", price: basicPrice, duration: 30, features: ["All animated videos", "Complete notes", "MCQ quizzes", "Progress tracking"] },
-          ADVANCE: { name: "Advance", price: advancePrice, duration: 30, features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board papers", "Priority support"] },
           BASIC_YEARLY: { name: "Basic Yearly", price: basicYearlyPrice, duration: 365, features: ["All Basic features", "1 year access", "Save 30%"] },
           ADVANCE_YEARLY: { name: "Advance Yearly", price: advanceYearlyPrice, duration: 365, features: ["All Advance features", "1 year access", "Save 33%"] },
         },
@@ -107,14 +101,6 @@ export default function AdminSettingsPage() {
             Plan Pricing (in Rupees)
           </h3>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-text-muted mb-1">Basic Monthly</label>
-              <Input type="number" value={basicPrice} onChange={(e) => setBasicPrice(parseInt(e.target.value) || 0)} />
-            </div>
-            <div>
-              <label className="block text-sm text-text-muted mb-1">Advance Monthly</label>
-              <Input type="number" value={advancePrice} onChange={(e) => setAdvancePrice(parseInt(e.target.value) || 0)} />
-            </div>
             <div>
               <label className="block text-sm text-text-muted mb-1">Basic Yearly</label>
               <Input type="number" value={basicYearlyPrice} onChange={(e) => setBasicYearlyPrice(parseInt(e.target.value) || 0)} />

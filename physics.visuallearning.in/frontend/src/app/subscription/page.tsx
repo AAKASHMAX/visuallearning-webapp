@@ -29,6 +29,7 @@ interface PlanItem {
   isFreeOfferActive?: boolean;
   freeOfferUntil?: string | null;
   durationDays: number;
+  accessDurationDays?: number;
   features: string[];
   courses?: { id: string; name: string; tier: string }[];
 }
@@ -55,17 +56,19 @@ function loadRazorpayScript() {
 }
 
 function planPeriod(durationDays: number, price: number) {
-  if (price <= 0 || durationDays <= 0) return "Free access";
-  if (durationDays >= 365) return "per year";
-  if (durationDays === 30) return "per month";
-  return `${durationDays} days access`;
+  if (price <= 0) return "30-day free trial";
+  return "per year";
 }
 
-function accessPeriod(durationDays: number) {
+function accessPeriod(durationDays: number, price: number) {
+  if (price <= 0) return "30 days free access";
   if (durationDays >= 365) return `${Math.round(durationDays / 365)} year access`;
-  if (durationDays === 30) return "30 days monthly access";
   if (durationDays > 0) return `${durationDays} days access`;
-  return "Free access";
+  return "Yearly access";
+}
+
+function monthlyEquivalent(yearlyPrice: number) {
+  return Math.round(yearlyPrice / 12).toLocaleString("en-IN");
 }
 
 function formatDate(date: Date) {
@@ -104,12 +107,11 @@ function SubscriptionContent() {
         setSubscription(subRes.data);
         setRazorpayKeyId(paymentConfigRes.data?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
 
-        const requestedPlan = requestedPlanParam?.toUpperCase();
-        const requestedBilling = searchParams.get("billing") === "yearly" ? "yearly" : "monthly";
+        const requestedPlan = requestedPlanParam?.toUpperCase().replace(/-/g, "_");
         const requestedBasePlan = requestedPlan?.replace(/_YEARLY$/, "");
-        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
-          || activePlans.find((plan: PlanItem) => requestedBilling === "yearly" && plan.code === `${requestedBasePlan}_YEARLY`)
-          || activePlans.find((plan: PlanItem) => requestedBilling === "monthly" && (plan.code === requestedBasePlan || plan.code === `${requestedBasePlan}_MONTHLY`));
+        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === `${requestedBasePlan}_YEARLY`)
+          || activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
+          || activePlans.find((plan: PlanItem) => plan.code.replace(/_YEARLY$/, "") === requestedBasePlan);
         setSelectedPlan(matchingPlan?.code || "");
       } catch {
         toast.error("Failed to load subscription plans");
@@ -127,12 +129,13 @@ function SubscriptionContent() {
     if (!selected) return 0;
     return Math.max(0, Math.round(selected.price * (1 - discountPercent / 100)));
   }, [selected, discountPercent]);
+  const selectedAccessDays = selected ? (discountedPrice <= 0 ? 30 : selected.accessDurationDays || selected.durationDays || 365) : 0;
   const accessDates = useMemo(() => {
     const start = new Date();
     const end = new Date(start);
-    end.setDate(start.getDate() + Math.max(selected?.durationDays || 0, 0));
+    end.setDate(start.getDate() + Math.max(selectedAccessDays, 0));
     return { start, end };
-  }, [selected?.code, selected?.durationDays]);
+  }, [selected?.code, selectedAccessDays]);
   const courseNames = selected?.courses?.length
     ? selected.courses.map((course) => course.name).join(", ")
     : selected?.name || "Selected course";
@@ -302,12 +305,15 @@ function SubscriptionContent() {
                             <FreePriceHighlight size="md" />
                           )}
                           <span className="ml-2 text-sm text-text-muted">{planPeriod(selected.durationDays, selected.price)}</span>
+                          {selected.price > 0 && (
+                            <p className="mt-1 text-sm font-bold text-accent">Only Rs {monthlyEquivalent(selected.price)}/month</p>
+                          )}
                           {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} />}
                         </div>
                       </div>
                       <div className="rounded-2xl border border-border bg-surface/60 p-5">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Time Period</p>
-                        <p className="mt-2 text-lg font-bold text-text-bright">{accessPeriod(selected.durationDays)}</p>
+                        <p className="mt-2 text-lg font-bold text-text-bright">{accessPeriod(selectedAccessDays, discountedPrice)}</p>
                       </div>
                       <div className="rounded-2xl border border-border bg-surface/60 p-5">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Start & End Date</p>
@@ -370,6 +376,9 @@ function SubscriptionContent() {
                           <div className={`text-right ${discountedPrice > 0 ? "text-2xl font-black text-text-bright" : ""}`}>
                             {discountedPrice > 0 ? <>&#8377;{discountedPrice.toLocaleString("en-IN")}</> : <FreePriceHighlight size="sm" />}
                           </div>
+                          {discountedPrice > 0 && (
+                            <p className="mt-1 text-right text-xs font-semibold text-accent">Rs {monthlyEquivalent(discountedPrice)}/month</p>
+                          )}
                           {discountedPrice <= 0 && (
                             <p className="mt-1 text-right text-xs font-semibold text-accent">Razorpay checkout: &#8377;1</p>
                           )}

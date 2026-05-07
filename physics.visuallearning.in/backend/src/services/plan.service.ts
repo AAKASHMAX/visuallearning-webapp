@@ -1,62 +1,35 @@
 import { PrismaClient } from "@prisma/client";
 
+export const FREE_TRIAL_DURATION_DAYS = 30;
+export const YEARLY_PLAN_DURATION_DAYS = 365;
+
 export const defaultPlanSeeds = [
-  {
-    code: "BRIDGE",
-    name: "Physics Bridge Course",
-    description: "Strengthen core physics concepts before advanced chapters.",
-    price: 999,
-    durationDays: 30,
-    displayOrder: 1,
-    tier: "BRIDGE",
-    features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
-  },
   {
     code: "BRIDGE_YEARLY",
     name: "Physics Bridge Course",
     description: "Strengthen core physics concepts before advanced chapters.",
     price: 9990,
-    durationDays: 365,
+    durationDays: YEARLY_PLAN_DURATION_DAYS,
     displayOrder: 1,
     tier: "BRIDGE",
     features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
-  },
-  {
-    code: "BASIC",
-    name: "Basic Course",
-    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
-    price: 299,
-    durationDays: 30,
-    displayOrder: 2,
-    tier: "BASIC",
-    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
   },
   {
     code: "BASIC_YEARLY",
     name: "Basic Course",
     description: "Complete animated lessons, notes, and quizzes for foundation physics.",
     price: 2990,
-    durationDays: 365,
+    durationDays: YEARLY_PLAN_DURATION_DAYS,
     displayOrder: 2,
     tier: "BASIC",
     features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
-  },
-  {
-    code: "ADVANCE",
-    name: "Advance Course",
-    description: "Advanced physics learning with expert lectures and virtual labs.",
-    price: 499,
-    durationDays: 30,
-    displayOrder: 3,
-    tier: "ADVANCE",
-    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
   },
   {
     code: "ADVANCE_YEARLY",
     name: "Advance Course",
     description: "Advanced physics learning with expert lectures and virtual labs.",
     price: 4990,
-    durationDays: 365,
+    durationDays: YEARLY_PLAN_DURATION_DAYS,
     displayOrder: 3,
     tier: "ADVANCE",
     features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
@@ -64,8 +37,6 @@ export const defaultPlanSeeds = [
 ];
 
 export function isFreeOfferActive(plan: { code?: string; durationDays?: number; freeOfferEnabled?: boolean; freeOfferUntil?: Date | string | null }) {
-  const isYearly = Boolean(plan.code?.endsWith("_YEARLY") || (plan.durationDays || 0) >= 365);
-  if (isYearly) return false;
   if (!plan.freeOfferEnabled) return false;
   if (!plan.freeOfferUntil) return true;
   return new Date(plan.freeOfferUntil).getTime() > Date.now();
@@ -149,7 +120,7 @@ export async function getPlanByCode(prisma: PrismaClient, code: string) {
   const baseCode = normalizedCode.replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
   const candidates = normalizedCode.endsWith("_YEARLY")
     ? [normalizedCode, `${baseCode}_YEARLY`]
-    : [normalizedCode, `${baseCode}_MONTHLY`, baseCode];
+    : [`${baseCode}_YEARLY`, normalizedCode, `${baseCode}_MONTHLY`, baseCode];
 
   for (const candidate of Array.from(new Set(candidates))) {
     const plan = await prisma.subscriptionPlan.findUnique({

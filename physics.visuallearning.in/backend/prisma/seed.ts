@@ -23,9 +23,9 @@ async function main() {
     {
       key: "plans_config",
       value: JSON.stringify({
-        FREE: { name: "Free", price: 0, duration: 0, features: ["First chapter free", "Selected animations", "Basic notes"] },
-        BASIC: { name: "Basic", price: 299, duration: 30, features: ["All animated videos", "Complete notes", "MCQ quizzes", "Progress tracking"] },
-        ADVANCE: { name: "Advance", price: 499, duration: 30, features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board papers", "Priority support"] },
+        FREE: { name: "Free Trial", price: 0, duration: 30, features: ["30-day access", "Selected animations", "Basic notes"] },
+        BASIC_YEARLY: { name: "Basic Yearly", price: 2990, duration: 365, features: ["All animated videos", "Complete notes", "MCQ quizzes", "Progress tracking"] },
+        ADVANCE_YEARLY: { name: "Advance Yearly", price: 4990, duration: 365, features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board papers", "Priority support"] },
       }),
     },
     {
