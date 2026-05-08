@@ -16,6 +16,58 @@ import {
   UsersRound,
 } from "lucide-react";
 
+type FeatureKind = "videos" | "notes" | "quiz" | "question-bank" | "ppts" | "virtual-lab" | "test-series";
+
+type FeatureItem = {
+  label: string;
+  kind: FeatureKind;
+};
+
+const featureVisuals: Record<FeatureKind, { icon: any; bg: string; glow: string; detail: string }> = {
+  videos: {
+    icon: MonitorPlay,
+    bg: "from-violet-500 via-fuchsia-500 to-pink-500",
+    glow: "shadow-fuchsia-500/25",
+    detail: "3D lessons",
+  },
+  notes: {
+    icon: FileText,
+    bg: "from-sky-500 via-cyan-500 to-blue-600",
+    glow: "shadow-sky-500/25",
+    detail: "PDF study",
+  },
+  quiz: {
+    icon: Brain,
+    bg: "from-emerald-500 via-teal-500 to-cyan-500",
+    glow: "shadow-emerald-500/25",
+    detail: "MCQ check",
+  },
+  "question-bank": {
+    icon: FileQuestion,
+    bg: "from-amber-400 via-orange-500 to-rose-500",
+    glow: "shadow-orange-500/25",
+    detail: "Practice set",
+  },
+  ppts: {
+    icon: Presentation,
+    bg: "from-indigo-500 via-blue-500 to-cyan-500",
+    glow: "shadow-indigo-500/25",
+    detail: "Slides",
+  },
+  "virtual-lab": {
+    icon: FlaskConical,
+    bg: "from-teal-500 via-emerald-500 to-lime-400",
+    glow: "shadow-teal-500/25",
+    detail: "Experiments",
+  },
+  "test-series": {
+    icon: ClipboardList,
+    bg: "from-rose-500 via-red-500 to-orange-500",
+    glow: "shadow-rose-500/25",
+    detail: "Assessment",
+  },
+};
+
 const audienceCards = [
   {
     title: "Students",
@@ -25,10 +77,10 @@ const audienceCards = [
     badge: "Class 9-12",
     accent: "from-sky-500 to-cyan-400",
     features: [
-      { label: "Videos", icon: MonitorPlay },
-      { label: "Notes", icon: FileText },
-      { label: "Quiz", icon: Brain },
-      { label: "Question Bank", icon: FileQuestion },
+      { label: "Videos", kind: "videos" },
+      { label: "Notes", kind: "notes" },
+      { label: "Quiz", kind: "quiz" },
+      { label: "Question Bank", kind: "question-bank" },
     ],
   },
   {
@@ -39,10 +91,10 @@ const audienceCards = [
     badge: "Teaching tools",
     accent: "from-emerald-500 to-lime-400",
     features: [
-      { label: "Videos", icon: MonitorPlay },
-      { label: "PPTs", icon: Presentation },
-      { label: "Test Series", icon: ClipboardList },
-      { label: "Question Bank", icon: FileQuestion },
+      { label: "Videos", kind: "videos" },
+      { label: "PPTs", kind: "ppts" },
+      { label: "Test Series", kind: "test-series" },
+      { label: "Question Bank", kind: "question-bank" },
     ],
   },
   {
@@ -53,13 +105,60 @@ const audienceCards = [
     badge: "Subject tracks",
     accent: "from-violet-500 to-fuchsia-400",
     features: [
-      { label: "Videos", icon: MonitorPlay },
-      { label: "PPTs", icon: Presentation },
-      { label: "Virtual Lab", icon: FlaskConical },
-      { label: "Test Series", icon: ClipboardList },
+      { label: "Videos", kind: "videos" },
+      { label: "PPTs", kind: "ppts" },
+      { label: "Virtual Lab", kind: "virtual-lab" },
+      { label: "Test Series", kind: "test-series" },
     ],
   },
-];
+] satisfies Array<{
+  title: string;
+  subtitle: string;
+  href: string;
+  icon: any;
+  badge: string;
+  accent: string;
+  features: FeatureItem[];
+}>;
+
+function FeatureInfographic({ feature }: { feature: FeatureItem }) {
+  const visual = featureVisuals[feature.kind];
+  const Icon = visual.icon;
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-2.5 shadow-sm transition-all group-hover:border-primary/10 group-hover:shadow-md">
+      <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br ${visual.bg} text-white shadow-lg ${visual.glow}`}>
+        <span className="absolute -right-2 -top-2 h-7 w-7 rounded-full bg-white/30" />
+        <span className="absolute bottom-1 left-1 h-2.5 w-8 rounded-full bg-black/10" />
+        {feature.kind === "videos" && (
+          <>
+            <span className="absolute left-1 top-2 h-1.5 w-1.5 rounded-sm bg-white/70" />
+            <span className="absolute left-1 bottom-2 h-1.5 w-1.5 rounded-sm bg-white/70" />
+            <span className="absolute right-1 top-2 h-1.5 w-1.5 rounded-sm bg-white/70" />
+            <span className="absolute right-1 bottom-2 h-1.5 w-1.5 rounded-sm bg-white/70" />
+          </>
+        )}
+        {feature.kind === "notes" && (
+          <span className="absolute right-2 top-2 h-5 w-4 rounded-sm bg-white/25 shadow-inner" />
+        )}
+        {feature.kind === "ppts" && (
+          <span className="absolute bottom-2 right-2 h-5 w-6 rounded-sm border border-white/50 bg-white/15" />
+        )}
+        {feature.kind === "virtual-lab" && (
+          <>
+            <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-white/65" />
+            <span className="absolute left-3 top-4 h-1.5 w-1.5 rounded-full bg-white/50" />
+          </>
+        )}
+        <Icon className="relative h-7 w-7 drop-shadow-sm" />
+      </div>
+      <div className="min-w-0">
+        <span className="block text-xs font-black leading-tight text-heading">{feature.label}</span>
+        <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-text-light">{visual.detail}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function CoursesPage() {
   return (
@@ -97,12 +196,9 @@ export default function CoursesPage() {
             <h2 className="text-2xl font-black text-heading">{card.title}</h2>
             <p className="mt-3 min-h-20 text-sm leading-6 text-text-muted">{card.subtitle}</p>
 
-            <div className="mt-6 grid grid-cols-2 gap-2.5">
+            <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {card.features.map((feature) => (
-                <div key={feature.label} className="rounded-lg border border-gray-100 bg-surface p-3 transition-colors group-hover:bg-white">
-                  <feature.icon className="mb-2 h-4 w-4 text-primary" />
-                  <span className="block text-xs font-black leading-tight text-heading">{feature.label}</span>
-                </div>
+                <FeatureInfographic key={feature.label} feature={feature} />
               ))}
             </div>
 
