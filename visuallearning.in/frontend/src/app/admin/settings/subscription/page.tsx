@@ -19,10 +19,18 @@ interface PlanConfig {
   durationYearly: number;
   enabled: boolean;
   classSelection: number;
+  unitType?: "fixed" | "class" | "subject";
+  audience?: string;
 }
 
 function getPlanTheme(key: string, label: string) {
   const k = (key + " " + label).toLowerCase();
+  if (k.includes("student"))
+    return { grad: "from-sky-500 to-cyan-600", lightBg: "from-sky-50 to-cyan-50", border: "border-sky-200", text: "text-sky-700", Icon: Star };
+  if (k.includes("teacher"))
+    return { grad: "from-emerald-500 to-lime-600", lightBg: "from-emerald-50 to-lime-50", border: "border-emerald-200", text: "text-emerald-700", Icon: Zap };
+  if (k.includes("professional"))
+    return { grad: "from-violet-500 to-fuchsia-700", lightBg: "from-violet-50 to-fuchsia-50", border: "border-violet-200", text: "text-violet-700", Icon: Crown };
   if (k.includes("single") || k.includes("foundation") || k.includes("free") || k.includes("monthly"))
     return { grad: "from-sky-500 to-blue-600", lightBg: "from-sky-50 to-blue-50", border: "border-sky-200", text: "text-sky-700", Icon: Star };
   if (k.includes("multi") || k.includes("academic") || k.includes("plus"))
@@ -41,6 +49,12 @@ function subjectTheme(name: string) {
   if (n.includes("biology"))   return { Icon: Dna,          grad: "from-rose-400 to-fuchsia-500", bg: "from-rose-50 to-pink-50",   border: "border-rose-100",   text: "text-rose-500" };
   if (n.includes("math"))      return { Icon: Calculator,   grad: "from-violet-400 to-purple-600", bg: "from-violet-50 to-purple-50", border: "border-violet-100", text: "text-violet-600" };
   return                              { Icon: Sparkles,     grad: "from-cyan-400 to-teal-500",    bg: "from-cyan-50 to-teal-50",   border: "border-cyan-100",   text: "text-cyan-600" };
+}
+
+function priceUnitText(plan: PlanConfig) {
+  if (plan.unitType === "class") return "per selected class";
+  if (plan.unitType === "subject") return "per selected subject";
+  return "fixed plan price";
 }
 
 export default function SubscriptionSettingsPage() {
@@ -232,8 +246,17 @@ export default function SubscriptionSettingsPage() {
                       <input type="text" value={plan.label} onChange={(e) => updatePlan(key, "label", e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
-                    <div className="col-span-2">
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access (0=All)</label>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Pricing Unit</label>
+                      <select value={plan.unitType || "fixed"} onChange={(e) => updatePlan(key, "unitType", e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50">
+                        <option value="fixed">Fixed plan</option>
+                        <option value="class">Per class</option>
+                        <option value="subject">Per subject</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Class Access (0=Any)</label>
                       <input type="number" min={0} value={plan.classSelection} onChange={(e) => updatePlan(key, "classSelection", parseInt(e.target.value) || 0)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
@@ -257,6 +280,7 @@ export default function SubscriptionSettingsPage() {
                         <input type="number" value={Math.round((plan.yearlyAmount || 0) / 100)} onChange={(e) => updatePlanYearlyRupees(key, parseFloat(e.target.value) || 0)}
                           className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
                       </div>
+                      <p className="mt-1 text-[10px] font-bold text-gray-400">{priceUnitText(plan)}</p>
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Yearly Dur. (days)</label>

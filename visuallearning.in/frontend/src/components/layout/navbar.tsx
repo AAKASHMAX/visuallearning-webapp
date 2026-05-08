@@ -33,6 +33,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/courses", label: "Courses" },
+    { href: "/subscription", label: "Pricing" },
     { href: "/contact", label: "Contact Us" },
     { href: "/feedback", label: "Feedback" },
   ];
@@ -40,7 +41,7 @@ export function Navbar() {
   const dashboardLinks = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/courses", label: "Courses", icon: BookOpen },
-    { href: "/subscription", label: "Subscriptions", icon: CreditCard },
+    { href: "/subscription", label: "Subscription", icon: CreditCard },
     { href: "/contact", label: "Contact Us", icon: Phone },
     { href: "/feedback", label: "Feedback", icon: MessageSquare },
     { href: "/profile", label: "Profile", icon: User },

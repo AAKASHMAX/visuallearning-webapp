@@ -599,6 +599,9 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     { key: "TELUGU", label: "Telugu" },
   ]),
   plans_config: JSON.stringify({
+    STUDENTS_PLAN:    { monthlyAmount: 0, yearlyAmount: 199900,    label: "Students",        durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "students" },
+    TEACHERS_PLAN:    { monthlyAmount: 0, yearlyAmount: 299900,    label: "Teachers",        durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "teachers" },
+    PROFESSIONAL_PLAN:{ monthlyAmount: 0, yearlyAmount: 499900,    label: "Professional",    durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "subject", audience: "professional" },
     FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
     ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
     ELITE_LEARNING:  { monthlyAmount: 159900, yearlyAmount: 1599900,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
@@ -611,6 +614,16 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     email: "visuallearning247@gmail.com",
   }),
 };
+
+const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
+  STUDENTS_PLAN: { monthlyAmount: 0, yearlyAmount: 199900, label: "Students", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "students" },
+  TEACHERS_PLAN: { monthlyAmount: 0, yearlyAmount: 299900, label: "Teachers", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "teachers" },
+  PROFESSIONAL_PLAN: { monthlyAmount: 0, yearlyAmount: 499900, label: "Professional", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "subject", audience: "professional" },
+};
+
+function mergeAudiencePlanDefaults(plans: Record<string, any>) {
+  return { ...AUDIENCE_PLAN_DEFAULTS, ...plans };
+}
 
 async function getSetting(key: string): Promise<string> {
   const setting = await prisma.setting.findUnique({ where: { key } });
@@ -627,7 +640,7 @@ export async function getSettings(_req: Request, res: Response) {
 
     return success(res, {
       enabledLanguages: JSON.parse(enabledLanguages),
-      plansConfig: JSON.parse(plansConfig),
+      plansConfig: mergeAudiencePlanDefaults(JSON.parse(plansConfig)),
       contactInfo: JSON.parse(contactInfo),
     });
   } catch (e) {
@@ -718,7 +731,7 @@ export async function getPublicSettings(_req: Request, res: Response) {
       typeof l === "string" ? { key: l, label: l.charAt(0) + l.slice(1).toLowerCase() } : l
     );
 
-    const plans = JSON.parse(plansConfig);
+    const plans = mergeAudiencePlanDefaults(JSON.parse(plansConfig));
 
     // Only return enabled plans to the public
     const enabledPlans = Object.entries(plans)

@@ -1,185 +1,171 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, BadgeCheck, Calendar, CheckCircle2, ShieldCheck, Sparkles, Star, Tag, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  BadgeCheck,
+  BookOpen,
+  BriefcaseBusiness,
+  CheckCircle2,
+  GraduationCap,
+  IndianRupee,
+  ShieldCheck,
+  Sparkles,
+  Tag,
+  UsersRound,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
+import { cn } from "@/lib/utils";
 
-type BillingCycle = "monthly" | "yearly";
+type AudiencePlanId = "STUDENTS_PLAN" | "TEACHERS_PLAN" | "PROFESSIONAL_PLAN";
+type SubjectKey = "physics" | "chemistry" | "biology";
 
 type Plan = {
   id: string;
   name: string;
-  monthlyPrice?: number;
   yearlyPrice?: number;
+  durationYearly?: number;
   features?: string[];
-  popular?: boolean;
+  unitType?: "fixed" | "class" | "subject";
 };
 
-type SubjectInfo = {
+type ClassInfo = {
   id: string;
   name: string;
-  price: number;
 };
 
-const PLAN_METADATA: Record<string, { bgColor: string; accentColor: string; badge?: string; included: string[] }> = {
-  FOUNDATION_PASS: {
-    bgColor: "#1C4D8D",
-    accentColor: "#60A5FA",
-    included: ["Selected chapters for Classes 9-12", "Animated concept videos", "Progress tracking", "Mobile and desktop access"],
+const audienceOrder: AudiencePlanId[] = ["STUDENTS_PLAN", "TEACHERS_PLAN", "PROFESSIONAL_PLAN"];
+
+const planVisuals: Record<AudiencePlanId, { title: string; subtitle: string; icon: any; accent: string; unit: string; empty: string }> = {
+  STUDENTS_PLAN: {
+    title: "Students",
+    subtitle: "Choose one or more classes and unlock student learning resources.",
+    icon: GraduationCap,
+    accent: "from-sky-500 to-cyan-400",
+    unit: "per class",
+    empty: "Select at least one class to continue.",
   },
-  ACADEMIC_PLUS: {
-    bgColor: "#162855",
-    accentColor: "#38BDF8",
-    included: ["Full Class 9-10 PCB", "Selected senior science chapters", "Chapter notes", "MCQ quizzes with solutions", "Performance analytics"],
+  TEACHERS_PLAN: {
+    title: "Teachers",
+    subtitle: "Choose classes for teaching resources, PPTs, tests, and question practice.",
+    icon: UsersRound,
+    accent: "from-emerald-500 to-lime-400",
+    unit: "per class",
+    empty: "Select at least one class to continue.",
   },
-  ELITE_LEARNING: {
-    bgColor: "#2d1654",
-    accentColor: "#D8B4FE",
-    badge: "Most Popular",
-    included: ["Full Class 9-12 science access", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Priority support"],
-  },
-  CLASS_9: {
-    bgColor: "#1e3a8a",
-    accentColor: "#93c5fd",
-    included: ["Full Class 9 curriculum", "3D animated videos", "Virtual labs and simulations", "Chapter notes", "Expert support"],
-  },
-  CLASS_10: {
-    bgColor: "#1e1b4b",
-    accentColor: "#c084fc",
-    included: ["Full Class 10 curriculum", "3D animated videos", "Virtual labs and simulations", "Board exam prep", "Chapter notes"],
-  },
-  CLASS_11: {
-    bgColor: "#312e81",
-    accentColor: "#818cf8",
-    included: ["Full Class 11 curriculum", "Advanced 3D visuals", "Complex simulations", "Formula sheets", "Priority support"],
-  },
-  CLASS_12: {
-    bgColor: "#4c1d95",
-    accentColor: "#ddd6fe",
-    included: ["Full Class 12 curriculum", "Advanced 3D visuals", "Board and competitive prep", "Formula sheets", "Priority support"],
-  },
-  FLEXI_PLAN: {
-    bgColor: "#170C79",
-    accentColor: "#818CF8",
-    badge: "Custom Plan",
-    included: ["Choose your own subjects", "3D animated videos", "Chapter notes", "MCQ quizzes", "Flexible pricing"],
+  PROFESSIONAL_PLAN: {
+    title: "Professional",
+    subtitle: "Choose one or more professional subject tracks.",
+    icon: BriefcaseBusiness,
+    accent: "from-violet-500 to-fuchsia-400",
+    unit: "per subject",
+    empty: "Select at least one subject to continue.",
   },
 };
 
-function normalizePlanParam(planParam: string) {
-  const direct = planParam.toUpperCase().replace(/-/g, "_");
-  const slugMap: Record<string, string> = {
-    "foundation-pass": "FOUNDATION_PASS",
-    "academic-plus": "ACADEMIC_PLUS",
-    "elite-learning": "ELITE_LEARNING",
-    "class-9": "CLASS_9",
-    "class-10": "CLASS_10",
-    "class-11": "CLASS_11",
-    "class-12": "CLASS_12",
-    "flexi-plan": "FLEXI_PLAN",
-  };
+const professionalSubjects = [
+  { key: "physics" as SubjectKey, name: "Physics", detail: "Basic to Advanced" },
+  { key: "chemistry" as SubjectKey, name: "Chemistry", detail: "Basic to Advanced" },
+  { key: "biology" as SubjectKey, name: "Biology", detail: "Basic" },
+];
 
-  return slugMap[planParam.toLowerCase()] || direct;
-}
-
-function findPlan(plans: Plan[], planParam: string) {
-  const normalized = normalizePlanParam(planParam);
-  return plans.find((plan) => plan.id === normalized)
-    || plans.find((plan) => plan.id.toLowerCase() === planParam.toLowerCase())
-    || null;
+function normalizeAudiencePlan(planParam: string | null): AudiencePlanId {
+  const value = (planParam || "").toLowerCase();
+  if (value.includes("teacher")) return "TEACHERS_PLAN";
+  if (value.includes("professional")) return "PROFESSIONAL_PLAN";
+  return "STUDENTS_PLAN";
 }
 
 function formatPrice(amount: number) {
-  return amount === 0 ? "FREE" : `\u20B9${amount.toLocaleString("en-IN")}`;
+  return amount <= 0 ? "FREE" : `\u20B9${amount.toLocaleString("en-IN")}`;
+}
+
+function isTargetClass(name: string) {
+  const normalized = name.toLowerCase();
+  return ["9", "10", "11", "12"].some((item) => normalized.includes(item));
 }
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const planParam = searchParams.get("plan") ?? "";
-  const billingCycle = (searchParams.get("billing") === "yearly" ? "yearly" : "monthly") as BillingCycle;
-  const subjectIds = (searchParams.get("subjects") ?? "").split(",").filter(Boolean);
-
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<AudiencePlanId>(() => normalizeAudiencePlan(searchParams.get("plan")));
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [selectedSubjectKeys, setSelectedSubjectKeys] = useState<SubjectKey[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
-  if (!planParam) {
-    redirect("/courses");
-  }
-
-  const plan = findPlan(plans, planParam);
-  const planKey = plan?.id || normalizePlanParam(planParam);
-  const isFlexi = planKey === "FLEXI_PLAN";
-  const meta = PLAN_METADATA[planKey] || PLAN_METADATA.FOUNDATION_PASS;
-
   useEffect(() => {
     let mounted = true;
 
-    async function loadBillingData() {
+    async function loadData() {
       setLoading(true);
       try {
         const { data } = await api.get("/subscription/plans");
-        const fetchedPlans = data.data.plans ?? data.data;
         if (!mounted) return;
-        setPlans(fetchedPlans);
-
-        if (normalizePlanParam(planParam) === "FLEXI_PLAN" && subjectIds.length > 0) {
-          const pricing = await api.get("/courses/pricing/subjects");
-          if (!mounted) return;
-          const classes = pricing.data.data ?? [];
-          const flatSubjects = classes.flatMap((classItem: any) => classItem.subjects ?? []);
-          setSubjects(flatSubjects.filter((subject: SubjectInfo) => subjectIds.includes(subject.id)));
-        }
+        setPlans(data.data?.plans || []);
+        setClasses(((data.data?.classes || []) as ClassInfo[]).filter((item) => isTargetClass(item.name)));
       } catch {
-        toast.error("Failed to load billing details");
+        toast.error("Failed to load subscription plans");
       } finally {
         if (mounted) setLoading(false);
       }
     }
 
-    loadBillingData();
+    loadData();
     return () => { mounted = false; };
-  }, [planParam, subjectIds.join(",")]);
+  }, []);
 
-  const basePrice = useMemo(() => {
-    if (isFlexi) {
-      const yearlyTotal = subjects.reduce((sum, subject) => sum + (subject.price || 0), 0);
-      return billingCycle === "monthly" ? Math.round(yearlyTotal / 10) : yearlyTotal;
-    }
+  const audiencePlans = useMemo(
+    () => audienceOrder.map((id) => plans.find((plan) => plan.id === id)).filter(Boolean) as Plan[],
+    [plans]
+  );
 
-    return billingCycle === "monthly"
-      ? plan?.monthlyPrice ?? 0
-      : plan?.yearlyPrice ?? 0;
-  }, [billingCycle, isFlexi, plan, subjects]);
+  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
+  const selectedCount = selectedPlanId === "PROFESSIONAL_PLAN" ? selectedSubjectKeys.length : selectedClassIds.length;
+  const unitPrice = selectedPlan?.yearlyPrice || 0;
+  const basePrice = unitPrice * selectedCount;
+  const discountedPrice = couponApplied ? Math.round(basePrice * (1 - couponDiscount / 100)) : basePrice;
+  const selectedVisual = planVisuals[selectedPlanId];
+  const canPay = !!selectedPlan && selectedCount > 0;
 
-  const discountedPrice = couponApplied
-    ? Math.round(basePrice * (1 - couponDiscount / 100))
-    : basePrice;
+  const toggleClass = (id: string) => {
+    setCouponApplied(false);
+    setSelectedClassIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  };
 
-  const billingLabel = billingCycle === "monthly" ? "Monthly billing" : "Yearly billing";
-  const planName = plan?.name || (isFlexi ? "FlexiLearn Plan" : planParam.replace(/-/g, " "));
-  const featureList = meta.included.length ? meta.included : plan?.features ?? [];
+  const toggleSubject = (key: SubjectKey) => {
+    setCouponApplied(false);
+    setSelectedSubjectKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+  };
+
+  const choosePlan = (planId: AudiencePlanId) => {
+    setSelectedPlanId(planId);
+    setCouponApplied(false);
+  };
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error("Enter a coupon code");
       return;
     }
+    if (basePrice <= 0) {
+      toast.error("Select a paid plan first");
+      return;
+    }
 
     setValidatingCoupon(true);
     try {
-      const { data } = await api.get(`/subscription/validate-coupon?code=${couponCode.trim()}&plan=${planKey}`);
+      const { data } = await api.get(`/subscription/validate-coupon?code=${couponCode.trim()}&plan=${selectedPlanId}`);
       if (data.data.valid) {
         setCouponApplied(true);
         setCouponDiscount(data.data.discountPercent);
@@ -198,105 +184,158 @@ export default function SubscriptionPage() {
   if (loading) return <PageLoader />;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      <div className="max-w-5xl mx-auto px-4 pt-6">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-sm font-bold text-text-muted hover:text-heading transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-primary shadow-sm">
+          <Sparkles className="h-4 w-4" />
+          Pricing
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl">Choose Your Subscription</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">
+          Select Students, Teachers, or Professional, then choose the classes or subjects you need. Total pricing updates automatically.
+        </p>
       </div>
 
-      <section className="relative overflow-hidden mt-4" style={{ background: `linear-gradient(135deg, ${meta.bgColor}, ${meta.bgColor}dd)` }}>
-        <div className="absolute inset-0 bg-grid-dark opacity-25 pointer-events-none" />
-        <div className="absolute -right-10 -top-10 h-72 w-72 rounded-full blur-[100px] opacity-25" style={{ backgroundColor: meta.accentColor }} />
-        <div className="relative z-10 max-w-5xl mx-auto px-4 py-10 text-white">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              {(meta.badge || plan?.popular) && (
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/15 px-4 py-1 text-xs font-black uppercase tracking-widest">
-                  <Sparkles className="h-3.5 w-3.5" /> {meta.badge || "Popular"}
-                </span>
+      <div className="grid gap-5 lg:grid-cols-3">
+        {audiencePlans.map((plan) => {
+          const id = plan.id as AudiencePlanId;
+          const visual = planVisuals[id];
+          const Icon = visual.icon;
+          const selected = selectedPlanId === id;
+
+          return (
+            <button
+              key={plan.id}
+              type="button"
+              onClick={() => choosePlan(id)}
+              className={cn(
+                "group relative overflow-hidden rounded-lg border bg-white p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10",
+                selected ? "border-primary ring-2 ring-primary/10" : "border-gray-200 hover:border-primary/30"
               )}
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight capitalize">{planName}</h1>
-              <p className="mt-2 max-w-2xl text-sm font-semibold text-white/65">Review your plan, apply a coupon if you have one, and continue to secure payment.</p>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-right backdrop-blur-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-white/50">{billingLabel}</p>
-              <p className="mt-1 text-4xl font-black">{formatPrice(discountedPrice)}</p>
-              <p className="text-xs font-bold text-white/45">/{billingCycle === "monthly" ? "month" : "year"}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-5xl mx-auto px-4 pt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <main className="lg:col-span-2 space-y-6">
-          {isFlexi && (
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-black text-heading">Selected Subjects</h2>
-              <p className="mt-1 text-xs font-bold text-text-muted">{subjects.length} subject{subjects.length === 1 ? "" : "s"} included in this custom plan.</p>
-              <div className="mt-5 space-y-3">
-                {subjects.length > 0 ? subjects.map((subject) => (
-                  <div key={subject.id} className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <span className="text-sm font-black text-heading">{subject.name}</span>
-                    <span className="text-sm font-black text-primary">{formatPrice(subject.price)}</span>
-                  </div>
-                )) : (
-                  <p className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm font-bold text-text-muted">No subjects selected for this custom plan.</p>
-                )}
+            >
+              <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${visual.accent}`} />
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
+                  <Icon className="h-7 w-7" />
+                </div>
+                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-[11px] font-black uppercase tracking-wider text-text-muted">
+                  {visual.unit}
+                </span>
               </div>
-            </section>
-          )}
+              <h2 className="text-2xl font-black text-heading">{visual.title}</h2>
+              <p className="mt-2 min-h-14 text-sm leading-6 text-text-muted">{visual.subtitle}</p>
+              <div className="mt-5 flex items-end gap-2">
+                <span className="text-3xl font-black text-heading">{formatPrice(plan.yearlyPrice || 0)}</span>
+                <span className="pb-1 text-xs font-black uppercase tracking-wider text-text-light">/ year</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="flex items-center gap-2 text-lg font-black text-heading">
-              <BadgeCheck className="h-5 w-5 text-primary" /> Plan Details
-            </h2>
-            <ul className="mt-5 space-y-2">
-              {featureList.map((feature, index) => (
-                <li key={index} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="text-[13px] font-semibold text-heading">{feature}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_23rem]">
+        <main className="space-y-6">
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-heading">
+                  {selectedPlanId === "PROFESSIONAL_PLAN" ? "Choose Subjects" : "Choose Classes"}
+                </h2>
+                <p className="mt-1 text-sm text-text-muted">{selectedVisual.empty}</p>
+              </div>
+              <div className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary sm:block">
+                {selectedCount} selected
+              </div>
+            </div>
+
+            {selectedPlanId === "PROFESSIONAL_PLAN" ? (
+              <div className="grid gap-4 md:grid-cols-3">
+                {professionalSubjects.map((subject) => {
+                  const selected = selectedSubjectKeys.includes(subject.key);
+                  return (
+                    <button
+                      key={subject.key}
+                      type="button"
+                      onClick={() => toggleSubject(subject.key)}
+                      className={cn(
+                        "rounded-lg border p-4 text-left transition-all",
+                        selected ? "border-primary bg-primary/5 ring-2 ring-primary/10" : "border-gray-200 bg-surface hover:border-primary/30 hover:bg-white"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary shadow-sm">
+                          <BookOpen className="h-5 w-5" />
+                        </div>
+                        {selected && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                      </div>
+                      <h3 className="mt-4 text-lg font-black text-heading">{subject.name}</h3>
+                      <p className="mt-1 text-sm text-text-muted">{subject.detail}</p>
+                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / year</p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {classes.map((classItem) => {
+                  const selected = selectedClassIds.includes(classItem.id);
+                  return (
+                    <button
+                      key={classItem.id}
+                      type="button"
+                      onClick={() => toggleClass(classItem.id)}
+                      className={cn(
+                        "rounded-lg border p-4 text-left transition-all",
+                        selected ? "border-primary bg-primary/5 ring-2 ring-primary/10" : "border-gray-200 bg-surface hover:border-primary/30 hover:bg-white"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary shadow-sm">
+                          <GraduationCap className="h-5 w-5" />
+                        </div>
+                        {selected && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                      </div>
+                      <h3 className="mt-4 text-lg font-black text-heading">{classItem.name}</h3>
+                      <p className="mt-1 text-sm text-text-muted">Full class resource access</p>
+                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / year</p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-base font-black text-heading">Why VisualLearning?</h2>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {[
-                "Expert-crafted 3D animations",
-                "NCERT and board exam aligned",
-                "Learn at your own pace",
-                "Secure Razorpay checkout",
-              ].map((text) => (
-                <div key={text} className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
-                  <Star className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="text-[12px] font-semibold text-heading">{text}</span>
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-lg font-black text-heading">
+              <BadgeCheck className="h-5 w-5 text-primary" />
+              Included Features
+            </h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(selectedPlan?.features || []).map((feature) => (
+                <div key={feature} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-surface px-3 py-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  <span className="text-sm font-bold text-heading">{feature}</span>
                 </div>
               ))}
             </div>
           </section>
         </main>
 
-        <aside className="lg:col-span-1">
-          <div className="sticky top-24 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-            <div className="border-b border-gray-100 px-5 py-4" style={{ backgroundColor: `${meta.accentColor}12` }}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">Order Summary</p>
-              <h3 className="mt-1 text-lg font-black text-heading">{planName}</h3>
+        <aside>
+          <div className="sticky top-24 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+            <div className={`bg-gradient-to-r ${selectedVisual.accent} px-5 py-4 text-white`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Order Summary</p>
+              <h3 className="mt-1 text-xl font-black">{selectedVisual.title}</h3>
             </div>
-
             <div className="space-y-5 p-5">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm font-bold text-text-muted">
-                  <span>{billingLabel}</span>
+                  <span>{formatPrice(unitPrice)} x {selectedCount}</span>
                   <span className="text-heading">{formatPrice(basePrice)}</span>
                 </div>
                 {couponApplied && (
                   <div className="flex justify-between text-sm font-bold text-emerald-600">
-                    <span>Discount</span>
+                    <span>Coupon discount</span>
                     <span>- {formatPrice(basePrice - discountedPrice)}</span>
                   </div>
                 )}
@@ -317,48 +356,48 @@ export default function SubscriptionPage() {
                     onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
                     placeholder="ENTER CODE"
                     disabled={couponApplied}
-                    className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold focus:border-primary focus:outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold focus:border-primary focus:outline-none"
                   />
                   {couponApplied ? (
-                    <button onClick={() => { setCouponApplied(false); setCouponCode(""); }} className="rounded-xl px-2 text-rose-500 hover:bg-rose-50">
+                    <button onClick={() => { setCouponApplied(false); setCouponCode(""); }} className="rounded-lg px-2 text-rose-500 hover:bg-rose-50">
                       <X className="h-4 w-4" />
                     </button>
                   ) : (
-                    <button onClick={applyCoupon} disabled={validatingCoupon} className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-white">
+                    <button onClick={applyCoupon} disabled={validatingCoupon || !canPay} className="rounded-lg bg-primary px-4 py-2 text-xs font-black text-white disabled:opacity-50">
                       {validatingCoupon ? "..." : "Apply"}
                     </button>
                   )}
                 </div>
               </div>
 
-              {plan ? (
+              {canPay ? (
                 <RazorpayButton
-                  plan={plan.id}
+                  plan={selectedPlanId}
                   amount={discountedPrice}
-                  label={planName}
-                  subjectsAccess={isFlexi ? subjectIds : undefined}
+                  label={selectedVisual.title}
+                  classesAccess={selectedPlanId === "PROFESSIONAL_PLAN" ? undefined : selectedClassIds}
+                  subjectsAccess={selectedPlanId === "PROFESSIONAL_PLAN" ? selectedSubjectKeys : undefined}
                   couponCode={couponApplied ? couponCode : undefined}
-                  billingCycle={billingCycle}
+                  billingCycle="yearly"
                   onSuccess={() => router.push("/dashboard")}
                   buttonLabel={`Pay ${formatPrice(discountedPrice)}`}
-                  className="w-full rounded-xl bg-primary py-4 text-sm font-black text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98]"
+                  className="w-full rounded-lg bg-primary py-4 text-sm font-black text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98]"
                 />
               ) : (
-                <div className="space-y-3">
-                  <Button disabled className="w-full opacity-50">Plan not available</Button>
-                  <Link href="/courses" className="block text-center text-xs font-bold text-primary hover:underline">
-                    Compare all courses
-                  </Link>
-                </div>
+                <Button disabled className="w-full rounded-lg py-4 opacity-60">
+                  Select items to continue
+                </Button>
               )}
 
-              <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-text-muted">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                Secured by Razorpay
-              </div>
-              <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-text-muted">
-                <Calendar className="h-3.5 w-3.5 text-primary" />
-                Access starts after payment confirmation
+              <div className="rounded-lg border border-gray-100 bg-surface p-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  Secured by Razorpay
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs font-bold text-text-muted">
+                  <IndianRupee className="h-4 w-4 text-primary" />
+                  Admin-controlled yearly pricing
+                </div>
               </div>
             </div>
           </div>

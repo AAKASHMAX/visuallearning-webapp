@@ -137,7 +137,7 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
 
     let hasAccess = false;
 
-    if (sub.plan === "FLEXI_PLAN" && subjectsAccess.length > 0) {
+    if (subjectsAccess.length > 0) {
       hasAccess = subjectId ? subjectsAccess.includes(subjectId) : classesAccess.includes(classId);
     } else if (sub.courseId && chapterId) {
       const courseChapter = await prisma.courseChapter.findUnique({

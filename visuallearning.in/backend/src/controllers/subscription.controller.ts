@@ -25,8 +25,75 @@ export const verifyPaymentSchema = z.object({
   billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
 });
 
+const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
+  STUDENTS_PLAN: {
+    monthlyAmount: 0,
+    yearlyAmount: 199900,
+    label: "Students",
+    durationMonthly: 30,
+    durationYearly: 365,
+    enabled: true,
+    classSelection: 0,
+    unitType: "class",
+    audience: "students",
+  },
+  TEACHERS_PLAN: {
+    monthlyAmount: 0,
+    yearlyAmount: 299900,
+    label: "Teachers",
+    durationMonthly: 30,
+    durationYearly: 365,
+    enabled: true,
+    classSelection: 0,
+    unitType: "class",
+    audience: "teachers",
+  },
+  PROFESSIONAL_PLAN: {
+    monthlyAmount: 0,
+    yearlyAmount: 499900,
+    label: "Professional",
+    durationMonthly: 30,
+    durationYearly: 365,
+    enabled: true,
+    classSelection: 0,
+    unitType: "subject",
+    audience: "professional",
+  },
+};
+
+function mergeAudiencePlanDefaults(plans: Record<string, any>) {
+  return { ...AUDIENCE_PLAN_DEFAULTS, ...plans };
+}
+
+function isAudiencePlan(planKey: string) {
+  return planKey === "STUDENTS_PLAN" || planKey === "TEACHERS_PLAN" || planKey === "PROFESSIONAL_PLAN";
+}
+
+function normalizeSubjectKeys(items: string[] = []) {
+  const allowed = ["physics", "chemistry", "biology"];
+  return Array.from(new Set(items.map((item) => item.toLowerCase()).filter((item) => allowed.includes(item))));
+}
+
+async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
+  const keys = normalizeSubjectKeys(subjectKeys);
+  if (keys.length === 0) return { subjectIds: [], classIds: [] };
+
+  const subjects = await prisma.subject.findMany({
+    where: {
+      OR: keys.map((key) => ({ name: { contains: key, mode: "insensitive" } })),
+      enabled: true,
+    },
+    select: { id: true, classId: true },
+  });
+
+  return {
+    subjectIds: subjects.map((subject) => subject.id),
+    classIds: Array.from(new Set(subjects.map((subject) => subject.classId))),
+  };
+}
+
 // Helper: get plan config from settings DB, fallback to hardcoded config
-async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number }> {
+async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
   // 1. Check Course table first for price updates from admin panel
   const course = await prisma.course.findFirst({ where: { planKey } });
   
@@ -34,12 +101,14 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
   let plans: Record<string, any> = {};
   if (setting) {
-    plans = JSON.parse(setting.value);
+    plans = mergeAudiencePlanDefaults(JSON.parse(setting.value));
+  } else {
+    plans = mergeAudiencePlanDefaults({});
   }
 
   const configFromSetting = plans[planKey];
 
-  if (course) {
+  if (course && !isAudiencePlan(planKey)) {
     // If course price exists, calculate monthly arbitrarily (price/10) if monthly is requested
     const basePrice = (course as any).price || 0;
     const amount = billingCycle === "monthly" ? Math.round(basePrice * 100 / 10) : basePrice * 100;
@@ -47,7 +116,8 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
       amount,
       duration: billingCycle === "monthly" ? (configFromSetting?.durationMonthly || 30) : (configFromSetting?.durationYearly || 365),
       label: course.name,
-      classSelection: configFromSetting?.classSelection || 0
+      classSelection: configFromSetting?.classSelection || 0,
+      unitType: configFromSetting?.unitType || "fixed",
     };
   }
 
@@ -57,7 +127,8 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
       amount: billingCycle === "monthly" ? configFromSetting.monthlyAmount : configFromSetting.yearlyAmount,
       duration: billingCycle === "monthly" ? configFromSetting.durationMonthly : configFromSetting.durationYearly,
       label: configFromSetting.label,
-      classSelection: configFromSetting.classSelection || 0
+      classSelection: configFromSetting.classSelection || 0,
+      unitType: configFromSetting.unitType || "fixed",
     };
   }
   
@@ -67,7 +138,8 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
     amount: billingCycle === "monthly" ? fallback?.monthlyAmount || 0 : fallback?.yearlyAmount || 0, 
     duration: billingCycle === "monthly" ? fallback?.durationMonthly || 30 : fallback?.durationYearly || 365, 
     label: fallback?.label || planKey, 
-    classSelection: 0 
+    classSelection: 0,
+    unitType: "fixed",
   };
 }
 
@@ -107,15 +179,15 @@ export async function getPlans(req: Request, res: Response) {
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
   let plansConfig: Record<string, any> = {};
   if (setting) {
-    plansConfig = JSON.parse(setting.value);
+    plansConfig = mergeAudiencePlanDefaults(JSON.parse(setting.value));
   } else {
     // Fallback to hardcoded defaults
-    plansConfig = {
+    plansConfig = mergeAudiencePlanDefaults({
       FOUNDATION_PASS: { monthlyAmount: config.plans.FOUNDATION_PASS.monthlyAmount, yearlyAmount: config.plans.FOUNDATION_PASS.yearlyAmount, label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
       ACADEMIC_PLUS:   { monthlyAmount: config.plans.ACADEMIC_PLUS.monthlyAmount,   yearlyAmount: config.plans.ACADEMIC_PLUS.yearlyAmount,   label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
       ELITE_LEARNING:  { monthlyAmount: config.plans.ELITE_LEARNING.monthlyAmount,  yearlyAmount: config.plans.ELITE_LEARNING.yearlyAmount,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
       FLEXI_PLAN:      { monthlyAmount: config.plans.FLEXI_PLAN.monthlyAmount,      yearlyAmount: config.plans.FLEXI_PLAN.yearlyAmount,      label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-    };
+    });
   }
 
   // Also fetch courses to get live prices
@@ -131,6 +203,9 @@ export async function getPlans(req: Request, res: Response) {
     CLASS_11:        ["Full 11th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Competitive exam base", "Formula sheets", "Priority support"],
     CLASS_12:        ["Full 12th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Board & Competitive prep", "Formula sheets", "Priority support"],
     FLEXI_PLAN:      ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
+    STUDENTS_PLAN:   ["Choose one or more classes", "Animated videos", "Chapter notes", "Quiz", "Question bank"],
+    TEACHERS_PLAN:   ["Choose one or more classes", "Animated videos", "PPTs", "Test series", "Question bank"],
+    PROFESSIONAL_PLAN: ["Choose one or more subjects", "Advanced animated videos", "PPTs", "Virtual lab", "Test series"],
   };
 
   const plans = Object.entries(plansConfig)
@@ -146,6 +221,8 @@ export async function getPlans(req: Request, res: Response) {
         durationYearly: v.durationYearly || 365,
         features: featureMap[key] || [],
         classSelection: v.classSelection || 0,
+        unitType: v.unitType || "fixed",
+        audience: v.audience || null,
         popular: key === "ELITE_LEARNING",
       };
     });
@@ -174,18 +251,39 @@ export async function validateCouponCode(req: Request, res: Response) {
 
 export async function createSubscriptionOrder(req: Request, res: Response) {
   try {
-    const { plan, classesAccess, couponCode, billingCycle = "yearly" } = req.body;
+    const { plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly" } = req.body;
     const planConfig = await getPlanConfig(plan, billingCycle);
 
     // Validate classesAccess based on plan's classSelection setting
-    if (planConfig.classSelection > 0) {
+    if (planConfig.unitType === "fixed" && planConfig.classSelection > 0) {
       if (!classesAccess || classesAccess.length !== planConfig.classSelection) {
         return error(res, `This plan requires exactly ${planConfig.classSelection} class(es)`, 400);
       }
     }
 
     let amount = planConfig.amount;
-    const { subjectsAccess } = req.body;
+
+    if (planConfig.unitType === "class") {
+      if (!classesAccess || classesAccess.length === 0) {
+        return error(res, "Select at least one class", 400);
+      }
+
+      const validClassCount = await prisma.class.count({ where: { id: { in: classesAccess } } });
+      if (validClassCount !== classesAccess.length) {
+        return error(res, "Invalid class selection", 400);
+      }
+
+      amount = planConfig.amount * classesAccess.length;
+    }
+
+    if (planConfig.unitType === "subject") {
+      const selectedSubjectKeys = normalizeSubjectKeys(subjectsAccess || []);
+      if (selectedSubjectKeys.length === 0) {
+        return error(res, "Select at least one subject", 400);
+      }
+
+      amount = planConfig.amount * selectedSubjectKeys.length;
+    }
 
     if (plan === "FLEXI_PLAN") {
       if (!subjectsAccess || subjectsAccess.length === 0) {
@@ -203,6 +301,8 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
     let couponDiscount = 0;
     let upgradeDiscount = 0;
+
+    const originalAmount = amount;
 
     // Check for existing active subscription (upgrade flow)
     const existing = await prisma.subscription.findFirst({
@@ -241,7 +341,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       subjectsAccess,
       couponCode,
       billingCycle,
-      originalAmount: planConfig.amount,
+      originalAmount,
       upgradeDiscount,
       couponDiscount,
       isUpgrade: !!existing,
@@ -255,7 +355,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
 export async function verifyPayment(req: Request, res: Response) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, couponCode, billingCycle = "yearly" } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly" } = req.body;
 
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
@@ -268,7 +368,14 @@ export async function verifyPayment(req: Request, res: Response) {
     let amount = planConfig.amount;
     let discountAmount = 0;
 
-    const { subjectsAccess } = req.body;
+    if (planConfig.unitType === "class" && classesAccess && classesAccess.length > 0) {
+      amount = planConfig.amount * classesAccess.length;
+    }
+
+    if (planConfig.unitType === "subject" && subjectsAccess && subjectsAccess.length > 0) {
+      amount = planConfig.amount * normalizeSubjectKeys(subjectsAccess).length;
+    }
+
     if (plan === "FLEXI_PLAN" && subjectsAccess && subjectsAccess.length > 0) {
       const subjects = await prisma.subject.findMany({
         where: { id: { in: subjectsAccess } },
@@ -287,8 +394,9 @@ export async function verifyPayment(req: Request, res: Response) {
     if (existing) {
       const upgradeDiscountPercent = await getUpgradeDiscount();
       if (upgradeDiscountPercent > 0) {
-        discountAmount += Math.round(amount * upgradeDiscountPercent / 100);
-        amount -= Math.round(planConfig.amount * upgradeDiscountPercent / 100);
+        const upgradeDiscount = Math.round(amount * upgradeDiscountPercent / 100);
+        discountAmount += upgradeDiscount;
+        amount -= upgradeDiscount;
       }
     }
 
@@ -321,6 +429,12 @@ export async function verifyPayment(req: Request, res: Response) {
         select: { classId: true }
       });
       resolvedClassesAccess = Array.from(new Set(subjects.map(s => s.classId)));
+    } else if (planConfig.unitType === "subject") {
+      const resolved = await resolveProfessionalSubjectAccess(subjectsAccess || []);
+      resolvedSubjectsAccess = resolved.subjectIds;
+      resolvedClassesAccess = resolved.classIds;
+    } else if (planConfig.unitType === "class") {
+      resolvedClassesAccess = classesAccess || [];
     } else if (planConfig.classSelection > 0) {
       resolvedClassesAccess = classesAccess || [];
     } else {
