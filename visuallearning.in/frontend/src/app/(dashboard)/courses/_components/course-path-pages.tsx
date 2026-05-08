@@ -172,8 +172,8 @@ const virtualLabCard: ContentCard = {
   actionLabel: "Open labs",
 };
 
-const teacherContentCards = [...baseContentCards, pptsCard, testSeriesCard];
-const professionalContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
+const teacherContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), testSeriesCard];
+const professionalContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), virtualLabCard, testSeriesCard];
 const allContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
 const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank"];
 

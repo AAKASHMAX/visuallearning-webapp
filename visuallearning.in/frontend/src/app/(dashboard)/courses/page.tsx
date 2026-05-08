@@ -37,7 +37,7 @@ const audienceCards = [
     icon: BriefcaseBusiness,
     badge: "Subject tracks",
     accent: "from-violet-500 to-fuchsia-400",
-    features: ["PPTs", "Virtual lab", "Test series", "Advanced tracks"],
+    features: ["Animated videos", "PPTs", "Virtual lab", "Test series"],
   },
 ];
 
