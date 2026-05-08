@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BadgeCheck,
@@ -20,6 +20,8 @@ import api from "@/lib/api";
 import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 import { cn } from "@/lib/utils";
 
 type AudiencePlanId = "STUDENTS_PLAN" | "TEACHERS_PLAN" | "PROFESSIONAL_PLAN";
@@ -90,7 +92,7 @@ function isTargetClass(name: string) {
   return ["9", "10", "11", "12"].some((item) => normalized.includes(item));
 }
 
-export default function SubscriptionPage() {
+function SubscriptionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -181,72 +183,81 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface">
+        <Navbar />
+        <PageLoader />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-primary shadow-sm">
-          <Sparkles className="h-4 w-4" />
-          Pricing
+    <div className="min-h-screen bg-surface">
+      <Navbar />
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-primary shadow-sm">
+            <Sparkles className="h-4 w-4" />
+            Pricing
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl">Choose Your Subscription</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">
+            Select Students, Teachers, or Professional, then choose the classes or subjects you need. Total pricing updates automatically.
+          </p>
         </div>
-        <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl">Choose Your Subscription</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">
-          Select Students, Teachers, or Professional, then choose the classes or subjects you need. Total pricing updates automatically.
-        </p>
-      </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        {audiencePlans.map((plan) => {
-          const id = plan.id as AudiencePlanId;
-          const visual = planVisuals[id];
-          const Icon = visual.icon;
-          const selected = selectedPlanId === id;
+        <div className="grid gap-5 lg:grid-cols-3">
+          {audiencePlans.map((plan) => {
+            const id = plan.id as AudiencePlanId;
+            const visual = planVisuals[id];
+            const Icon = visual.icon;
+            const selected = selectedPlanId === id;
 
-          return (
-            <button
-              key={plan.id}
-              type="button"
-              onClick={() => choosePlan(id)}
-              className={cn(
-                "group relative overflow-hidden rounded-lg border bg-white p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10",
-                selected ? "border-primary ring-2 ring-primary/10" : "border-gray-200 hover:border-primary/30"
-              )}
-            >
-              <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${visual.accent}`} />
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
-                  <Icon className="h-7 w-7" />
+            return (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => choosePlan(id)}
+                className={cn(
+                  "group relative overflow-hidden rounded-lg border bg-white p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10",
+                  selected ? "border-primary ring-2 ring-primary/10" : "border-gray-200 hover:border-primary/30"
+                )}
+              >
+                <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${visual.accent}`} />
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-[11px] font-black uppercase tracking-wider text-text-muted">
+                    {visual.unit}
+                  </span>
                 </div>
-                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-[11px] font-black uppercase tracking-wider text-text-muted">
-                  {visual.unit}
-                </span>
-              </div>
-              <h2 className="text-2xl font-black text-heading">{visual.title}</h2>
-              <p className="mt-2 min-h-14 text-sm leading-6 text-text-muted">{visual.subtitle}</p>
-              <div className="mt-5 flex items-end gap-2">
-                <span className="text-3xl font-black text-heading">{formatPrice(plan.yearlyPrice || 0)}</span>
-                <span className="pb-1 text-xs font-black uppercase tracking-wider text-text-light">/ year</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                <h2 className="text-2xl font-black text-heading">{visual.title}</h2>
+                <p className="mt-2 min-h-14 text-sm leading-6 text-text-muted">{visual.subtitle}</p>
+                <div className="mt-5 flex items-end gap-2">
+                  <span className="text-3xl font-black text-heading">{formatPrice(plan.yearlyPrice || 0)}</span>
+                  <span className="pb-1 text-xs font-black uppercase tracking-wider text-text-light">/ year</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_23rem]">
-        <main className="space-y-6">
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-black text-heading">
-                  {selectedPlanId === "PROFESSIONAL_PLAN" ? "Choose Subjects" : "Choose Classes"}
-                </h2>
-                <p className="mt-1 text-sm text-text-muted">{selectedVisual.empty}</p>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_23rem]">
+          <main className="space-y-6">
+            <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-heading">
+                    {selectedPlanId === "PROFESSIONAL_PLAN" ? "Choose Subjects" : "Choose Classes"}
+                  </h2>
+                  <p className="mt-1 text-sm text-text-muted">{selectedVisual.empty}</p>
+                </div>
+                <div className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary sm:block">
+                  {selectedCount} selected
+                </div>
               </div>
-              <div className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary sm:block">
-                {selectedCount} selected
-              </div>
-            </div>
 
             {selectedPlanId === "PROFESSIONAL_PLAN" ? (
               <div className="grid gap-4 md:grid-cols-3">
@@ -401,8 +412,18 @@ export default function SubscriptionPage() {
               </div>
             </div>
           </div>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      </main>
+      <Footer />
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <SubscriptionPageContent />
+    </Suspense>
   );
 }
