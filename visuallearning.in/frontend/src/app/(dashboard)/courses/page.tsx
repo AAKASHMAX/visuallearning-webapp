@@ -23,21 +23,21 @@ const audienceCards = [
   },
   {
     title: "Teachers",
-    subtitle: "Class-wise resources for teaching, revision support, and classroom-ready science content.",
+    subtitle: "Class-wise teaching resources with videos, notes, PPTs, question practice, and test series.",
     href: "/courses/teachers",
     icon: UsersRound,
     badge: "Teaching tools",
     accent: "from-emerald-500 to-lime-400",
-    features: ["Class resources", "Visual explanations", "Notes support", "Practice material"],
+    features: ["Animated videos", "PPTs", "Test series", "Question bank"],
   },
   {
     title: "Professionals",
-    subtitle: "Subject tracks for Physics, Chemistry, and Biology from basics to advanced concepts.",
+    subtitle: "Subject tracks with advanced videos, PPTs, virtual labs, tests, and practice resources.",
     href: "/courses/professional",
     icon: BriefcaseBusiness,
     badge: "Subject tracks",
     accent: "from-violet-500 to-fuchsia-400",
-    features: ["Physics track", "Chemistry track", "Biology track", "Advanced learning"],
+    features: ["PPTs", "Virtual lab", "Test series", "Advanced tracks"],
   },
 ];
 

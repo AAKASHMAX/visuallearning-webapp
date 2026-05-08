@@ -11,12 +11,15 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  ClipboardList,
   Dna,
   FileQuestion,
   FileText,
+  FlaskConical,
   GraduationCap,
   Lock,
   MonitorPlay,
+  Presentation,
   Sparkles,
   UsersRound,
 } from "lucide-react";
@@ -25,8 +28,17 @@ import { cn } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/loading";
 
 type Audience = "students" | "teachers";
-type ContentSlug = "animated-videos" | "notes" | "quiz" | "question-bank";
+type ContentSlug = "animated-videos" | "notes" | "quiz" | "question-bank" | "ppts" | "virtual-lab" | "test-series";
 type SubjectKey = "physics" | "chemistry" | "biology";
+type ContentCard = {
+  slug: ContentSlug;
+  title: string;
+  subtitle: string;
+  icon: any;
+  accent: string;
+  href?: string;
+  actionLabel?: string;
+};
 
 type ClassRow = {
   id: string;
@@ -83,7 +95,7 @@ const professionalSubjects = [
     subtitle: "Basic to Advanced",
     icon: Atom,
     accent: "from-blue-500 to-cyan-400",
-    features: ["Mechanics", "Electricity", "Waves", "Modern physics"],
+    features: ["Animated videos", "PPTs", "Virtual labs", "Test series"],
   },
   {
     key: "chemistry" as SubjectKey,
@@ -91,7 +103,7 @@ const professionalSubjects = [
     subtitle: "Basic to Advanced",
     icon: Beaker,
     accent: "from-emerald-500 to-teal-400",
-    features: ["Reactions", "Organic basics", "Bonding", "Concept maps"],
+    features: ["Animated videos", "PPTs", "Virtual labs", "Test series"],
   },
   {
     key: "biology" as SubjectKey,
@@ -99,40 +111,71 @@ const professionalSubjects = [
     subtitle: "Basic",
     icon: Dna,
     accent: "from-rose-500 to-pink-400",
-    features: ["Cells", "Life processes", "Genetics", "Ecology"],
+    features: ["Animated videos", "PPTs", "Virtual labs", "Test series"],
   },
 ];
 
-const contentCards = [
+const baseContentCards: ContentCard[] = [
   {
-    slug: "animated-videos" as ContentSlug,
+    slug: "animated-videos",
     title: "Animated Videos",
     subtitle: "3D visual lessons arranged chapter-wise.",
     icon: MonitorPlay,
     accent: "from-sky-500 to-cyan-400",
   },
   {
-    slug: "notes" as ContentSlug,
+    slug: "notes",
     title: "Notes",
     subtitle: "Chapter PDF notes for study and revision.",
     icon: FileText,
     accent: "from-emerald-500 to-lime-400",
   },
   {
-    slug: "quiz" as ContentSlug,
+    slug: "quiz",
     title: "Quiz",
     subtitle: "Practice MCQs to check understanding.",
     icon: Brain,
     accent: "from-violet-500 to-fuchsia-400",
   },
   {
-    slug: "question-bank" as ContentSlug,
+    slug: "question-bank",
     title: "Question Bank",
     subtitle: "Chapter questions for deeper practice.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
   },
 ];
+
+const pptsCard: ContentCard = {
+  slug: "ppts",
+  title: "PPTs",
+  subtitle: "Presentation slides for teaching and concept delivery.",
+  icon: Presentation,
+  accent: "from-indigo-500 to-blue-400",
+};
+
+const testSeriesCard: ContentCard = {
+  slug: "test-series",
+  title: "Test Series",
+  subtitle: "Structured tests and assessments for revision.",
+  icon: ClipboardList,
+  accent: "from-rose-500 to-orange-400",
+};
+
+const virtualLabCard: ContentCard = {
+  slug: "virtual-lab",
+  title: "Virtual Lab",
+  subtitle: "Interactive experiments and simulations.",
+  icon: FlaskConical,
+  accent: "from-teal-500 to-cyan-400",
+  href: "/courses/virtual-lab",
+  actionLabel: "Open labs",
+};
+
+const teacherContentCards = [...baseContentCards, pptsCard, testSeriesCard];
+const professionalContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
+const allContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
+const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank"];
 
 function isTargetClass(name: string) {
   const normalized = name.toLowerCase();
@@ -163,6 +206,10 @@ function contentQuery(slug: ContentSlug) {
   return slug;
 }
 
+function isChapterContent(slug: ContentSlug) {
+  return chapterContentSlugs.includes(slug);
+}
+
 function chapterTab(slug: ContentSlug) {
   if (slug === "notes") return "notes";
   if (slug === "quiz" || slug === "question-bank") return "quiz";
@@ -178,7 +225,7 @@ function chapterContentCount(chapter: ChapterRow, slug: ContentSlug) {
 
 function useContent(slug: string) {
   return useMemo(
-    () => contentCards.find((card) => card.slug === slug) || contentCards[0],
+    () => allContentCards.find((card) => card.slug === slug) || baseContentCards[0],
     [slug]
   );
 }
@@ -251,6 +298,37 @@ function EmptyState({ title, message }: { title: string; message: string }) {
       <BookOpen className="mx-auto mb-4 h-10 w-10 text-primary/40" />
       <h2 className="text-lg font-black text-heading">{title}</h2>
       <p className="mt-2 text-sm text-text-muted">{message}</p>
+    </div>
+  );
+}
+
+function ResourcePlaceholder({
+  content,
+  actionHref,
+}: {
+  content: ContentCard;
+  actionHref?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+      <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${content.accent} text-white shadow-lg shadow-gray-200`}>
+        <content.icon className="h-7 w-7" />
+      </div>
+      <h2 className="text-2xl font-black text-heading">{content.title}</h2>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
+        {content.slug === "virtual-lab"
+          ? "Virtual Lab is already available as a separate interactive section."
+          : `${content.title} is now included in this course path. Upload fields and backend storage can be connected in the next backend pass.`}
+      </p>
+      {actionHref && (
+        <Link
+          href={actionHref}
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-heading px-5 py-3 text-sm font-black text-white transition-transform hover:-translate-y-0.5"
+        >
+          {content.actionLabel || "Open"}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -395,7 +473,10 @@ export function AudienceContentPage({
       description={`${className} resources are separated into focused content pages.`}
       backHref={`/courses/${audience}/${classId}`}
     >
-      <ContentTypeGrid baseHref={`/courses/${audience}/${classId}/${subjectId}`} />
+      <ContentTypeGrid
+        baseHref={`/courses/${audience}/${classId}/${subjectId}`}
+        cards={audience === "teachers" ? teacherContentCards : baseContentCards}
+      />
     </PageFrame>
   );
 }
@@ -421,10 +502,10 @@ export function AudienceChaptersPage({
   useEffect(() => {
     async function load() {
       try {
-        const [subjectResult, chapterResult] = await Promise.all([
-          fetchClassSubjects(classId),
-          fetchSubjectChapters(subjectId, content.slug),
-        ]);
+        const subjectResult = await fetchClassSubjects(classId);
+        const chapterResult = isChapterContent(content.slug)
+          ? await fetchSubjectChapters(subjectId, content.slug)
+          : [];
         const subject = subjectResult.subjects.find((item) => item.id === subjectId);
         setClassName(subjectResult.className);
         setSubjectName(subject?.name || chapterResult[0]?.subjectName || "Subject");
@@ -447,7 +528,11 @@ export function AudienceChaptersPage({
       description={`${className} chapter cards. First chapter is open for preview; remaining chapters need subscription access.`}
       backHref={`/courses/${audience}/${classId}/${subjectId}`}
     >
-      <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/${audience}/${classId}/${subjectId}/${content.slug}`} />
+      {isChapterContent(content.slug) ? (
+        <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/${audience}/${classId}/${subjectId}/${content.slug}`} />
+      ) : (
+        <ResourcePlaceholder content={content} />
+      )}
     </PageFrame>
   );
 }
@@ -501,7 +586,7 @@ export function ProfessionalContentPage({ subjectKey }: { subjectKey: string }) 
       description={`${subject.subtitle} resources are separated into focused content pages.`}
       backHref="/courses/professional"
     >
-      <ContentTypeGrid baseHref={`/courses/professional/${subject.key}`} />
+      <ContentTypeGrid baseHref={`/courses/professional/${subject.key}`} cards={professionalContentCards} />
     </PageFrame>
   );
 }
@@ -516,6 +601,11 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
     async function load() {
       setLoading(true);
       try {
+        if (!isChapterContent(content.slug)) {
+          setChapters([]);
+          return;
+        }
+
         const classes = await fetchTargetClasses();
         const subjectGroups = await Promise.all(
           classes.map(async (classItem) => {
@@ -552,21 +642,27 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
     <PageFrame
       eyebrow="Professional Path"
       title={`${content.title} - ${subject.title}`}
-      description="Chapter cards are collected from the matching subject content across available classes."
+      description={isChapterContent(content.slug)
+        ? "Chapter cards are collected from the matching subject content across available classes."
+        : `${content.title} is now included in this professional subject path.`}
       backHref={`/courses/professional/${subject.key}`}
     >
-      <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/professional/${subject.key}/${content.slug}`} />
+      {isChapterContent(content.slug) ? (
+        <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/professional/${subject.key}/${content.slug}`} />
+      ) : (
+        <ResourcePlaceholder content={content} actionHref={content.slug === "virtual-lab" ? "/courses/virtual-lab" : undefined} />
+      )}
     </PageFrame>
   );
 }
 
-function ContentTypeGrid({ baseHref }: { baseHref: string }) {
+function ContentTypeGrid({ baseHref, cards }: { baseHref: string; cards: ContentCard[] }) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {contentCards.map((card) => (
+      {cards.map((card) => (
         <Link
           key={card.slug}
-          href={`${baseHref}/${card.slug}`}
+          href={card.href || `${baseHref}/${card.slug}`}
           className="group rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
         >
           <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${card.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
@@ -575,7 +671,7 @@ function ContentTypeGrid({ baseHref }: { baseHref: string }) {
           <h2 className="text-lg font-black text-heading">{card.title}</h2>
           <p className="mt-2 min-h-16 text-sm leading-6 text-text-muted">{card.subtitle}</p>
           <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-            <span className="text-xs font-black uppercase tracking-wider text-text-light">Open chapters</span>
+            <span className="text-xs font-black uppercase tracking-wider text-text-light">{card.actionLabel || "Open chapters"}</span>
             <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
           </div>
         </Link>
