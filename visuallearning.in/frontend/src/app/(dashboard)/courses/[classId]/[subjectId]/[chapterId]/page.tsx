@@ -173,7 +173,7 @@ export default function UnifiedChapterPage() {
                       onClick={() => setLanguage("HINDI")} 
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-white shadow-md" : "bg-white text-text-muted hover:bg-surface"}`}
                     >
-                      हिंदी
+                      Hinglish
                     </button>
                     <button 
                       onClick={() => setLanguage("ENGLISH")} 
@@ -244,12 +244,12 @@ export default function UnifiedChapterPage() {
                 {filteredVideos.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
                     <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
-                    <p className="text-sm text-text-muted">No videos available in {language === "HINDI" ? "Hindi" : "English"}</p>
+                    <p className="text-sm text-text-muted">No videos available in {language === "HINDI" ? "Hinglish" : "English"}</p>
                     <button 
                       onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
                       className="text-xs text-accent font-bold mt-2 hover:underline"
                     >
-                      Switch to {language === "HINDI" ? "English" : "Hindi"}
+                      Switch to {language === "HINDI" ? "English" : "Hinglish"}
                     </button>
                   </div>
                 ) : (
