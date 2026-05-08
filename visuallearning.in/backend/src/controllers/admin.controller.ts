@@ -261,6 +261,7 @@ export async function deleteVideo(req: Request, res: Response) { return crudDele
 
 // --- Notes ---
 export async function addNote(req: Request, res: Response) { return crudCreate(prisma.note, req.body, res); }
+export async function updateNote(req: Request, res: Response) { return crudUpdate(prisma.note, req.params.id, req.body, res); }
 export async function deleteNote(req: Request, res: Response) { return crudDelete(prisma.note, req.params.id, res); }
 
 // --- Questions ---

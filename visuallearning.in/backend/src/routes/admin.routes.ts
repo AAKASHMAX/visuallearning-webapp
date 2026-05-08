@@ -8,7 +8,7 @@ import {
   addSubject, updateSubject, deleteSubject, subjectSchema, toggleSubjectAccess, getSubjectAccessList,
   addChapter, updateChapter, deleteChapter, chapterSchema,
   getChapterVideos, addVideo, updateVideo, deleteVideo, videoSchema,
-  addNote, deleteNote, noteSchema,
+  addNote, updateNote, deleteNote, noteSchema,
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
   getAllCourses, addCourse, updateCourse, deleteCourse, getCourseWithChapters, addChapterToCourse, removeChapterFromCourse, getChaptersGroupedBySubject, courseSchema,
@@ -104,6 +104,7 @@ router.delete("/videos/:id", deleteVideo);
 
 // Notes
 router.post("/notes", validate(noteSchema), addNote);
+router.put("/notes/:id", validate(noteSchema), updateNote);
 router.delete("/notes/:id", deleteNote);
 
 // Questions

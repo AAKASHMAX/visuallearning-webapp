@@ -66,13 +66,13 @@ export async function getChapters(req: Request, res: Response) {
       chapterWhere.videos = { some: { type: "ANIMATED_VIDEO" } };
     } else if (contentType === "notes") {
       chapterWhere.notes = { some: {} };
-    } else if (contentType === "quiz") {
+    } else if (contentType === "quiz" || contentType === "question_bank") {
       chapterWhere.questions = { some: {} };
     }
 
     const chapters = await prisma.chapter.findMany({
       where: chapterWhere,
-      orderBy: { order: "asc" },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
       include: {
         _count: { select: { videos: true, notes: true, questions: true } },
       },
@@ -98,7 +98,7 @@ export async function getChapters(req: Request, res: Response) {
         ...ch,
         contentCount: ch._count.notes,
       }));
-    } else if (contentType === "quiz") {
+    } else if (contentType === "quiz" || contentType === "question_bank") {
       chaptersWithCount = chapters.map((ch) => ({
         ...ch,
         contentCount: ch._count.questions,
@@ -170,6 +170,16 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
   return result;
 }
 
+async function isFirstChapterForSubject(chapterId: string, subjectId: string) {
+  const firstChapter = await prisma.chapter.findFirst({
+    where: { subjectId },
+    orderBy: [{ order: "asc" }, { name: "asc" }],
+    select: { id: true },
+  });
+
+  return firstChapter?.id === chapterId;
+}
+
 export async function getVideos(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -201,9 +211,12 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
+      hasAccess = true;
+    } else if (isFirstChapter) {
       hasAccess = true;
     } else if (req.user) {
       const classId = chapter.subject.class.id;
@@ -246,7 +259,7 @@ export async function getVideoById(req: Request, res: Response) {
     });
     if (!video) return error(res, "Video not found", 404);
 
-    const isFirstChapter = video.chapter.order === 1;
+    const isFirstChapter = await isFirstChapterForSubject(video.chapter.id, video.chapter.subject.id);
 
     if (!isFirstChapter) {
       if (!req.user) return error(res, "Login required", 401);
@@ -283,9 +296,12 @@ export async function getNotes(req: Request, res: Response) {
 
     const notes = await prisma.note.findMany({ where: { chapterId: id } });
 
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
+      hasAccess = true;
+    } else if (isFirstChapter) {
       hasAccess = true;
     } else if (req.user) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
@@ -317,12 +333,15 @@ export async function getQuestions(req: Request, res: Response) {
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
       hasAccess = true;
+    } else if (isFirstChapter) {
+      hasAccess = true;
     } else if (req.user) {
-      const result = await checkClassAccess(req.user.id, chapter.subject.class.id);
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
       hasAccess = result.hasAccess;
     }
 

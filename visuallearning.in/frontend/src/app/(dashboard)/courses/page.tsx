@@ -1,805 +1,518 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/ui/loading";
-import api from "@/lib/api";
-import type { LucideIcon } from "lucide-react";
 import {
-  Sparkles, Zap, GraduationCap,
-  CheckCircle2, XCircle, ArrowRight,
-  Orbit, Flame, Lightbulb, Microscope, Beaker, Dna, Waves, Atom,
-  AlertCircle, Calculator, FlaskConical, Sparkle, BookOpen, Brain, BarChart3,
-  MonitorPlay, FileText, MessageCircle, Trophy, Smartphone, Target, Route,
-  ShieldCheck, ClipboardCheck, Layers3
+  Atom,
+  Beaker,
+  BookOpen,
+  Brain,
+  BriefcaseBusiness,
+  ChevronRight,
+  ClipboardList,
+  Dna,
+  FileQuestion,
+  FileText,
+  GraduationCap,
+  Layers3,
+  Lock,
+  MonitorPlay,
+  Presentation,
+  Sparkles,
+  UsersRound,
 } from "lucide-react";
+import api from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { PageLoader } from "@/components/ui/loading";
 
-type FeatureDetail = {
-  title: string;
-  detail: string;
-  icon: LucideIcon;
+type Audience = "students" | "teachers" | "professional";
+type ContentKey = "animated_videos" | "notes" | "quiz" | "question_bank" | "ppts" | "test_series";
+
+type ClassRow = {
+  id: string;
+  name: string;
+  order: number;
+  subjects: SubjectRow[];
 };
 
-const iconByKey: Record<string, LucideIcon> = {
-  atom: Atom,
-  flask: FlaskConical,
-  "flask-conical": FlaskConical,
-  dna: Dna,
-  calculator: Calculator,
-  microscope: Microscope,
-  beaker: Beaker,
-  waves: Waves,
-  lightbulb: Lightbulb,
+type SubjectRow = {
+  id: string;
+  classId: string;
+  name: string;
+  icon?: string | null;
+  enabled?: boolean;
+  _count?: { chapters: number };
 };
 
-function subjectVisual(name: string, iconKey?: string | null) {
-  const n = name.toLowerCase();
-  let Icon: LucideIcon = Sparkles;
-  let bg = "from-slate-50 to-indigo-50";
-  let border = "border-indigo-100";
-  let iconGrad = "from-cyan-400 to-teal-500";
-  let ring = "ring-cyan-400/40";
-  let shadow = "rgba(6,182,212,0.3)";
-  let priceColor = "text-cyan-600";
-  let subtitleColor = "text-indigo-400";
+type ChapterRow = {
+  id: string;
+  subjectId: string;
+  classId: string;
+  className: string;
+  subjectName: string;
+  name: string;
+  order: number;
+  contentCount?: number;
+  _count?: { videos: number; notes: number; questions: number };
+};
 
-  if (iconKey && iconByKey[iconKey]) Icon = iconByKey[iconKey];
+const targetClassNames = ["9", "10", "11", "12"];
+const targetSubjects = ["physics", "chemistry", "biology"];
 
-  if (n.includes("physics")) {
-    Icon = Atom;
-    bg = "from-sky-50 to-blue-50";
-    border = "border-sky-100";
-    iconGrad = "from-sky-400 to-blue-600";
-    ring = "ring-sky-400/45";
-    shadow = "rgba(56,189,248,0.35)";
-    priceColor = "text-sky-600";
-    subtitleColor = "text-sky-400";
-  } else if (n.includes("chemistry")) {
-    Icon = FlaskConical;
-    bg = "from-emerald-50 to-teal-50";
-    border = "border-emerald-100";
-    iconGrad = "from-emerald-400 to-teal-500";
-    ring = "ring-emerald-400/45";
-    shadow = "rgba(52,211,153,0.35)";
-    priceColor = "text-emerald-600";
-    subtitleColor = "text-emerald-400";
-  } else if (n.includes("biology")) {
-    Icon = Dna;
-    bg = "from-rose-50 to-pink-50";
-    border = "border-rose-100";
-    iconGrad = "from-rose-400 to-fuchsia-500";
-    ring = "ring-rose-400/45";
-    shadow = "rgba(251,113,133,0.35)";
-    priceColor = "text-rose-500";
-    subtitleColor = "text-rose-400";
-  } else if (n.includes("math")) {
-    Icon = Calculator;
-    bg = "from-violet-50 to-purple-50";
-    border = "border-violet-100";
-    iconGrad = "from-violet-400 to-purple-600";
-    ring = "ring-violet-400/45";
-    shadow = "rgba(167,139,250,0.35)";
-    priceColor = "text-violet-600";
-    subtitleColor = "text-violet-400";
-  }
+const audienceCards = [
+  {
+    key: "students" as Audience,
+    title: "Students",
+    subtitle: "Class 9 to 12 science learning",
+    icon: GraduationCap,
+    tint: "from-sky-500 to-blue-600",
+  },
+  {
+    key: "teachers" as Audience,
+    title: "Teachers",
+    subtitle: "Class content plus PPTs and tests",
+    icon: UsersRound,
+    tint: "from-emerald-500 to-teal-600",
+  },
+  {
+    key: "professional" as Audience,
+    title: "Professional",
+    subtitle: "Subject tracks from basics to advanced",
+    icon: BriefcaseBusiness,
+    tint: "from-violet-500 to-purple-600",
+  },
+];
 
-  return { Icon, bg, border, iconGrad, ring, shadow, priceColor, subtitleColor };
+const professionalSubjects = [
+  { key: "physics", title: "Physics", subtitle: "Basic to Advanced", icon: Atom, tint: "from-blue-500 to-indigo-600" },
+  { key: "chemistry", title: "Chemistry", subtitle: "Basic to Advanced", icon: Beaker, tint: "from-emerald-500 to-teal-600" },
+  { key: "biology", title: "Biology", subtitle: "Basic", icon: Dna, tint: "from-rose-500 to-pink-600" },
+];
+
+const baseContentCards = [
+  { key: "animated_videos" as ContentKey, title: "Animated Videos", subtitle: "3D chapter videos", icon: MonitorPlay },
+  { key: "notes" as ContentKey, title: "Notes", subtitle: "Chapter PDF notes", icon: FileText },
+  { key: "quiz" as ContentKey, title: "Quiz", subtitle: "Practice MCQs", icon: Brain },
+  { key: "question_bank" as ContentKey, title: "Question Bank", subtitle: "Chapter questions", icon: FileQuestion },
+];
+
+const teacherExtraCards = [
+  { key: "ppts" as ContentKey, title: "PPTs", subtitle: "Teaching slide decks", icon: Presentation },
+  { key: "test_series" as ContentKey, title: "Test Series", subtitle: "Assessments and tests", icon: ClipboardList },
+];
+
+const professionalExtraCards = [
+  { key: "ppts" as ContentKey, title: "PPTs", subtitle: "Professional slide decks", icon: Presentation },
+];
+
+function subjectIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("chemistry")) return Beaker;
+  if (lower.includes("biology")) return Dna;
+  return Atom;
 }
 
-// Course theme config based on planKey
-const COURSE_THEME: Record<string, { bgColor: string; accentColor: string; animation: string; excluded: string[] }> = {
-  FOUNDATION_PASS: { bgColor: "#1C4D8D", accentColor: "#60A5FA", animation: "atom", excluded: ["Full class content", "Virtual Labs", "Priority support"] },
-  ACADEMIC_PLUS: { bgColor: "#162855", accentColor: "#38BDF8", animation: "magnet", excluded: ["Virtual Labs & 3D", "WhatsApp support"] },
-  ELITE_LEARNING: { bgColor: "#2d1654", accentColor: "#D8B4FE", animation: "circuit", excluded: [] },
-  CLASS_9: { bgColor: "#1e3a8a", accentColor: "#3b82f6", animation: "atom", excluded: [] },
-  CLASS_10: { bgColor: "#1e3a8a", accentColor: "#3b82f6", animation: "magnet", excluded: [] },
-  CLASS_11: { bgColor: "#312e81", accentColor: "#818cf8", animation: "circuit", excluded: [] },
-  CLASS_12: { bgColor: "#312e81", accentColor: "#818cf8", animation: "book", excluded: [] },
-};
+function subjectTint(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("chemistry")) return "from-emerald-500 to-teal-600";
+  if (lower.includes("biology")) return "from-rose-500 to-pink-600";
+  return "from-blue-500 to-indigo-600";
+}
 
-const DETAILED_FEATURES: Record<string, FeatureDetail[]> = {
-  FOUNDATION_PASS: [
-    { title: "Core Chapters That Build Real Understanding", detail: "Master the most important physics concepts needed for school success", icon: Target },
-    { title: "3D Animated Concept Videos", detail: "Learn visually with engaging animations that make complex ideas simple", icon: MonitorPlay },
-    { title: "Step-by-Step Beginner Learning Path", detail: "Perfect for students who want to rebuild or strengthen their basics", icon: Route },
-    { title: "Smart Notes for Quick Revision", detail: "Clear, concise notes designed for fast recall before exams", icon: FileText },
-    { title: "Practice Quizzes for Exam Preparation", detail: "Test your understanding and improve performance with targeted questions", icon: ClipboardCheck },
-  ],
-  ACADEMIC_PLUS: [
-    { title: "Complete Class 9-10 PCB Coverage", detail: "Build strong school foundations with structured Physics, Chemistry and Biology lessons", icon: GraduationCap },
-    { title: "Selected Senior Science Chapters", detail: "Get an early edge with important Class 11-12 Physics and Chemistry concepts", icon: Atom },
-    { title: "3D Animated Concept Videos", detail: "Understand difficult topics faster through visual explanations and motion-based learning", icon: MonitorPlay },
-    { title: "Chapter Notes and Formula Support", detail: "Revise quickly with clear notes, key points and exam-friendly summaries", icon: FileText },
-    { title: "MCQ Practice With Solutions", detail: "Prepare for school tests with targeted questions and guided answers", icon: ClipboardCheck },
-    { title: "Performance Analytics", detail: "Track learning activity and identify where to improve next", icon: BarChart3 },
-    { title: "Email Support Within 24 Hours", detail: "Get help when you are stuck and keep your study momentum going", icon: MessageCircle },
-  ],
-  ELITE_LEARNING: [
-    { title: "Complete Class 9-12 Science Access", detail: "Learn Physics, Chemistry and Biology across all major school grades", icon: Trophy },
-    { title: "64+ Virtual Labs", detail: "Explore experiments and simulations that make abstract concepts feel practical", icon: FlaskConical },
-    { title: "Deep 3D Visual Learning Tools", detail: "Use immersive visuals to understand mechanisms, structures and processes", icon: Layers3 },
-    { title: "Board Exam Practice", detail: "Prepare with exam-focused practice, past-paper style work and chapter revision", icon: ClipboardCheck },
-    { title: "Notes, Formula Sheets and Revision Material", detail: "Keep every important idea close with organized study resources", icon: BookOpen },
-    { title: "Priority WhatsApp Support", detail: "Get faster guidance from the learning team whenever you need help", icon: MessageCircle },
-    { title: "Progress and Performance Tracking", detail: "Stay aware of your learning path with activity and completion insights", icon: BarChart3 },
-  ],
-  CLASS_9: [
-    { title: "Full Class 9 Curriculum", detail: "Study the complete grade plan with chapter-by-chapter structure", icon: GraduationCap },
-    { title: "3D Animated Videos", detail: "Learn core science topics through visual storytelling", icon: MonitorPlay },
-    { title: "Virtual Labs and Simulations", detail: "Experiment with concepts instead of only reading them", icon: FlaskConical },
-    { title: "Board Exam Preparation", detail: "Practice the style of questions that matter for school exams", icon: ClipboardCheck },
-    { title: "Chapter Notes", detail: "Revise faster with crisp, organized notes", icon: FileText },
-    { title: "Expert Support", detail: "Get learning help when a concept needs one more explanation", icon: MessageCircle },
-  ],
-  CLASS_10: [
-    { title: "Full Class 10 Curriculum", detail: "Cover the complete syllabus with a clear learning sequence", icon: GraduationCap },
-    { title: "3D Animated Videos", detail: "Make complex board topics easier to remember", icon: MonitorPlay },
-    { title: "Virtual Labs and Simulations", detail: "Understand experiments and applications visually", icon: FlaskConical },
-    { title: "Board Exam Preparation", detail: "Practice chapter concepts with exam-focused learning", icon: ClipboardCheck },
-    { title: "Chapter Notes", detail: "Use concise revision material before tests", icon: FileText },
-    { title: "Expert Support", detail: "Keep doubts from slowing down your preparation", icon: MessageCircle },
-  ],
-  CLASS_11: [
-    { title: "Full Class 11 Curriculum", detail: "Build the advanced science base needed for higher studies", icon: GraduationCap },
-    { title: "Advanced 3D Visuals", detail: "Visualize deeper mechanisms, equations and models", icon: Layers3 },
-    { title: "Complex Simulations", detail: "Explore how advanced concepts behave in motion", icon: FlaskConical },
-    { title: "Competitive Exam Base", detail: "Strengthen fundamentals used in school and entrance-level preparation", icon: Target },
-    { title: "Formula Sheets", detail: "Revise important relations and shortcuts faster", icon: BookOpen },
-    { title: "Priority Support", detail: "Get help with difficult topics before they pile up", icon: ShieldCheck },
-  ],
-  CLASS_12: [
-    { title: "Full Class 12 Curriculum", detail: "Study senior-grade concepts with structured chapter coverage", icon: GraduationCap },
-    { title: "Advanced 3D Visuals", detail: "Understand abstract physics, chemistry and biology topics visually", icon: Layers3 },
-    { title: "Complex Simulations", detail: "See advanced concepts in action with interactive learning", icon: FlaskConical },
-    { title: "Board and Competitive Preparation", detail: "Prepare for school exams while strengthening entrance-level basics", icon: Trophy },
-    { title: "Formula Sheets", detail: "Keep high-value revision material ready before exams", icon: BookOpen },
-    { title: "Priority Support", detail: "Get faster help for critical topics and doubts", icon: ShieldCheck },
-  ],
-  FLEXI_PLAN: [
-    { title: "Choose Your Own Subjects", detail: "Pay only for the subjects you want to study", icon: Target },
-    { title: "3D Animated Videos", detail: "Learn each selected subject through visual explanations", icon: MonitorPlay },
-    { title: "Chapter Notes", detail: "Revise selected chapters with clean PDF material", icon: FileText },
-    { title: "MCQ Quizzes", detail: "Practice and test your understanding chapter by chapter", icon: ClipboardCheck },
-    { title: "Flexible Pricing", detail: "Build a custom learning plan around your needs", icon: Sparkles },
-  ],
-};
+function chapterContentCount(chapter: ChapterRow, contentKey: ContentKey) {
+  if (typeof chapter.contentCount === "number") return chapter.contentCount;
+  if (contentKey === "notes") return chapter._count?.notes || 0;
+  if (contentKey === "quiz" || contentKey === "question_bank") return chapter._count?.questions || 0;
+  return chapter._count?.videos || 0;
+}
 
-function getDetailedFeatures(planKey: string, fallback: string[] = []): FeatureDetail[] {
-  if (DETAILED_FEATURES[planKey]) return DETAILED_FEATURES[planKey];
-  return fallback.map((title) => ({
-    title,
-    detail: "Included in this course plan to support your learning progress",
-    icon: CheckCircle2,
-  }));
+function contentQuery(contentKey: ContentKey) {
+  if (contentKey === "animated_videos") return "animated_videos";
+  if (contentKey === "notes") return "notes";
+  if (contentKey === "quiz" || contentKey === "question_bank") return "quiz";
+  return "";
+}
+
+function chapterTab(contentKey: ContentKey) {
+  if (contentKey === "notes") return "notes";
+  if (contentKey === "quiz" || contentKey === "question_bank") return "quiz";
+  return "videos";
+}
+
+function isTargetClass(name: string) {
+  const normalized = name.toLowerCase();
+  return targetClassNames.some((item) => normalized.includes(item));
+}
+
+function isTargetSubject(name: string) {
+  const normalized = name.toLowerCase();
+  return targetSubjects.some((item) => normalized.includes(item));
 }
 
 export default function CoursesPage() {
-  const [loading, setLoading] = useState(false);
-  const [classesData, setClassesData] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [activeClassId, setActiveClassId] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [audience, setAudience] = useState<Audience>("students");
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [selectedProfessional, setSelectedProfessional] = useState("");
+  const [selectedContent, setSelectedContent] = useState<ContentKey | "">("");
+  const [chapters, setChapters] = useState<ChapterRow[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      api.get("/courses/pricing/subjects").then(({ data }) => data.data || []),
-      api.get("/courses/list").then(({ data }) => data.data || []),
-    ])
-      .then(([subjectsData, coursesData]) => {
-        setClassesData(subjectsData);
-        setCourses(coursesData);
-        setActiveClassId((prev) =>
-          prev && subjectsData.some((c: { id: string }) => c.id === prev) ? prev : subjectsData[0]?.id ?? null
+    async function loadStructure() {
+      setLoading(true);
+      try {
+        const { data } = await api.get("/courses/classes");
+        const classList = data.data || [];
+        const hydrated = await Promise.all(
+          classList.map(async (classItem: ClassRow) => {
+            try {
+              const subjectsRes = await api.get(`/courses/classes/${classItem.id}/subjects`);
+              return {
+                ...classItem,
+                subjects: (subjectsRes.data.data?.subjects || []).filter((subject: SubjectRow) => isTargetSubject(subject.name)),
+              };
+            } catch {
+              return { ...classItem, subjects: [] };
+            }
+          })
         );
-      })
-      .catch(() => { setClassesData([]); setCourses([]); })
-      .finally(() => setLoading(false));
+
+        const nextClasses = hydrated
+          .filter((classItem) => isTargetClass(classItem.name))
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
+        setClasses(nextClasses);
+        setSelectedClassId(nextClasses[0]?.id || "");
+      } catch {
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadStructure();
   }, []);
 
-  const totalPrice = useMemo(() => {
-    if (!classesData.length) return 0;
-    const idToPrice = new Map<string, number>();
-    classesData.forEach((cls) =>
-      cls.subjects.forEach((s: { id: string; price: number }) => idToPrice.set(s.id, s.price))
-    );
-    return selectedSubjects.reduce((sum, id) => sum + (idToPrice.get(id) ?? 0), 0);
-  }, [selectedSubjects, classesData]);
+  const activeClass = classes.find((item) => item.id === selectedClassId) || classes[0];
+  const studentSubjects = (activeClass?.subjects || []).filter((subject) => subject.enabled !== false);
+  const activeSubject = studentSubjects.find((item) => item.id === selectedSubjectId);
 
-  const maxDiscount = useMemo(() => {
-    let max = 0;
-    courses.forEach(c => {
-      const monthly = c.monthlyPrice || 0;
-      const yearly = c.yearlyPrice || 0;
-      if (monthly > 0 && yearly > 0) {
-        const expectedYearly = monthly * 12;
-        if (expectedYearly > yearly) {
-          const discount = Math.round(((expectedYearly - yearly) / expectedYearly) * 100);
-          if (discount > max) max = discount;
-        }
+  const contentCards = useMemo(() => {
+    if (audience === "teachers") return [...baseContentCards, ...teacherExtraCards];
+    if (audience === "professional") return [...baseContentCards, ...professionalExtraCards];
+    return baseContentCards;
+  }, [audience]);
+
+  useEffect(() => {
+    setSelectedClassId(classes[0]?.id || "");
+    setSelectedSubjectId("");
+    setSelectedProfessional("");
+    setSelectedContent("");
+    setChapters([]);
+  }, [audience, classes]);
+
+  useEffect(() => {
+    setSelectedSubjectId("");
+    setSelectedContent("");
+    setChapters([]);
+  }, [selectedClassId]);
+
+  useEffect(() => {
+    setSelectedContent("");
+    setChapters([]);
+  }, [selectedSubjectId, selectedProfessional]);
+
+  useEffect(() => {
+    async function loadChapters() {
+      if (!selectedContent) {
+        setChapters([]);
+        return;
       }
-    });
-    return max > 0 ? max : 20; // fallback to 20% if no dynamic calculation is possible
-  }, [courses]);
 
-  const toggleSubject = (subId: string) => {
-    setSelectedSubjects((prev) =>
-      prev.includes(subId) ? prev.filter((id) => id !== subId) : [...prev, subId]
-    );
-  };
+      if (selectedContent === "ppts" || selectedContent === "test_series") {
+        setChapters([]);
+        return;
+      }
 
-  const selectedCount = selectedSubjects.length;
-  const activeClass = classesData.find((c) => c.id === activeClassId) ?? classesData[0];
+      const subjectsToLoad = audience === "professional"
+        ? classes.flatMap((classItem) =>
+            classItem.subjects
+              .filter((subject) => subject.enabled !== false && subject.name.toLowerCase().includes(selectedProfessional))
+              .map((subject) => ({ ...subject, className: classItem.name }))
+          )
+        : activeSubject
+          ? [{ ...activeSubject, className: activeClass?.name || "" }]
+          : [];
+
+      if (subjectsToLoad.length === 0) {
+        setChapters([]);
+        return;
+      }
+
+      setChaptersLoading(true);
+      try {
+        const query = contentQuery(selectedContent);
+        const results = await Promise.all(
+          subjectsToLoad.map(async (subject) => {
+            const suffix = query ? `?contentType=${query}` : "";
+            const { data } = await api.get(`/courses/subjects/${subject.id}/chapters${suffix}`);
+            const subjectData = data.data?.subject;
+            return (data.data?.chapters || []).map((chapter: any) => ({
+              ...chapter,
+              classId: subjectData?.class?.id || subject.classId,
+              className: subjectData?.class?.name || subject.className,
+              subjectId: subject.id,
+              subjectName: subject.name,
+            }));
+          })
+        );
+        setChapters(results.flat());
+      } catch {
+        setChapters([]);
+      } finally {
+        setChaptersLoading(false);
+      }
+    }
+
+    loadChapters();
+  }, [activeClass?.name, activeSubject, audience, classes, selectedContent, selectedProfessional]);
 
   if (loading) return <PageLoader />;
 
+  const selectionReady = audience === "professional" ? selectedProfessional : selectedSubjectId;
+  const selectedTitle = audience === "professional"
+    ? professionalSubjects.find((subject) => subject.key === selectedProfessional)?.title
+    : activeSubject?.name;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-
-      {/* Page Header */}
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] via-[#a855f7] to-[#0ea5e9] drop-shadow-sm py-1">
-          VisualLearning Courses
-        </h1>
-        <p className="text-lg text-text-muted max-w-2xl mx-auto font-medium">
-          Unlock your potential with our immersive 3D science curriculum. Choose a plan that fits your learning style.
-        </p>
-      </div>
-
-      <ConceptCarousel />
-
-      {/* ALL PRICING PLANS */}
-      <div className="mt-12 mb-16">
-        {/* Tab selector */}
-        <div className="flex flex-col items-center mb-10">
-          <h2 className="text-4xl font-black text-heading mb-4 tracking-tight text-center">
-            Premium Learning <span className="gradient-text">Packages</span>
-          </h2>
-          <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8 font-medium">
-            Choose the perfect plan to unlock premium visual content and accelerate your science journey.
-          </p>
-
-          {/* Billing Cycle Toggle */}
-          <div className="flex items-center justify-center p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm mb-4">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`px-8 py-2.5 rounded-xl text-sm font-black transition-all duration-200 ${
-                billingCycle === "monthly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle("yearly")}
-              className={`px-8 py-2.5 rounded-xl text-sm font-black transition-all duration-200 ${
-                billingCycle === "yearly" ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              Yearly
-              <span className="ml-2 inline-flex items-center justify-center bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Save {maxDiscount}%</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-20">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {courses
-              .filter(c => ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].includes(c.planKey))
-              .sort((a, b) => {
-                const order = ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"];
-                return order.indexOf(a.planKey) - order.indexOf(b.planKey);
-              })
-              .map((course) => {
-              const theme = COURSE_THEME[course.planKey] || COURSE_THEME.FOUNDATION_PASS;
-              const currentPrice = billingCycle === "monthly" 
-                ? (course.monthlyPrice !== undefined ? course.monthlyPrice : (course.price ? Math.round(course.price / 10) : 0))
-                : (course.yearlyPrice !== undefined ? course.yearlyPrice : (course.price || 0));
-              const isFree = currentPrice === 0 && course.planKey !== "FLEXI_PLAN" && course.planKey !== "ACADEMIC_PLUS" && course.planKey !== "ELITE_LEARNING"; // Only free if genuinely 0, handle fallbacks gracefully
-              const priceStr = isFree ? "FREE" : `₹${(currentPrice || 0).toLocaleString("en-IN")}`;
-              const isElite = course.planKey === "ELITE_LEARNING";
-              return (
-                <PlanCard
-                  key={course.id}
-                  bgColor={theme.bgColor}
-                  accentColor={theme.accentColor}
-                  planKey={course.planKey}
-                  planName={course.name}
-                  price={priceStr}
-                  originalPrice={isFree ? "₹3999" : undefined}
-                  period={`/${billingCycle === "monthly" ? "mo" : "yr"}`}
-                  showCountdown={isFree}
-                  animation={theme.animation}
-                  badge={isElite ? "Most Popular" : undefined}
-                  included={course.features}
-                  excluded={theme.excluded}
-                  ctaLink={`/course-details/${course.slug}?billing=${billingCycle}`}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <div className="flex flex-col items-center mb-10">
-            <h2 className="text-4xl font-black text-heading mb-4 tracking-tight text-center">
-              Structured <span className="gradient-text">Grade-wise</span> Plans
-            </h2>
-            <p className="text-text-muted max-w-lg mx-auto text-sm text-center mb-8 font-medium">
-              Complete curricula tailored for your specific grade level with full access to all features.
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary-light px-3 py-1 text-xs font-black uppercase tracking-wider text-primary">
+              <Layers3 className="h-4 w-4" />
+              VisualLearning Library
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl">Choose Your Learning Path</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
+              Browse student, teacher, and professional science content through class, subject, and resource type.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {courses.filter(c => ["CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"].includes(c.planKey)).map((course) => {
-              const theme = COURSE_THEME[course.planKey] || COURSE_THEME.CLASS_9;
-              const currentPrice = billingCycle === "monthly" ? course.monthlyPrice : course.yearlyPrice;
-              const priceStr = `₹${(currentPrice || 0).toLocaleString("en-IN")}`;
-              return (
-                <PlanCard
-                  key={course.id}
-                  bgColor={theme.bgColor}
-                  accentColor={theme.accentColor}
-                  planKey={course.planKey}
-                  planName={course.name}
-                  price={priceStr}
-                  period={`/${billingCycle === "monthly" ? "mo" : "yr"}`}
-                  animation={theme.animation}
-                  included={course.features}
-                  excluded={theme.excluded}
-                  ctaLink={`/course-details/${course.slug}?billing=${billingCycle}`}
-                />
-              );
-            })}
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+            First chapter is open. Remaining content unlocks with subscription.
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-/* COUNTDOWN TIMER */
-function CountdownTimer({ accent }: { accent: string }) {
-  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
-
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const diff = midnight.getTime() - now.getTime();
-      setTimeLeft({
-        h: Math.floor(diff / 3600000),
-        m: Math.floor((diff % 3600000) / 60000),
-        s: Math.floor((diff % 60000) / 1000),
-      });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  return (
-    <div className="flex flex-col items-end gap-0.5">
-      <span className="text-[9px] font-black text-white/60 uppercase tracking-widest">Ends in</span>
-      <div className="flex items-center gap-0.5">
-        {[pad(timeLeft.h), pad(timeLeft.m), pad(timeLeft.s)].map((v, i) => (
-          <span key={i} className="flex items-center gap-0.5">
-            <span
-              className="inline-block w-7 text-center py-0.5 rounded text-[11px] font-black text-white"
-              style={{ backgroundColor: `${accent}30`, border: `1px solid ${accent}40` }}
+      <section className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-black text-heading">Audience</h2>
+          <span className="text-xs font-bold uppercase tracking-wider text-text-light">Step 1</span>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {audienceCards.map((card) => (
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => setAudience(card.key)}
+              className={cn(
+                "group rounded-2xl border bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                audience === card.key ? "border-primary ring-2 ring-primary/10" : "border-gray-200"
+              )}
             >
-              {v}
-            </span>
-            {i < 2 && <span className="text-[11px] font-black text-white/30">:</span>}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* 3D CONCEPT CAROUSEL */
-function ConceptCarousel() {
-  const concepts = [
-    { name: "Laws of Motion", icon: Orbit, gradient: "from-blue-400 to-blue-600", formula: "F = ma" },
-    { name: "Atomic Structure", icon: Atom, gradient: "from-purple-400 to-purple-600", formula: "E = -13.6/n²" },
-    { name: "Cell Biology", icon: Microscope, gradient: "from-green-400 to-green-600", formula: "DNA → RNA" },
-    { name: "Optics & Light", icon: Lightbulb, gradient: "from-yellow-400 to-orange-500", formula: "n₁sinθ₁=n₂sinθ₂" },
-    { name: "Thermodynamics", icon: Flame, gradient: "from-orange-500 to-red-600", formula: "ΔU = Q − W" },
-    { name: "Organic Chem", icon: Beaker, gradient: "from-emerald-400 to-teal-600", formula: "CH₄ + 2O₂" },
-    { name: "Genetics", icon: Dna, gradient: "from-pink-400 to-rose-600", formula: "Aa × Aa" },
-    { name: "EM Waves", icon: Waves, gradient: "from-cyan-400 to-blue-600", formula: "c = λf" },
-  ];
-  const radius = 320;
-  const angleStep = 360 / concepts.length;
-  return (
-    <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary-dark via-primary to-primary-dark py-14 mb-10">
-      <div className="absolute inset-0 bg-grid-dark opacity-30 pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#05BFDB]/10 rounded-full blur-[150px]" />
-      <div className="relative z-10 text-center mb-16">
-        <h2 className="text-2xl font-black text-white tracking-tight mb-1.5">
-          Explore Science in <span className="text-[#05BFDB]">3D</span>
-        </h2>
-        <p className="text-white/45 text-sm font-semibold">Rotating through topics you&apos;ll master</p>
-      </div>
-      <div className="carousel-scene mx-auto relative z-10" style={{ height: 280 }}>
-        <div
-          className="carousel-ring relative mx-auto w-[160px] h-[200px]"
-          style={{ transformStyle: "preserve-3d", marginTop: 20 }}
-        >
-          {concepts.map((c, i) => (
-            <div
-              key={i}
-              className="carousel-card absolute inset-0 w-[160px] h-[200px]"
-              style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)` }}
-            >
-              <div className="w-full h-full rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-lg">
-                <div
-                  className={`w-11 h-11 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-lg`}
-                >
-                  <c.icon className="w-5 h-5 text-white" />
-                </div>
-                <h4 className="text-xs font-black text-white leading-tight uppercase tracking-tight">{c.name}</h4>
-                <span className="text-[10px] font-mono text-[#05BFDB]/80">{c.formula}</span>
+              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${card.tint} text-white shadow-sm transition-transform group-hover:scale-105`}>
+                <card.icon className="h-6 w-6" />
               </div>
+              <h3 className="text-lg font-black text-heading">{card.title}</h3>
+              <p className="mt-1 text-sm text-text-muted">{card.subtitle}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {audience !== "professional" ? (
+        <>
+          <section className="mb-8">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-black text-heading">Classes</h2>
+              <span className="text-xs font-bold uppercase tracking-wider text-text-light">Step 2</span>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {classes.map((classItem) => (
+                <button
+                  key={classItem.id}
+                  type="button"
+                  onClick={() => setSelectedClassId(classItem.id)}
+                  className={cn(
+                    "rounded-2xl border bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                    selectedClassId === classItem.id ? "border-accent ring-2 ring-accent/10" : "border-gray-200"
+                  )}
+                >
+                  <BookOpen className="mb-5 h-7 w-7 text-accent" />
+                  <h3 className="text-xl font-black text-heading">{classItem.name}</h3>
+                  <p className="mt-1 text-sm text-text-muted">{classItem.subjects.length} science subjects</p>
+                </button>
+              ))}
+            </div>
+          </section>
 
-/* ANIMATIONS */
-function AtomAnimation({ accent }: { accent: string }) {
-  return (
-    <div className="relative w-40 h-40 mx-auto">
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-[30px] opacity-20"
-        style={{ backgroundColor: accent }}
-      />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center z-10"
-        style={{ background: accent, boxShadow: `0 0 10px ${accent}, 0 0 30px ${accent}80` }}
-      >
-        <span className="text-[8px] font-black text-white">N</span>
-      </div>
-      <div
-        className="absolute inset-0 rounded-full animate-spin border"
-        style={{ animationDuration: "4s", borderColor: `${accent}40` }}
-      >
-        <div
-          className="absolute -top-1 left-1/2 w-3 h-3 rounded-full"
-          style={{ backgroundColor: "#fff", boxShadow: `0 0 10px #fff, 0 0 20px ${accent}` }}
-        />
-      </div>
-      <div
-        className="absolute inset-4 rounded-full animate-spin border"
-        style={{ animationDuration: "3s", animationDirection: "reverse", borderColor: `${accent}30` }}
-      >
-        <div
-          className="absolute top-1/2 -right-1 w-2.5 h-2.5 rounded-full"
-          style={{ backgroundColor: "#fff", boxShadow: `0 0 8px #fff, 0 0 15px ${accent}` }}
-        />
-      </div>
-      <div
-        className="absolute inset-8 rounded-full animate-spin border"
-        style={{ animationDuration: "6s", borderColor: `${accent}20` }}
-      >
-        <div
-          className="absolute bottom-0 left-1/4 w-2 h-2 rounded-full"
-          style={{ backgroundColor: "#fff", boxShadow: `0 0 5px #fff, 0 0 10px ${accent}` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function MagnetAnimation({ accent }: { accent: string }) {
-  return (
-    <div className="relative w-40 h-40 mx-auto flex items-center justify-center">
-      <div className="absolute w-20 h-20 rounded-full blur-[25px] opacity-20" style={{ backgroundColor: accent }} />
-      <div
-        className="absolute z-0 flex items-center justify-center"
-        style={{ animation: "magnetic-lines 3s ease-in-out infinite" }}
-      >
-        <div
-          className="w-16 h-16 border-t-2 border-b-2 rounded-full absolute"
-          style={{ borderColor: accent, opacity: 0.8 }}
-        />
-        <div
-          className="w-10 h-10 border-t-2 border-b-2 rounded-full absolute"
-          style={{ borderColor: accent, opacity: 0.6 }}
-        />
-        <div className="w-1 h-8 rounded-full absolute" style={{ backgroundColor: accent, opacity: 0.9 }} />
-      </div>
-      <div
-        className="absolute z-10 w-7 h-12 rounded-md border-2 flex items-center justify-center"
-        style={{
-          borderColor: `${accent}80`,
-          backgroundColor: `${accent}20`,
-          animation: "magnet-left 3s ease-in-out infinite",
-        }}
-      >
-        <span className="text-[10px] font-black text-white">N</span>
-      </div>
-      <div
-        className="absolute z-10 w-7 h-12 rounded-md border-2 flex items-center justify-center"
-        style={{
-          borderColor: `${accent}80`,
-          backgroundColor: `${accent}20`,
-          animation: "magnet-right 3s ease-in-out infinite",
-        }}
-      >
-        <span className="text-[10px] font-black text-white">S</span>
-      </div>
-    </div>
-  );
-}
-
-function CircuitAnimation({ accent }: { accent: string }) {
-  return (
-    <div className="relative w-40 h-40 mx-auto">
-      <div
-        className="absolute inset-3 rounded-2xl border-2"
-        style={{
-          borderColor: `${accent}60`,
-          boxShadow: `0 0 15px ${accent}30, inset 0 0 15px ${accent}30`,
-        }}
-      />
-      <div className="absolute left-1 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 z-10">
-        <div
-          className="w-3 h-6 rounded-sm border"
-          style={{ borderColor: accent, backgroundColor: `${accent}50` }}
-        />
-        <span className="text-[6px] font-black text-white">+−</span>
-      </div>
-      <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10">
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center"
-          style={{
-            backgroundColor: `${accent}20`,
-            border: `2px solid ${accent}`,
-            animation: "pulse-glow-brand 2s ease-in-out infinite",
-          }}
-        >
-          <Lightbulb className="w-3.5 h-3.5 text-white" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BookAnimation({ accent }: { accent: string }) {
-  const formulas = ["E=mc²", "F=ma", "PV=nRT", "λf=c"];
-  return (
-    <div className="relative w-40 h-40 mx-auto flex items-end justify-center">
-      {/* Glow under book */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-6 rounded-full blur-[18px] opacity-40" style={{ backgroundColor: accent }} />
-      {/* Open book */}
-      <div className="relative w-32 mb-2 z-10">
-        {/* Left page */}
-        <div
-          className="absolute bottom-0 left-0 w-16 h-20 rounded-tl-xl border-l-2 border-t-2 border-b-2"
-          style={{ borderColor: `${accent}60`, backgroundColor: `${accent}12` }}
-        >
-          {/* Lines on left page */}
-          {[0,1,2].map(j => (
-            <div key={j} className="mx-2 mt-3 rounded-full h-0.5" style={{ marginTop: j === 0 ? 10 : 6, backgroundColor: `${accent}30` }} />
-          ))}
-        </div>
-        {/* Right page */}
-        <div
-          className="absolute bottom-0 right-0 w-16 h-20 rounded-tr-xl border-r-2 border-t-2 border-b-2"
-          style={{ borderColor: `${accent}60`, backgroundColor: `${accent}12` }}
-        >
-          {[0,1,2].map(j => (
-            <div key={j} className="mx-2 rounded-full h-0.5" style={{ marginTop: j === 0 ? 10 : 6, backgroundColor: `${accent}30` }} />
-          ))}
-        </div>
-        {/* Spine */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-20 rounded-full" style={{ backgroundColor: `${accent}70` }} />
-      </div>
-      {/* Rising formulas */}
-      {formulas.map((f, i) => (
-        <div
-          key={i}
-          className="absolute font-mono font-black rounded-lg px-2 py-0.5 border z-20 text-white"
-          style={{
-            fontSize: "9px",
-            backgroundColor: `${accent}35`,
-            borderColor: `${accent}65`,
-            left: `${10 + i * 22}%`,
-            bottom: 0,
-            animation: `formula-rise ${2.8 + i * 0.45}s ease-in-out infinite`,
-            animationDelay: `${i * 0.6}s`,
-          }}
-        >
-          {f}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* PLAN CARD */
-function PlanCard({
-  bgColor,
-  accentColor,
-  planKey,
-  planName,
-  price,
-  originalPrice,
-  period = "",
-  badge,
-  animation,
-  included,
-  excluded,
-  ctaLink,
-  ctaText = "Explore Course",
-  showCountdown,
-  onCtaClick,
-}: any) {
-  const isPopular = !!badge;
-  const featureItems = getDetailedFeatures(planKey, included);
-  return (
-    <div
-      className={`relative flex flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
-        isPopular
-          ? "border-purple-300/60 ring-1 ring-purple-200/50 shadow-purple-100/60"
-          : "border-card-border"
-      }`}
-    >
-      {/* Popular ribbon */}
-      {isPopular && (
-        <div className="absolute top-3.5 right-0 z-20">
-          <span className="block bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-l-full shadow-lg">
-            {badge}
-          </span>
-        </div>
+          <section className="mb-8">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-black text-heading">Subjects</h2>
+              <span className="text-xs font-bold uppercase tracking-wider text-text-light">Step 3</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {studentSubjects.map((subject) => {
+                const Icon = subjectIcon(subject.name);
+                return (
+                  <button
+                    key={subject.id}
+                    type="button"
+                    onClick={() => setSelectedSubjectId(subject.id)}
+                    className={cn(
+                      "group rounded-2xl border bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                      selectedSubjectId === subject.id ? "border-primary ring-2 ring-primary/10" : "border-gray-200"
+                    )}
+                  >
+                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${subjectTint(subject.name)} text-white transition-transform group-hover:scale-105`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-lg font-black text-heading">{subject.name}</h3>
+                    <p className="mt-1 text-sm text-text-muted">{subject._count?.chapters || 0} chapters</p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-black text-heading">Professional Tracks</h2>
+            <span className="text-xs font-bold uppercase tracking-wider text-text-light">Step 2</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {professionalSubjects.map((subject) => (
+              <button
+                key={subject.key}
+                type="button"
+                onClick={() => setSelectedProfessional(subject.key)}
+                className={cn(
+                  "group min-h-44 rounded-2xl border bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                  selectedProfessional === subject.key ? "border-primary ring-2 ring-primary/10" : "border-gray-200"
+                )}
+              >
+                <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${subject.tint} text-white transition-transform group-hover:scale-105`}>
+                  <subject.icon className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-black text-heading">{subject.title}</h3>
+                <p className="mt-2 text-sm text-text-muted">{subject.subtitle}</p>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* DARK HEADER */}
-      <div className="relative overflow-hidden" style={{ backgroundColor: bgColor }}>
-        <div className="absolute inset-0 bg-grid-dark pointer-events-none opacity-60" />
-        <div
-          className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] opacity-20"
-          style={{ backgroundColor: accentColor }}
-        />
-
-        {/* Plan name pill */}
-        <div className="relative z-10 flex justify-center pt-4 mb-2">
-          <h3
-            className="px-5 py-1.5 rounded-full text-sm font-black text-white uppercase tracking-widest"
-            style={{ backgroundColor: `${accentColor}25`, border: `1px solid ${accentColor}45` }}
-          >
-            {planName}
-          </h3>
-        </div>
-
-        {/* Price + badge */}
-        <div className="relative z-10 px-5 mb-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className="text-3xl font-black text-white leading-none"
-                style={{ textShadow: `0 0 25px ${accentColor}60` }}
+      {selectionReady && (
+        <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-black text-heading">Content Type</h2>
+            <span className="text-xs font-bold uppercase tracking-wider text-text-light">Step 4</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {contentCards.map((content) => (
+              <button
+                key={content.key}
+                type="button"
+                onClick={() => setSelectedContent(content.key)}
+                className={cn(
+                  "rounded-2xl border bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                  selectedContent === content.key ? "border-accent ring-2 ring-accent/10" : "border-gray-200"
+                )}
               >
-                {price}
-              </span>
-              {originalPrice && (
-                <span className="text-[13px] font-bold text-white/65 line-through">{originalPrice}</span>
-              )}
-              <span className="text-[10px] font-bold text-white/40">{period}</span>
-            </div>
-            {showCountdown && <CountdownTimer accent={accentColor} />}
+                <content.icon className="mb-5 h-7 w-7 text-primary" />
+                <h3 className="text-base font-black text-heading">{content.title}</h3>
+                <p className="mt-1 text-sm text-text-muted">{content.subtitle}</p>
+              </button>
+            ))}
           </div>
-        </div>
+        </section>
+      )}
 
-        {/* Animation */}
-        <div className="relative z-10 flex h-[72px] items-center justify-center overflow-hidden">
-          <div className="scale-[0.43] origin-center">
-            {animation === "atom" && <AtomAnimation accent={accentColor} />}
-            {animation === "magnet" && <MagnetAnimation accent={accentColor} />}
-            {animation === "circuit" && <CircuitAnimation accent={accentColor} />}
-          </div>
-        </div>
-
-        {/* Wave */}
-        <svg
-          className="relative z-10 w-full -mb-px block"
-          viewBox="0 0 500 20"
-          preserveAspectRatio="none"
-          style={{ height: "16px" }}
-        >
-          <path d="M0,8 C125,24 375,0 500,8 L500,20 L0,20 Z" fill="white" />
-        </svg>
-      </div>
-
-      {/* WHITE BODY */}
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
-        <div className="flex-1 space-y-3 mb-4">
-
-          {/* Included list */}
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary/80">
-                <Sparkles className="h-3 w-3 text-[#00b4d8]" />
-                What&apos;s included
+      {selectedContent && (
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-heading">
+                {contentCards.find((item) => item.key === selectedContent)?.title} {selectedTitle ? `- ${selectedTitle}` : ""}
+              </h2>
+              <p className="mt-1 text-sm text-text-muted">
+                Chapter cards are pulled from existing class and subject content.
               </p>
-              <span
-                className="rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest"
-                style={{ color: accentColor, backgroundColor: `${accentColor}12` }}
-              >
-                {featureItems.length} tools
-              </span>
             </div>
-            <ul className="space-y-1.5">
-              {featureItems.map((feature, i) => {
-                const Icon = feature.icon;
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary-light px-3 py-1 text-xs font-black text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              Preview first chapter
+            </div>
+          </div>
+
+          {selectedContent === "ppts" || selectedContent === "test_series" ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-surface p-10 text-center">
+              <Presentation className="mx-auto mb-4 h-10 w-10 text-primary/50" />
+              <h3 className="text-lg font-black text-heading">Content section ready</h3>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-text-muted">
+                This {selectedContent === "ppts" ? "PPTs" : "Test Series"} section is added to the learning flow. Upload and database fields can be added in the next pass.
+              </p>
+            </div>
+          ) : chaptersLoading ? (
+            <PageLoader />
+          ) : chapters.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-surface p-10 text-center">
+              <BookOpen className="mx-auto mb-4 h-10 w-10 text-primary/50" />
+              <h3 className="text-lg font-black text-heading">No chapters found</h3>
+              <p className="mt-2 text-sm text-text-muted">Content for this section will appear after chapters are added in admin.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {chapters.map((chapter, index) => {
+                const unlocked = (chapter.order || index + 1) === 1;
+                const tab = chapterTab(selectedContent);
+                const returnTo = encodeURIComponent("/courses");
+                const href = `/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?tab=${tab}&returnTo=${returnTo}`;
                 return (
-                <li
-                  key={`i-${i}`}
-                  className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50/80 px-2.5 py-2 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
-                >
-                  <div
-                    className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg shadow-sm transition-transform group-hover:scale-105"
-                    style={{ backgroundColor: `${accentColor}14`, border: `1px solid ${accentColor}26`, color: accentColor }}
+                  <Link
+                    key={`${chapter.subjectId}-${chapter.id}`}
+                    href={href}
+                    className="group rounded-2xl border border-gray-200 bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white hover:shadow-md"
                   >
-                    <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-[14px] font-normal leading-tight text-gray-900">{feature.title}</h4>
-                  </div>
-                </li>
-              );
+                    <div className="mb-5 flex items-start justify-between gap-4">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${subjectTint(chapter.subjectName)} text-white`}>
+                        <BookOpen className="h-6 w-6" />
+                      </div>
+                      <span className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black",
+                        unlocked ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"
+                      )}>
+                        {unlocked ? "Preview" : <><Lock className="h-3 w-3" /> Locked</>}
+                      </span>
+                    </div>
+                    <p className="mb-1 text-xs font-black uppercase tracking-wider text-text-light">{chapter.className} - {chapter.subjectName}</p>
+                    <h3 className="line-clamp-2 text-base font-black text-heading group-hover:text-primary">
+                      {chapter.order || index + 1}. {chapter.name}
+                    </h3>
+                    <div className="mt-4 flex items-center justify-between text-sm text-text-muted">
+                      <span>{chapterContentCount(chapter, selectedContent)} resources</span>
+                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </Link>
+                );
               })}
-            </ul>
-          </div>
-
-          {/* Excluded list */}
-          {excluded && excluded.length > 0 && (
-            <div className="rounded-xl border border-dashed border-rose-200/80 bg-rose-50/60 px-3 py-2.5">
-              <p className="mb-1.5 flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.16em] text-rose-600/70">
-                <XCircle className="h-2.5 w-2.5 text-rose-400" strokeWidth={2.5} />
-                Not in this plan
-              </p>
-              <ul className="space-y-1">
-                {excluded.map((f: string, i: number) => (
-                  <li key={`e-${i}`} className="flex items-center gap-1.5 px-1">
-                    <XCircle className="h-3 w-3 shrink-0 text-rose-300" strokeWidth={2} />
-                    <span className="text-[13px] font-medium leading-tight text-text-muted line-through decoration-rose-300/80">
-                      {f}
-                    </span>
-                  </li>
-                ))}
-              </ul>
             </div>
           )}
-        </div>
-
-        {/* CTA */}
-        {onCtaClick ? (
-          <Button
-            onClick={onCtaClick}
-            className="w-full rounded-xl py-3 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-white"
-            style={{ background: `linear-gradient(135deg, ${accentColor}, ${bgColor})` }}
-          >
-            {ctaText} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        ) : (
-          <Link href={ctaLink || "#"} className="block">
-            <Button
-              className="w-full rounded-xl py-3 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-white"
-              style={{ background: `linear-gradient(135deg, ${accentColor}, ${bgColor})` }}
-            >
-              {ctaText} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          </Link>
-        )}
-      </div>
+        </section>
+      )}
     </div>
   );
 }

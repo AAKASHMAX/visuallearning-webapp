@@ -43,7 +43,8 @@ export default function UnifiedChapterPage() {
   const [chapterName, setChapterName] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
-  const [activeTab, setActiveTab] = useState<Tab>("videos");
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab === "notes" ? "notes" : initialTab === "quiz" ? "quiz" : "videos");
   
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);

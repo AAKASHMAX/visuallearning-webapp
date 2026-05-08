@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, Menu, X, User, LogOut } from "lucide-react";
+import { Bell, BookOpen, CreditCard, LayoutDashboard, Menu, MessageSquare, Phone, User, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
@@ -33,8 +33,17 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/courses", label: "Courses" },
-    { href: "/feedback", label: "Feedback" },
     { href: "/contact", label: "Contact Us" },
+    { href: "/feedback", label: "Feedback" },
+  ];
+
+  const dashboardLinks = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/courses", label: "Courses", icon: BookOpen },
+    { href: "/subscription", label: "Subscriptions", icon: CreditCard },
+    { href: "/contact", label: "Contact Us", icon: Phone },
+    { href: "/feedback", label: "Feedback", icon: MessageSquare },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -85,8 +94,8 @@ export function Navbar() {
                   <User className="w-4 h-4" />
                   <span>Profile</span>
                 </Link>
-                <button onClick={() => { logout(); window.location.href = "/"; }} className="hover:text-accent ml-2">
-                  <LogOut className="w-4 h-4" />
+                <button onClick={() => { logout(); window.location.href = "/"; }} className="hover:text-accent ml-2 text-sm font-bold">
+                  Logout
                 </button>
               </div>
             ) : mounted ? (
@@ -108,54 +117,50 @@ export function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "block py-2.5 px-4 rounded-xl text-sm font-black transition-all",
-                    isActive ? "bg-accent text-primary-dark" : "hover:text-accent"
-                  )}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-
             {mounted && isAuthenticated ? (
               <>
                 <div className="px-4 py-2">
                   <NotificationBell align="left" />
                 </div>
-                <Link 
-                  href={user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} 
-                  className={cn(
-                    "block py-2.5 px-4 rounded-xl text-sm font-black",
-                    (pathname === "/dashboard" || pathname === "/admin/dashboard") ? "bg-accent text-primary-dark" : "hover:text-accent"
-                  )} 
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  href="/profile" 
-                  className={cn(
-                    "block py-2.5 px-4 rounded-xl text-sm font-black",
-                    pathname === "/profile" ? "bg-accent text-primary-dark" : "hover:text-accent"
-                  )} 
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Profile
-                </Link>
-                <button onClick={() => { logout(); window.location.href = "/"; }} className="block py-2 text-red-300 w-full text-left px-4">Logout</button>
+                {dashboardLinks.map((link) => {
+                  const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={user?.role === "ADMIN" && link.href === "/dashboard" ? "/admin/dashboard" : link.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-black transition-all",
+                        isActive ? "bg-accent text-primary-dark" : "bg-white/10 text-white hover:bg-white/15"
+                      )}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <link.icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+                <button onClick={() => { logout(); window.location.href = "/"; }} className="block w-full rounded-xl bg-red-500/15 px-4 py-3 text-left text-sm font-black text-red-100">Logout</button>
               </>
             ) : mounted ? (
               <>
-                <Link href="/auth/login" className="block py-2 hover:text-accent px-4" onClick={() => setMenuOpen(false)}>Login</Link>
-                <Link href="/auth/signup" className="block py-2 hover:text-accent px-4" onClick={() => setMenuOpen(false)}>Sign Up</Link>
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "block rounded-xl px-4 py-3 text-sm font-black transition-all",
+                        isActive ? "bg-accent text-primary-dark" : "bg-white/10 text-white hover:bg-white/15"
+                      )}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+                <Link href="/auth/login" className="block rounded-xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/15" onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link href="/auth/signup" className="block rounded-xl bg-accent px-4 py-3 text-sm font-black text-primary-dark" onClick={() => setMenuOpen(false)}>Sign Up</Link>
               </>
             ) : null}
           </div>

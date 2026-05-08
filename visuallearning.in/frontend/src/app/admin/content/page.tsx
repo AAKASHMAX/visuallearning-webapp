@@ -9,13 +9,16 @@ import toast from "react-hot-toast";
 import { Plus, Pencil, Trash2, X, Search } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 
-type Tab = "chapters" | "videos" | "notes" | "questions";
+type Tab = "chapters" | "videos" | "notes" | "questions" | "questionBank" | "ppts" | "testSeries";
 
 const tabs: { key: Tab; label: string }[] = [
   { key: "chapters", label: "Chapters" },
-  { key: "videos", label: "Videos" },
+  { key: "videos", label: "Animated Videos" },
   { key: "notes", label: "Notes" },
-  { key: "questions", label: "Questions" },
+  { key: "questions", label: "Quiz" },
+  { key: "questionBank", label: "Question Bank" },
+  { key: "ppts", label: "PPTs" },
+  { key: "testSeries", label: "Test Series" },
 ];
 
 function stripVideoTitleNumber(title: string) {
@@ -86,7 +89,7 @@ export default function AdminContentPage() {
       } else if (tab === "notes" && selectedChapter) {
         const { data } = await api.get(`/courses/chapters/${selectedChapter}/notes`);
         setData(readContentList(data, "notes"));
-      } else if (tab === "questions" && selectedChapter) {
+      } else if ((tab === "questions" || tab === "questionBank") && selectedChapter) {
         const { data } = await api.get(`/courses/chapters/${selectedChapter}/questions`);
         setData(readContentList(data, "questions"));
       } else {
@@ -144,7 +147,12 @@ export default function AdminContentPage() {
 
   const handleSave = async () => {
     try {
-      const endpoint = `/admin/${tab}`;
+      if (tab === "ppts" || tab === "testSeries") {
+        toast.error("PPTs and Test Series storage will be added in the next backend pass");
+        return;
+      }
+
+      const endpoint = `/admin/${tab === "questionBank" ? "questions" : tab}`;
       const payload = getCleanPayload();
       if (editing) {
         await api.put(`${endpoint}/${editing}`, payload);
@@ -166,7 +174,8 @@ export default function AdminContentPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure?")) return;
     try {
-      await api.delete(`/admin/${tab}/${id}`);
+      const endpoint = tab === "questionBank" ? "questions" : tab;
+      await api.delete(`/admin/${endpoint}/${id}`);
       toast.success("Deleted");
       loadData();
     } catch {
@@ -207,17 +216,20 @@ export default function AdminContentPage() {
     return true;
   });
 
-  const canAdd = tab === "chapters" || !!selectedChapter;
+  const canAdd = (tab === "chapters" || !!selectedChapter) && tab !== "ppts" && tab !== "testSeries";
+  const isQuestionTab = tab === "questions" || tab === "questionBank";
   const emptyText = tab === "chapters"
     ? "No chapters found."
-    : "Choose a chapter to manage this content.";
+    : tab === "ppts" || tab === "testSeries"
+      ? "This admin section is ready in the menu. Storage and upload fields will be added next."
+      : "Choose a chapter to manage this content.";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Content Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Chapterwise content only</p>
+          <p className="text-sm text-gray-500 mt-1">Manage content according to Students, Teachers, and Professional learning sections</p>
         </div>
       </div>
 
@@ -269,7 +281,7 @@ export default function AdminContentPage() {
       <div className="flex justify-end mb-4">
         {canAdd && (
           <Button onClick={showForm ? () => { setShowForm(false); setEditing(null); setFormData({}); } : startCreate}>
-            {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "questions" ? "Question" : tab === "notes" ? "Note" : tab.slice(0, -1)}</>}
+            {showForm ? <><X className="w-4 h-4 mr-1" />Cancel</> : <><Plus className="w-4 h-4 mr-1" />Add {tab === "questionBank" || tab === "questions" ? "Question" : tab === "notes" ? "Note" : "Video"}</>}
           </Button>
         )}
       </div>
@@ -333,7 +345,7 @@ export default function AdminContentPage() {
               </>
             )}
 
-            {tab === "questions" && (
+            {(tab === "questions" || tab === "questionBank") && (
               <>
                 <Input label="Question Text" value={formData.questionText || ""} onChange={(e) => setFormData({ ...formData, questionText: e.target.value })} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -369,7 +381,7 @@ export default function AdminContentPage() {
               <thead>
                 <tr className="border-b bg-gray-50/50 text-left">
                   <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">
-                    {tab === "questions" ? "Question" : "Name/Title"}
+                    {isQuestionTab ? "Question" : "Name/Title"}
                   </th>
                   {tab === "chapters" && <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Class/Subject</th>}
                   {tab === "chapters" && <th className="p-4 font-black uppercase tracking-wider text-[10px] text-gray-400">Content Stats</th>}
@@ -382,7 +394,7 @@ export default function AdminContentPage() {
                   <tr key={item.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-gray-900 max-w-[300px] truncate">
-                        {tab === "questions" ? item.questionText : (item.name || item.title)}
+                        {isQuestionTab ? item.questionText : (item.name || item.title)}
                       </div>
                       {tab === "videos" && <div className="text-[10px] font-mono text-gray-400">{item.vimeoVideoId || item.youtubeVideoId}</div>}
                     </td>
