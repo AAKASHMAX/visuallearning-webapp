@@ -4,9 +4,14 @@ import Link from "next/link";
 import {
   ArrowRight,
   BriefcaseBusiness,
-  CheckCircle2,
+  Brain,
+  ClipboardList,
+  FileQuestion,
+  FileText,
+  FlaskConical,
   GraduationCap,
   MonitorPlay,
+  Presentation,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -19,7 +24,12 @@ const audienceCards = [
     icon: GraduationCap,
     badge: "Class 9-12",
     accent: "from-sky-500 to-cyan-400",
-    features: ["Animated videos", "Chapter notes", "Quiz practice", "Question bank"],
+    features: [
+      { label: "Videos", icon: MonitorPlay },
+      { label: "Notes", icon: FileText },
+      { label: "Quiz", icon: Brain },
+      { label: "Question Bank", icon: FileQuestion },
+    ],
   },
   {
     title: "Teachers",
@@ -28,7 +38,12 @@ const audienceCards = [
     icon: UsersRound,
     badge: "Teaching tools",
     accent: "from-emerald-500 to-lime-400",
-    features: ["Animated videos", "PPTs", "Test series", "Question bank"],
+    features: [
+      { label: "Videos", icon: MonitorPlay },
+      { label: "PPTs", icon: Presentation },
+      { label: "Test Series", icon: ClipboardList },
+      { label: "Question Bank", icon: FileQuestion },
+    ],
   },
   {
     title: "Professionals",
@@ -37,7 +52,12 @@ const audienceCards = [
     icon: BriefcaseBusiness,
     badge: "Subject tracks",
     accent: "from-violet-500 to-fuchsia-400",
-    features: ["Animated videos", "PPTs", "Virtual lab", "Test series"],
+    features: [
+      { label: "Videos", icon: MonitorPlay },
+      { label: "PPTs", icon: Presentation },
+      { label: "Virtual Lab", icon: FlaskConical },
+      { label: "Test Series", icon: ClipboardList },
+    ],
   },
 ];
 
@@ -77,11 +97,11 @@ export default function CoursesPage() {
             <h2 className="text-2xl font-black text-heading">{card.title}</h2>
             <p className="mt-3 min-h-20 text-sm leading-6 text-text-muted">{card.subtitle}</p>
 
-            <div className="mt-6 grid gap-2">
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
               {card.features.map((feature) => (
-                <div key={feature} className="flex items-center gap-2 text-sm font-bold text-heading">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  {feature}
+                <div key={feature.label} className="rounded-lg border border-gray-100 bg-surface p-3 transition-colors group-hover:bg-white">
+                  <feature.icon className="mb-2 h-4 w-4 text-primary" />
+                  <span className="block text-xs font-black leading-tight text-heading">{feature.label}</span>
                 </div>
               ))}
             </div>
