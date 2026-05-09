@@ -8,8 +8,6 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardList,
-  Download,
-  ExternalLink,
   FileQuestion,
   FileText,
   Lock,
@@ -123,6 +121,11 @@ function normalizeOption(value: string) {
   return (value || "").replace(/^option/i, "").trim().toUpperCase();
 }
 
+function pdfViewerUrl(url: string) {
+  const separator = url.includes("#") ? "&" : "#";
+  return `${url}${separator}toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+}
+
 export function ResourceViewerPage({
   classId,
   subjectId,
@@ -155,6 +158,10 @@ export function ResourceViewerPage({
     () => documents.find((doc) => doc.id === activeDocumentId) || documents[0] || null,
     [activeDocumentId, documents]
   );
+  const heroTitle = activeDocument?.title || meta.title;
+  const heroDescription = activeDocument
+    ? `${meta.title} - ${activeDocument.meta || "PDF Viewer"}`
+    : meta.description;
 
   useEffect(() => {
     let mounted = true;
@@ -282,15 +289,19 @@ export function ResourceViewerPage({
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-wider text-primary">{meta.eyebrow}</p>
-              <h1 className="mt-1 text-2xl font-black text-heading sm:text-3xl">{meta.title}</h1>
-              <p className="mt-2 text-sm leading-6 text-text-muted">{meta.description}</p>
-              <p className="mt-3 text-sm font-bold text-heading">
-                {chapterInfo.chapterName}
-                <span className="mx-2 text-text-light">/</span>
-                {chapterInfo.subjectName}
-                <span className="mx-2 text-text-light">/</span>
-                {chapterInfo.className}
-              </p>
+              <h1 className="mt-1 text-2xl font-black text-heading sm:text-3xl">{heroTitle}</h1>
+              <p className="mt-2 text-sm leading-6 text-text-muted">{heroDescription}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
+                  {chapterInfo.className}
+                </span>
+                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
+                  {chapterInfo.subjectName}
+                </span>
+                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
+                  {chapterInfo.chapterName}
+                </span>
+              </div>
             </div>
           </div>
           <ZoomControls zoom={zoom} setZoom={setZoom} />
@@ -400,39 +411,32 @@ function DocumentViewer({
   }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-      <aside className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-4 text-sm font-black uppercase tracking-wider text-text-light">Files</h2>
-        <div className="space-y-2">
-          {documents.map((document, index) => (
-            <button
-              key={document.id}
-              type="button"
-              onClick={() => setActiveDocumentId(document.id)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all",
-                activeDocumentId === document.id
-                  ? "border-primary bg-primary-light text-heading"
-                  : "border-gray-200 bg-white hover:border-primary/30"
-              )}
-            >
-              <div className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                document.locked ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-600"
-              )}>
-                {document.locked ? <Lock className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black text-heading">{index + 1}. {document.title}</p>
-                <p className="mt-1 text-xs font-bold text-text-light">{document.meta || "PDF"}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-primary" />
-            </button>
-          ))}
+    <section className="min-w-0 rounded-lg border border-gray-200 bg-white shadow-sm">
+      {documents.length > 1 && (
+        <div className="border-b border-gray-100 p-4">
+          <p className="mb-3 text-xs font-black uppercase tracking-wider text-text-light">Available files</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {documents.map((document, index) => (
+              <button
+                key={document.id}
+                type="button"
+                onClick={() => setActiveDocumentId(document.id)}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-black transition-all",
+                  activeDocumentId === document.id
+                    ? "border-primary bg-primary-light text-heading"
+                    : "border-gray-200 bg-white text-text-muted hover:border-primary/30 hover:text-heading"
+                )}
+              >
+                {document.locked ? <Lock className="h-4 w-4 text-amber-600" /> : <FileText className="h-4 w-4 text-emerald-600" />}
+                <span className="max-w-56 truncate">{index + 1}. {document.title}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </aside>
+      )}
 
-      <section className="min-w-0 rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div>
         {locked || activeDocument?.locked || !activeDocument?.pdfUrl ? (
           activeDocument?.locked || locked ? (
             <LockedPanel />
@@ -440,32 +444,7 @@ function DocumentViewer({
             <EmptyPanel title="File link missing" message="This item is listed, but no viewer link has been attached yet." icon={FileText} compact />
           )
         ) : (
-          <div>
-            <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="truncate text-lg font-black text-heading">{activeDocument.title}</h2>
-                <p className="text-sm text-text-muted">{activeDocument.meta || "PDF Viewer"}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <a
-                  href={activeDocument.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open
-                </a>
-                <a
-                  href={activeDocument.pdfUrl}
-                  download
-                  className="inline-flex items-center gap-2 rounded-lg bg-heading px-3 py-2 text-xs font-black text-white hover:bg-primary"
-                >
-                  <Download className="h-4 w-4" />
-                  Download
-                </a>
-              </div>
-            </div>
+          <>
             <div className="h-[72vh] overflow-auto bg-slate-100 p-3">
               <div
                 className="origin-top-left overflow-hidden rounded-lg bg-white shadow-sm"
@@ -477,16 +456,16 @@ function DocumentViewer({
                 }}
               >
                 <iframe
-                  src={activeDocument.pdfUrl}
+                  src={pdfViewerUrl(activeDocument.pdfUrl)}
                   title={activeDocument.title}
                   className="h-full w-full border-0"
                 />
               </div>
             </div>
-          </div>
+          </>
         )}
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }
 
