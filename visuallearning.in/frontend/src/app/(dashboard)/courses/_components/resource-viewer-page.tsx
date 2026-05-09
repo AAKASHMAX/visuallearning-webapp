@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,6 +11,8 @@ import {
   FileQuestion,
   FileText,
   Lock,
+  Maximize2,
+  Minimize2,
   Minus,
   Plus,
   Presentation,
@@ -123,7 +125,7 @@ function normalizeOption(value: string) {
 
 function pdfViewerUrl(url: string) {
   const separator = url.includes("#") ? "&" : "#";
-  return `${url}${separator}toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+  return `${url}${separator}toolbar=0&navpanes=0&pagemode=none&scrollbar=1&view=Fit`;
 }
 
 export function ResourceViewerPage({
@@ -400,18 +402,49 @@ function DocumentViewer({
   zoom: number;
   locked: boolean;
 }) {
+  const viewerRef = useRef<HTMLElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const emptyCopy = kind === "ppts"
     ? "No PPT or slide PDF has been added for this chapter yet."
     : kind === "test-series"
       ? "No test paper has been added for this subject yet."
       : "No PDF has been added for this chapter yet.";
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === viewerRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!viewerRef.current) return;
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await viewerRef.current.requestFullscreen();
+      }
+    } catch {
+      setIsFullscreen((value) => !value);
+    }
+  };
+
   if (documents.length === 0) {
     return <EmptyPanel title="No files available" message={emptyCopy} icon={resourceMeta[kind].icon} />;
   }
 
   return (
-    <section className="min-w-0 rounded-lg border border-gray-200 bg-white shadow-sm">
+    <section
+      ref={viewerRef}
+      className={cn(
+        "min-w-0 rounded-lg border border-gray-200 bg-white shadow-sm",
+        isFullscreen && "fixed inset-0 z-[80] overflow-hidden rounded-none border-0"
+      )}
+    >
       {documents.length > 1 && (
         <div className="border-b border-gray-100 p-4">
           <p className="mb-3 text-xs font-black uppercase tracking-wider text-text-light">Available files</p>
@@ -445,14 +478,36 @@ function DocumentViewer({
           )
         ) : (
           <>
-            <div className="h-[72vh] overflow-auto bg-slate-100 p-3">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-4 py-3">
+              <p className="min-w-0 truncate text-sm font-black text-heading">
+                {activeDocument.title}
+              </p>
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                {isFullscreen ? "Exit" : "Full screen"}
+              </button>
+            </div>
+            <div
+              className={cn(
+                "overflow-auto bg-slate-100 py-4",
+                isFullscreen
+                  ? "h-[calc(100vh-64px)] px-4 sm:px-10 lg:px-24"
+                  : "h-[76vh] px-4 sm:px-10 lg:px-20 xl:px-28"
+              )}
+            >
               <div
-                className="origin-top-left overflow-hidden rounded-lg bg-white shadow-sm"
+                className="mx-auto origin-top overflow-hidden rounded-lg bg-white shadow-sm"
                 style={{
                   transform: `scale(${zoom})`,
+                  transformOrigin: "top center",
                   width: `${100 / zoom}%`,
-                  height: `${78 / zoom}vh`,
-                  minHeight: `${760 / zoom}px`,
+                  maxWidth: `${980 / zoom}px`,
+                  height: isFullscreen ? `${100 / zoom}%` : `${80 / zoom}vh`,
+                  minHeight: isFullscreen ? `${720 / zoom}px` : `${760 / zoom}px`,
                 }}
               >
                 <iframe
