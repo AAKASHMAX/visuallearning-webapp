@@ -175,7 +175,7 @@ const virtualLabCard: ContentCard = {
 const teacherContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), testSeriesCard];
 const professionalContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), virtualLabCard, testSeriesCard];
 const allContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
-const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank"];
+const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank", "ppts", "test-series"];
 
 function isTargetClass(name: string) {
   const normalized = name.toLowerCase();
@@ -210,16 +210,11 @@ function isChapterContent(slug: ContentSlug) {
   return chapterContentSlugs.includes(slug);
 }
 
-function chapterTab(slug: ContentSlug) {
-  if (slug === "notes") return "notes";
-  if (slug === "quiz" || slug === "question-bank") return "quiz";
-  return "videos";
-}
-
 function chapterContentCount(chapter: ChapterRow, slug: ContentSlug) {
   if (typeof chapter.contentCount === "number") return chapter.contentCount;
   if (slug === "notes") return chapter._count?.notes || 0;
   if (slug === "quiz" || slug === "question-bank") return chapter._count?.questions || 0;
+  if (slug === "ppts" || slug === "test-series") return 0;
   return chapter._count?.videos || 0;
 }
 
@@ -698,7 +693,13 @@ function ChapterGrid({
       {chapters.map((chapter, index) => {
         const visual = subjectVisual(chapter.subjectName);
         const unlocked = index === 0;
-        const href = `/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?tab=${chapterTab(contentSlug)}&returnTo=${encodeURIComponent(returnTo)}`;
+        const href = contentSlug === "animated-videos"
+          ? `/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?tab=videos&returnTo=${encodeURIComponent(returnTo)}`
+          : `/courses/resource-viewer/${chapter.classId}/${chapter.subjectId}/${chapter.id}?type=${contentSlug}&returnTo=${encodeURIComponent(returnTo)}`;
+        const resourceCount = chapterContentCount(chapter, contentSlug);
+        const resourceLabel = contentSlug === "ppts" || contentSlug === "test-series"
+          ? "Open viewer"
+          : `${resourceCount} resources`;
 
         return (
           <Link
@@ -724,7 +725,7 @@ function ChapterGrid({
               {chapter.order || index + 1}. {chapter.name}
             </h2>
             <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm font-bold text-text-muted">{chapterContentCount(chapter, contentSlug)} resources</span>
+              <span className="text-sm font-bold text-text-muted">{resourceLabel}</span>
               <ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
