@@ -23,7 +23,9 @@ services:
     name: physics-visuallearning-api
     runtime: node
     plan: free
+    branch: master
     rootDir: physics.visuallearning.in/backend
+    autoDeployTrigger: commit
     buildCommand: npm install --include=dev && npm run build
     startCommand: npx prisma db push --skip-generate && node dist/index.js
     envVars:
