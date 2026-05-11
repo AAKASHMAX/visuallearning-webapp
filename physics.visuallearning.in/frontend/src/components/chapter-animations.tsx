@@ -514,7 +514,301 @@ export function SemiconductorAdvancedAnimation() {
   );
 }
 
+type SheetVisualMode =
+  | "orbit"
+  | "rays"
+  | "field"
+  | "circuit"
+  | "wave"
+  | "matter"
+  | "thermal"
+  | "atomic"
+  | "magnet"
+  | "coil"
+  | "semiconductor";
+
+type SheetVisualConfig = {
+  label: string;
+  mode: SheetVisualMode;
+  accent: string;
+  secondary: string;
+  symbol: string;
+  formula: string;
+  tilt: number;
+  rings: number;
+};
+
+function SheetChapterAnimation({ configKey, config }: { configKey: string; config: SheetVisualConfig }) {
+  const filterId = `sheet-glow-${configKey}`;
+  const ringItems = Array.from({ length: config.rings });
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 120 86" aria-hidden="true">
+        <defs>
+          <filter id={filterId}>
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {config.mode === "orbit" && (
+          <g filter={`url(#${filterId})`}>
+            <circle cx="60" cy="43" r="10" fill={config.accent} opacity="0.85" />
+            {ringItems.map((_, i) => (
+              <ellipse
+                key={i}
+                cx="60"
+                cy="43"
+                rx={28 + i * 8}
+                ry={12 + i * 5}
+                fill="none"
+                stroke={i % 2 ? config.secondary : config.accent}
+                strokeWidth="1.4"
+                opacity={0.45 - i * 0.06}
+                transform={`rotate(${config.tilt + i * 32} 60 43)`}
+              />
+            ))}
+            <circle cx="88" cy="31" r="4" fill={config.secondary}>
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite" />
+            </circle>
+          </g>
+        )}
+
+        {config.mode === "rays" && (
+          <g filter={`url(#${filterId})`}>
+            <polygon points="60,20 78,60 42,60" fill={config.secondary} opacity="0.28" stroke={config.secondary} strokeWidth="1.4" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <line
+                key={i}
+                x1="12"
+                y1={32 + i * 4}
+                x2="55"
+                y2={38 + i}
+                stroke={config.accent}
+                strokeWidth="2"
+                opacity={0.55 - i * 0.05}
+              />
+            ))}
+            {[0, 1, 2, 3].map((i) => (
+              <line
+                key={i}
+                x1="72"
+                y1="42"
+                x2={102}
+                y2={24 + i * 12}
+                stroke={i % 2 ? config.secondary : config.accent}
+                strokeWidth="2"
+                opacity="0.72"
+              >
+                <animate attributeName="x2" values="98;108;98" dur="2.4s" begin={`${i * 0.15}s`} repeatCount="indefinite" />
+              </line>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "field" && (
+          <g filter={`url(#${filterId})`}>
+            <circle cx="36" cy="43" r="12" fill={config.accent} opacity="0.25" stroke={config.accent} strokeWidth="2" />
+            <circle cx="84" cy="43" r="12" fill={config.secondary} opacity="0.25" stroke={config.secondary} strokeWidth="2" />
+            <text x="36" y="48" textAnchor="middle" fill={config.accent} fontSize="16" fontWeight="700">+</text>
+            <text x="84" y="48" textAnchor="middle" fill={config.secondary} fontSize="18" fontWeight="700">-</text>
+            {[-16, -8, 0, 8, 16].map((offset, i) => (
+              <path
+                key={i}
+                d={`M 48 ${43 + offset} C 58 ${30 + offset / 2}, 68 ${56 - offset / 2}, 76 ${43 - offset}`}
+                fill="none"
+                stroke={i % 2 ? config.secondary : config.accent}
+                strokeWidth="1.5"
+                opacity="0.55"
+              >
+                <animate attributeName="opacity" values="0.25;0.72;0.25" dur="2.2s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
+              </path>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "circuit" && (
+          <g filter={`url(#${filterId})`}>
+            <rect x="26" y="24" width="68" height="38" rx="8" fill="none" stroke={config.accent} strokeWidth="2" opacity="0.55" />
+            <line x1="18" y1="37" x2="18" y2="51" stroke={config.secondary} strokeWidth="3" />
+            <line x1="22" y1="32" x2="22" y2="56" stroke={config.secondary} strokeWidth="3" />
+            <rect x="52" y="18" width="18" height="12" rx="2" fill={config.secondary} opacity="0.3" stroke={config.secondary} />
+            {[0, 1, 2].map((i) => (
+              <circle key={i} r="4" fill={config.accent}>
+                <animateMotion dur="2s" begin={`${i * 0.45}s`} repeatCount="indefinite" path="M 28 24 H 94 V 62 H 26 V 24" />
+              </circle>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "wave" && (
+          <g filter={`url(#${filterId})`}>
+            {[0, 1, 2].map((i) => (
+              <path
+                key={i}
+                d={`M 8 ${36 + i * 8} Q 22 ${16 + i * 4} 36 ${36 + i * 8} T 64 ${36 + i * 8} T 92 ${36 + i * 8} T 120 ${36 + i * 8}`}
+                fill="none"
+                stroke={i % 2 ? config.secondary : config.accent}
+                strokeWidth={i === 1 ? 2.4 : 1.5}
+                opacity={0.65 - i * 0.12}
+              >
+                <animate attributeName="d" dur="2s" begin={`${i * 0.15}s`} repeatCount="indefinite"
+                  values={`M 8 ${36 + i * 8} Q 22 ${16 + i * 4} 36 ${36 + i * 8} T 64 ${36 + i * 8} T 92 ${36 + i * 8} T 120 ${36 + i * 8};M 8 ${36 + i * 8} Q 22 ${56 - i * 4} 36 ${36 + i * 8} T 64 ${36 + i * 8} T 92 ${36 + i * 8} T 120 ${36 + i * 8};M 8 ${36 + i * 8} Q 22 ${16 + i * 4} 36 ${36 + i * 8} T 64 ${36 + i * 8} T 92 ${36 + i * 8} T 120 ${36 + i * 8}`} />
+              </path>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "matter" && (
+          <g filter={`url(#${filterId})`}>
+            {[0, 1, 2, 3].map((row) =>
+              [0, 1, 2, 3, 4].map((col) => (
+                <circle key={`${row}-${col}`} cx={28 + col * 16 + (row % 2) * 7} cy={24 + row * 11} r="3.5" fill={col % 2 ? config.secondary : config.accent} opacity="0.72">
+                  <animate attributeName="cy" values={`${24 + row * 11};${21 + row * 11};${24 + row * 11}`} dur="1.8s" begin={`${(row + col) * 0.08}s`} repeatCount="indefinite" />
+                </circle>
+              ))
+            )}
+            <path d="M 24 66 C 36 52, 48 78, 60 64 S 84 50, 96 66" fill="none" stroke={config.accent} strokeWidth="2" opacity="0.55" />
+          </g>
+        )}
+
+        {config.mode === "thermal" && (
+          <g filter={`url(#${filterId})`}>
+            <path d="M 58 66 C 40 48, 55 38, 51 22 C 72 38, 73 52, 62 66 Z" fill={config.accent} opacity="0.75">
+              <animate attributeName="d" dur="0.8s" repeatCount="indefinite" values="M 58 66 C 40 48, 55 38, 51 22 C 72 38, 73 52, 62 66 Z;M 58 66 C 44 48, 50 35, 58 20 C 76 40, 68 54, 62 66 Z;M 58 66 C 40 48, 55 38, 51 22 C 72 38, 73 52, 62 66 Z" />
+            </path>
+            {[0, 1, 2, 3].map((i) => (
+              <text key={i} x={32 + i * 16} y={30 - i * 2} fill={i % 2 ? config.secondary : config.accent} fontSize="14" opacity="0.55">~</text>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "atomic" && (
+          <g filter={`url(#${filterId})`}>
+            <circle cx="60" cy="43" r="8" fill={config.secondary} opacity="0.85" />
+            {ringItems.map((_, i) => (
+              <g key={i} transform={`rotate(${config.tilt + i * 58} 60 43)`}>
+                <ellipse cx="60" cy="43" rx={30 + i * 5} ry="11" fill="none" stroke={i % 2 ? config.secondary : config.accent} strokeWidth="1.4" opacity="0.42" />
+                <circle cx={90 + i * 5} cy="43" r="3.5" fill={config.accent}>
+                  <animateTransform attributeName="transform" type="rotate" from={`0 60 43`} to={`360 60 43`} dur={`${3 + i}s`} repeatCount="indefinite" />
+                </circle>
+              </g>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "magnet" && (
+          <g filter={`url(#${filterId})`}>
+            <rect x="36" y="34" width="24" height="18" rx="4" fill={config.accent} />
+            <rect x="60" y="34" width="24" height="18" rx="4" fill={config.secondary} />
+            <text x="48" y="47" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="700">N</text>
+            <text x="72" y="47" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="700">S</text>
+            {[0, 1, 2].map((i) => (
+              <ellipse key={i} cx="60" cy="43" rx={34 + i * 8} ry={17 + i * 5} fill="none" stroke={i % 2 ? config.secondary : config.accent} strokeDasharray="4 3" opacity={0.5 - i * 0.09}>
+                <animate attributeName="opacity" values="0.25;0.62;0.25" dur="2.5s" begin={`${i * 0.25}s`} repeatCount="indefinite" />
+              </ellipse>
+            ))}
+          </g>
+        )}
+
+        {config.mode === "coil" && (
+          <g filter={`url(#${filterId})`}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <ellipse key={i} cx={42 + i * 8} cy="43" rx="7" ry="18" fill="none" stroke={config.accent} strokeWidth="2" opacity="0.55" />
+            ))}
+            <rect x="16" y="36" width="22" height="14" rx="4" fill={config.secondary} opacity="0.8">
+              <animate attributeName="x" values="14;30;14" dur="2s" repeatCount="indefinite" />
+            </rect>
+            <circle cx="94" cy="28" r="4" fill="#facc15">
+              <animate attributeName="r" values="2;5;2" dur="1.2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+        )}
+
+        {config.mode === "semiconductor" && (
+          <g filter={`url(#${filterId})`}>
+            <rect x="34" y="24" width="26" height="38" rx="5" fill={config.accent} opacity="0.28" stroke={config.accent} />
+            <rect x="60" y="24" width="26" height="38" rx="5" fill={config.secondary} opacity="0.28" stroke={config.secondary} />
+            <text x="47" y="47" textAnchor="middle" fill={config.accent} fontSize="14" fontWeight="700">P</text>
+            <text x="73" y="47" textAnchor="middle" fill={config.secondary} fontSize="14" fontWeight="700">N</text>
+            {[0, 1, 2].map((i) => (
+              <circle key={i} cx={44 + i * 12} cy={28 + i * 10} r="3" fill={i % 2 ? config.secondary : config.accent}>
+                <animate attributeName="cx" values={`${44 + i * 12};${54 + i * 12};${44 + i * 12}`} dur="1.7s" begin={`${i * 0.2}s`} repeatCount="indefinite" />
+              </circle>
+            ))}
+          </g>
+        )}
+      </svg>
+
+      <div
+        className="absolute right-3 top-2 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+        style={{ color: config.accent, borderColor: `${config.accent}66`, background: `${config.accent}12` }}
+      >
+        {config.symbol}
+      </div>
+      <div className="absolute bottom-1 text-[9px] font-mono font-bold" style={{ color: config.secondary }}>
+        {config.formula}
+      </div>
+    </div>
+  );
+}
+
+function createSheetAnimation(configKey: string, config: SheetVisualConfig) {
+  return function GeneratedSheetChapterAnimation() {
+    return <SheetChapterAnimation configKey={configKey} config={config} />;
+  };
+}
+
+const sheetChapterVisuals: Record<string, SheetVisualConfig> = {
+  "sheet-09-motion": { label: "Class 9 Motion", mode: "orbit", accent: "#22d3ee", secondary: "#60a5fa", symbol: "v", formula: "s = vt", tilt: 8, rings: 2 },
+  "sheet-09-force": { label: "Class 9 Force", mode: "field", accent: "#f59e0b", secondary: "#fb7185", symbol: "F", formula: "F = ma", tilt: 18, rings: 3 },
+  "sheet-09-gravitation": { label: "Class 9 Gravitation", mode: "orbit", accent: "#fbbf24", secondary: "#38bdf8", symbol: "g", formula: "F = GmM/r2", tilt: 34, rings: 3 },
+  "sheet-09-work-energy": { label: "Class 9 Work and Energy", mode: "thermal", accent: "#a78bfa", secondary: "#34d399", symbol: "W", formula: "W = Fs", tilt: -12, rings: 2 },
+  "sheet-09-sound": { label: "Class 9 Sound", mode: "wave", accent: "#4ade80", secondary: "#22d3ee", symbol: "f", formula: "v = fL", tilt: 0, rings: 3 },
+  "sheet-10-light": { label: "Class 10 Light", mode: "rays", accent: "#facc15", secondary: "#a78bfa", symbol: "n", formula: "sin i/sin r", tilt: -18, rings: 3 },
+  "sheet-10-human-eye": { label: "Class 10 Human Eye", mode: "rays", accent: "#38bdf8", secondary: "#f472b6", symbol: "eye", formula: "P = 1/f", tilt: 22, rings: 2 },
+  "sheet-10-electricity": { label: "Class 10 Electricity", mode: "circuit", accent: "#fde047", secondary: "#22c55e", symbol: "I", formula: "V = IR", tilt: 0, rings: 2 },
+  "sheet-10-magnetism": { label: "Class 10 Magnetic Effects", mode: "magnet", accent: "#ef4444", secondary: "#3b82f6", symbol: "B", formula: "B = mu I", tilt: 12, rings: 3 },
+  "sheet-11-straight-line": { label: "Class 11 Straight Line", mode: "orbit", accent: "#06b6d4", secondary: "#818cf8", symbol: "a", formula: "v = u + at", tilt: -28, rings: 2 },
+  "sheet-11-plane": { label: "Class 11 Motion in Plane", mode: "orbit", accent: "#2dd4bf", secondary: "#f59e0b", symbol: "R", formula: "R = u2 sin2q/g", tilt: 48, rings: 3 },
+  "sheet-11-laws": { label: "Class 11 Laws of Motion", mode: "field", accent: "#fb923c", secondary: "#f43f5e", symbol: "p", formula: "dp/dt", tilt: 14, rings: 2 },
+  "sheet-11-work-power": { label: "Class 11 Work Energy Power", mode: "thermal", accent: "#8b5cf6", secondary: "#fbbf24", symbol: "P", formula: "P = W/t", tilt: -8, rings: 3 },
+  "sheet-11-rotational": { label: "Class 11 Rotational Motion", mode: "orbit", accent: "#c084fc", secondary: "#22d3ee", symbol: "tau", formula: "tau = I alpha", tilt: 64, rings: 4 },
+  "sheet-11-gravitation": { label: "Class 11 Gravitation", mode: "orbit", accent: "#f97316", secondary: "#38bdf8", symbol: "G", formula: "U = -GMm/r", tilt: -42, rings: 4 },
+  "sheet-11-solids": { label: "Class 11 Solids", mode: "matter", accent: "#22d3ee", secondary: "#a78bfa", symbol: "Y", formula: "stress/strain", tilt: 0, rings: 2 },
+  "sheet-11-fluids": { label: "Class 11 Fluids", mode: "wave", accent: "#38bdf8", secondary: "#14b8a6", symbol: "P", formula: "P = rho gh", tilt: 0, rings: 4 },
+  "sheet-11-thermal": { label: "Class 11 Thermal Matter", mode: "thermal", accent: "#fb923c", secondary: "#facc15", symbol: "Q", formula: "Q = mcDT", tilt: 10, rings: 2 },
+  "sheet-11-thermodynamics": { label: "Class 11 Thermodynamics", mode: "thermal", accent: "#f97316", secondary: "#60a5fa", symbol: "dU", formula: "dU = Q - W", tilt: -24, rings: 3 },
+  "sheet-12-charges": { label: "Class 12 Charges and Fields", mode: "field", accent: "#f43f5e", secondary: "#22d3ee", symbol: "q", formula: "E = F/q", tilt: 0, rings: 3 },
+  "sheet-12-potential": { label: "Class 12 Potential", mode: "field", accent: "#a78bfa", secondary: "#facc15", symbol: "V", formula: "V = kq/r", tilt: 18, rings: 4 },
+  "sheet-12-current": { label: "Class 12 Current", mode: "circuit", accent: "#fde047", secondary: "#38bdf8", symbol: "R", formula: "I = nqAvd", tilt: 0, rings: 3 },
+  "sheet-12-moving-charges": { label: "Class 12 Moving Charges", mode: "magnet", accent: "#ef4444", secondary: "#22d3ee", symbol: "F", formula: "qvB", tilt: -16, rings: 4 },
+  "sheet-12-magnetism-matter": { label: "Class 12 Magnetism Matter", mode: "magnet", accent: "#f43f5e", secondary: "#2563eb", symbol: "M", formula: "m = IA", tilt: 30, rings: 2 },
+  "sheet-12-emi": { label: "Class 12 EMI", mode: "coil", accent: "#22d3ee", secondary: "#facc15", symbol: "emf", formula: "-dPhi/dt", tilt: 0, rings: 3 },
+  "sheet-12-ac": { label: "Class 12 Alternating Current", mode: "wave", accent: "#fbbf24", secondary: "#c084fc", symbol: "AC", formula: "V0 sin wt", tilt: 0, rings: 2 },
+  "sheet-12-em-waves": { label: "Class 12 EM Waves", mode: "wave", accent: "#60a5fa", secondary: "#f472b6", symbol: "c", formula: "c = fL", tilt: 0, rings: 4 },
+  "sheet-12-ray-optics": { label: "Class 12 Ray Optics", mode: "rays", accent: "#facc15", secondary: "#38bdf8", symbol: "f", formula: "1/f = 1/v + 1/u", tilt: 36, rings: 3 },
+  "sheet-12-wave-optics": { label: "Class 12 Wave Optics", mode: "wave", accent: "#22d3ee", secondary: "#a78bfa", symbol: "lambda", formula: "beta = D L/d", tilt: 0, rings: 5 },
+  "sheet-12-dual-nature": { label: "Class 12 Dual Nature", mode: "atomic", accent: "#fbbf24", secondary: "#60a5fa", symbol: "h", formula: "E = h nu", tilt: 20, rings: 3 },
+  "sheet-12-atoms": { label: "Class 12 Atoms", mode: "atomic", accent: "#22d3ee", secondary: "#8b5cf6", symbol: "n", formula: "En = -13.6/n2", tilt: -28, rings: 4 },
+  "sheet-12-nuclei": { label: "Class 12 Nuclei", mode: "atomic", accent: "#f43f5e", secondary: "#facc15", symbol: "A", formula: "E = mc2", tilt: 54, rings: 2 },
+  "sheet-12-semiconductor": { label: "Class 12 Semiconductor", mode: "semiconductor", accent: "#fb7185", secondary: "#22d3ee", symbol: "PN", formula: "diode", tilt: 0, rings: 3 },
+};
+
+const sheetAnimationRegistry = Object.fromEntries(
+  Object.entries(sheetChapterVisuals).map(([key, config]) => [key, createSheetAnimation(key, config)])
+) as Record<string, () => JSX.Element>;
+
+const sheetAnimationMap = Object.fromEntries(
+  Object.entries(sheetChapterVisuals).map(([key, config]) => [config.label.toLowerCase(), createSheetAnimation(key, config)])
+) as Record<string, () => JSX.Element>;
+
 export const chapterAnimationOptions = [
+  ...Object.entries(sheetChapterVisuals).map(([key, config]) => ({ key, label: config.label })),
   { key: "motion", label: "Motion" },
   { key: "force", label: "Force & Laws" },
   { key: "gravitation", label: "Gravitation" },
@@ -566,10 +860,12 @@ const animationRegistry: Record<string, () => JSX.Element> = {
   "ray-optics": RayOpticsAnimation,
   "modern-physics": ModernPhysicsAnimation,
   "semiconductor-advanced": SemiconductorAdvancedAnimation,
+  ...sheetAnimationRegistry,
 };
 
 /* Map chapter names to animation components */
 const animationMap: Record<string, () => JSX.Element> = {
+  ...sheetAnimationMap,
   // Existing mappings
   motion: animationRegistry.motion,
   "force and laws of motion": animationRegistry.force,
