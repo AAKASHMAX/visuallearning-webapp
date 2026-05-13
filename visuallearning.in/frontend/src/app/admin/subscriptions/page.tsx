@@ -12,19 +12,29 @@ import {
 } from "lucide-react";
 
 interface SubRow {
-  id: string; plan: string; classesAccess: string[];
+  id: string; plan: string; classesAccess: string[]; subjectsAccess?: string[];
   status: string; expiryDate: string; amount: number;
   createdAt: string; user: { id: string; name: string; email: string };
   course?: { id: string; name: string; slug: string; planKey?: string; accentColor?: string; icon?: string } | null;
 }
 
-interface CourseOption {
+type AudiencePlanId = "STUDENTS_PLAN" | "TEACHERS_PLAN" | "PROFESSIONAL_PLAN";
+type SubjectKey = "physics" | "chemistry" | "biology";
+
+interface PlanOption {
   id: string;
   name: string;
-  slug: string;
-  planKey?: string | null;
-  _count?: { chapters: number };
+  durationYearly?: number;
+  unitType?: "fixed" | "class" | "subject";
+  audience?: string | null;
 }
+
+const audiencePlanOrder: AudiencePlanId[] = ["STUDENTS_PLAN", "TEACHERS_PLAN", "PROFESSIONAL_PLAN"];
+const professionalSubjects = [
+  { key: "physics" as SubjectKey, name: "Physics" },
+  { key: "chemistry" as SubjectKey, name: "Chemistry" },
+  { key: "biology" as SubjectKey, name: "Biology" },
+];
 
 function statusColor(s: string) {
   if (s === "ACTIVE")    return "bg-emerald-100 text-emerald-700 border-emerald-200";
@@ -55,6 +65,11 @@ function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
+function isTargetClass(name: string) {
+  const normalized = name.toLowerCase();
+  return ["9", "10", "11", "12"].some((item) => normalized.includes(item));
+}
+
 export default function AdminSubscriptionsPage() {
   const [subs,          setSubs]          = useState<SubRow[]>([]);
   const [loading,       setLoading]       = useState(true);
@@ -65,7 +80,7 @@ export default function AdminSubscriptionsPage() {
   const [showGrant,     setShowGrant]     = useState(false);
   const [editingSub,    setEditingSub]    = useState<SubRow | null>(null);
   const [classes,       setClasses]       = useState<{ id: string; name: string }[]>([]);
-  const [courses,       setCourses]       = useState<CourseOption[]>([]);
+  const [plans,         setPlans]         = useState<PlanOption[]>([]);
   const [planLabels,    setPlanLabels]    = useState<Record<string, string>>({});
   const [planKeys,      setPlanKeys]      = useState<string[]>([]);
   const [activeClassTab, setActiveClassTab] = useState<string>("");
@@ -77,7 +92,14 @@ export default function AdminSubscriptionsPage() {
   const [savingPrice,     setSavingPrice]     = useState(false);
 
   // Grant form
-  const [grantForm, setGrantForm] = useState({ userId: "", courseId: "", plan: "", durationDays: 365, billingCycle: "yearly" as string, classesAccess: [] as string[] });
+  const [grantForm, setGrantForm] = useState({
+    userId: "",
+    plan: "",
+    durationDays: 365,
+    billingCycle: "yearly" as string,
+    classesAccess: [] as string[],
+    subjectsAccess: [] as SubjectKey[],
+  });
   const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState<{id:string;name:string;email:string}[]>([]);
   const [selectedUser, setSelectedUser] = useState<{id:string;name:string;email:string}|null>(null);
@@ -86,7 +108,7 @@ export default function AdminSubscriptionsPage() {
 
   useEffect(() => {
     api.get("/courses/classes").then(({ data }) => {
-      const cls = data.data;
+      const cls = (data.data || []).filter((item: { name: string }) => isTargetClass(item.name));
       setClasses(cls);
       setActiveClassTab(cls[0]?.id ?? "");
     });
@@ -95,16 +117,17 @@ export default function AdminSubscriptionsPage() {
       const labels: Record<string, string> = {};
       Object.entries(plans).forEach(([k, v]: [string, any]) => { labels[k] = v.label; });
       setPlanLabels(labels);
-      setPlanKeys(Object.keys(plans));
-      setGrantForm((f) => ({ ...f, plan: Object.keys(plans)[0] ?? "" }));
+      setPlanKeys(audiencePlanOrder.filter((key) => plans[key]));
     });
-    api.get("/admin/courses").then(({ data }) => {
-      const courseList = data.data || [];
-      setCourses(courseList);
+    api.get("/subscription/plans").then(({ data }) => {
+      const planList = ((data.data?.plans || []) as PlanOption[])
+        .filter((plan) => audiencePlanOrder.includes(plan.id as AudiencePlanId))
+        .sort((a, b) => audiencePlanOrder.indexOf(a.id as AudiencePlanId) - audiencePlanOrder.indexOf(b.id as AudiencePlanId));
+      setPlans(planList);
       setGrantForm((f) => ({
         ...f,
-        courseId: courseList[0]?.id ?? "",
-        plan: courseList[0]?.planKey || courseList[0]?.slug || f.plan,
+        plan: planList[0]?.id || f.plan,
+        durationDays: planList[0]?.durationYearly || f.durationDays,
       }));
     });
     loadSubjectPricing();
@@ -146,16 +169,26 @@ export default function AdminSubscriptionsPage() {
 
   const handleGrant = async () => {
     if (!grantForm.userId) { toast.error("Please select a user"); return; }
-    if (!grantForm.courseId) { toast.error("Please select a course plan"); return; }
+    if (!grantForm.plan) { toast.error("Please select a plan"); return; }
+    const selectedPlan = plans.find((plan) => plan.id === grantForm.plan);
+    if (selectedPlan?.unitType === "class" && grantForm.classesAccess.length === 0) {
+      toast.error("Please select at least one class");
+      return;
+    }
+    if (selectedPlan?.unitType === "subject" && grantForm.subjectsAccess.length === 0) {
+      toast.error("Please select at least one subject");
+      return;
+    }
+
     try {
-      const selectedCourse = courses.find((course) => course.id === grantForm.courseId);
       await api.post("/admin/subscriptions", {
         userId: grantForm.userId,
-        courseId: grantForm.courseId,
-        plan: selectedCourse?.planKey || selectedCourse?.slug || grantForm.plan,
+        plan: grantForm.plan,
+        classesAccess: selectedPlan?.unitType === "class" ? grantForm.classesAccess : [],
+        subjectsAccess: selectedPlan?.unitType === "subject" ? grantForm.subjectsAccess : [],
         durationDays: grantForm.durationDays,
       });
-      toast.success("Course plan assigned!");
+      toast.success("Plan assigned!");
       setShowGrant(false);
       setSelectedUser(null);
       setUserSearch("");
@@ -209,6 +242,15 @@ export default function AdminSubscriptionsPage() {
     else setEditForm((p) => ({ ...p, classesAccess: p.classesAccess.includes(classId) ? p.classesAccess.filter((c) => c !== classId) : [...p.classesAccess, classId] }));
   };
 
+  const toggleGrantSubject = (subjectKey: SubjectKey) => {
+    setGrantForm((p) => ({
+      ...p,
+      subjectsAccess: p.subjectsAccess.includes(subjectKey)
+        ? p.subjectsAccess.filter((key) => key !== subjectKey)
+        : [...p.subjectsAccess, subjectKey],
+    }));
+  };
+
   // Stats
   const active    = subs.filter((s) => s.status === "ACTIVE").length;
   const expired   = subs.filter((s) => s.status === "EXPIRED").length;
@@ -219,6 +261,7 @@ export default function AdminSubscriptionsPage() {
     : subs;
 
   const activeClassData = subjectPricing.find((c) => c.id === activeClassTab);
+  const selectedGrantPlan = plans.find((plan) => plan.id === grantForm.plan);
 
   return (
     <div className="space-y-8">
@@ -297,15 +340,21 @@ export default function AdminSubscriptionsPage() {
                 </>
               )}
             </div>
-            {/* Course */}
+            {/* Plan */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Course Plan</label>
-              <select value={grantForm.courseId} onChange={(e) => {
-                const selected = courses.find((course) => course.id === e.target.value);
-                setGrantForm({ ...grantForm, courseId: e.target.value, plan: selected?.planKey || selected?.slug || "" });
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Plan</label>
+              <select value={grantForm.plan} onChange={(e) => {
+                const selected = plans.find((plan) => plan.id === e.target.value);
+                setGrantForm({
+                  ...grantForm,
+                  plan: e.target.value,
+                  durationDays: selected?.durationYearly || grantForm.durationDays,
+                  classesAccess: [],
+                  subjectsAccess: [],
+                });
               }}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                {courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}
+                {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
               </select>
             </div>
             {/* Billing Cycle */}
@@ -324,6 +373,49 @@ export default function AdminSubscriptionsPage() {
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
             </div>
           </div>
+          {selectedGrantPlan?.unitType === "subject" ? (
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Subject Access</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {professionalSubjects.map((subject) => {
+                  const selected = grantForm.subjectsAccess.includes(subject.key);
+                  return (
+                    <button
+                      key={subject.key}
+                      type="button"
+                      onClick={() => toggleGrantSubject(subject.key)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-bold transition-all ${
+                        selected ? "border-primary bg-primary/10 text-primary" : "border-gray-200 bg-white text-gray-600 hover:border-primary/30"
+                      }`}
+                    >
+                      {selected ? "Selected: " : ""}{subject.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Class Access</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {classes.map((classItem) => {
+                  const selected = grantForm.classesAccess.includes(classItem.id);
+                  return (
+                    <button
+                      key={classItem.id}
+                      type="button"
+                      onClick={() => toggleClass(classItem.id, "grant")}
+                      className={`rounded-xl border px-3 py-2 text-sm font-bold transition-all ${
+                        selected ? "border-primary bg-primary/10 text-primary" : "border-gray-200 bg-white text-gray-600 hover:border-primary/30"
+                      }`}
+                    >
+                      {selected ? "Selected: " : ""}{classItem.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <Button onClick={handleGrant} className="rounded-xl font-bold">
             <CheckCircle2 className="w-4 h-4 mr-2" /> Assign Access
           </Button>

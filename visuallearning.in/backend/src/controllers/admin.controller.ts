@@ -456,6 +456,7 @@ export async function grantSubscription(req: Request, res: Response) {
     let resolvedSubjects = subjectsAccess || [];
 
     let assignedCourseId: string | null = course?.id || null;
+    const planConfig = course ? null : await getAdminPlanConfig(resolvedPlan);
 
     if (course) {
       resolvedClasses = Array.from(new Set(course.chapters.map((cc) => cc.chapter.subject.classId)));
@@ -468,6 +469,20 @@ export async function grantSubscription(req: Request, res: Response) {
         });
         resolvedClasses = Array.from(new Set(subjects.map((s) => s.classId)));
       }
+    } else if (planConfig?.unitType === "subject") {
+      if (!resolvedSubjects.length) return error(res, "Select at least one subject", 400);
+      const resolved = await resolveProfessionalSubjectAccess(resolvedSubjects);
+      if (!resolved.subjectIds.length) return error(res, "No matching subjects found", 400);
+      resolvedSubjects = resolved.subjectIds;
+      resolvedClasses = resolved.classIds;
+      assignedCourseId = null;
+    } else if (planConfig?.unitType === "class") {
+      if (!resolvedClasses.length) return error(res, "Select at least one class", 400);
+      const validClassCount = await prisma.class.count({ where: { id: { in: resolvedClasses } } });
+      if (validClassCount !== resolvedClasses.length) return error(res, "Invalid class selection", 400);
+      resolvedClasses = Array.from(new Set(resolvedClasses));
+      resolvedSubjects = [];
+      assignedCourseId = null;
     } else {
       const matchingCourse = await prisma.course.findFirst({ where: { planKey: resolvedPlan } });
       if (matchingCourse) {
@@ -623,6 +638,38 @@ const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
 
 function mergeAudiencePlanDefaults(plans: Record<string, any>) {
   return { ...AUDIENCE_PLAN_DEFAULTS, ...plans };
+}
+
+function normalizeSubjectKeys(items: string[] = []) {
+  const allowed = ["physics", "chemistry", "biology"];
+  return Array.from(new Set(items.map((item) => item.toLowerCase()).filter((item) => allowed.includes(item))));
+}
+
+async function resolveProfessionalSubjectAccess(items: string[] = []) {
+  const keys = normalizeSubjectKeys(items);
+  const subjects = keys.length > 0
+    ? await prisma.subject.findMany({
+        where: {
+          OR: keys.map((key) => ({ name: { contains: key, mode: "insensitive" } })),
+          enabled: true,
+        },
+        select: { id: true, classId: true },
+      })
+    : await prisma.subject.findMany({
+        where: { id: { in: items }, enabled: true },
+        select: { id: true, classId: true },
+      });
+
+  return {
+    subjectIds: subjects.map((subject) => subject.id),
+    classIds: Array.from(new Set(subjects.map((subject) => subject.classId))),
+  };
+}
+
+async function getAdminPlanConfig(planKey: string): Promise<{ unitType?: "fixed" | "class" | "subject" } | null> {
+  const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  const plans = setting ? mergeAudiencePlanDefaults(JSON.parse(setting.value)) : mergeAudiencePlanDefaults({});
+  return plans[planKey] || null;
 }
 
 async function getSetting(key: string): Promise<string> {
