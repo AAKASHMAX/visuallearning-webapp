@@ -5,6 +5,7 @@ import { ArrowLeft, Beaker, Search, Lock, Monitor } from "lucide-react";
 import { type VirtualLabGame, categories, previewVideos } from "@/data/virtual-lab-games";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
+import { hasActiveSubscription, getSubscriptionList } from "@/lib/subscription-access";
 
 const categoryColors: Record<string, string> = {
   biology: "bg-green-100 text-green-700",
@@ -27,9 +28,11 @@ const categoryEmojis: Record<string, string> = {
   environment: "\u{1f30d}",
 };
 
-function GameCard({ game, isSubscribed }: { game: VirtualLabGame; isSubscribed: boolean }) {
+function GameCard({ game, isSubscribed, subscriptionChecked }: { game: VirtualLabGame; isSubscribed: boolean; subscriptionChecked: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewUrl = previewVideos[game.slug];
+  const isLocked = subscriptionChecked && !isSubscribed;
+  const href = isLocked ? "/subscription" : `/courses/virtual-lab/${game.slug}`;
   const thumbnailUrl = previewUrl
     ? previewUrl.replace("/video/upload/f_mp4,q_auto/", "/video/upload/so_0,w_400,h_200,c_fill,q_auto,f_jpg/").replace(/\.\w+$/, ".jpg")
     : undefined;
@@ -49,7 +52,7 @@ function GameCard({ game, isSubscribed }: { game: VirtualLabGame; isSubscribed: 
   };
 
   return (
-    <Link href={isSubscribed ? `/courses/virtual-lab/${game.slug}` : "/courses"}>
+    <Link href={href}>
       <div
         className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-teal-300 transition-all cursor-pointer h-full"
         onMouseEnter={handleMouseEnter}
@@ -82,7 +85,7 @@ function GameCard({ game, isSubscribed }: { game: VirtualLabGame; isSubscribed: 
               </span>
             </>
           )}
-          {!isSubscribed && (
+          {isLocked && (
             <div className="absolute top-2 right-2 z-20 bg-black/60 rounded-full p-1.5">
               <Lock className="w-3.5 h-3.5 text-white" />
             </div>
@@ -106,23 +109,33 @@ export default function GameList({ games, title, icon }: { games: VirtualLabGame
   const [search, setSearch] = useState("");
   const { user } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriptionChecked, setSubscriptionChecked] = useState(false);
 
   useEffect(() => {
     if (!user) return;
+    if (user.role === "ADMIN") {
+      setIsSubscribed(true);
+      setSubscriptionChecked(true);
+      return;
+    }
+
     const cached = sessionStorage.getItem("vl_my_sub");
     if (cached) {
       try {
         const { data, ts } = JSON.parse(cached);
         if (Date.now() - ts < 5 * 60 * 1000 && data) {
-          setIsSubscribed(data.status === "ACTIVE" && new Date(data.expiryDate) > new Date());
+          setIsSubscribed(hasActiveSubscription(data));
+          setSubscriptionChecked(true);
           return;
         }
       } catch {}
     }
     api.get("/subscription/my-subscription").then(({ data }) => {
-      sessionStorage.setItem("vl_my_sub", JSON.stringify({ data, ts: Date.now() }));
-      if (data) setIsSubscribed(data.status === "ACTIVE" && new Date(data.expiryDate) > new Date());
-    }).catch(() => {});
+      const subscriptions = getSubscriptionList(data);
+      sessionStorage.setItem("vl_my_sub", JSON.stringify({ data: subscriptions, ts: Date.now() }));
+      setIsSubscribed(hasActiveSubscription(subscriptions));
+      setSubscriptionChecked(true);
+    }).catch(() => setSubscriptionChecked(true));
   }, [user]);
 
   const availableCategories = categories.filter(
@@ -191,7 +204,7 @@ export default function GameList({ games, title, icon }: { games: VirtualLabGame
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((game) => (
-          <GameCard key={game.slug} game={game} isSubscribed={isSubscribed} />
+          <GameCard key={game.slug} game={game} isSubscribed={isSubscribed} subscriptionChecked={subscriptionChecked} />
         ))}
       </div>
 
