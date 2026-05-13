@@ -8,7 +8,7 @@ import {
   Beaker, Atom, MonitorPlay, PenTool, ClipboardList, FlaskConical, Eye,
   Crown, ArrowRight, Sparkles, AlertCircle, Layout, CheckCircle2, Zap,
   Search, Bookmark, Star, Info,
-  GraduationCap, Layers, ChevronRight, FlaskRound
+  GraduationCap, Layers, ChevronRight, FlaskRound, BriefcaseBusiness
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { PageLoader } from "@/components/ui/loading";
 import type { Subscription, ClassItem } from "@/types";
 
 const iconMap: Record<string, any> = {
-  Atom, FlaskConical, FlaskRound, Beaker, GraduationCap, Layers, BookOpen, Zap, Crown, Sparkles
+  Atom, FlaskConical, FlaskRound, Beaker, GraduationCap, Layers, BookOpen, Zap, Crown, Sparkles, BriefcaseBusiness
 };
 
 function subjectTheme(name: string) {
@@ -36,11 +36,64 @@ interface SubjectInfo {
   icon?: string;
 }
 
+function subjectTrackKey(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("chemistry")) return "chemistry";
+  if (normalized.includes("biology")) return "biology";
+  return "physics";
+}
+
+function planMeta(plan: string) {
+  const key = plan.toUpperCase();
+  if (key === "STUDENTS_PLAN") {
+    return {
+      badge: "STUDENTS",
+      title: "Students Plan",
+      subtitle: "Class-wise student learning resources",
+      grad: "from-sky-900 to-blue-900",
+      tint: "blue",
+      href: "/courses/students",
+      icon: GraduationCap,
+    };
+  }
+  if (key === "TEACHERS_PLAN") {
+    return {
+      badge: "TEACHERS",
+      title: "Teachers Plan",
+      subtitle: "Class-wise teaching resources",
+      grad: "from-emerald-900 to-teal-900",
+      tint: "emerald",
+      href: "/courses/teachers",
+      icon: Users,
+    };
+  }
+  if (key === "PROFESSIONAL_PLAN") {
+    return {
+      badge: "PROFESSIONAL",
+      title: "Professional Plan",
+      subtitle: "Subject tracks for advanced learning",
+      grad: "from-violet-900 to-fuchsia-900",
+      tint: "violet",
+      href: "/courses/professional",
+      icon: BriefcaseBusiness,
+    };
+  }
+  return {
+    badge: key.replace(/_/g, " "),
+    title: key.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()),
+    subtitle: "Active learning access",
+    grad: "from-blue-900 to-indigo-900",
+    tint: "blue",
+    href: "/courses",
+    icon: Crown,
+  };
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
-  const [flexiSubjects, setFlexiSubjects] = useState<SubjectInfo[]>([]);
+  const [subjectAccessBySubId, setSubjectAccessBySubId] = useState<Record<string, SubjectInfo[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,20 +107,31 @@ export default function DashboardPage() {
         setSubscriptions(subs);
         setAllClasses(classRes.data.data);
 
-        // For any FLEXI_PLAN in the active list, resolve subject names
-        const flexiSub = subs.find(s => s.status === "ACTIVE" && s.plan === "FLEXI_PLAN" && s.subjectsAccess?.length > 0);
-        if (flexiSub) {
+        // Resolve subject names for Flexi and Professional subject-track plans.
+        const subjectSubs = subs.filter(s => s.status === "ACTIVE" && s.subjectsAccess?.length > 0);
+        if (subjectSubs.length > 0) {
           const { data: pricingRes } = await api.get("/courses/pricing/subjects");
-          const allCls = pricingRes.data as any[];
-          const found: SubjectInfo[] = [];
+          const allCls = (pricingRes.data || pricingRes) as any[];
+          const byId: Record<string, SubjectInfo> = {};
+          const allSubjects: SubjectInfo[] = [];
+
           for (const cls of allCls) {
             for (const s of cls.subjects) {
-              if (flexiSub.subjectsAccess.includes(s.id)) {
-                found.push({ subjectId: s.id, subjectName: s.name, classId: cls.id, className: cls.name, icon: s.icon });
-              }
+              const info = { subjectId: s.id, subjectName: s.name, classId: cls.id, className: cls.name, icon: s.icon };
+              byId[s.id] = info;
+              allSubjects.push(info);
             }
           }
-          setFlexiSubjects(found);
+
+          const nextMap: Record<string, SubjectInfo[]> = {};
+          for (const sub of subjectSubs) {
+            nextMap[sub.id] = sub.subjectsAccess.flatMap((access) => {
+              if (byId[access]) return [byId[access]];
+              const key = access.toLowerCase();
+              return allSubjects.filter((subject) => subject.subjectName.toLowerCase().includes(key));
+            });
+          }
+          setSubjectAccessBySubId(nextMap);
         }
       } catch (err) {
         console.error("Failed to load dashboard data", err);
@@ -106,7 +170,7 @@ export default function DashboardPage() {
               <SubscriptionCard 
                 key={sub.id} 
                 sub={sub} 
-                flexiSubjects={sub.plan === "FLEXI_PLAN" ? flexiSubjects : []} 
+                subjectAccess={subjectAccessBySubId[sub.id] || []}
                 allClasses={allClasses}
               />
             ))}
@@ -164,28 +228,46 @@ export default function DashboardPage() {
   );
 }
 
-function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscription; flexiSubjects: SubjectInfo[]; allClasses: ClassItem[] }) {
+function SubscriptionCard({ sub, subjectAccess, allClasses }: { sub: Subscription; subjectAccess: SubjectInfo[]; allClasses: ClassItem[] }) {
   const daysLeft = Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / 86400000);
   const planName = sub.plan.replace(/_/g, " ");
+  const meta = planMeta(sub.plan);
+  const HeaderIcon = meta.icon;
 
-  // FLEXI PLAN Layout
-  if (sub.plan === "FLEXI_PLAN") {
+  // Subject-track plans (FlexiLearn / Professional)
+  if (sub.plan === "FLEXI_PLAN" || sub.plan === "PROFESSIONAL_PLAN" || (sub.subjectsAccess?.length || 0) > 0) {
+    const isProfessional = sub.plan === "PROFESSIONAL_PLAN";
+    const professionalTracks = Array.from(
+      new Map(subjectAccess.map((subject) => [subjectTrackKey(subject.subjectName), subject])).values()
+    );
+    const visibleSubjects = isProfessional ? professionalTracks : subjectAccess;
+
     return (
       <div className="bg-white rounded-3xl border border-indigo-100 shadow-xl overflow-hidden flex flex-col">
-        <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 text-white">
+        <div className={`p-6 bg-gradient-to-br ${isProfessional ? meta.grad : "from-indigo-900 to-slate-900"} text-white`}>
           <div className="flex items-center justify-between mb-4">
-            <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-black text-[9px]">FLEXI LEARN</Badge>
-            <span className="text-[10px] font-bold text-indigo-400">{daysLeft} days left</span>
+            <Badge className="bg-white/15 text-white border-white/20 font-black text-[9px]">{isProfessional ? meta.badge : "FLEXI LEARN"}</Badge>
+            <span className="text-[10px] font-bold text-white/60">{daysLeft} days left</span>
           </div>
-          <h3 className="text-xl font-black mb-1">Customized Subjects</h3>
-          <p className="text-xs text-indigo-300/70 font-medium">You have access to {flexiSubjects.length} selected subjects</p>
+          <div className="flex items-center gap-3">
+            <HeaderIcon className="w-7 h-7 text-white/80" />
+            <div>
+              <h3 className="text-xl font-black mb-1">{isProfessional ? "Professional Subject Tracks" : "Customized Subjects"}</h3>
+              <p className="text-xs text-white/60 font-medium">
+                {isProfessional
+                  ? `${visibleSubjects.length || sub.subjectsAccess.length} selected professional subject${(visibleSubjects.length || sub.subjectsAccess.length) === 1 ? "" : "s"}`
+                  : `You have access to ${visibleSubjects.length || sub.subjectsAccess.length} selected subjects`}
+              </p>
+            </div>
+          </div>
         </div>
         <div className="p-5 flex-1 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
-          {flexiSubjects.map((s) => {
+          {visibleSubjects.map((s) => {
             const theme = subjectTheme(s.subjectName);
             const SubIcon = iconMap[s.icon ?? ""] || Atom;
+            const href = isProfessional ? `/courses/professional/${subjectTrackKey(s.subjectName)}` : `/courses/${s.classId}/${s.subjectId}`;
             return (
-              <Link href={`/courses/${s.classId}/${s.subjectId}`} key={s.subjectId}>
+              <Link href={href} key={`${s.subjectId}-${href}`}>
                 <div className={`group flex items-center justify-between p-3 rounded-xl border ${theme.border} ${theme.bg} hover:shadow-md transition-all mb-2`}>
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${theme.grad} flex items-center justify-center shadow-sm`}>
@@ -193,7 +275,7 @@ function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscriptio
                     </div>
                     <div className="min-w-0">
                       <p className={`text-xs font-black ${theme.text} truncate`}>{s.subjectName}</p>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase">{s.className}</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">{isProfessional ? "Professional Track" : s.className}</p>
                     </div>
                   </div>
                   <ChevronRight className={`w-4 h-4 ${theme.text} group-hover:translate-x-1 transition-transform`} />
@@ -246,19 +328,30 @@ function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscriptio
     );
   }
 
-  // Class-based / Full Access fallback
+  // Class-based plan fallback
   const subClasses = allClasses.filter(c => sub.classesAccess.includes(c.id));
   const isFullAccess = sub.classesAccess.length === 0 || sub.classesAccess.length >= allClasses.length;
+  const tintClasses: Record<string, { badge: string; text: string; button: string }> = {
+    blue: { badge: "bg-blue-500/20 text-blue-200 border-blue-500/30", text: "text-blue-400", button: "bg-blue-600 hover:bg-blue-700" },
+    emerald: { badge: "bg-emerald-500/20 text-emerald-200 border-emerald-500/30", text: "text-emerald-400", button: "bg-emerald-600 hover:bg-emerald-700" },
+    violet: { badge: "bg-violet-500/20 text-violet-200 border-violet-500/30", text: "text-violet-400", button: "bg-violet-600 hover:bg-violet-700" },
+  };
+  const tint = tintClasses[meta.tint] || tintClasses.blue;
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
-      <div className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
+      <div className={`p-6 bg-gradient-to-br ${meta.grad} text-white`}>
         <div className="flex items-center justify-between mb-4">
-          <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 font-black text-[9px]">{isFullAccess ? "ALL ACCESS" : "CLASS PASS"}</Badge>
-          <span className="text-[10px] font-bold text-blue-400">{daysLeft} days left</span>
+          <Badge className={`${tint.badge} font-black text-[9px]`}>{meta.badge}</Badge>
+          <span className={`text-[10px] font-bold ${tint.text}`}>{daysLeft} days left</span>
         </div>
-        <h3 className="text-xl font-black mb-1">{isFullAccess ? "Full Access Pass" : "Grade Access Plan"}</h3>
-        <p className="text-xs text-blue-300/70 font-medium">{isFullAccess ? "9th to 12th Grade" : `${subClasses.length} Grade Access`}</p>
+        <div className="flex items-center gap-3">
+          <HeaderIcon className="w-7 h-7 text-white/80" />
+          <div>
+            <h3 className="text-xl font-black mb-1">{meta.title}</h3>
+            <p className="text-xs text-white/60 font-medium">{isFullAccess ? "All Class 9-12 access" : `${subClasses.length} selected class${subClasses.length === 1 ? "" : "es"}`}</p>
+          </div>
+        </div>
       </div>
       <div className="p-6 flex-1 flex flex-col">
         {!isFullAccess && (
@@ -270,8 +363,8 @@ function SubscriptionCard({ sub, flexiSubjects, allClasses }: { sub: Subscriptio
             ))}
           </div>
         )}
-        <Link href="/courses" className="mt-auto">
-          <Button className="w-full py-6 text-sm font-black bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl transition-all">
+        <Link href={meta.href} className="mt-auto">
+          <Button className={`w-full py-6 text-sm font-black ${tint.button} text-white rounded-2xl shadow-xl transition-all`}>
             Enter Classroom <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Link>
