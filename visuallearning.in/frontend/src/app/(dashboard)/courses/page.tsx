@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Brain,
+  Clock3,
   ClipboardList,
   FileQuestion,
   FileText,
@@ -22,6 +23,8 @@ type FeatureItem = {
   label: string;
   kind: FeatureKind;
 };
+
+const comingSoonFeatureKinds = new Set<FeatureKind>(["question-bank", "ppts", "test-series"]);
 
 const featureVisuals: Record<FeatureKind, { icon: any; bg: string; glow: string; detail: string }> = {
   videos: {
@@ -124,9 +127,10 @@ const audienceCards = [
 function FeatureInfographic({ feature }: { feature: FeatureItem }) {
   const visual = featureVisuals[feature.kind];
   const Icon = visual.icon;
+  const comingSoon = comingSoonFeatureKinds.has(feature.kind);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-2.5 shadow-sm transition-all group-hover:border-primary/10 group-hover:shadow-md">
+    <div className={`flex items-center gap-3 rounded-lg border p-2.5 shadow-sm transition-all group-hover:shadow-md ${comingSoon ? "border-amber-200 bg-amber-50/70 group-hover:border-amber-300" : "border-gray-100 bg-white group-hover:border-primary/10"}`}>
       <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br ${visual.bg} text-white shadow-lg ${visual.glow}`}>
         <span className="absolute -right-2 -top-2 h-7 w-7 rounded-full bg-white/30" />
         <span className="absolute bottom-1 left-1 h-2.5 w-8 rounded-full bg-black/10" />
@@ -152,9 +156,19 @@ function FeatureInfographic({ feature }: { feature: FeatureItem }) {
         )}
         <Icon className="relative h-7 w-7 drop-shadow-sm" />
       </div>
-      <div className="min-w-0">
-        <span className="block text-xs font-black leading-tight text-heading">{feature.label}</span>
-        <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-text-light">{visual.detail}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="block text-xs font-black leading-tight text-heading">{feature.label}</span>
+          {comingSoon && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-700">
+              <Clock3 className="h-2.5 w-2.5" />
+              Soon
+            </span>
+          )}
+        </div>
+        <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-text-light">
+          {comingSoon ? "Coming soon" : visual.detail}
+        </span>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  Clock3,
   ClipboardList,
   FileQuestion,
   FileText,
@@ -79,6 +80,8 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
   },
 };
 
+const comingSoonResourceKinds = new Set<ResourceKind>(["question-bank", "ppts", "test-series"]);
+
 function normalizeResourceKind(value?: string | string[]): ResourceKind {
   const raw = Array.isArray(value) ? value[0] : value;
   if (raw === "quiz" || raw === "question-bank" || raw === "ppts" || raw === "test-series") return raw;
@@ -143,6 +146,7 @@ export function ResourceViewerPage({
 }) {
   const kind = normalizeResourceKind(type);
   const meta = resourceMeta[kind];
+  const isComingSoonResource = comingSoonResourceKinds.has(kind);
   const [loading, setLoading] = useState(true);
   const [chapterInfo, setChapterInfo] = useState<ChapterInfo>({ chapterName: "Chapter", subjectName: "Subject", className: "Class" });
   const [documents, setDocuments] = useState<ViewerDocument[]>([]);
@@ -190,6 +194,10 @@ export function ResourceViewerPage({
           subjectName: subjectData.subject?.name || "Subject",
           className: subjectData.subject?.class?.name || "Class",
         });
+
+        if (isComingSoonResource) {
+          return;
+        }
 
         if (kind === "quiz") {
           const quizRes = await api.get(`/courses/chapters/${chapterId}/questions`);
@@ -270,7 +278,7 @@ export function ResourceViewerPage({
     return () => {
       mounted = false;
     };
-  }, [chapterId, kind, subjectId]);
+  }, [chapterId, isComingSoonResource, kind, subjectId]);
 
   if (loading) return <PageLoader />;
 
@@ -306,11 +314,13 @@ export function ResourceViewerPage({
               </div>
             </div>
           </div>
-          <ZoomControls zoom={zoom} setZoom={setZoom} />
+          {!isComingSoonResource && <ZoomControls zoom={zoom} setZoom={setZoom} />}
         </div>
       </div>
 
-      {loadError ? (
+      {isComingSoonResource ? (
+        <ComingSoonResourcePanel meta={meta} />
+      ) : loadError ? (
         <EmptyPanel title="Could not load resource" message={loadError} icon={Icon} />
       ) : kind === "quiz" ? (
         <QuestionViewer
@@ -343,6 +353,30 @@ export function ResourceViewerPage({
           locked={locked}
         />
       )}
+    </div>
+  );
+}
+
+function ComingSoonResourcePanel({
+  meta,
+}: {
+  meta: { title: string; icon: any; accent: string };
+}) {
+  const Icon = meta.icon;
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-10 text-center shadow-sm">
+      <div className={`mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-gradient-to-br ${meta.accent} text-white shadow-lg shadow-amber-200`}>
+        <Icon className="h-8 w-8" />
+      </div>
+      <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-700">
+        <Clock3 className="h-4 w-4" />
+        Coming soon
+      </div>
+      <h2 className="text-xl font-black text-heading">{meta.title.replace(" Viewer", "")} is coming soon</h2>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-text-muted">
+        This resource is visible in every course now and will become available here when the content is ready.
+      </p>
     </div>
   );
 }

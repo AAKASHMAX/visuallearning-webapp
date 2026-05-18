@@ -11,6 +11,7 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  Clock3,
   ClipboardList,
   Dna,
   FileQuestion,
@@ -38,6 +39,7 @@ type ContentCard = {
   accent: string;
   href?: string;
   actionLabel?: string;
+  comingSoon?: boolean;
 };
 
 type ClassRow = {
@@ -143,6 +145,7 @@ const baseContentCards: ContentCard[] = [
     subtitle: "Chapter questions for deeper practice.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
+    comingSoon: true,
   },
 ];
 
@@ -152,6 +155,7 @@ const pptsCard: ContentCard = {
   subtitle: "Presentation slides for teaching and concept delivery.",
   icon: Presentation,
   accent: "from-indigo-500 to-blue-400",
+  comingSoon: true,
 };
 
 const testSeriesCard: ContentCard = {
@@ -160,6 +164,7 @@ const testSeriesCard: ContentCard = {
   subtitle: "Structured tests and assessments for revision.",
   icon: ClipboardList,
   accent: "from-rose-500 to-orange-400",
+  comingSoon: true,
 };
 
 const virtualLabCard: ContentCard = {
@@ -324,6 +329,24 @@ function ResourcePlaceholder({
           <ArrowRight className="h-4 w-4" />
         </Link>
       )}
+    </div>
+  );
+}
+
+function ComingSoonPanel({ content }: { content: ContentCard }) {
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-8 shadow-sm">
+      <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${content.accent} text-white shadow-lg shadow-amber-200`}>
+        <content.icon className="h-7 w-7" />
+      </div>
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-700">
+        <Clock3 className="h-4 w-4" />
+        Coming soon
+      </div>
+      <h2 className="text-2xl font-black text-heading">{content.title}</h2>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
+        {content.title} is marked as coming soon across VisualLearning courses. This section will open once the content is ready.
+      </p>
     </div>
   );
 }
@@ -498,7 +521,7 @@ export function AudienceChaptersPage({
     async function load() {
       try {
         const subjectResult = await fetchClassSubjects(classId);
-        const chapterResult = isChapterContent(content.slug)
+        const chapterResult = isChapterContent(content.slug) && !content.comingSoon
           ? await fetchSubjectChapters(subjectId, content.slug)
           : [];
         const subject = subjectResult.subjects.find((item) => item.id === subjectId);
@@ -523,7 +546,9 @@ export function AudienceChaptersPage({
       description={`${className} chapter cards. First chapter is open for preview; remaining chapters need subscription access.`}
       backHref={`/courses/${audience}/${classId}/${subjectId}`}
     >
-      {isChapterContent(content.slug) ? (
+      {content.comingSoon ? (
+        <ComingSoonPanel content={content} />
+      ) : isChapterContent(content.slug) ? (
         <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/${audience}/${classId}/${subjectId}/${content.slug}`} />
       ) : (
         <ResourcePlaceholder content={content} />
@@ -553,12 +578,20 @@ export function ProfessionalSubjectsPage() {
             <h2 className="text-2xl font-black text-heading">{subject.title}</h2>
             <p className="mt-2 text-sm font-bold text-primary">{subject.subtitle}</p>
             <div className="mt-6 grid gap-2">
-              {subject.features.map((feature) => (
-                <div key={feature} className="flex items-center gap-2 text-sm font-bold text-heading">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  {feature}
-                </div>
-              ))}
+              {subject.features.map((feature) => {
+                const comingSoon = feature.toLowerCase().includes("ppt") || feature.toLowerCase().includes("test series");
+                return (
+                  <div key={feature} className="flex flex-wrap items-center gap-2 text-sm font-bold text-heading">
+                    {comingSoon ? <Clock3 className="h-4 w-4 text-amber-600" /> : <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                    <span>{feature}</span>
+                    {comingSoon && (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
+                        Coming soon
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
               <span className="text-xs font-black uppercase tracking-wider text-text-light">Open track</span>
@@ -596,7 +629,7 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
     async function load() {
       setLoading(true);
       try {
-        if (!isChapterContent(content.slug)) {
+        if (!isChapterContent(content.slug) || content.comingSoon) {
           setChapters([]);
           return;
         }
@@ -642,7 +675,9 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
         : `${content.title} is now included in this professional subject path.`}
       backHref={`/courses/professional/${subject.key}`}
     >
-      {isChapterContent(content.slug) ? (
+      {content.comingSoon ? (
+        <ComingSoonPanel content={content} />
+      ) : isChapterContent(content.slug) ? (
         <ChapterGrid chapters={chapters} contentSlug={content.slug} returnTo={`/courses/professional/${subject.key}/${content.slug}`} />
       ) : (
         <ResourcePlaceholder content={content} actionHref={content.slug === "virtual-lab" ? "/courses/virtual-lab" : undefined} />
@@ -654,23 +689,56 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
 function ContentTypeGrid({ baseHref, cards }: { baseHref: string; cards: ContentCard[] }) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Link
-          key={card.slug}
-          href={card.href || `${baseHref}/${card.slug}`}
-          className="group rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
-        >
-          <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${card.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
-            <card.icon className="h-7 w-7" />
-          </div>
-          <h2 className="text-lg font-black text-heading">{card.title}</h2>
-          <p className="mt-2 min-h-16 text-sm leading-6 text-text-muted">{card.subtitle}</p>
-          <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-            <span className="text-xs font-black uppercase tracking-wider text-text-light">{card.actionLabel || "Open chapters"}</span>
-            <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
-          </div>
-        </Link>
-      ))}
+      {cards.map((card) => {
+        const CardIcon = card.icon;
+        const body = (
+          <>
+            {card.comingSoon && (
+              <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-700">
+                <Clock3 className="h-3 w-3" />
+                Coming soon
+              </span>
+            )}
+            <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${card.accent} text-white shadow-lg shadow-gray-200 transition-transform ${card.comingSoon ? "" : "group-hover:scale-105"}`}>
+              <CardIcon className="h-7 w-7" />
+            </div>
+            <h2 className="text-lg font-black text-heading">{card.title}</h2>
+            <p className="mt-2 min-h-16 text-sm leading-6 text-text-muted">{card.subtitle}</p>
+            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
+              <span className={`text-xs font-black uppercase tracking-wider ${card.comingSoon ? "text-amber-700" : "text-text-light"}`}>
+                {card.comingSoon ? "Coming soon" : card.actionLabel || "Open chapters"}
+              </span>
+              {card.comingSoon ? (
+                <Clock3 className="h-5 w-5 text-amber-600" />
+              ) : (
+                <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
+              )}
+            </div>
+          </>
+        );
+
+        if (card.comingSoon) {
+          return (
+            <div
+              key={card.slug}
+              aria-disabled="true"
+              className="relative rounded-lg border border-amber-200 bg-amber-50/70 p-5 shadow-sm"
+            >
+              {body}
+            </div>
+          );
+        }
+
+        return (
+          <Link
+            key={card.slug}
+            href={card.href || `${baseHref}/${card.slug}`}
+            className="group relative rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
+          >
+            {body}
+          </Link>
+        );
+      })}
     </div>
   );
 }
