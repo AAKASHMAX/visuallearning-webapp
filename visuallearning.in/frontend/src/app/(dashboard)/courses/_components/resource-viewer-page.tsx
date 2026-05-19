@@ -289,39 +289,40 @@ export function ResourceViewerPage({
 
   const Icon = meta.icon;
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href={backHref} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </Link>
+  const isDocumentViewer = !isComingSoonResource && !loadError && kind !== "quiz" && !(kind === "question-bank" && documents.length === 0);
 
-      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-4">
-            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${meta.accent} text-white shadow-lg shadow-gray-200`}>
-              <Icon className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wider text-primary">{meta.eyebrow}</p>
-              <h1 className="mt-1 text-2xl font-black text-heading sm:text-3xl">{heroTitle}</h1>
-              <p className="mt-2 text-sm leading-6 text-text-muted">{heroDescription}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
-                  {chapterInfo.className}
-                </span>
-                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
-                  {chapterInfo.subjectName}
-                </span>
-                <span className="rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-black text-heading">
-                  {chapterInfo.chapterName}
-                </span>
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mb-4 flex items-center gap-3">
+        <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
+        {isDocumentViewer && activeDocument && (
+          <>
+            <span className="text-gray-300">|</span>
+            <h1 className="min-w-0 truncate text-sm font-black text-heading">{heroTitle}</h1>
+          </>
+        )}
+      </div>
+
+      {!isDocumentViewer && (
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${meta.accent} text-white shadow-lg shadow-gray-200`}>
+                <Icon className="h-7 w-7" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-primary">{meta.eyebrow}</p>
+                <h1 className="mt-1 text-2xl font-black text-heading sm:text-3xl">{heroTitle}</h1>
+                <p className="mt-2 text-sm leading-6 text-text-muted">{heroDescription}</p>
               </div>
             </div>
+            <ZoomControls zoom={zoom} setZoom={setZoom} />
           </div>
-          {!isComingSoonResource && <ZoomControls zoom={zoom} setZoom={setZoom} />}
         </div>
-      </div>
+      )}
 
       {isComingSoonResource ? (
         <ComingSoonResourcePanel meta={meta} />
@@ -355,6 +356,7 @@ export function ResourceViewerPage({
           activeDocumentId={activeDocumentId}
           setActiveDocumentId={setActiveDocumentId}
           zoom={zoom}
+          setZoom={setZoom}
           locked={locked}
         />
       )}
@@ -431,6 +433,7 @@ function DocumentViewer({
   activeDocumentId,
   setActiveDocumentId,
   zoom,
+  setZoom,
   locked,
 }: {
   kind: ResourceKind;
@@ -439,6 +442,7 @@ function DocumentViewer({
   activeDocumentId: string;
   setActiveDocumentId: (id: string) => void;
   zoom: number;
+  setZoom: React.Dispatch<React.SetStateAction<number>>;
   locked: boolean;
 }) {
   const viewerRef = useRef<HTMLElement | null>(null);
@@ -517,12 +521,13 @@ function DocumentViewer({
           )
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 bg-white px-4 py-2">
               <p className="min-w-0 truncate text-sm font-black text-heading">
                 {activeDocument.title}
               </p>
               <div className="flex shrink-0 items-center gap-2">
-                {activeDocument.pdfUrl && (
+                <ZoomControls zoom={zoom} setZoom={setZoom} />
+                {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   <a
                     href={activeDocument.pdfUrl}
                     download
@@ -531,7 +536,7 @@ function DocumentViewer({
                     className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
                   >
                     <Download className="h-4 w-4" />
-                    Download PDF
+                    <span className="hidden sm:inline">Download PDF</span>
                   </a>
                 )}
                 <button
@@ -540,7 +545,7 @@ function DocumentViewer({
                   className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
                 >
                   {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  {isFullscreen ? "Exit" : "Full screen"}
+                  <span className="hidden sm:inline">{isFullscreen ? "Exit" : "Full screen"}</span>
                 </button>
               </div>
             </div>
