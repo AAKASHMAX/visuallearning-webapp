@@ -552,9 +552,11 @@ function DocumentViewer({
             {activeDocument.htmlContent ? (
               <div
                 className={cn(
-                  "overflow-auto bg-slate-100",
+                  "relative overflow-auto bg-slate-100",
                   isFullscreen ? "h-[calc(100vh-64px)]" : "h-[76vh]"
                 )}
+                style={{ userSelect: "none", WebkitUserSelect: "none" } as React.CSSProperties}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 {activeDocument.cssContent && (
                   <style dangerouslySetInnerHTML={{ __html: activeDocument.cssContent }} />
@@ -564,6 +566,33 @@ function DocumentViewer({
                   style={{ zoom } as React.CSSProperties}
                   dangerouslySetInnerHTML={{ __html: activeDocument.htmlContent }}
                 />
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+                  aria-hidden="true"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(
+                      -45deg,
+                      transparent,
+                      transparent 80px,
+                      rgba(0,0,0,0.03) 80px,
+                      rgba(0,0,0,0.03) 81px
+                    )`,
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 flex flex-wrap items-center justify-center gap-x-32 gap-y-40"
+                    style={{ transform: "rotate(-30deg)", transformOrigin: "center center", width: "200%", height: "200%", left: "-50%", top: "-50%" }}
+                  >
+                    {Array.from({ length: 40 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="whitespace-nowrap text-[15px] font-black tracking-widest text-black/[0.045] select-none"
+                      >
+                        VISUALLEARNING.IN
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               <div
