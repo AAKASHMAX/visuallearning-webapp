@@ -156,6 +156,7 @@ export function ResourceViewerPage({
   const [activeDocumentId, setActiveDocumentId] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [locked, setLocked] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [zoom, setZoom] = useState(1);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -269,6 +270,7 @@ export function ResourceViewerPage({
         if (!mounted) return;
         setDocuments(filteredDocuments);
         setActiveDocumentId(filteredDocuments[0]?.id || "");
+        setCanDownload(Boolean(notesRes.data.data?.canDownload));
         setLocked(Boolean(notesRes.data.data?.hasAccess === false) && filteredDocuments.length > 0);
       } catch (error) {
         if (!mounted) return;
@@ -358,6 +360,7 @@ export function ResourceViewerPage({
           zoom={zoom}
           setZoom={setZoom}
           locked={locked}
+          canDownload={canDownload}
         />
       )}
     </div>
@@ -435,6 +438,7 @@ function DocumentViewer({
   zoom,
   setZoom,
   locked,
+  canDownload,
 }: {
   kind: ResourceKind;
   documents: ViewerDocument[];
@@ -444,9 +448,11 @@ function DocumentViewer({
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   locked: boolean;
+  canDownload: boolean;
 }) {
   const viewerRef = useRef<HTMLElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const emptyCopy = kind === "ppts"
     ? "No PPT or slide PDF has been added for this chapter yet."
     : kind === "test-series"
@@ -528,16 +534,27 @@ function DocumentViewer({
               <div className="flex shrink-0 items-center gap-2">
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
-                  <a
-                    href={activeDocument.pdfUrl}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Download PDF</span>
-                  </a>
+                  canDownload ? (
+                    <a
+                      href={activeDocument.pdfUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Download PDF</span>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowDownloadModal(true)}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-black text-gray-500 hover:bg-gray-100"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Download PDF</span>
+                    </button>
+                  )
                 )}
                 <button
                   type="button"
@@ -625,6 +642,35 @@ function DocumentViewer({
           </>
         )}
       </div>
+
+      {showDownloadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowDownloadModal(false)}>
+          <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600 mx-auto">
+              <Lock className="h-7 w-7" />
+            </div>
+            <h3 className="text-center text-lg font-black text-heading">Subscribe to Download</h3>
+            <p className="mt-2 text-center text-sm leading-6 text-text-muted">
+              PDF downloads are available for subscribed users. Subscribe to a plan to download notes.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDownloadModal(false)}
+                className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-black text-heading hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <Link
+                href="/subscription"
+                className="flex-1 rounded-lg bg-heading px-4 py-2.5 text-center text-sm font-black text-white hover:bg-primary"
+              >
+                View Plans
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

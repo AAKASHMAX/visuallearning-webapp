@@ -299,13 +299,17 @@ export async function getNotes(req: Request, res: Response) {
     const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
+    let canDownload = false;
     if (isAdmin) {
       hasAccess = true;
-    } else if (isFirstChapter) {
-      hasAccess = true;
+      canDownload = true;
     } else if (req.user) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
       hasAccess = result.hasAccess;
+      canDownload = result.hasAccess;
+    }
+    if (!hasAccess && isFirstChapter) {
+      hasAccess = true;
     }
 
     const notesWithAccess = notes.map((n) => {
@@ -319,7 +323,7 @@ export async function getNotes(req: Request, res: Response) {
       };
     });
 
-    return success(res, { notes: notesWithAccess, hasAccess, chapter: { name: chapter.name } });
+    return success(res, { notes: notesWithAccess, hasAccess, canDownload, chapter: { name: chapter.name } });
   } catch (e) {
     console.error("Get notes error:", e);
     return error(res, "Failed to fetch notes");
