@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2, X, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Upload, Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 
 type Tab = "chapters" | "videos" | "notes" | "questions" | "questionBank" | "ppts" | "testSeries";
@@ -38,8 +38,32 @@ export default function AdminContentPage() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [editing, setEditing] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const { enabledLanguages } = useLanguage();
+
+  const handleFileUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "notes");
+      const { data } = await api.post("/admin/upload", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const url = data.data?.url;
+      if (url) {
+        setFormData((prev: any) => ({ ...prev, pdfUrl: url }));
+        toast.success("PDF uploaded");
+      } else {
+        toast.error("Upload failed - no URL returned");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -341,7 +365,32 @@ export default function AdminContentPage() {
             {tab === "notes" && (
               <>
                 <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
-                <Input label="PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload PDF</label>
+                  <div className="flex gap-2 items-center">
+                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border ${uploading ? "bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-50"}`}>
+                      {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {uploading ? "Uploading..." : "Choose PDF"}
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {formData.pdfUrl && (
+                      <a href={formData.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate max-w-[300px]">
+                        View current PDF
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <Input label="Or paste PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
               </>
             )}
 

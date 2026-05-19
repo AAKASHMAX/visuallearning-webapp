@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { validate } from "../middleware/validate";
@@ -12,7 +13,7 @@ import {
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
   getAllCourses, addCourse, updateCourse, deleteCourse, getCourseWithChapters, addChapterToCourse, removeChapterFromCourse, getChaptersGroupedBySubject, courseSchema,
-  getChaptersList,
+  getChaptersList, uploadPdf,
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
@@ -28,6 +29,7 @@ import {
 import { deleteFeedback, getFeedbacks, markFeedbackRead } from "../controllers/feedback.controller";
 
 const router = Router();
+const upload = multer({ dest: "uploads/", limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
 
 // Public settings endpoint (no auth)
 router.get("/public-settings", getPublicSettings);
@@ -101,6 +103,9 @@ router.get("/videos/chapter/:chapterId", getChapterVideos);
 router.post("/videos", validate(videoSchema), addVideo);
 router.put("/videos/:id", updateVideo);
 router.delete("/videos/:id", deleteVideo);
+
+// File Upload
+router.post("/upload", upload.single("file"), uploadPdf);
 
 // Notes
 router.post("/notes", validate(noteSchema), addNote);

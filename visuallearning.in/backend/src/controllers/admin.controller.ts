@@ -1,8 +1,17 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import { v2 as cloudinary } from "cloudinary";
 import { prisma } from "../config/prisma";
+import { config } from "../config";
 import { success, error } from "../utils/apiResponse";
 import { cacheInvalidate } from "../utils/cache";
+
+// --- Cloudinary setup ---
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
 
 // --- Schemas ---
 export const classSchema = z.object({ name: z.string().min(1), order: z.number().int().optional() });
@@ -258,6 +267,31 @@ function cleanVideoData(data: any) {
 export async function addVideo(req: Request, res: Response) { return crudCreate(prisma.video, cleanVideoData(req.body), res); }
 export async function updateVideo(req: Request, res: Response) { return crudUpdate(prisma.video, req.params.id, cleanVideoData(req.body), res); }
 export async function deleteVideo(req: Request, res: Response) { return crudDelete(prisma.video, req.params.id, res); }
+
+// --- File Upload (Cloudinary) ---
+export async function uploadPdf(req: Request, res: Response) {
+  try {
+    const file = req.file;
+    if (!file) return error(res, "No file uploaded", 400);
+
+    const folder = req.body.folder || "notes";
+    const result = await cloudinary.uploader.upload(file.path, {
+      resource_type: "raw",
+      folder,
+      use_filename: true,
+      unique_filename: true,
+    });
+
+    // Clean up temp file
+    const fs = await import("fs");
+    fs.unlink(file.path, () => {});
+
+    return success(res, { url: result.secure_url, publicId: result.public_id }, "File uploaded successfully");
+  } catch (e) {
+    console.error("Upload error:", e);
+    return error(res, "Failed to upload file");
+  }
+}
 
 // --- Notes ---
 export async function addNote(req: Request, res: Response) { return crudCreate(prisma.note, req.body, res); }

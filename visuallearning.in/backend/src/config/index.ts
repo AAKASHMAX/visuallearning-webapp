@@ -21,6 +21,11 @@ export const config = {
     pass: process.env.SMTP_PASS || "",
   },
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || "dvtuf1zqn",
+    apiKey: process.env.CLOUDINARY_API_KEY || "727822633118353",
+    apiSecret: process.env.CLOUDINARY_API_SECRET || "D41LANrVz7TTgOiGFMs4gfNIEpg",
+  },
   plans: {
     FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365 },
     ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365 },
