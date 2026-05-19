@@ -228,13 +228,15 @@ model Video {
 }
 
 model Note {
-  id        String   @id @default(cuid())
-  chapterId String
-  title     String
-  pdfUrl    String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  chapterId   String
+  title       String
+  pdfUrl      String
+  htmlContent String?
+  cssContent  String?
+  createdAt   DateTime @default(now())
 
-  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   @@index([chapterId])
 }

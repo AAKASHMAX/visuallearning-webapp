@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock3,
   ClipboardList,
+  Download,
   FileQuestion,
   FileText,
   Lock,
@@ -32,6 +33,8 @@ type ViewerDocument = {
   id: string;
   title: string;
   pdfUrl: string | null;
+  htmlContent?: string | null;
+  cssContent?: string | null;
   locked?: boolean;
   meta?: string;
 };
@@ -256,8 +259,10 @@ export function ResourceViewerPage({
           id: note.id,
           title: note.title,
           pdfUrl: note.pdfUrl || null,
+          htmlContent: note.htmlContent || null,
+          cssContent: note.cssContent || null,
           locked: Boolean(note.locked),
-          meta: kind === "ppts" ? "Presentation PDF" : "PDF Notes",
+          meta: kind === "ppts" ? "Presentation PDF" : note.htmlContent ? "HTML Notes" : "PDF Notes",
         }));
         const filteredDocuments = filterDocuments(kind, noteDocuments);
 
@@ -516,41 +521,73 @@ function DocumentViewer({
               <p className="min-w-0 truncate text-sm font-black text-heading">
                 {activeDocument.title}
               </p>
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
-              >
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                {isFullscreen ? "Exit" : "Full screen"}
-              </button>
-            </div>
-            <div
-              className={cn(
-                "overflow-auto bg-slate-100 py-4",
-                isFullscreen
-                  ? "h-[calc(100vh-64px)] px-4 sm:px-10 lg:px-24"
-                  : "h-[76vh] px-4 sm:px-10 lg:px-20 xl:px-28"
-              )}
-            >
-              <div
-                className="mx-auto origin-top overflow-hidden rounded-lg bg-white shadow-sm"
-                style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: "top center",
-                  width: `${100 / zoom}%`,
-                  maxWidth: `${980 / zoom}px`,
-                  height: isFullscreen ? `${100 / zoom}%` : `${80 / zoom}vh`,
-                  minHeight: isFullscreen ? `${720 / zoom}px` : `${760 / zoom}px`,
-                }}
-              >
-                <iframe
-                  src={pdfViewerUrl(activeDocument.pdfUrl)}
-                  title={activeDocument.title}
-                  className="h-full w-full border-0"
-                />
+              <div className="flex shrink-0 items-center gap-2">
+                {activeDocument.pdfUrl && (
+                  <a
+                    href={activeDocument.pdfUrl}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleFullscreen}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
+                >
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {isFullscreen ? "Exit" : "Full screen"}
+                </button>
               </div>
             </div>
+            {activeDocument.htmlContent ? (
+              <div
+                className={cn(
+                  "overflow-auto bg-slate-100",
+                  isFullscreen ? "h-[calc(100vh-64px)]" : "h-[76vh]"
+                )}
+              >
+                {activeDocument.cssContent && (
+                  <style dangerouslySetInnerHTML={{ __html: activeDocument.cssContent }} />
+                )}
+                <div
+                  className="notes-html-viewer"
+                  style={{ zoom } as React.CSSProperties}
+                  dangerouslySetInnerHTML={{ __html: activeDocument.htmlContent }}
+                />
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "overflow-auto bg-slate-100 py-4",
+                  isFullscreen
+                    ? "h-[calc(100vh-64px)] px-4 sm:px-10 lg:px-24"
+                    : "h-[76vh] px-4 sm:px-10 lg:px-20 xl:px-28"
+                )}
+              >
+                <div
+                  className="mx-auto origin-top overflow-hidden rounded-lg bg-white shadow-sm"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transformOrigin: "top center",
+                    width: `${100 / zoom}%`,
+                    maxWidth: `${980 / zoom}px`,
+                    height: isFullscreen ? `${100 / zoom}%` : `${80 / zoom}vh`,
+                    minHeight: isFullscreen ? `${720 / zoom}px` : `${760 / zoom}px`,
+                  }}
+                >
+                  <iframe
+                    src={pdfViewerUrl(activeDocument.pdfUrl!)}
+                    title={activeDocument.title}
+                    className="h-full w-full border-0"
+                  />
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

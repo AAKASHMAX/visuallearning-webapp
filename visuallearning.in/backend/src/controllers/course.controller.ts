@@ -313,6 +313,8 @@ export async function getNotes(req: Request, res: Response) {
       return {
         ...n,
         pdfUrl: canView ? n.pdfUrl : null,
+        htmlContent: canView ? n.htmlContent : null,
+        cssContent: canView ? n.cssContent : null,
         locked: !canView,
       };
     });

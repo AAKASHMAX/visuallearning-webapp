@@ -39,6 +39,10 @@ export default function AdminContentPage() {
   const [formData, setFormData] = useState<any>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [htmlUploading, setHtmlUploading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<FileList | null>(null);
+  const [selectedHtml, setSelectedHtml] = useState<File | null>(null);
+  const [selectedCss, setSelectedCss] = useState<File | null>(null);
 
   const { enabledLanguages } = useLanguage();
 
@@ -62,6 +66,35 @@ export default function AdminContentPage() {
       toast.error(err.response?.data?.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleHtmlNoteUpload = async () => {
+    if (!selectedHtml) return toast.error("Select an HTML file first");
+    setHtmlUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("html", selectedHtml);
+      if (selectedCss) fd.append("css", selectedCss);
+      if (selectedImages) {
+        Array.from(selectedImages).forEach((img) => fd.append("images", img));
+      }
+      const { data } = await api.post("/admin/upload-html-note", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000,
+      });
+      const result = data.data;
+      setFormData((prev: any) => ({
+        ...prev,
+        htmlContent: result.htmlContent || prev.htmlContent,
+        cssContent: result.cssContent || prev.cssContent,
+        pdfUrl: result.pdfUrl || prev.pdfUrl,
+      }));
+      toast.success(`HTML note processed (${result.imagesUploaded} images uploaded)`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "HTML upload failed");
+    } finally {
+      setHtmlUploading(false);
     }
   };
 
@@ -153,6 +186,8 @@ export default function AdminContentPage() {
       return {
         title: formData.title,
         pdfUrl: formData.pdfUrl,
+        htmlContent: formData.htmlContent || null,
+        cssContent: formData.cssContent || null,
         chapterId: formData.chapterId || selectedChapter,
       };
     }
@@ -365,23 +400,41 @@ export default function AdminContentPage() {
             {tab === "notes" && (
               <>
                 <Input label="Title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload PDF</label>
+
+                <div className="border rounded-lg p-4 bg-blue-50/50 space-y-3">
+                  <p className="text-sm font-bold text-blue-800">HTML Note (for viewing)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">HTML File</label>
+                      <input type="file" accept=".html,.htm" className="text-sm w-full"
+                        onChange={(e) => setSelectedHtml(e.target.files?.[0] || null)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">CSS File (optional)</label>
+                      <input type="file" accept=".css" className="text-sm w-full"
+                        onChange={(e) => setSelectedCss(e.target.files?.[0] || null)} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Images folder (select all images)</label>
+                    <input type="file" accept="image/*,.svg" multiple className="text-sm w-full"
+                      onChange={(e) => setSelectedImages(e.target.files)} />
+                    {selectedImages && <span className="text-xs text-gray-500">{selectedImages.length} images selected</span>}
+                  </div>
+                  <Button type="button" onClick={handleHtmlNoteUpload} disabled={htmlUploading || !selectedHtml} className="w-full">
+                    {htmlUploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Processing & Uploading...</> : <><Upload className="w-4 h-4 mr-2" />Upload HTML Note</>}
+                  </Button>
+                  {formData.htmlContent && <p className="text-xs text-green-600 font-medium">HTML content loaded ({Math.round(formData.htmlContent.length / 1024)}KB)</p>}
+                </div>
+
+                <div className="border rounded-lg p-4 bg-emerald-50/50 space-y-3">
+                  <p className="text-sm font-bold text-emerald-800">PDF (for download)</p>
                   <div className="flex gap-2 items-center">
                     <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border ${uploading ? "bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-50"}`}>
                       {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       {uploading ? "Uploading..." : "Choose PDF"}
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        className="hidden"
-                        disabled={uploading}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file);
-                          e.target.value = "";
-                        }}
-                      />
+                      <input type="file" accept=".pdf" className="hidden" disabled={uploading}
+                        onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileUpload(file); e.target.value = ""; }} />
                     </label>
                     {formData.pdfUrl && (
                       <a href={formData.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate max-w-[300px]">
@@ -389,8 +442,8 @@ export default function AdminContentPage() {
                       </a>
                     )}
                   </div>
+                  <Input label="Or paste PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
                 </div>
-                <Input label="Or paste PDF URL" value={formData.pdfUrl || ""} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://..." />
               </>
             )}
 

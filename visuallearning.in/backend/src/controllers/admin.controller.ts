@@ -30,7 +30,7 @@ export const videoSchema = z.object({
   duration: z.string().optional(), order: z.number().int().optional(), isFree: z.boolean().optional(),
   type: z.string().optional(),
 });
-export const noteSchema = z.object({ chapterId: z.string(), title: z.string().min(1), pdfUrl: z.string().min(1) });
+export const noteSchema = z.object({ chapterId: z.string(), title: z.string().min(1), pdfUrl: z.string().min(1), htmlContent: z.string().optional().nullable(), cssContent: z.string().optional().nullable() });
 export const boardPaperSchema = z.object({
   subjectId: z.string(), year: z.number().int(), title: z.string().min(1), pdfUrl: z.string().min(1), order: z.number().int().optional(),
 });
@@ -290,6 +290,88 @@ export async function uploadPdf(req: Request, res: Response) {
   } catch (e) {
     console.error("Upload error:", e);
     return error(res, "Failed to upload file");
+  }
+}
+
+// --- HTML Notes Upload ---
+export async function uploadHtmlNote(req: Request, res: Response) {
+  try {
+    const fs = await import("fs");
+    const path = await import("path");
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const htmlFile = files?.html?.[0];
+    const cssFile = files?.css?.[0];
+    const pdfFile = files?.pdf?.[0];
+    const imageFiles = files?.images || [];
+
+    if (!htmlFile) return error(res, "HTML file is required", 400);
+
+    const folder = req.body.folder || "notes-html";
+
+    // 1. Upload images to Cloudinary and build URL map
+    const imageUrlMap: Record<string, string> = {};
+    for (const img of imageFiles) {
+      const ext = path.extname(img.originalname).toLowerCase();
+      const isSvg = ext === ".svg";
+      const result = await cloudinary.uploader.upload(img.path, {
+        resource_type: isSvg ? "raw" : "image",
+        folder: `${folder}/images`,
+        use_filename: true,
+        unique_filename: false,
+        overwrite: true,
+      });
+      imageUrlMap[img.originalname] = result.secure_url;
+      fs.unlink(img.path, () => {});
+    }
+
+    // 2. Read HTML and rewrite image paths
+    let htmlContent = fs.readFileSync(htmlFile.path, "utf-8");
+    // Replace ../images/filename references with Cloudinary URLs
+    htmlContent = htmlContent.replace(/(?:\.\.\/images\/|images\/)([^"'\s)]+)/g, (_match, filename) => {
+      return imageUrlMap[filename] || _match;
+    });
+    // Strip <head>...</head>, <html>, <body>, <!DOCTYPE> tags — keep only inner body content
+    htmlContent = htmlContent
+      .replace(/<!DOCTYPE[^>]*>/i, "")
+      .replace(/<html[^>]*>/i, "")
+      .replace(/<\/html>/i, "")
+      .replace(/<head[\s\S]*?<\/head>/i, "")
+      .replace(/<body[^>]*>/i, "")
+      .replace(/<\/body>/i, "")
+      .trim();
+
+    fs.unlink(htmlFile.path, () => {});
+
+    // 3. Read CSS if provided
+    let cssContent: string | null = null;
+    if (cssFile) {
+      cssContent = fs.readFileSync(cssFile.path, "utf-8");
+      fs.unlink(cssFile.path, () => {});
+    }
+
+    // 4. Upload PDF if provided
+    let pdfUrl: string | null = null;
+    if (pdfFile) {
+      const pdfResult = await cloudinary.uploader.upload(pdfFile.path, {
+        resource_type: "raw",
+        folder,
+        use_filename: true,
+        unique_filename: true,
+      });
+      pdfUrl = pdfResult.secure_url;
+      fs.unlink(pdfFile.path, () => {});
+    }
+
+    return success(res, {
+      htmlContent,
+      cssContent,
+      pdfUrl,
+      imagesUploaded: Object.keys(imageUrlMap).length,
+    }, "HTML note processed successfully");
+  } catch (e) {
+    console.error("HTML note upload error:", e);
+    return error(res, "Failed to process HTML note");
   }
 }
 

@@ -13,7 +13,7 @@ import {
   addQuestion, updateQuestion, deleteQuestion, questionSchema,
   addBoardPaper, updateBoardPaper, deleteBoardPaper, boardPaperSchema,
   getAllCourses, addCourse, updateCourse, deleteCourse, getCourseWithChapters, addChapterToCourse, removeChapterFromCourse, getChaptersGroupedBySubject, courseSchema,
-  getChaptersList, uploadPdf,
+  getChaptersList, uploadPdf, uploadHtmlNote,
   getMostWatched, getRevenueByMonth,
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
@@ -106,6 +106,12 @@ router.delete("/videos/:id", deleteVideo);
 
 // File Upload
 router.post("/upload", upload.single("file"), uploadPdf);
+router.post("/upload-html-note", upload.fields([
+  { name: "html", maxCount: 1 },
+  { name: "css", maxCount: 1 },
+  { name: "pdf", maxCount: 1 },
+  { name: "images", maxCount: 100 },
+]), uploadHtmlNote);
 
 // Notes
 router.post("/notes", validate(noteSchema), addNote);
