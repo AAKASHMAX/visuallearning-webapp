@@ -16,7 +16,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "videos", label: "Animated Videos" },
   { key: "notes", label: "Notes" },
   { key: "questions", label: "Quiz" },
-  { key: "questionBank", label: "Question Bank" },
+  { key: "questionBank", label: "NCERT Q&A" },
   { key: "ppts", label: "PPTs" },
   { key: "testSeries", label: "Test Series" },
 ];

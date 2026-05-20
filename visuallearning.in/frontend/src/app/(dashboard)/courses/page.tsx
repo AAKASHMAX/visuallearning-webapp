@@ -83,7 +83,7 @@ const audienceCards = [
       { label: "Videos", kind: "videos" },
       { label: "Notes", kind: "notes" },
       { label: "Quiz", kind: "quiz" },
-      { label: "Question Bank", kind: "question-bank" },
+      { label: "NCERT Q&A", kind: "question-bank" },
     ],
   },
   {
@@ -97,7 +97,7 @@ const audienceCards = [
       { label: "Videos", kind: "videos" },
       { label: "PPTs", kind: "ppts" },
       { label: "Test Series", kind: "test-series" },
-      { label: "Question Bank", kind: "question-bank" },
+      { label: "NCERT Q&A", kind: "question-bank" },
     ],
   },
   {

@@ -61,7 +61,7 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
     accent: "from-violet-500 to-fuchsia-400",
   },
   "question-bank": {
-    title: "Question Bank Viewer",
+    title: "NCERT Questions and Solutions",
     eyebrow: "Questions",
     description: "Review chapter questions and solutions in a clean scrollable viewer.",
     icon: FileQuestion,
@@ -690,7 +690,7 @@ function QuestionViewer({
       <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-black text-heading">
-            {kind === "quiz" ? "Chapter Quiz" : "Chapter Question Bank"}
+            {kind === "quiz" ? "Chapter Quiz" : "NCERT Questions and Solutions"}
           </h2>
           <p className="text-sm text-text-muted">{questions.length} questions available</p>
         </div>

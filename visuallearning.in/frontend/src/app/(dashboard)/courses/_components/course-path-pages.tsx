@@ -141,7 +141,7 @@ const baseContentCards: ContentCard[] = [
   },
   {
     slug: "question-bank",
-    title: "Question Bank",
+    title: "NCERT Questions & Solutions",
     subtitle: "Chapter questions for deeper practice.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
@@ -421,7 +421,7 @@ export function AudienceSubjectsPage({ audience, classId }: { audience: Audience
     <PageFrame
       eyebrow={meta.label}
       title={`${className} Subjects`}
-      description="Choose a subject. The next page will show Animated Videos, Notes, Quiz, and Question Bank."
+      description="Choose a subject. The next page will show Animated Videos, Notes, Quiz, and NCERT Questions & Solutions."
       backHref={`/courses/${audience}`}
     >
       {subjects.length === 0 ? (
@@ -562,7 +562,7 @@ export function ProfessionalSubjectsPage() {
     <PageFrame
       eyebrow="Professional Path"
       title="Professional Subjects"
-      description="Choose a subject track. Each track opens into Animated Videos, Notes, Quiz, and Question Bank."
+      description="Choose a subject track. Each track opens into Animated Videos, Notes, Quiz, and NCERT Questions & Solutions."
       backHref="/courses"
     >
       <div className="grid gap-5 md:grid-cols-3">
