@@ -85,6 +85,8 @@ export interface Note {
   chapterId: string;
   title: string;
   pdfUrl: string;
+  htmlContent?: string | null;
+  cssContent?: string | null;
   locked?: boolean;
 }
 
