@@ -519,7 +519,7 @@ function DocumentViewer({
       )}
 
       <div>
-        {locked || activeDocument?.locked || !activeDocument?.pdfUrl ? (
+        {locked || activeDocument?.locked || (!activeDocument?.pdfUrl && !activeDocument?.htmlContent) ? (
           activeDocument?.locked || locked ? (
             <LockedPanel />
           ) : (
