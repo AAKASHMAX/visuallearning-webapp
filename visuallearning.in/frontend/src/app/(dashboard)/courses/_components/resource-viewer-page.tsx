@@ -459,6 +459,8 @@ function DocumentViewer({
       ? "No test paper has been added for this subject yet."
       : "No PDF has been added for this chapter yet.";
 
+  const notesContainerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(document.fullscreenElement === viewerRef.current);
@@ -467,6 +469,47 @@ function DocumentViewer({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  // Load KaTeX auto-render for notes with raw LaTeX ($...$, $$...$$)
+  useEffect(() => {
+    const html = activeDocument?.htmlContent;
+    if (!html || !notesContainerRef.current) return;
+    // Only run if raw LaTeX delimiters are present
+    if (!html.includes('$')) return;
+
+    const container = notesContainerRef.current;
+    let cancelled = false;
+
+    async function renderMath() {
+      // Load KaTeX + auto-render if not already loaded
+      if (!(window as any).katex) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+        document.head.appendChild(script);
+        await new Promise<void>((resolve) => { script.onload = () => resolve(); });
+      }
+      if (!(window as any).renderMathInElement) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
+        document.head.appendChild(script);
+        await new Promise<void>((resolve) => { script.onload = () => resolve(); });
+      }
+      if (cancelled) return;
+      try {
+        (window as any).renderMathInElement(container, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\\(', right: '\\)', display: false },
+            { left: '\\[', right: '\\]', display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch {}
+    }
+    renderMath();
+    return () => { cancelled = true; };
+  }, [activeDocument?.htmlContent]);
 
   const toggleFullscreen = async () => {
     if (!viewerRef.current) return;
@@ -581,6 +624,7 @@ function DocumentViewer({
                 )}
                 <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 28px), 210mm) !important; max-width: 210mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
                 <div
+                  ref={notesContainerRef}
                   className="notes-html-viewer"
                   style={{ zoom } as React.CSSProperties}
                   dangerouslySetInnerHTML={{ __html: activeDocument.htmlContent }}
