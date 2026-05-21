@@ -575,6 +575,7 @@ function DocumentViewer({
                 style={{ userSelect: "none", WebkitUserSelect: "none" } as React.CSSProperties}
                 onContextMenu={(e) => e.preventDefault()}
               >
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
                 {activeDocument.cssContent && (
                   <style dangerouslySetInnerHTML={{ __html: activeDocument.cssContent }} />
                 )}
