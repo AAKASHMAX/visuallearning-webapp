@@ -145,7 +145,6 @@ const baseContentCards: ContentCard[] = [
     subtitle: "Chapter questions for deeper practice.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
-    comingSoon: true,
   },
 ];
 

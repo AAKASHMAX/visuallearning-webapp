@@ -83,7 +83,7 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
   },
 };
 
-const comingSoonResourceKinds = new Set<ResourceKind>(["question-bank", "ppts", "test-series"]);
+const comingSoonResourceKinds = new Set<ResourceKind>(["ppts", "test-series"]);
 
 function normalizeResourceKind(value?: string | string[]): ResourceKind {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -221,8 +221,10 @@ export function ResourceViewerPage({
             id: note.id,
             title: note.title,
             pdfUrl: note.pdfUrl || null,
+            htmlContent: note.htmlContent || null,
+            cssContent: note.cssContent || null,
             locked: Boolean(note.locked),
-            meta: "Question PDF",
+            meta: note.htmlContent ? "HTML Questions" : "Question PDF",
           }));
           const questionBankDocuments = filterDocuments(kind, noteDocuments);
           const questionData = questionsRes.data.data || {};
