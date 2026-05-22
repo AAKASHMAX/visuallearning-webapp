@@ -485,7 +485,7 @@ function DocumentViewer({
     const html = activeDocument?.htmlContent;
     if (!html || !notesContainerRef.current) return;
     // Only run if raw LaTeX delimiters are present
-    if (!html.includes('$')) return;
+    if (!html.includes('$') && !html.includes('\\(') && !html.includes('\\[')) return;
 
     const container = notesContainerRef.current;
     let cancelled = false;
