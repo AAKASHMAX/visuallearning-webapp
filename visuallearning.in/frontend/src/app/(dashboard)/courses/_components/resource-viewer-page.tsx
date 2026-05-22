@@ -622,7 +622,7 @@ function DocumentViewer({
                 {activeDocument.cssContent && (
                   <style dangerouslySetInnerHTML={{ __html: activeDocument.cssContent }} />
                 )}
-                <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 28px), 210mm) !important; max-width: 210mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
+                <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 28px), 220.5mm) !important; max-width: 220.5mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
                 <div
                   ref={notesContainerRef}
                   className="notes-html-viewer"
