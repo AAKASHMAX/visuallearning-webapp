@@ -519,7 +519,7 @@ function DocumentViewer({
     }
     renderMath();
     return () => { cancelled = true; };
-  }, [activeDocument?.htmlContent]);
+  }, [activeDocument?.htmlContent, isFullscreen]);
 
   const toggleFullscreen = async () => {
     if (!viewerRef.current) return;
