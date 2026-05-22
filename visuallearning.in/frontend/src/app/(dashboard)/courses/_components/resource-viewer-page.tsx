@@ -101,6 +101,14 @@ function safeDecode(value?: string | string[] | null) {
   }
 }
 
+function scopeCSS(css: string): string {
+  // Extract :root variables so they remain global, scope everything else under .notes-html-viewer
+  const rootMatch = css.match(/:root\s*\{([^}]+)\}/);
+  const rootVars = rootMatch ? `:root{${rootMatch[1]}}` : "";
+  const rest = rootMatch ? css.replace(/:root\s*\{[^}]+\}/, "") : css;
+  return `${rootVars}\n.notes-html-viewer{${rest}}`;
+}
+
 function hasSignal(document: ViewerDocument, terms: string[]) {
   const text = `${document.title} ${document.pdfUrl || ""}`.toLowerCase();
   return terms.some((term) => text.includes(term));
@@ -622,7 +630,7 @@ function DocumentViewer({
               >
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
                 {activeDocument.cssContent && (
-                  <style dangerouslySetInnerHTML={{ __html: activeDocument.cssContent }} />
+                  <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeDocument.cssContent) }} />
                 )}
                 <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 28px), 220.5mm) !important; max-width: 220.5mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
                 <div
