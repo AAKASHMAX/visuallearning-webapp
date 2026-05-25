@@ -27,7 +27,7 @@ export const verifyPaymentSchema = z.object({
 
 const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
   STUDENTS_PLAN: {
-    monthlyAmount: 0,
+    monthlyAmount: 24900,
     yearlyAmount: 199900,
     label: "Students",
     durationMonthly: 30,
@@ -38,7 +38,7 @@ const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
     audience: "students",
   },
   TEACHERS_PLAN: {
-    monthlyAmount: 0,
+    monthlyAmount: 34900,
     yearlyAmount: 299900,
     label: "Teachers",
     durationMonthly: 30,
@@ -49,7 +49,7 @@ const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
     audience: "teachers",
   },
   PROFESSIONAL_PLAN: {
-    monthlyAmount: 0,
+    monthlyAmount: 59900,
     yearlyAmount: 499900,
     label: "Professional",
     durationMonthly: 30,

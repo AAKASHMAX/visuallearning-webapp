@@ -27,10 +27,14 @@ import { cn } from "@/lib/utils";
 type AudiencePlanId = "STUDENTS_PLAN" | "TEACHERS_PLAN" | "PROFESSIONAL_PLAN";
 type SubjectKey = "physics" | "chemistry" | "biology";
 
+type BillingCycle = "monthly" | "yearly";
+
 type Plan = {
   id: string;
   name: string;
+  monthlyPrice?: number;
   yearlyPrice?: number;
+  durationMonthly?: number;
   durationYearly?: number;
   features?: string[];
   unitType?: "fixed" | "class" | "subject";
@@ -99,6 +103,7 @@ function SubscriptionPageContent() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<AudiencePlanId>(() => normalizeAudiencePlan(searchParams.get("plan")));
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [selectedSubjectKeys, setSelectedSubjectKeys] = useState<SubjectKey[]>([]);
   const [couponCode, setCouponCode] = useState("");
@@ -134,7 +139,7 @@ function SubscriptionPageContent() {
 
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
   const selectedCount = selectedPlanId === "PROFESSIONAL_PLAN" ? selectedSubjectKeys.length : selectedClassIds.length;
-  const unitPrice = selectedPlan?.yearlyPrice || 0;
+  const unitPrice = billingCycle === "monthly" ? (selectedPlan?.monthlyPrice || 0) : (selectedPlan?.yearlyPrice || 0);
   const basePrice = unitPrice * selectedCount;
   const discountedPrice = couponApplied ? Math.round(basePrice * (1 - couponDiscount / 100)) : basePrice;
   const selectedVisual = planVisuals[selectedPlanId];
@@ -152,6 +157,11 @@ function SubscriptionPageContent() {
 
   const choosePlan = (planId: AudiencePlanId) => {
     setSelectedPlanId(planId);
+    setCouponApplied(false);
+  };
+
+  const switchBillingCycle = (cycle: BillingCycle) => {
+    setBillingCycle(cycle);
     setCouponApplied(false);
   };
 
@@ -205,6 +215,40 @@ function SubscriptionPageContent() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">
             Select Students, Teachers, or Professional, then choose the classes or subjects you need. Total pricing updates automatically.
           </p>
+
+          <div className="mt-5 flex items-center gap-3">
+            <div className="inline-flex items-center rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => switchBillingCycle("monthly")}
+                className={cn(
+                  "rounded-full px-5 py-2 text-sm font-bold transition-all",
+                  billingCycle === "monthly"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-text-muted hover:text-heading"
+                )}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => switchBillingCycle("yearly")}
+                className={cn(
+                  "rounded-full px-5 py-2 text-sm font-bold transition-all",
+                  billingCycle === "yearly"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-text-muted hover:text-heading"
+                )}
+              >
+                Yearly
+              </button>
+            </div>
+            {billingCycle === "yearly" && (
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                Save up to 33%
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
@@ -236,8 +280,12 @@ function SubscriptionPageContent() {
                 <h2 className="text-2xl font-black text-heading">{visual.title}</h2>
                 <p className="mt-2 min-h-14 text-sm leading-6 text-text-muted">{visual.subtitle}</p>
                 <div className="mt-5 flex items-end gap-2">
-                  <span className="text-3xl font-black text-heading">{formatPrice(plan.yearlyPrice || 0)}</span>
-                  <span className="pb-1 text-xs font-black uppercase tracking-wider text-text-light">/ year</span>
+                  <span className="text-3xl font-black text-heading">
+                    {formatPrice(billingCycle === "monthly" ? (plan.monthlyPrice || 0) : (plan.yearlyPrice || 0))}
+                  </span>
+                  <span className="pb-1 text-xs font-black uppercase tracking-wider text-text-light">
+                    / {billingCycle === "monthly" ? "month" : "year"}
+                  </span>
                 </div>
               </button>
             );
@@ -281,7 +329,7 @@ function SubscriptionPageContent() {
                       </div>
                       <h3 className="mt-4 text-lg font-black text-heading">{subject.name}</h3>
                       <p className="mt-1 text-sm text-text-muted">{subject.detail}</p>
-                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / year</p>
+                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / {billingCycle === "monthly" ? "month" : "year"}</p>
                     </button>
                   );
                 })}
@@ -308,7 +356,7 @@ function SubscriptionPageContent() {
                       </div>
                       <h3 className="mt-4 text-lg font-black text-heading">{classItem.name}</h3>
                       <p className="mt-1 text-sm text-text-muted">Full class resource access</p>
-                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / year</p>
+                      <p className="mt-4 text-sm font-black text-primary">{formatPrice(unitPrice)} / {billingCycle === "monthly" ? "month" : "year"}</p>
                     </button>
                   );
                 })}
@@ -389,7 +437,7 @@ function SubscriptionPageContent() {
                   classesAccess={selectedPlanId === "PROFESSIONAL_PLAN" ? undefined : selectedClassIds}
                   subjectsAccess={selectedPlanId === "PROFESSIONAL_PLAN" ? selectedSubjectKeys : undefined}
                   couponCode={couponApplied ? couponCode : undefined}
-                  billingCycle="yearly"
+                  billingCycle={billingCycle}
                   onSuccess={() => router.push("/dashboard")}
                   buttonLabel={`Pay ${formatPrice(discountedPrice)}`}
                   className="w-full rounded-lg bg-primary py-4 text-sm font-black text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98]"
@@ -407,7 +455,7 @@ function SubscriptionPageContent() {
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs font-bold text-text-muted">
                   <IndianRupee className="h-4 w-4 text-primary" />
-                  Admin-controlled yearly pricing
+                  {billingCycle === "monthly" ? "Monthly billing" : "Yearly billing"}
                 </div>
               </div>
             </div>
