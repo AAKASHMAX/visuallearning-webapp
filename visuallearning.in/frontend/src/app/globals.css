@@ -378,3 +378,8 @@ html {
   50% { opacity: 1; filter: blur(0px); transform: scaleY(1) scaleX(1); }
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+

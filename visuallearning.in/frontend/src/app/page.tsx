@@ -8,7 +8,7 @@ import {
   Atom, Zap, Play, BookOpen, FlaskConical, GraduationCap, Star,
   Check, ArrowRight, Sparkles, Monitor, Trophy, Users, ChevronRight,
   Waves, Orbit, Lightbulb, Target, Rocket, Flame, Brain, PenTool,
-  Beaker, Microscope, Dna,
+  Beaker, Microscope, Dna, Presentation, BookMarked, FileCheck,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -17,7 +17,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <StatsBar />
-      <SubjectCarousel />
+      <DemoShowcase />
       <FeaturesSection />
       <TopicsShowcase />
 
@@ -147,20 +147,19 @@ function StatsBar() {
   );
 }
 
-/* ── SUBJECT CAROUSEL ── */
-function SubjectCarousel() {
-  const concepts = [
-    { name: "Atomic Structure", description: "Electrons, protons & quantum", icon: Atom, gradient: "from-[#05BFDB] to-blue-600", formula: "E = -13.6/n² eV" },
-    { name: "Gravitation", description: "Universal attraction & orbits", icon: Orbit, gradient: "from-purple-500 to-purple-700", formula: "F = Gm₁m₂/r²" },
-    { name: "Thermodynamics", description: "Heat, energy & entropy", icon: Flame, gradient: "from-cta to-orange-600", formula: "ΔU = Q - W" },
-    { name: "Electromagnetism", description: "Fields, forces & EM waves", icon: Zap, gradient: "from-yellow-400 to-amber-600", formula: "F = qE + qv×B" },
-    { name: "Wave Optics", description: "Interference & diffraction", icon: Lightbulb, gradient: "from-cyan-400 to-teal-600", formula: "λ = h/p" },
-    { name: "Organic Chemistry", description: "Reactions & mechanisms", icon: Beaker, gradient: "from-emerald-400 to-green-600", formula: "CH₄ + O₂" },
-    { name: "Cell Biology", description: "Structure & function", icon: Microscope, gradient: "from-rose-500 to-pink-600", formula: "DNA → RNA" },
-    { name: "Genetics", description: "Heredity & variation", icon: Dna, gradient: "from-indigo-400 to-violet-600", formula: "Aa × Aa" },
+/* ── DEMO SHOWCASE (Visualize Every Concept) ── */
+function DemoShowcase() {
+  const demos = [
+    { title: "3D Animated Videos", description: "Watch complex concepts come alive with immersive 3D animations and walkthroughs.", href: "/demo/video", icon: Monitor, gradient: "from-violet-600 via-purple-500 to-fuchsia-500", glow: "shadow-violet-500/20" },
+    { title: "Visual Notes", description: "Beautifully structured notes with highlights, diagrams, and key takeaways for revision.", href: "/demo/visual-notes", icon: BookOpen, gradient: "from-sky-600 via-cyan-500 to-blue-500", glow: "shadow-sky-500/20" },
+    { title: "Presentations (PPTs)", description: "Ready-to-use teaching slides with clear visuals and structured chapter flow.", href: "/demo/ppt", icon: Presentation, gradient: "from-indigo-600 via-blue-500 to-cyan-500", glow: "shadow-indigo-500/20" },
+    { title: "NCERT Solutions", description: "Step-by-step NCERT answers with exam tips and key insights for every question.", href: "/demo/ncert-solution", icon: BookMarked, gradient: "from-emerald-600 via-teal-500 to-cyan-500", glow: "shadow-emerald-500/20" },
+    { title: "PYQ Solutions", description: "Year-wise solved board exam questions with marking schemes and answer strategies.", href: "/demo/pyq", icon: FileCheck, gradient: "from-rose-600 via-orange-500 to-amber-500", glow: "shadow-rose-500/20" },
+    { title: "Interactive Quiz", description: "MCQ quizzes with instant feedback, score tracking, and detailed result analysis.", href: "/demo/quiz", icon: Target, gradient: "from-amber-500 via-orange-500 to-rose-500", glow: "shadow-amber-500/20" },
   ];
-  const radius = 340;
-  const angleStep = 360 / concepts.length;
+
+  // Duplicate for seamless infinite scroll
+  const items = [...demos, ...demos];
 
   return (
     <section className="py-24 relative overflow-hidden">
@@ -171,37 +170,50 @@ function SubjectCarousel() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
             <Sparkles className="w-4 h-4 text-cta" />
-            <span className="text-sm text-text-muted">Explore Science</span>
+            <span className="text-sm text-text-muted">Explore Features</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-heading mb-4">
             Visualize Every <span className="gradient-text">Concept</span>
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            From atomic structure to genetics &mdash; experience science in stunning 3D animations and interactive simulations.
+            Experience every feature with interactive demos &mdash; no login required.
           </p>
         </div>
+      </div>
 
-        <div className="carousel-scene mx-auto" style={{ height: 380 }}>
-          <div className="carousel-ring relative mx-auto" style={{ width: 200, height: 260, marginTop: 40, transformStyle: "preserve-3d" }}>
-            {concepts.map((c, i) => (
-              <div key={i} className="carousel-card absolute inset-0 w-[200px]" style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)` }}>
-                <div className="rounded-2xl border border-card-border bg-white/90 backdrop-blur-sm p-6 text-center h-full flex flex-col items-center justify-center gap-3 hover:border-[#05BFDB]/40 transition-colors card-shadow">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shrink-0`}>
-                    <c.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-heading leading-tight">{c.name}</h3>
-                  <p className="text-xs text-text-muted leading-relaxed">{c.description}</p>
-                  <span className="text-xs font-mono text-primary/60 mt-1">{c.formula}</span>
+      {/* Infinite scrolling marquee */}
+      <div className="relative">
+        {/* Fade edges */}
+        <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-surface to-transparent sm:w-32" />
+        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-surface to-transparent sm:w-32" />
+
+        <div className="flex animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused] gap-5 w-max px-4">
+          {items.map((d, i) => (
+            <div key={i} className="w-[280px] shrink-0 group">
+              <div className="h-full rounded-2xl border border-card-border bg-white p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#05BFDB]/30 card-shadow">
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${d.gradient} flex items-center justify-center mb-4 shadow-lg ${d.glow} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                  <d.icon className="w-7 h-7 text-white" />
                 </div>
+                <h3 className="text-base font-bold text-heading mb-2">{d.title}</h3>
+                <p className="text-xs text-text-muted leading-relaxed mb-5 flex-1">{d.description}</p>
+                <Link
+                  href={d.href}
+                  className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-bold text-primary transition-all hover:bg-primary hover:text-white hover:gap-3"
+                >
+                  Watch Demo
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="text-center mt-8">
-          <Link href="/courses">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mt-10">
+          <Link href="/demo">
             <Button size="lg" className="group bg-primary hover:bg-primary-dark text-white">
-              Explore All Courses <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              Explore All Demos <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
         </div>
