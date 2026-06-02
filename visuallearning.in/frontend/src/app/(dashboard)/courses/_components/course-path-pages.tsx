@@ -165,6 +165,7 @@ const pptsCard: ContentCard = {
   subtitle: "Presentation slides for teaching and concept delivery.",
   icon: Presentation,
   accent: "from-indigo-500 to-blue-400",
+  comingSoon: true,
 };
 
 const testSeriesCard: ContentCard = {
@@ -229,8 +230,7 @@ function chapterContentCount(chapter: ChapterRow, slug: ContentSlug) {
   if (typeof chapter.contentCount === "number") return chapter.contentCount;
   if (slug === "notes" || slug === "pyq") return chapter._count?.notes || 0;
   if (slug === "quiz" || slug === "question-bank") return chapter._count?.questions || 0;
-  if (slug === "ppts") return chapter._count?.notes || 0;
-  if (slug === "test-series") return 0;
+  if (slug === "ppts" || slug === "test-series") return 0;
   return chapter._count?.videos || 0;
 }
 
@@ -601,7 +601,7 @@ export function ProfessionalSubjectsPage() {
             <p className="mt-2 text-sm font-bold text-primary">{subject.subtitle}</p>
             <div className="mt-6 grid gap-2">
               {subject.features.map((feature) => {
-                const comingSoon = feature.toLowerCase().includes("test series");
+                const comingSoon = feature.toLowerCase().includes("ppt") || feature.toLowerCase().includes("test series");
                 return (
                   <div key={feature} className="flex flex-wrap items-center gap-2 text-sm font-bold text-heading">
                     {comingSoon ? <Clock3 className="h-4 w-4 text-amber-600" /> : <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
