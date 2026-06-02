@@ -387,31 +387,31 @@ function ZoomControls({
   setZoom: React.Dispatch<React.SetStateAction<number>>;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-surface p-1">
+    <div className="flex shrink-0 items-center gap-1 rounded-md border border-gray-200 bg-surface p-0.5">
       <button
         type="button"
         onClick={() => setZoom((value) => Math.max(0.75, Number((value - 0.1).toFixed(2))))}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-heading hover:bg-white"
+        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
         aria-label="Zoom out"
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-3.5 w-3.5" />
       </button>
-      <span className="min-w-14 text-center text-xs font-black text-heading">{Math.round(zoom * 100)}%</span>
+      <span className="min-w-10 text-center text-[11px] font-bold text-heading">{Math.round(zoom * 100)}%</span>
       <button
         type="button"
         onClick={() => setZoom((value) => Math.min(1.6, Number((value + 0.1).toFixed(2))))}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-heading hover:bg-white"
+        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
         aria-label="Zoom in"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
         onClick={() => setZoom(1)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-heading hover:bg-white"
+        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
         aria-label="Reset zoom"
       >
-        <RotateCcw className="h-4 w-4" />
+        <RotateCcw className="h-3 w-3" />
       </button>
     </div>
   );
@@ -525,30 +525,6 @@ function DocumentViewer({
         isFullscreen && "fixed inset-0 z-[80] overflow-hidden rounded-none border-0"
       )}
     >
-      {documents.length > 1 && (
-        <div className="border-b border-gray-100 p-4">
-          <p className="mb-3 text-xs font-black uppercase tracking-wider text-text-light">Available files</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {documents.map((document, index) => (
-              <button
-                key={document.id}
-                type="button"
-                onClick={() => setActiveDocumentId(document.id)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-black transition-all",
-                  activeDocumentId === document.id
-                    ? "border-primary bg-primary-light text-heading"
-                    : "border-gray-200 bg-white text-text-muted hover:border-primary/30 hover:text-heading"
-                )}
-              >
-                {document.locked ? <Lock className="h-4 w-4 text-amber-600" /> : <FileText className="h-4 w-4 text-emerald-600" />}
-                <span className="max-w-56 truncate">{index + 1}. {document.title}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div>
         {locked || activeDocument?.locked || (!activeDocument?.pdfUrl && !activeDocument?.htmlContent) ? (
           activeDocument?.locked || locked ? (
@@ -558,8 +534,29 @@ function DocumentViewer({
           )
         ) : (
           <>
-            <div className="flex items-center justify-end gap-2 border-b border-gray-100 bg-white px-4 py-2">
-              <div className="flex shrink-0 items-center gap-2">
+            {/* Single compact toolbar: file tabs (left) + controls (right) */}
+            <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-3 py-2">
+              {documents.length > 1 && (
+                <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
+                  {documents.map((document, index) => (
+                    <button
+                      key={document.id}
+                      type="button"
+                      onClick={() => setActiveDocumentId(document.id)}
+                      className={cn(
+                        "flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold transition-all",
+                        activeDocumentId === document.id
+                          ? "border-primary bg-primary-light text-heading"
+                          : "border-gray-200 bg-white text-text-muted hover:border-primary/30"
+                      )}
+                    >
+                      {document.locked ? <Lock className="h-3.5 w-3.5 text-amber-600" /> : <FileText className="h-3.5 w-3.5 text-emerald-600" />}
+                      <span className="max-w-40 truncate">{index + 1}. {document.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="ml-auto flex shrink-0 items-center gap-1.5">
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   canDownload ? (
@@ -568,29 +565,29 @@ function DocumentViewer({
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
                     >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">Download PDF</span>
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Download</span>
                     </a>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setShowDownloadModal(true)}
-                      className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-black text-gray-500 hover:bg-gray-100"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-100"
                     >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">Download PDF</span>
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Download</span>
                     </button>
                   )
                 )}
                 <button
                   type="button"
                   onClick={toggleFullscreen}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-black text-heading hover:border-primary/30 hover:text-primary"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-heading hover:border-primary/30 hover:text-primary"
                 >
-                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{isFullscreen ? "Exit" : "Full screen"}</span>
+                  {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  <span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span>
                 </button>
               </div>
             </div>
