@@ -23,10 +23,6 @@ const allFeatures = [
   "PYQ Solution (Advanced)",
   "Quiz",
   "Download (Notes, NCERT Solution, PYQs)",
-  "Email support",
-  "Direct call support",
-  "Content on demand (Notes, PPT, PYQs, Test Paper)",
-  "Collaborate with company",
 ];
 
 // Features that have a live demo page.
