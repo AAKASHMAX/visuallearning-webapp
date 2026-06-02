@@ -45,8 +45,8 @@ const plans = [
     subtitle: "Class 9-12 science learning with animated chapters, notes, quiz, and more.",
     href: "/courses/students",
     icon: GraduationCap,
-    gradient: "from-blue-600 via-sky-500 to-cyan-400",
-    btnGradient: "from-blue-600 to-cyan-500",
+    gradient: "from-sky-600 to-sky-700",
+    btnGradient: "from-sky-600 to-sky-700",
     accentText: "text-sky-600",
     accentBg: "bg-sky-50",
     glowColor: "shadow-sky-500/20",
@@ -66,8 +66,8 @@ const plans = [
     subtitle: "Teaching resources with videos, notes, PPTs, and test papers.",
     href: "/courses/teachers",
     icon: UsersRound,
-    gradient: "from-emerald-600 via-emerald-500 to-teal-400",
-    btnGradient: "from-emerald-600 to-teal-500",
+    gradient: "from-emerald-600 to-emerald-700",
+    btnGradient: "from-emerald-600 to-emerald-700",
     accentText: "text-emerald-600",
     accentBg: "bg-emerald-50",
     glowColor: "shadow-emerald-500/20",
@@ -91,8 +91,8 @@ const plans = [
     subtitle: "Advanced subject tracks with PPTs, labs, and company collaboration.",
     href: "/courses/professional",
     icon: BriefcaseBusiness,
-    gradient: "from-violet-600 via-purple-500 to-fuchsia-400",
-    btnGradient: "from-violet-600 to-fuchsia-500",
+    gradient: "from-violet-600 to-violet-700",
+    btnGradient: "from-violet-600 to-violet-700",
     accentText: "text-violet-600",
     accentBg: "bg-violet-50",
     glowColor: "shadow-violet-500/20",
@@ -200,7 +200,7 @@ export default function CoursesPage() {
 
               {/* Features list */}
               <div className="flex flex-1 flex-col px-5 pb-6 pt-4">
-                <div className="flex flex-1 flex-col">
+                <div className="flex flex-1 flex-col gap-2">
                   {allFeatures.map((feature) => {
                     const included = isIncluded(feature, plan);
                     const label = getFeatureLabel(feature, plan.title);
@@ -208,7 +208,9 @@ export default function CoursesPage() {
                     return (
                       <div
                         key={feature}
-                        className="flex items-center gap-2.5 border-b border-gray-50 py-2 last:border-0"
+                        className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 ${
+                          included ? "border-gray-100 bg-gray-50/70" : "border-gray-50 bg-white opacity-60"
+                        }`}
                       >
                         {included ? (
                           <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${plan.accentBg}`}>
@@ -230,9 +232,9 @@ export default function CoursesPage() {
                           <Link
                             href={demoHref}
                             onClick={(e) => e.stopPropagation()}
-                            className={`inline-flex shrink-0 items-center gap-1 rounded-full ${plan.accentBg} px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${plan.accentText} transition-all hover:gap-1.5 hover:brightness-95`}
+                            className={`inline-flex shrink-0 items-center gap-0.5 text-[9px] font-bold ${plan.accentText} transition-all hover:gap-1 hover:underline`}
                           >
-                            <Play className="h-2.5 w-2.5 fill-current" />
+                            <Play className="h-2 w-2 fill-current" />
                             Watch demo
                           </Link>
                         )}
