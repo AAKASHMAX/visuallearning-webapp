@@ -10,6 +10,7 @@ import {
   Clock3,
   ClipboardList,
   Download,
+  FileCheck,
   FileQuestion,
   FileText,
   Lock,
@@ -27,7 +28,7 @@ import { PageLoader } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
 
-type ResourceKind = "notes" | "quiz" | "question-bank" | "ppts" | "test-series";
+type ResourceKind = "notes" | "quiz" | "question-bank" | "pyq" | "ppts" | "test-series";
 
 type ViewerDocument = {
   id: string;
@@ -67,6 +68,13 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
   },
+  pyq: {
+    title: "PYQ Solutions",
+    eyebrow: "Previous Year Questions",
+    description: "Review previous year board exam questions with detailed solutions.",
+    icon: FileCheck,
+    accent: "from-rose-500 to-orange-400",
+  },
   ppts: {
     title: "PPT Viewer",
     eyebrow: "Slides",
@@ -87,7 +95,7 @@ const comingSoonResourceKinds = new Set<ResourceKind>(["ppts", "test-series"]);
 
 function normalizeResourceKind(value?: string | string[]): ResourceKind {
   const raw = Array.isArray(value) ? value[0] : value;
-  if (raw === "quiz" || raw === "question-bank" || raw === "ppts" || raw === "test-series") return raw;
+  if (raw === "quiz" || raw === "question-bank" || raw === "pyq" || raw === "ppts" || raw === "test-series") return raw;
   return "notes";
 }
 
@@ -123,9 +131,13 @@ function filterDocuments(kind: ResourceKind, documents: ViewerDocument[]) {
     return documents.filter((doc) => hasSignal(doc, ["question", "important", "bank", "worksheet"]));
   }
 
+  if (kind === "pyq") {
+    return documents.filter((doc) => hasSignal(doc, ["pyq", "previous year", "board paper", "past paper", "solved paper"]));
+  }
+
   if (kind === "notes") {
     const cleanNotes = documents.filter(
-      (doc) => !hasSignal(doc, ["ppt", "pptx", "presentation", "slide", "question bank", "important question", "test paper"])
+      (doc) => !hasSignal(doc, ["ppt", "pptx", "presentation", "slide", "question bank", "important question", "test paper", "pyq", "previous year"])
     );
     return cleanNotes.length > 0 ? cleanNotes : documents;
   }
@@ -166,7 +178,7 @@ export function ResourceViewerPage({
   const [locked, setLocked] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [zoom, setZoom] = useState(0.85);
+  const [zoom, setZoom] = useState(0.75);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [showQuestionAnswers, setShowQuestionAnswers] = useState(false);
@@ -273,7 +285,7 @@ export function ResourceViewerPage({
           htmlContent: note.htmlContent || null,
           cssContent: note.cssContent || null,
           locked: Boolean(note.locked),
-          meta: kind === "ppts" ? "Presentation PDF" : note.htmlContent ? "HTML Notes" : "PDF Notes",
+          meta: kind === "ppts" ? "Presentation PDF" : kind === "pyq" ? "PYQ Solution" : note.htmlContent ? "HTML Notes" : "PDF Notes",
         }));
         const filteredDocuments = filterDocuments(kind, noteDocuments);
 

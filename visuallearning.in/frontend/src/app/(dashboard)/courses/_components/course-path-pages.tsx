@@ -14,6 +14,7 @@ import {
   Clock3,
   ClipboardList,
   Dna,
+  FileCheck,
   FileQuestion,
   FileText,
   FlaskConical,
@@ -29,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/loading";
 
 type Audience = "students" | "teachers";
-type ContentSlug = "animated-videos" | "notes" | "quiz" | "question-bank" | "ppts" | "virtual-lab" | "test-series";
+type ContentSlug = "animated-videos" | "notes" | "quiz" | "question-bank" | "pyq" | "ppts" | "virtual-lab" | "test-series";
 type SubjectKey = "physics" | "chemistry" | "biology";
 type ContentCard = {
   slug: ContentSlug;
@@ -117,6 +118,22 @@ const professionalSubjects = [
   },
 ];
 
+const pyqCard: ContentCard = {
+  slug: "pyq",
+  title: "PYQ Solutions",
+  subtitle: "Previous year board exam questions with solutions.",
+  icon: FileCheck,
+  accent: "from-rose-500 to-orange-400",
+};
+
+const quizCard: ContentCard = {
+  slug: "quiz",
+  title: "Quiz",
+  subtitle: "Practice MCQs to check understanding.",
+  icon: Brain,
+  accent: "from-violet-500 to-fuchsia-400",
+};
+
 const baseContentCards: ContentCard[] = [
   {
     slug: "animated-videos",
@@ -133,19 +150,13 @@ const baseContentCards: ContentCard[] = [
     accent: "from-emerald-500 to-lime-400",
   },
   {
-    slug: "quiz",
-    title: "Quiz",
-    subtitle: "Practice MCQs to check understanding.",
-    icon: Brain,
-    accent: "from-violet-500 to-fuchsia-400",
-  },
-  {
     slug: "question-bank",
     title: "NCERT Questions & Solutions",
     subtitle: "Chapter questions for deeper practice.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
   },
+  quizCard,
 ];
 
 const pptsCard: ContentCard = {
@@ -176,10 +187,10 @@ const virtualLabCard: ContentCard = {
   actionLabel: "Open labs",
 };
 
-const teacherContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), testSeriesCard];
-const professionalContentCards = [baseContentCards[0], pptsCard, ...baseContentCards.slice(1), virtualLabCard, testSeriesCard];
-const allContentCards = [...baseContentCards, pptsCard, virtualLabCard, testSeriesCard];
-const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank", "ppts", "test-series"];
+const teacherContentCards = [baseContentCards[0], pptsCard, baseContentCards[1], baseContentCards[2], pyqCard, testSeriesCard, quizCard];
+const professionalContentCards = [baseContentCards[0], pptsCard, baseContentCards[1], baseContentCards[2], pyqCard, virtualLabCard, testSeriesCard, quizCard];
+const allContentCards = [...baseContentCards, pyqCard, pptsCard, virtualLabCard, testSeriesCard];
+const chapterContentSlugs: ContentSlug[] = ["animated-videos", "notes", "quiz", "question-bank", "pyq", "ppts", "test-series"];
 
 function isTargetClass(name: string) {
   const normalized = name.toLowerCase();
@@ -207,6 +218,7 @@ function subjectVisual(name: string) {
 function contentQuery(slug: ContentSlug) {
   if (slug === "animated-videos") return "animated_videos";
   if (slug === "question-bank") return "question_bank";
+  if (slug === "pyq") return "notes";
   return slug;
 }
 
@@ -216,7 +228,7 @@ function isChapterContent(slug: ContentSlug) {
 
 function chapterContentCount(chapter: ChapterRow, slug: ContentSlug) {
   if (typeof chapter.contentCount === "number") return chapter.contentCount;
-  if (slug === "notes") return chapter._count?.notes || 0;
+  if (slug === "notes" || slug === "pyq") return chapter._count?.notes || 0;
   if (slug === "quiz" || slug === "question-bank") return chapter._count?.questions || 0;
   if (slug === "ppts" || slug === "test-series") return 0;
   return chapter._count?.videos || 0;
@@ -483,6 +495,17 @@ export function AudienceContentPage({
 
   if (loading) return <PageLoader />;
 
+  const isPyqClass = className.toLowerCase().includes("10") || className.toLowerCase().includes("12");
+  let cards: ContentCard[];
+  if (audience === "teachers") {
+    cards = teacherContentCards;
+  } else {
+    // For students: add PYQ before quiz (last item) for class 10 & 12
+    cards = isPyqClass
+      ? [...baseContentCards.slice(0, -1), pyqCard, quizCard]
+      : baseContentCards;
+  }
+
   return (
     <PageFrame
       eyebrow={meta.label}
@@ -492,7 +515,7 @@ export function AudienceContentPage({
     >
       <ContentTypeGrid
         baseHref={`/courses/${audience}/${classId}/${subjectId}`}
-        cards={audience === "teachers" ? teacherContentCards : baseContentCards}
+        cards={cards}
       />
     </PageFrame>
   );
