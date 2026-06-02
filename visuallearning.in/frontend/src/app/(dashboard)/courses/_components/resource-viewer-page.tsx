@@ -166,7 +166,7 @@ export function ResourceViewerPage({
   const [locked, setLocked] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.85);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [showQuestionAnswers, setShowQuestionAnswers] = useState(false);
@@ -534,29 +534,9 @@ function DocumentViewer({
           )
         ) : (
           <>
-            {/* Single compact toolbar: file tabs (left) + controls (right) */}
-            <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-3 py-2">
-              {documents.length > 1 && (
-                <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
-                  {documents.map((document, index) => (
-                    <button
-                      key={document.id}
-                      type="button"
-                      onClick={() => setActiveDocumentId(document.id)}
-                      className={cn(
-                        "flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold transition-all",
-                        activeDocumentId === document.id
-                          ? "border-primary bg-primary-light text-heading"
-                          : "border-gray-200 bg-white text-text-muted hover:border-primary/30"
-                      )}
-                    >
-                      {document.locked ? <Lock className="h-3.5 w-3.5 text-amber-600" /> : <FileText className="h-3.5 w-3.5 text-emerald-600" />}
-                      <span className="max-w-40 truncate">{index + 1}. {document.title}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            {/* Compact toolbar: controls only */}
+            <div className="flex items-center justify-end gap-1.5 border-b border-gray-100 bg-white px-3 py-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   canDownload ? (
