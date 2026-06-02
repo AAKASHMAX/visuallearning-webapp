@@ -91,7 +91,7 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
   },
 };
 
-const comingSoonResourceKinds = new Set<ResourceKind>(["ppts", "test-series"]);
+const comingSoonResourceKinds = new Set<ResourceKind>(["test-series"]);
 
 function normalizeResourceKind(value?: string | string[]): ResourceKind {
   const raw = Array.isArray(value) ? value[0] : value;
