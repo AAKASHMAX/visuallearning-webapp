@@ -687,43 +687,38 @@ export function ProfessionalChaptersPage({ subjectKey, contentSlug }: { subjectK
 
 function ContentTypeGrid({ baseHref, cards }: { baseHref: string; cards: ContentCard[] }) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="flex flex-col gap-3">
       {cards.map((card) => {
         const CardIcon = card.icon;
-        const body = (
-          <>
-            {card.comingSoon && (
-              <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-700">
-                <Clock3 className="h-3 w-3" />
-                Coming soon
-              </span>
+        const inner = (
+          <div className="flex items-center gap-4">
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${card.accent} text-white shadow-md transition-transform ${card.comingSoon ? "" : "group-hover:scale-105"}`}>
+              <CardIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-black text-heading">{card.title}</h2>
+                {card.comingSoon && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-700">
+                    <Clock3 className="h-2.5 w-2.5" />
+                    Soon
+                  </span>
+                )}
+              </div>
+              <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{card.subtitle}</p>
+            </div>
+            {card.comingSoon ? (
+              <Clock3 className="h-4 w-4 shrink-0 text-amber-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
             )}
-            <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${card.accent} text-white shadow-lg shadow-gray-200 transition-transform ${card.comingSoon ? "" : "group-hover:scale-105"}`}>
-              <CardIcon className="h-7 w-7" />
-            </div>
-            <h2 className="text-lg font-black text-heading">{card.title}</h2>
-            <p className="mt-2 min-h-16 text-sm leading-6 text-text-muted">{card.subtitle}</p>
-            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className={`text-xs font-black uppercase tracking-wider ${card.comingSoon ? "text-amber-700" : "text-text-light"}`}>
-                {card.comingSoon ? "Coming soon" : card.actionLabel || "Open chapters"}
-              </span>
-              {card.comingSoon ? (
-                <Clock3 className="h-5 w-5 text-amber-600" />
-              ) : (
-                <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
-              )}
-            </div>
-          </>
+          </div>
         );
 
         if (card.comingSoon) {
           return (
-            <div
-              key={card.slug}
-              aria-disabled="true"
-              className="relative rounded-lg border border-amber-200 bg-amber-50/70 p-5 shadow-sm"
-            >
-              {body}
+            <div key={card.slug} className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3.5">
+              {inner}
             </div>
           );
         }
@@ -732,9 +727,9 @@ function ContentTypeGrid({ baseHref, cards }: { baseHref: string; cards: Content
           <Link
             key={card.slug}
             href={card.href || `${baseHref}/${card.slug}`}
-            className="group relative rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
+            className="group rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md"
           >
-            {body}
+            {inner}
           </Link>
         );
       })}
@@ -756,7 +751,7 @@ function ChapterGrid({
   }
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col gap-2.5">
       {chapters.map((chapter, index) => {
         const visual = subjectVisual(chapter.subjectName);
         const unlocked = index === 0;
@@ -772,29 +767,28 @@ function ChapterGrid({
           <Link
             key={`${chapter.subjectId}-${chapter.id}`}
             href={href}
-            className="group rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
+            className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md"
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div className={`flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}>
-                <BookOpen className="h-7 w-7" />
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-sm transition-transform group-hover:scale-105`}>
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-sm font-black text-heading group-hover:text-primary">
+                {chapter.order || index + 1}. {chapter.name}
+              </h2>
+              <div className="mt-0.5 flex items-center gap-3 text-xs text-text-muted">
+                <span>{chapter.className} - {chapter.subjectName}</span>
+                <span className="text-gray-300">|</span>
+                <span>{resourceLabel}</span>
               </div>
-              <span className={cn(
-                "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wider",
-                unlocked ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"
-              )}>
-                {unlocked ? "Preview" : <><Lock className="h-3 w-3" /> Locked</>}
-              </span>
             </div>
-            <p className="mb-2 text-xs font-black uppercase tracking-wider text-text-light">
-              {chapter.className} - {chapter.subjectName}
-            </p>
-            <h2 className="line-clamp-2 text-lg font-black text-heading group-hover:text-primary">
-              {chapter.order || index + 1}. {chapter.name}
-            </h2>
-            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm font-bold text-text-muted">{resourceLabel}</span>
-              <ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
-            </div>
+            <span className={cn(
+              "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider",
+              unlocked ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"
+            )}>
+              {unlocked ? "Preview" : <><Lock className="h-3 w-3" /> Locked</>}
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-primary/40 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
           </Link>
         );
       })}
