@@ -1,0 +1,266 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, FileText, Loader2, X } from "lucide-react";
+import api from "@/lib/api";
+
+/**
+ * Renders real Chapter 1 (Class 12 Physics — "Electric Charges and Fields")
+ * content on the public demo pages, by kind. Ch1 is the free first chapter,
+ * so the public API returns its content without login.
+ */
+const DEMO_CHAPTER_ID = "cmmos51yc0001uuz8ecig0bew"; // production chapter id
+
+export type DemoKind = "notes" | "ncert" | "pyq" | "ppt" | "quiz";
+
+type NoteDoc = {
+  id: string;
+  title: string;
+  pdfUrl?: string | null;
+  htmlContent?: string | null;
+  cssContent?: string | null;
+};
+
+type QuizQuestion = {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: string;
+  solution?: string | null;
+};
+
+function scopeCSS(css: string): string {
+  const rootMatch = css.match(/:root\s*\{([^}]+)\}/);
+  const rootVars = rootMatch ? `:root{${rootMatch[1]}}` : "";
+  const rest = rootMatch ? css.replace(/:root\s*\{[^}]+\}/, "") : css;
+  return `${rootVars}\n.demo-notes-viewer{${rest}}`;
+}
+
+function pdfViewerUrl(url: string) {
+  const sep = url.includes("#") ? "&" : "#";
+  return `${url}${sep}toolbar=0&navpanes=0&pagemode=none&view=Fit`;
+}
+
+function hasTerm(title: string, term: string) {
+  return title.toLowerCase().includes(term);
+}
+
+function pickNote(notes: NoteDoc[], kind: DemoKind): NoteDoc | null {
+  if (kind === "ncert") return notes.find((n) => hasTerm(n.title, "ncert")) || null;
+  if (kind === "pyq") return notes.find((n) => hasTerm(n.title, "pyq") || hasTerm(n.title, "previous year")) || null;
+  if (kind === "ppt") return notes.find((n) => hasTerm(n.title, "ppt") || hasTerm(n.title, "presentation")) || null;
+  // Main notes: exclude the specialised note types.
+  const excluded = ["ppt", "presentation", "pyq", "previous year", "important", "ncert", "question"];
+  return notes.find((n) => !excluded.some((t) => hasTerm(n.title, t))) || null;
+}
+
+function StateBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-200 bg-white text-text-muted">
+      {children}
+    </div>
+  );
+}
+
+export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [doc, setDoc] = useState<NoteDoc | null>(null);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Quiz state
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      setError(false);
+      try {
+        if (kind === "quiz") {
+          const res = await api.get(`/courses/chapters/${DEMO_CHAPTER_ID}/questions`);
+          const data = res.data.data || {};
+          const qs = (data.questions || data || []) as QuizQuestion[];
+          if (mounted) setQuestions(qs);
+        } else {
+          const res = await api.get(`/courses/chapters/${DEMO_CHAPTER_ID}/notes`);
+          const notes = (res.data.data?.notes || []) as NoteDoc[];
+          if (mounted) setDoc(pickNote(notes, kind));
+        }
+      } catch {
+        if (mounted) setError(true);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [kind]);
+
+  // KaTeX auto-render for HTML docs with raw LaTeX.
+  useEffect(() => {
+    const html = doc?.htmlContent;
+    if (!html || !containerRef.current) return;
+    if (!html.includes("$") && !html.includes("\\(") && !html.includes("\\[")) return;
+    const container = containerRef.current;
+    let cancelled = false;
+
+    async function renderMath() {
+      if (!(window as any).katex) {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+        document.head.appendChild(s);
+        await new Promise<void>((resolve) => { s.onload = () => resolve(); });
+      }
+      if (!(window as any).renderMathInElement) {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+        document.head.appendChild(s);
+        await new Promise<void>((resolve) => { s.onload = () => resolve(); });
+      }
+      if (cancelled) return;
+      try {
+        (window as any).renderMathInElement(container, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          throwOnError: false,
+        });
+      } catch {}
+    }
+    renderMath();
+    return () => { cancelled = true; };
+  }, [doc?.htmlContent]);
+
+  if (loading) {
+    return (
+      <StateBox>
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-sm font-medium">Loading demo content…</p>
+      </StateBox>
+    );
+  }
+
+  if (error) {
+    return (
+      <StateBox>
+        <FileText className="h-7 w-7 opacity-30" />
+        <p className="text-sm font-medium">Couldn&apos;t load the demo right now. Please try again.</p>
+      </StateBox>
+    );
+  }
+
+  if (kind === "quiz") {
+    if (questions.length === 0) {
+      return (
+        <StateBox>
+          <FileText className="h-7 w-7 opacity-30" />
+          <p className="text-sm font-medium">No quiz questions available.</p>
+        </StateBox>
+      );
+    }
+    const score = questions.filter((q) => answers[q.id] === q.correctOption).length;
+    return (
+      <div className="space-y-4">
+        {questions.map((q, idx) => (
+          <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="mb-4 text-sm font-bold text-heading">Q{idx + 1}. {q.questionText}</p>
+            <div className="grid grid-cols-1 gap-2">
+              {(["A", "B", "C", "D"] as const).map((opt) => {
+                const value = q[`option${opt}` as keyof QuizQuestion] as string;
+                const selected = answers[q.id] === opt;
+                const correct = showResults && q.correctOption === opt;
+                const wrong = showResults && selected && q.correctOption !== opt;
+                return (
+                  <button
+                    key={opt}
+                    disabled={showResults}
+                    onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt }))}
+                    className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-all ${
+                      correct
+                        ? "border-emerald-500 bg-emerald-50 font-bold text-emerald-700"
+                        : wrong
+                        ? "border-red-500 bg-red-50 text-red-600"
+                        : selected
+                        ? "border-primary bg-primary/5 font-bold text-primary"
+                        : "border-gray-200 text-text-muted hover:border-primary/40 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span><span className="mr-2 opacity-50">{opt}.</span>{value}</span>
+                    {correct && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                    {wrong && <X className="h-4 w-4 text-red-500" />}
+                  </button>
+                );
+              })}
+            </div>
+            {showResults && q.solution && (
+              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                <p className="text-xs text-blue-800"><span className="font-bold">Solution:</span> {q.solution}</p>
+              </div>
+            )}
+          </div>
+        ))}
+        <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-sm backdrop-blur">
+          {showResults ? (
+            <>
+              <span className="text-base font-black text-heading">Score: {score} / {questions.length}</span>
+              <button
+                onClick={() => { setShowResults(false); setAnswers({}); }}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark"
+              >
+                Retry
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-xs font-medium text-text-muted">{Object.keys(answers).length} / {questions.length} answered</span>
+              <button
+                onClick={() => setShowResults(true)}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark"
+              >
+                Submit Quiz
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!doc) {
+    return (
+      <StateBox>
+        <FileText className="h-7 w-7 opacity-30" />
+        <p className="text-sm font-medium">Demo content is being prepared.</p>
+      </StateBox>
+    );
+  }
+
+  // PDF-based (PPT or any note without HTML).
+  if (doc.pdfUrl && doc.pdfUrl !== "pending" && !doc.htmlContent) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-slate-100 shadow-sm">
+        <iframe src={pdfViewerUrl(doc.pdfUrl)} title={doc.title} className="h-[80vh] w-full" />
+      </div>
+    );
+  }
+
+  // HTML-based notes / NCERT / PYQ.
+  return (
+    <div className="relative h-[80vh] overflow-auto rounded-2xl border border-gray-200 bg-slate-100 shadow-sm">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+      {doc.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(doc.cssContent) }} />}
+      <div ref={containerRef} className="demo-notes-viewer" dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
+    </div>
+  );
+}
