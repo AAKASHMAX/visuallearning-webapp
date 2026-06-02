@@ -8,7 +8,22 @@ import {
   GraduationCap,
   MonitorPlay,
   UsersRound,
+  X,
 } from "lucide-react";
+
+const allFeatures = [
+  "3D animated video 9th - 12th",
+  "Visual notes",
+  "PPTs (Advanced)",
+  "NCERT Solution (Advanced)",
+  "PYQ Solution (Advanced)",
+  "Quiz",
+  "Download (Notes, NCERT Solution, PYQs)",
+  "Email support",
+  "Direct call support",
+  "Content on demand (Notes, PPT, PYQs, Test Paper)",
+  "Collaborate with company",
+];
 
 const plans = [
   {
@@ -18,9 +33,8 @@ const plans = [
     icon: GraduationCap,
     accent: "from-sky-500 to-cyan-400",
     accentText: "text-sky-600",
-    accentBorder: "border-sky-200",
     accentBg: "bg-sky-50",
-    features: [
+    included: new Set([
       "3D animated video 9th - 12th",
       "Visual notes",
       "NCERT Solution (Advanced)",
@@ -28,7 +42,7 @@ const plans = [
       "Quiz",
       "Download (Notes, NCERT Solution, PYQs)",
       "Email support",
-    ],
+    ]),
   },
   {
     title: "Teachers",
@@ -37,10 +51,9 @@ const plans = [
     icon: UsersRound,
     accent: "from-emerald-500 to-lime-400",
     accentText: "text-emerald-600",
-    accentBorder: "border-emerald-200",
     accentBg: "bg-emerald-50",
     popular: true,
-    features: [
+    included: new Set([
       "3D animated video 9th - 12th",
       "Visual notes",
       "PPTs (Advanced)",
@@ -51,7 +64,7 @@ const plans = [
       "Email support",
       "Direct call support",
       "Content on demand (Notes, PPT, PYQs, Test Paper)",
-    ],
+    ]),
   },
   {
     title: "Professionals",
@@ -60,9 +73,8 @@ const plans = [
     icon: BriefcaseBusiness,
     accent: "from-violet-500 to-fuchsia-400",
     accentText: "text-violet-600",
-    accentBorder: "border-violet-200",
     accentBg: "bg-violet-50",
-    features: [
+    included: new Set([
       "3D animated video subject wise",
       "Visual notes",
       "PPTs (Advanced)",
@@ -74,9 +86,24 @@ const plans = [
       "Direct call support",
       "Content on demand (Notes, PPT, PYQs, Test Paper)",
       "Collaborate with company",
-    ],
+    ]),
   },
 ];
+
+/* For Professionals, "3D animated video 9th - 12th" becomes "3D animated video subject wise" */
+function getFeatureLabel(feature: string, planTitle: string) {
+  if (feature === "3D animated video 9th - 12th" && planTitle === "Professionals") {
+    return "3D animated video subject wise";
+  }
+  return feature;
+}
+
+function isIncluded(feature: string, plan: (typeof plans)[number]) {
+  if (feature === "3D animated video 9th - 12th" && plan.title === "Professionals") {
+    return plan.included.has("3D animated video subject wise");
+  }
+  return plan.included.has(feature);
+}
 
 export default function CoursesPage() {
   return (
@@ -114,26 +141,50 @@ export default function CoursesPage() {
             )}
 
             <div className="flex flex-col p-6">
-              <div
-                className={`flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br ${plan.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}
-              >
-                <plan.icon className="h-7 w-7" />
+              {/* Header: title top-left, icon top-right */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-heading">{plan.title}</h2>
+                  <p className="mt-1.5 text-sm leading-6 text-text-muted">{plan.subtitle}</p>
+                </div>
+                <div
+                  className={`ml-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${plan.accent} text-white shadow-lg shadow-gray-200 transition-transform group-hover:scale-105`}
+                >
+                  <plan.icon className="h-7 w-7" />
+                </div>
               </div>
 
-              <h2 className="mt-4 text-2xl font-black text-heading">{plan.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-text-muted">{plan.subtitle}</p>
-
-              <div className="mt-6 flex flex-col gap-3">
-                {plan.features.map((feature) => (
-                  <div key={feature} className="flex items-start gap-2.5">
+              {/* Feature list with included/excluded */}
+              <div className="mt-6 flex flex-col gap-2.5">
+                {allFeatures.map((feature) => {
+                  const included = isIncluded(feature, plan);
+                  const label = getFeatureLabel(feature, plan.title);
+                  return (
                     <div
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${plan.accentBg}`}
+                      key={feature}
+                      className={`flex items-start gap-2.5 ${!included ? "opacity-50" : ""}`}
                     >
-                      <Check className={`h-3 w-3 ${plan.accentText}`} strokeWidth={3} />
+                      {included ? (
+                        <div
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${plan.accentBg}`}
+                        >
+                          <Check className={`h-3 w-3 ${plan.accentText}`} strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-50">
+                          <X className="h-3 w-3 text-red-400" strokeWidth={3} />
+                        </div>
+                      )}
+                      <span
+                        className={`text-sm leading-snug ${
+                          included ? "text-text-muted" : "text-red-300 line-through"
+                        }`}
+                      >
+                        {label}
+                      </span>
                     </div>
-                    <span className="text-sm leading-snug text-text-muted">{feature}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-2 rounded-lg bg-heading px-4 py-3 text-sm font-bold text-white transition-all group-hover:gap-3">
