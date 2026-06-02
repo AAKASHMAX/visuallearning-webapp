@@ -43,8 +43,8 @@ export default function UnifiedChapterPage() {
   const [chapterName, setChapterName] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
-  const initialTab = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab === "notes" ? "notes" : initialTab === "quiz" ? "quiz" : "videos");
+  // Notes and Quiz have their own dedicated sections now; this page only lists videos.
+  const [activeTab, setActiveTab] = useState<Tab>("videos");
   
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -112,8 +112,6 @@ export default function UnifiedChapterPage() {
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
     { key: "videos", label: "Video(3D)", icon: Play, count: filteredVideos.length },
-    { key: "notes", label: "Notes", icon: FileText, count: notes.length },
-    { key: "quiz", label: "Quiz", icon: Brain, count: questions.length },
   ];
 
   const returnTo = searchParams.get("returnTo");
