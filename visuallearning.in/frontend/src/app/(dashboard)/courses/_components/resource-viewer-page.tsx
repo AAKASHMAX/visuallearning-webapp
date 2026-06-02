@@ -305,36 +305,14 @@ export function ResourceViewerPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-3 flex items-center gap-3">
         <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
-        {isDocumentViewer && activeDocument && (
-          <>
-            <span className="text-gray-300">|</span>
-            <h1 className="min-w-0 truncate text-sm font-black text-heading">{heroTitle}</h1>
-          </>
-        )}
+        <span className="text-gray-300">|</span>
+        <h1 className="min-w-0 truncate text-sm font-black text-heading">{chapterInfo.chapterName}</h1>
       </div>
-
-      {!isDocumentViewer && (
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${meta.accent} text-white shadow-lg shadow-gray-200`}>
-                <Icon className="h-7 w-7" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-wider text-primary">{meta.eyebrow}</p>
-                <h1 className="mt-1 text-2xl font-black text-heading sm:text-3xl">{heroTitle}</h1>
-                <p className="mt-2 text-sm leading-6 text-text-muted">{heroDescription}</p>
-              </div>
-            </div>
-            <ZoomControls zoom={zoom} setZoom={setZoom} />
-          </div>
-        </div>
-      )}
 
       {isComingSoonResource ? (
         <ComingSoonResourcePanel meta={meta} />
@@ -580,10 +558,7 @@ function DocumentViewer({
           )
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2 border-b border-gray-100 bg-white px-4 py-2">
-              <p className="min-w-0 truncate text-sm font-black text-heading">
-                {activeDocument.title}
-              </p>
+            <div className="flex items-center justify-end gap-2 border-b border-gray-100 bg-white px-4 py-2">
               <div className="flex shrink-0 items-center gap-2">
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
