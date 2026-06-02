@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, BookOpen, CreditCard, LayoutDashboard, Menu, MessageSquare, Phone, User, X } from "lucide-react";
+import { Bell, BookOpen, CreditCard, LayoutDashboard, Menu, Phone, User, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
@@ -35,7 +35,6 @@ export function Navbar() {
     { href: "/courses", label: "Courses" },
     { href: "/subscription", label: "Pricing" },
     { href: "/contact", label: "Contact Us" },
-    { href: "/feedback", label: "Feedback" },
   ];
 
   const dashboardLinks = [
@@ -43,7 +42,6 @@ export function Navbar() {
     { href: "/courses", label: "Courses", icon: BookOpen },
     { href: "/subscription", label: "Subscription", icon: CreditCard },
     { href: "/contact", label: "Contact Us", icon: Phone },
-    { href: "/feedback", label: "Feedback", icon: MessageSquare },
     { href: "/profile", label: "Profile", icon: User },
   ];
 
@@ -78,6 +76,14 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            <a
+              href="tel:+919718154204"
+              className="flex items-center gap-1.5 text-sm font-medium text-white/90 transition-colors hover:text-accent"
+            >
+              <Phone className="w-4 h-4" />
+              Call : 9718154204
+            </a>
 
             {mounted && isAuthenticated ? (
               <div className="flex items-center gap-4 ml-2">
@@ -140,6 +146,9 @@ export function Navbar() {
                     </Link>
                   );
                 })}
+                <a href="tel:+919718154204" className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/15" onClick={() => setMenuOpen(false)}>
+                  <Phone className="h-4 w-4" /> Call : 9718154204
+                </a>
                 <button onClick={() => { logout(); window.location.href = "/"; }} className="block w-full rounded-xl bg-red-500/15 px-4 py-3 text-left text-sm font-black text-red-100">Logout</button>
               </>
             ) : mounted ? (
@@ -160,6 +169,9 @@ export function Navbar() {
                     </Link>
                   );
                 })}
+                <a href="tel:+919718154204" className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/15" onClick={() => setMenuOpen(false)}>
+                  <Phone className="h-4 w-4" /> Call : 9718154204
+                </a>
                 <Link href="/auth/login" className="block rounded-xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/15" onClick={() => setMenuOpen(false)}>Login</Link>
                 <Link href="/auth/signup" className="block rounded-xl bg-accent px-4 py-3 text-sm font-black text-primary-dark" onClick={() => setMenuOpen(false)}>Sign Up</Link>
               </>
