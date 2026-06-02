@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FileText, Loader2, X } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 /**
  * Renders real Chapter 1 (Class 12 Physics — "Electric Charges and Fields")
@@ -71,6 +72,10 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   const [doc, setDoc] = useState<NoteDoc | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Quiz state
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -103,6 +108,24 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       mounted = false;
     };
   }, [kind]);
+
+  // Keep state in sync with the native Fullscreen API.
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!wrapperRef.current) return;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await wrapperRef.current.requestFullscreen();
+    } catch {
+      // Fallback for browsers that block the Fullscreen API.
+      setIsFullscreen((v) => !v);
+    }
+  };
 
   // KaTeX auto-render for HTML docs with raw LaTeX.
   useEffect(() => {
@@ -140,7 +163,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
     }
     renderMath();
     return () => { cancelled = true; };
-  }, [doc?.htmlContent]);
+  }, [doc?.htmlContent, isFullscreen]);
 
   if (loading) {
     return (
@@ -160,6 +183,11 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
     );
   }
 
+  // Heights adapt when the viewer is expanded to fullscreen.
+  const docHeight = isFullscreen ? "h-[calc(100vh-72px)]" : "h-[80vh]";
+
+  let content: React.ReactNode;
+
   if (kind === "quiz") {
     if (questions.length === 0) {
       return (
@@ -170,7 +198,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       );
     }
     const score = questions.filter((q) => answers[q.id] === q.correctOption).length;
-    return (
+    content = (
       <div className="space-y-4">
         {questions.map((q, idx) => (
           <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -235,32 +263,46 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
         </div>
       </div>
     );
-  }
-
-  if (!doc) {
+  } else if (!doc) {
     return (
       <StateBox>
         <FileText className="h-7 w-7 opacity-30" />
         <p className="text-sm font-medium">Demo content is being prepared.</p>
       </StateBox>
     );
-  }
-
-  // PDF-based (PPT or any note without HTML).
-  if (doc.pdfUrl && doc.pdfUrl !== "pending" && !doc.htmlContent) {
-    return (
+  } else if (doc.pdfUrl && doc.pdfUrl !== "pending" && !doc.htmlContent) {
+    // PDF-based (PPT or any note without HTML).
+    content = (
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-slate-100 shadow-sm">
-        <iframe src={pdfViewerUrl(doc.pdfUrl)} title={doc.title} className="h-[80vh] w-full" />
+        <iframe src={pdfViewerUrl(doc.pdfUrl)} title={doc.title} className={cn("w-full", docHeight)} />
+      </div>
+    );
+  } else {
+    // HTML-based notes / NCERT / PYQ.
+    content = (
+      <div className={cn("relative overflow-auto rounded-2xl border border-gray-200 bg-slate-100 shadow-sm", docHeight)}>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+        {doc.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(doc.cssContent) }} />}
+        <div ref={containerRef} className="demo-notes-viewer" dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
       </div>
     );
   }
 
-  // HTML-based notes / NCERT / PYQ.
   return (
-    <div className="relative h-[80vh] overflow-auto rounded-2xl border border-gray-200 bg-slate-100 shadow-sm">
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
-      {doc.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(doc.cssContent) }} />}
-      <div ref={containerRef} className="demo-notes-viewer" dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
+    <div
+      ref={wrapperRef}
+      className={cn("relative", isFullscreen && "fixed inset-0 z-[80] flex flex-col overflow-auto bg-white p-4 sm:p-6")}
+    >
+      <div className="mb-3 flex items-center justify-end">
+        <button
+          onClick={toggleFullscreen}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-heading transition-all hover:border-primary/40 hover:text-primary"
+        >
+          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        </button>
+      </div>
+      <div className={cn(isFullscreen && "min-h-0 flex-1")}>{content}</div>
     </div>
   );
 }

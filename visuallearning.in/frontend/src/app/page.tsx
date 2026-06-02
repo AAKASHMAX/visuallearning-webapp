@@ -66,9 +66,9 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-wrap gap-4 mb-10">
-              <Link href="/auth/signup">
+              <Link href="/demo">
                 <Button size="lg" className="group bg-[#05BFDB] hover:bg-[#05BFDB]/90 text-white">
-                  Start Learning Free
+                  Watch Demo
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
