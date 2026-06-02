@@ -225,10 +225,12 @@ function DemoShowcase() {
 /* ── FEATURES ── */
 function FeaturesSection() {
   const features = [
-    { icon: Monitor, title: "3D Animated Videos", description: "Watch complex concepts come alive with stunning 3D animations. Visualize molecular structures, electromagnetic waves, and more.", gradient: "from-[#05BFDB] to-blue-600" },
-    { icon: FlaskConical, title: "Virtual Lab Experiments", description: "Conduct virtual experiments in your browser. From optics to electricity — safe, interactive, and always available.", gradient: "from-purple-500 to-purple-700" },
-    { icon: BookOpen, title: "Detailed Chapter Notes", description: "Download comprehensive PDF notes for every chapter. Revise formulas, derivations, and key concepts anytime.", gradient: "from-emerald-500 to-teal-600" },
-    { icon: Target, title: "MCQ Practice Quizzes", description: "Test your understanding with chapter-wise quizzes. Get instant feedback and track your progress.", gradient: "from-rose-500 to-pink-600" },
+    { icon: Monitor, title: "3D Animated Videos", description: "Watch complex concepts come alive with stunning 3D animations across Physics, Chemistry, and Biology.", gradient: "from-violet-600 to-fuchsia-500" },
+    { icon: BookOpen, title: "Visual Notes", description: "Beautifully structured chapter notes with diagrams, highlights, and key takeaways for fast revision.", gradient: "from-sky-500 to-blue-600" },
+    { icon: BookMarked, title: "NCERT Solutions", description: "Step-by-step NCERT answers with exam tips and key insights for every textbook question.", gradient: "from-emerald-500 to-teal-600" },
+    { icon: FileCheck, title: "PYQ Solutions", description: "Year-wise solved previous-year board questions with marking schemes and answer strategies.", gradient: "from-rose-500 to-orange-500" },
+    { icon: Presentation, title: "Presentations (PPTs)", description: "Ready-to-teach slide decks with clear visuals and a structured chapter flow.", gradient: "from-indigo-500 to-blue-500" },
+    { icon: Target, title: "MCQ Practice Quizzes", description: "Chapter-wise quizzes with instant feedback and score tracking to test your understanding.", gradient: "from-amber-500 to-pink-600" },
   ];
 
   return (
