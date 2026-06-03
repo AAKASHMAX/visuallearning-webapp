@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
 const navItems = [
+  { href: "/", label: "Home", activePaths: ["/"] },
   { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
   { href: "/demo", label: "Demo", activePaths: ["/demo"] },
   { href: "/pricing", label: "Subscription", activePaths: ["/pricing", "/subscription"] },

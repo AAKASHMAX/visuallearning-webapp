@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { BookOpen, PlayCircle, CreditCard, Phone, LayoutDashboard, User, LogOut, LogIn } from "lucide-react";
+import { Home, BookOpen, PlayCircle, CreditCard, Phone, LayoutDashboard, User, LogOut, LogIn } from "lucide-react";
 
+const homeLink = { href: "/", label: "Home", icon: Home, match: ["/"] };
 const publicLinks = [
   { href: "/courses", label: "Courses", icon: BookOpen, match: ["/courses", "/course-details"] },
   { href: "/demo", label: "Demo", icon: PlayCircle, match: ["/demo"] },
@@ -32,8 +33,10 @@ export function Sidebar() {
         : "text-text-muted hover:bg-surface-light/70 hover:text-text-bright"
     );
 
-  // Order: Dashboard, Courses, Demo, Subscription, Contact, Profile
-  const navItems = isAuthenticated ? [dashboardLink, ...publicLinks, profileLink] : publicLinks;
+  // Order: Home, Dashboard, Courses, Demo, Subscription, Contact, Profile
+  const navItems = isAuthenticated
+    ? [homeLink, dashboardLink, ...publicLinks, profileLink]
+    : [homeLink, ...publicLinks];
 
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-50 w-64 flex-col border-r border-border bg-primary-dark/95 backdrop-blur-xl">
