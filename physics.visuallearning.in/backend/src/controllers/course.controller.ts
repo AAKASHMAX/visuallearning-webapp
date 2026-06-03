@@ -242,10 +242,9 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
 
     const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
     const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
-    const firstVideoIds = getFirstVideoIdsByLanguage(videos);
-
     const videosWithAccess = videos.map((v: any) => {
-      const canAccessVideo = firstVideoIds.has(v.id) || isFirstChapter || v.isFree || hasAccess;
+      // Unsubscribed users get only the first chapter (and any explicitly-free video).
+      const canAccessVideo = isFirstChapter || v.isFree || hasAccess;
       return {
         ...v,
         hasAccess: canAccessVideo,
@@ -279,8 +278,7 @@ export async function getVideoById(req: AuthRequest, res: Response) {
     }
 
     const isFirstChapter = await isFirstChapterInAnyCourse(video.chapter);
-    const isFirstVideo = await isFirstVideoInChapter(video);
-    const hasAccess = video.isFree || isFirstVideo || isFirstChapter || await userHasChapterAccess(video.chapter, req.user?.id);
+    const hasAccess = video.isFree || isFirstChapter || await userHasChapterAccess(video.chapter, req.user?.id);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Subscription required to access this video" });
@@ -322,8 +320,8 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
     const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
     const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
 
-    const notesWithAccess = notes.map((n: any, i: number) => {
-      const canView = n.isFree || (isFirstChapter && i === 0) || hasAccess;
+    const notesWithAccess = notes.map((n: any) => {
+      const canView = n.isFree || isFirstChapter || hasAccess;
       return {
         ...n,
         hasAccess: canView,

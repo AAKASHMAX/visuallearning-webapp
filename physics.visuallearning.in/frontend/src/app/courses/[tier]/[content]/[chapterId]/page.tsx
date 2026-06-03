@@ -116,6 +116,7 @@ export default function ContentViewerPage() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [activeNoteId, setActiveNoteId] = useState<string>("");
   const [showSubscribe, setShowSubscribe] = useState(false);
+  const [quizLocked, setQuizLocked] = useState(false);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
@@ -138,7 +139,13 @@ export default function ContentViewerPage() {
           const r = await api.get(`/chapters/${chapterId}/videos`);
           videos = Array.isArray(r.data) ? r.data : [];
         } else if (content === "quiz") {
-          try { const r = await api.get(`/chapters/${chapterId}/questions`); qs = Array.isArray(r.data) ? r.data : []; } catch { qs = []; }
+          try {
+            const r = await api.get(`/chapters/${chapterId}/questions`);
+            qs = Array.isArray(r.data) ? r.data : [];
+          } catch (e: any) {
+            qs = [];
+            if (e?.response?.status === 403 && !cancelled) setQuizLocked(true);
+          }
         } else {
           const r = await api.get(`/chapters/${chapterId}/notes`);
           noteList = (Array.isArray(r.data) ? r.data : []).filter((n: Note) => noteMatches(content, n.title));
@@ -390,7 +397,14 @@ export default function ContentViewerPage() {
 
       {/* QUIZ */}
       {content === "quiz" && (
-        questions.length === 0 ? <Empty icon={CheckCircle2} text="Quiz questions for this chapter will be added soon." /> : (
+        quizLocked ? (
+          <div className="rounded-2xl border border-border bg-card p-12 text-center">
+            <Lock className="w-10 h-10 text-energy mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-text-bright mb-1">Subscribe to unlock</h3>
+            <p className="text-text-muted text-sm mb-5">The quiz for this chapter is part of the paid plan.</p>
+            <Link href={`/subscription?plan=${tier.toUpperCase()}`}><Button>Subscribe Now</Button></Link>
+          </div>
+        ) : questions.length === 0 ? <Empty icon={CheckCircle2} text="Quiz questions for this chapter will be added soon." /> : (
           <div className="max-w-3xl">
             <div className="space-y-5">
               {questions.map((q, idx) => (
