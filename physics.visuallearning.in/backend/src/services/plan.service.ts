@@ -3,36 +3,48 @@ import { PrismaClient } from "@prisma/client";
 export const FREE_TRIAL_DURATION_DAYS = 30;
 export const YEARLY_PLAN_DURATION_DAYS = 365;
 
+const CLASS_PLAN_FEATURES = ["3D Animated Videos", "Visual Notes", "NCERT Solutions", "PYQ Solutions", "Interactive Quiz"];
+
 export const defaultPlanSeeds = [
   {
-    code: "BRIDGE_YEARLY",
-    name: "Physics Bridge Course",
-    description: "Strengthen core physics concepts before advanced chapters.",
-    price: 9990,
-    durationDays: YEARLY_PLAN_DURATION_DAYS,
+    code: "CLASS_11_MONTHLY",
+    name: "Class 11 Physics",
+    description: "Full Class 11 Physics — videos, notes, NCERT & PYQ solutions, and quizzes.",
+    price: 499,
+    durationDays: 30,
     displayOrder: 1,
-    tier: "BRIDGE",
-    features: ["Core concepts", "Foundational modules", "Concept strengthening", "Bridge tests"],
+    tier: "11",
+    features: CLASS_PLAN_FEATURES,
   },
   {
-    code: "BASIC_YEARLY",
-    name: "Basic Course",
-    description: "Complete animated lessons, notes, and quizzes for foundation physics.",
-    price: 2990,
+    code: "CLASS_11_YEARLY",
+    name: "Class 11 Physics",
+    description: "Full Class 11 Physics — videos, notes, NCERT & PYQ solutions, and quizzes.",
+    price: 1999,
     durationDays: YEARLY_PLAN_DURATION_DAYS,
     displayOrder: 2,
-    tier: "BASIC",
-    features: ["All animated videos", "Chapter notes", "MCQ quizzes", "Progress tracking"],
+    tier: "11",
+    features: CLASS_PLAN_FEATURES,
   },
   {
-    code: "ADVANCE_YEARLY",
-    name: "Advance Course",
-    description: "Advanced physics learning with expert lectures and virtual labs.",
-    price: 4990,
-    durationDays: YEARLY_PLAN_DURATION_DAYS,
+    code: "CLASS_12_MONTHLY",
+    name: "Class 12 Physics",
+    description: "Full Class 12 Physics — videos, notes, NCERT & PYQ solutions, and quizzes.",
+    price: 699,
+    durationDays: 30,
     displayOrder: 3,
-    tier: "ADVANCE",
-    features: ["Everything in Basic", "Expert lectures", "Virtual labs", "Board practice"],
+    tier: "12",
+    features: CLASS_PLAN_FEATURES,
+  },
+  {
+    code: "CLASS_12_YEARLY",
+    name: "Class 12 Physics",
+    description: "Full Class 12 Physics — videos, notes, NCERT & PYQ solutions, and quizzes.",
+    price: 2999,
+    durationDays: YEARLY_PLAN_DURATION_DAYS,
+    displayOrder: 4,
+    tier: "12",
+    features: CLASS_PLAN_FEATURES,
   },
 ];
 

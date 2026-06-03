@@ -110,7 +110,6 @@ export async function getPlans(req: AuthRequest, res: Response) {
       where: {
         isActive: true,
         code: { not: "FREE" },
-        OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
       },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
