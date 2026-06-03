@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import { FeedbackPopup } from "@/components/layout/feedback-popup";
 import { FloatingContact } from "@/components/layout/floating-contact";
+import { Sidebar } from "@/components/layout/sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,7 +36,8 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {children}
+        <Sidebar />
+        <div className="lg:pl-64">{children}</div>
         <FeedbackPopup />
         <FloatingContact />
         <Toaster

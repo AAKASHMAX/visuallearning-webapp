@@ -11,8 +11,9 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "Home", activePaths: ["/"] },
   { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
+  { href: "/demo", label: "Demo", activePaths: ["/demo"] },
+  { href: "/subscription", label: "Pricing", activePaths: ["/subscription"] },
   { href: "/contact", label: "Contact Us", activePaths: ["/contact"] },
 ];
 
@@ -66,7 +67,7 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 lg:left-64 z-40 transition-all duration-500 ${
         isScrolled || isMobileMenuOpen
           ? "glass py-3 shadow-lg shadow-primary/50"
           : "bg-transparent py-5"
@@ -74,8 +75,8 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          {/* Logo (hidden on desktop — the sidebar shows it) */}
+          <Link href="/" className="flex items-center gap-3 group lg:hidden">
             <Image src="/images/logo2.png" alt="VL" width={42} height={42} className="rounded-md" />
             <div className="flex flex-col">
               <span className="text-lg font-bold text-text-bright tracking-tight">
@@ -88,8 +89,8 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-8 lg:ml-auto">
+            <div className="flex items-center gap-2 lg:hidden">
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href} className={navLinkClass(isNavItemActive(item))}>
                   {item.label}
