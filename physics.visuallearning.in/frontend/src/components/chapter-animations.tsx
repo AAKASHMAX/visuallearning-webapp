@@ -911,6 +911,31 @@ const animationMap: Record<string, () => JSX.Element> = {
   "waves & oscillations": animationRegistry.oscillations,
   "heat & thermodynamics": animationRegistry.thermodynamics,
   "electricity foundations": animationRegistry.electricity,
+
+  // Class 11 & 12 NCERT chapter names (exact) so every chapter card has a fitting animation
+  "physical world and measurement": animationRegistry.units,
+  "units and measurements": animationRegistry.units,
+  "motion in a straight line": animationRegistry.kinematics,
+  "motion in a plane": animationRegistry.kinematics,
+  "work, energy and power": animationRegistry["work-energy"],
+  "system of particles and rotational motion": animationRegistry.rotational,
+  "mechanical properties of solids": animationRegistry["properties-of-matter"],
+  "mechanical properties of fluids": animationRegistry["sheet-11-fluids"],
+  "thermal properties of matter": animationRegistry.thermodynamics,
+  "kinetic theory": animationRegistry.thermodynamics,
+  oscillations: animationRegistry.oscillations,
+  "electric charges and fields": animationRegistry.electrostatics,
+  "electrostatic potential and capacitance": animationRegistry["sheet-12-potential"],
+  "moving charges and magnetism": animationRegistry["sheet-12-moving-charges"],
+  "magnetism and matter": animationRegistry.magnetism,
+  "electromagnetic induction": animationRegistry.emi,
+  "electromagnetic waves": animationRegistry["sheet-12-em-waves"],
+  "ray optics and optical instruments": animationRegistry["ray-optics"],
+  "wave optics": animationRegistry["sheet-12-wave-optics"],
+  "dual nature of radiation and matter": animationRegistry["modern-physics"],
+  atoms: animationRegistry["sheet-12-atoms"],
+  nuclei: animationRegistry["sheet-12-nuclei"],
+  "semiconductor electronics": animationRegistry.semiconductor,
 };
 
 export function getChapterAnimation(chapterName: string, animationKey?: string | null): (() => JSX.Element) | null {
