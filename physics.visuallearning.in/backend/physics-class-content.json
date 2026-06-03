@@ -1,0 +1,751 @@
+{
+  "11": [
+    {
+      "name": "Physical World and Measurement",
+      "videos": []
+    },
+    {
+      "name": "Units and Measurements",
+      "videos": []
+    },
+    {
+      "name": "Motion in a Straight Line",
+      "videos": [
+        {
+          "title": "Motion and its type",
+          "hindi": "https://vimeo.com/1186839847",
+          "english": "https://vimeo.com/1187966127"
+        },
+        {
+          "title": "Basic terms used in motion",
+          "hindi": "https://vimeo.com/1186839964",
+          "english": "https://vimeo.com/1187966262"
+        },
+        {
+          "title": "Motion in a straight line",
+          "hindi": "https://vimeo.com/1186840006",
+          "english": "https://vimeo.com/1187966477"
+        },
+        {
+          "title": "Uniform and nonuniform motion",
+          "hindi": "https://vimeo.com/1186840039",
+          "english": "https://vimeo.com/1187966519"
+        },
+        {
+          "title": "Formula for uniformly acceleracted motion",
+          "hindi": "https://vimeo.com/1186840113",
+          "english": "https://vimeo.com/1187966576"
+        }
+      ]
+    },
+    {
+      "name": "Motion in a Plane",
+      "videos": [
+        {
+          "title": "Scalar and vector quantities",
+          "hindi": "https://vimeo.com/1186840149",
+          "english": "https://vimeo.com/1187966637"
+        },
+        {
+          "title": "Position and displacement vectors",
+          "hindi": "https://vimeo.com/1186840222",
+          "english": "https://vimeo.com/1187966712"
+        },
+        {
+          "title": "Projectile motion",
+          "hindi": null,
+          "english": "https://vimeo.com/1187966820"
+        },
+        {
+          "title": "Uniform circular motion.",
+          "hindi": "https://vimeo.com/1186840270",
+          "english": "https://vimeo.com/1187966764"
+        }
+      ]
+    },
+    {
+      "name": "Laws of Motion",
+      "videos": [
+        {
+          "title": "Concept of force",
+          "hindi": "https://vimeo.com/1186840343",
+          "english": "https://vimeo.com/1187966847"
+        },
+        {
+          "title": "Inertia",
+          "hindi": "https://vimeo.com/1186840413",
+          "english": "https://vimeo.com/1187966899"
+        },
+        {
+          "title": "Newton's first law of motion",
+          "hindi": "https://vimeo.com/1186840478",
+          "english": "https://vimeo.com/1187966964"
+        },
+        {
+          "title": "Impulse",
+          "hindi": "https://vimeo.com/1186840599",
+          "english": "https://vimeo.com/1187967007"
+        },
+        {
+          "title": "Friction",
+          "hindi": "https://vimeo.com/1186840627",
+          "english": "https://vimeo.com/1187967045"
+        },
+        {
+          "title": "Types of friction",
+          "hindi": "https://vimeo.com/1186840705",
+          "english": "https://vimeo.com/1187967128"
+        },
+        {
+          "title": "Laws of friction",
+          "hindi": "https://vimeo.com/1186840798",
+          "english": "https://vimeo.com/1187967212"
+        }
+      ]
+    },
+    {
+      "name": "Work, Energy and Power",
+      "videos": [
+        {
+          "title": "Work and its nature",
+          "hindi": "https://vimeo.com/1186848333",
+          "english": "https://vimeo.com/1187967260"
+        },
+        {
+          "title": "Conservative and non conservative force",
+          "hindi": "https://vimeo.com/1186848425",
+          "english": "https://vimeo.com/1187967330"
+        },
+        {
+          "title": "What is Energy",
+          "hindi": "https://vimeo.com/1186848594",
+          "english": "https://vimeo.com/1187967411"
+        },
+        {
+          "title": "Kinetic energy",
+          "hindi": "https://vimeo.com/1186848658",
+          "english": "https://vimeo.com/1187967422"
+        },
+        {
+          "title": "Potential energy",
+          "hindi": "https://vimeo.com/1186848699",
+          "english": "https://vimeo.com/1187967443"
+        },
+        {
+          "title": "Law of conservation of energy",
+          "hindi": "https://vimeo.com/1186848743",
+          "english": "https://vimeo.com/1187967457"
+        },
+        {
+          "title": "Potential energy of a spring",
+          "hindi": "https://vimeo.com/1186848780",
+          "english": "https://vimeo.com/1187967472"
+        },
+        {
+          "title": "Elastic and inelastic collisions in one and two dimensions",
+          "hindi": "https://vimeo.com/1186848859",
+          "english": "https://vimeo.com/1187967497"
+        }
+      ]
+    },
+    {
+      "name": "System of Particles and Rotational Motion",
+      "videos": [
+        {
+          "title": "Centre of mass",
+          "hindi": "https://vimeo.com/1186850961",
+          "english": "https://vimeo.com/1187967520"
+        }
+      ]
+    },
+    {
+      "name": "Gravitation",
+      "videos": [
+        {
+          "title": "Kepler's laws of planetary motion",
+          "hindi": "https://vimeo.com/1186851143",
+          "english": "https://vimeo.com/1187967540"
+        },
+        {
+          "title": "Universal law of gravitation.",
+          "hindi": "https://vimeo.com/1186851224",
+          "english": "https://vimeo.com/1187967557"
+        },
+        {
+          "title": "Acceleration due to gravity",
+          "hindi": "https://vimeo.com/1186851298",
+          "english": "https://vimeo.com/1187967594"
+        }
+      ]
+    },
+    {
+      "name": "Mechanical Properties of Solids",
+      "videos": [
+        {
+          "title": "Elasticity",
+          "hindi": "https://vimeo.com/1186851709",
+          "english": "https://vimeo.com/1187967615"
+        },
+        {
+          "title": "Stress and its type",
+          "hindi": "https://vimeo.com/1186851777",
+          "english": "https://vimeo.com/1187967646"
+        },
+        {
+          "title": "Strain and its type",
+          "hindi": "https://vimeo.com/1186851855",
+          "english": "https://vimeo.com/1187967682"
+        },
+        {
+          "title": "Hooke's law",
+          "hindi": "https://vimeo.com/1186851913",
+          "english": "https://vimeo.com/1187967719"
+        }
+      ]
+    },
+    {
+      "name": "Mechanical Properties of Fluids",
+      "videos": [
+        {
+          "title": "Hydrostatic Paradox",
+          "hindi": "https://vimeo.com/1186851972",
+          "english": null
+        },
+        {
+          "title": "Pacals law",
+          "hindi": "https://vimeo.com/1186852000",
+          "english": "https://vimeo.com/1188042118"
+        },
+        {
+          "title": "Hydraulic Lift",
+          "hindi": "https://vimeo.com/1186852071",
+          "english": null
+        },
+        {
+          "title": "Buoyancy",
+          "hindi": "https://vimeo.com/1186852103",
+          "english": "https://vimeo.com/1188042163"
+        },
+        {
+          "title": "Archmiedes Principle",
+          "hindi": "https://vimeo.com/1186852103",
+          "english": "https://vimeo.com/1188042207"
+        },
+        {
+          "title": "Surface energy and surface tension",
+          "hindi": "https://vimeo.com/1186852202",
+          "english": "https://vimeo.com/1188042249"
+        },
+        {
+          "title": "Viscocity",
+          "hindi": "https://vimeo.com/1186852259",
+          "english": "https://vimeo.com/1188042290"
+        },
+        {
+          "title": "Poiceulis and Stocks law",
+          "hindi": "https://vimeo.com/1186852350",
+          "english": "https://vimeo.com/1188042329"
+        },
+        {
+          "title": "Streamline, laminar , turbulent flow",
+          "hindi": "https://vimeo.com/1186852418",
+          "english": "https://vimeo.com/1188042368"
+        },
+        {
+          "title": "Bernoulli's theorem",
+          "hindi": "https://vimeo.com/1186852505",
+          "english": "https://vimeo.com/1188042415"
+        }
+      ]
+    },
+    {
+      "name": "Thermal Properties of Matter",
+      "videos": [
+        {
+          "title": "Heat and temperature",
+          "hindi": "https://vimeo.com/1186852595",
+          "english": "https://vimeo.com/1188042451"
+        },
+        {
+          "title": "Thermal expansion of solids, liquids and gases",
+          "hindi": "https://vimeo.com/1186852645",
+          "english": "https://vimeo.com/1188042492"
+        },
+        {
+          "title": "Specific heat capacity; Cp, Cv - calorimetry",
+          "hindi": "https://vimeo.com/1186852726",
+          "english": "https://vimeo.com/1188042535"
+        },
+        {
+          "title": "Specific heat capacity of gas",
+          "hindi": "https://vimeo.com/1186852791",
+          "english": "https://vimeo.com/1188042586"
+        },
+        {
+          "title": "Change of state - latent heat capacity",
+          "hindi": "https://vimeo.com/1186852866",
+          "english": "https://vimeo.com/1188042626"
+        }
+      ]
+    },
+    {
+      "name": "Thermodynamics",
+      "videos": [
+        {
+          "title": "Thermal equilibrium",
+          "hindi": "https://vimeo.com/1186852969",
+          "english": null
+        },
+        {
+          "title": "Zeroth law of thermodynamics",
+          "hindi": "https://vimeo.com/1186853059",
+          "english": null
+        },
+        {
+          "title": "First law of thermodynamics,",
+          "hindi": "https://vimeo.com/1186853131",
+          "english": null
+        }
+      ]
+    },
+    {
+      "name": "Kinetic Theory",
+      "videos": []
+    },
+    {
+      "name": "Oscillations",
+      "videos": []
+    },
+    {
+      "name": "Waves",
+      "videos": []
+    }
+  ],
+  "12": [
+    {
+      "name": "Electric Charges and Fields",
+      "videos": [
+        {
+          "title": "Electric charges",
+          "hindi": "https://vimeo.com/1182881776",
+          "english": "https://vimeo.com/1187598539"
+        },
+        {
+          "title": "Conservation of charge",
+          "hindi": "https://vimeo.com/1182892651",
+          "english": "https://vimeo.com/1187598680"
+        },
+        {
+          "title": "Coulomb's law",
+          "hindi": "https://vimeo.com/1182902747",
+          "english": null
+        },
+        {
+          "title": "Coulomb's law in vector form",
+          "hindi": "https://vimeo.com/1182902820",
+          "english": "https://vimeo.com/1187598832"
+        },
+        {
+          "title": "Superposition principal",
+          "hindi": "https://vimeo.com/1182902852",
+          "english": "https://vimeo.com/1187598883"
+        },
+        {
+          "title": "Electric field & Electric fields line",
+          "hindi": "https://vimeo.com/1182902894",
+          "english": "https://vimeo.com/1187598928"
+        },
+        {
+          "title": "Electric dipole",
+          "hindi": "https://vimeo.com/1182902972",
+          "english": "https://vimeo.com/1187599007"
+        },
+        {
+          "title": "Torque on a dipole",
+          "hindi": "https://vimeo.com/1182957820",
+          "english": "https://vimeo.com/1187599040"
+        },
+        {
+          "title": "Electric flux",
+          "hindi": "https://vimeo.com/1182958103",
+          "english": "https://vimeo.com/1187599088"
+        },
+        {
+          "title": "Gauss's theoram",
+          "hindi": "https://vimeo.com/1182958272",
+          "english": "https://vimeo.com/1187599174"
+        },
+        {
+          "title": "Field due to infintely long straight wire",
+          "hindi": "https://vimeo.com/1182958407",
+          "english": "https://vimeo.com/1187599223"
+        },
+        {
+          "title": "Uniformely charged infinite plane sheet",
+          "hindi": "https://vimeo.com/1182958529",
+          "english": "https://vimeo.com/1187599264"
+        },
+        {
+          "title": "Uniformely charged thin spherical shell",
+          "hindi": "https://vimeo.com/1182958652",
+          "english": "https://vimeo.com/1187599304"
+        }
+      ]
+    },
+    {
+      "name": "Electrostatic Potential and Capacitance",
+      "videos": [
+        {
+          "title": "Electric potential and potential difference",
+          "hindi": "https://vimeo.com/1183254112",
+          "english": "https://vimeo.com/1187599333"
+        },
+        {
+          "title": "Conductors and insulators",
+          "hindi": "https://vimeo.com/1183254147",
+          "english": "https://vimeo.com/1187599368"
+        },
+        {
+          "title": "Dielectrics and electric polarization.",
+          "hindi": "https://vimeo.com/1183254207",
+          "english": "https://vimeo.com/1187599439"
+        },
+        {
+          "title": "Capacitors and capacitance.",
+          "hindi": "https://vimeo.com/1183254260",
+          "english": "https://vimeo.com/1187599528"
+        },
+        {
+          "title": "Combination of capacitors in series and in parallel.",
+          "hindi": "https://vimeo.com/1183254497",
+          "english": "https://vimeo.com/1187599659"
+        }
+      ]
+    },
+    {
+      "name": "Current Electricity",
+      "videos": [
+        {
+          "title": "Electric current",
+          "hindi": "https://vimeo.com/1183254331",
+          "english": "https://vimeo.com/1187195457"
+        },
+        {
+          "title": "Conductor and Insulator",
+          "hindi": "https://vimeo.com/1183254147",
+          "english": "https://vimeo.com/1187599368"
+        },
+        {
+          "title": "Drift velocity,",
+          "hindi": "https://vimeo.com/1183254383",
+          "english": "https://vimeo.com/1187990084"
+        },
+        {
+          "title": "Ohm's law",
+          "hindi": "https://vimeo.com/1183254438",
+          "english": "https://vimeo.com/1187195604"
+        },
+        {
+          "title": "Resistor",
+          "hindi": "https://vimeo.com/1183254470",
+          "english": "https://vimeo.com/1187195673"
+        },
+        {
+          "title": "Combination of resistor",
+          "hindi": "https://vimeo.com/1183254497",
+          "english": "https://vimeo.com/1187991142"
+        },
+        {
+          "title": "Kirchhoff's rules",
+          "hindi": "https://vimeo.com/1183254625",
+          "english": "https://vimeo.com/1187599743"
+        },
+        {
+          "title": "Wheatstone bridge.",
+          "hindi": "https://vimeo.com/1183254576",
+          "english": "https://vimeo.com/1187991203"
+        },
+        {
+          "title": "Mater Bridge",
+          "hindi": "https://vimeo.com/1183254529",
+          "english": "https://vimeo.com/1187991274"
+        },
+        {
+          "title": "Potentiometer",
+          "hindi": "https://vimeo.com/1183254592",
+          "english": "https://vimeo.com/1187991426"
+        }
+      ]
+    },
+    {
+      "name": "Moving Charges and Magnetism",
+      "videos": [
+        {
+          "title": "Concept of magnetic field",
+          "hindi": "https://vimeo.com/1183309414",
+          "english": "https://vimeo.com/1187599817"
+        },
+        {
+          "title": "Oersted's experiment",
+          "hindi": "https://vimeo.com/1183309573",
+          "english": "https://vimeo.com/1187599889"
+        },
+        {
+          "title": "Biot - Savart law",
+          "hindi": "https://vimeo.com/1183309649",
+          "english": "https://vimeo.com/1187599947"
+        },
+        {
+          "title": "Ampere's circuital law",
+          "hindi": "https://vimeo.com/1183309723",
+          "english": "https://vimeo.com/1187600014"
+        },
+        {
+          "title": "Straight solenoid",
+          "hindi": "https://vimeo.com/1183309784",
+          "english": "https://vimeo.com/1187600078"
+        },
+        {
+          "title": "Force on charge in electric field",
+          "hindi": "https://vimeo.com/1183309873",
+          "english": "https://vimeo.com/1187600152"
+        },
+        {
+          "title": "Force on a current-carrying conductor magnetic field",
+          "hindi": "https://vimeo.com/1183630382",
+          "english": "https://vimeo.com/1187600212"
+        }
+      ]
+    },
+    {
+      "name": "Magnetism and Matter",
+      "videos": [
+        {
+          "title": "Magnetic field and line",
+          "hindi": "https://vimeo.com/1183309414",
+          "english": "https://vimeo.com/1187600283"
+        }
+      ]
+    },
+    {
+      "name": "Electromagnetic Induction",
+      "videos": [
+        {
+          "title": "Electromagnetic induction",
+          "hindi": "https://vimeo.com/1183622726",
+          "english": "https://vimeo.com/1187600316"
+        },
+        {
+          "title": "Faraday's laws",
+          "hindi": "https://vimeo.com/1183312495",
+          "english": "https://vimeo.com/1187600387"
+        },
+        {
+          "title": "Lenz's Law",
+          "hindi": "https://vimeo.com/1183312579",
+          "english": "https://vimeo.com/1187600499"
+        },
+        {
+          "title": "Self  induction.",
+          "hindi": "https://vimeo.com/1183622776",
+          "english": "https://vimeo.com/1187600623"
+        },
+        {
+          "title": "Mutual induction.",
+          "hindi": "https://vimeo.com/1183312615",
+          "english": "https://vimeo.com/1187600699"
+        },
+        {
+          "title": "Eddy current",
+          "hindi": "https://vimeo.com/1183622876",
+          "english": "https://vimeo.com/1187600797"
+        },
+        {
+          "title": "Electric motor",
+          "hindi": "https://vimeo.com/1183622669",
+          "english": "https://vimeo.com/1187600909"
+        }
+      ]
+    },
+    {
+      "name": "Alternating Current",
+      "videos": [
+        {
+          "title": "Alternating currents",
+          "hindi": "https://vimeo.com/1183622964",
+          "english": "https://vimeo.com/1187601017"
+        }
+      ]
+    },
+    {
+      "name": "Electromagnetic Waves",
+      "videos": [
+        {
+          "title": "Electromagnetic waves",
+          "hindi": "https://vimeo.com/1183623068",
+          "english": "https://vimeo.com/1187601110"
+        }
+      ]
+    },
+    {
+      "name": "Ray Optics and Optical Instruments",
+      "videos": [
+        {
+          "title": "Reflection of light",
+          "hindi": "https://vimeo.com/1183623085",
+          "english": "https://vimeo.com/1187601170"
+        },
+        {
+          "title": "Spherical mirrors",
+          "hindi": "https://vimeo.com/1183626545",
+          "english": "https://vimeo.com/1187601231"
+        },
+        {
+          "title": "Refraction of light",
+          "hindi": "https://vimeo.com/1183623124",
+          "english": "https://vimeo.com/1187601329"
+        },
+        {
+          "title": "Total internal reflection",
+          "hindi": "https://vimeo.com/1183623153",
+          "english": "https://vimeo.com/1187601408"
+        },
+        {
+          "title": "Refraction of light through a prism.",
+          "hindi": "https://vimeo.com/1183626646",
+          "english": "https://vimeo.com/1187601501"
+        },
+        {
+          "title": "Microscopes",
+          "hindi": "https://vimeo.com/1183623212",
+          "english": "https://vimeo.com/1187601540"
+        },
+        {
+          "title": "Astronomical telescopes",
+          "hindi": "https://vimeo.com/1183623316",
+          "english": "https://vimeo.com/1187601749"
+        },
+        {
+          "title": "Dispersion of light",
+          "hindi": "https://vimeo.com/1183623189",
+          "english": "https://vimeo.com/1187601931"
+        }
+      ]
+    },
+    {
+      "name": "Wave Optics",
+      "videos": [
+        {
+          "title": "Wave front and Huygens principle",
+          "hindi": "https://vimeo.com/1183623397",
+          "english": "https://vimeo.com/1187602009"
+        },
+        {
+          "title": "Young's double slit experiment",
+          "hindi": "https://vimeo.com/1183623426",
+          "english": "https://vimeo.com/1187602175"
+        },
+        {
+          "title": "Interference of wave",
+          "hindi": "https://vimeo.com/1183623483",
+          "english": "https://vimeo.com/1187602202"
+        },
+        {
+          "title": "Diffraction due to a single slit",
+          "hindi": "https://vimeo.com/1183623508",
+          "english": "https://vimeo.com/1187602281"
+        }
+      ]
+    },
+    {
+      "name": "Dual Nature of Radiation and Matter",
+      "videos": [
+        {
+          "title": "Photoelectric effect.",
+          "hindi": "https://vimeo.com/1183623574",
+          "english": "https://vimeo.com/1187602355"
+        }
+      ]
+    },
+    {
+      "name": "Atoms",
+      "videos": [
+        {
+          "title": "Rutherford Alpha-particle scattering experiment.",
+          "hindi": "https://vimeo.com/1183623647",
+          "english": "https://vimeo.com/1187602587"
+        },
+        {
+          "title": "Bohr model of an atom",
+          "hindi": "https://vimeo.com/1183623720",
+          "english": "https://vimeo.com/1187602698"
+        },
+        {
+          "title": "Atomic spectra",
+          "hindi": "https://vimeo.com/1183623756",
+          "english": "https://vimeo.com/1187602902"
+        },
+        {
+          "title": "Isotops, Isobars, Isotones",
+          "hindi": "https://vimeo.com/1183623647",
+          "english": "https://vimeo.com/1187603016"
+        }
+      ]
+    },
+    {
+      "name": "Nuclei",
+      "videos": [
+        {
+          "title": "Nuclear force",
+          "hindi": "https://vimeo.com/1183623840",
+          "english": "https://vimeo.com/1187603108"
+        },
+        {
+          "title": "Nuclear Binding Energy",
+          "hindi": "https://vimeo.com/1183623865",
+          "english": "https://vimeo.com/1187603150"
+        }
+      ]
+    },
+    {
+      "name": "Semiconductor Electronics",
+      "videos": [
+        {
+          "title": "Energy bands in conductors",
+          "hindi": "https://vimeo.com/1183623891",
+          "english": "https://vimeo.com/1187603207"
+        },
+        {
+          "title": "Semiconductors",
+          "hindi": "https://vimeo.com/1183624008",
+          "english": "https://vimeo.com/1187603298"
+        },
+        {
+          "title": "P-N Junction Diode",
+          "hindi": "https://vimeo.com/1183624089",
+          "english": "https://vimeo.com/1187603448"
+        },
+        {
+          "title": "Forward and Reverse biasing.",
+          "hindi": "https://vimeo.com/1183624226",
+          "english": "https://vimeo.com/1187603603"
+        },
+        {
+          "title": "Zener diode",
+          "hindi": "https://vimeo.com/1183624349",
+          "english": "https://vimeo.com/1187603666"
+        },
+        {
+          "title": "Rectifier",
+          "hindi": "https://vimeo.com/1183623926",
+          "english": "https://vimeo.com/1187603725"
+        },
+        {
+          "title": "Transistor",
+          "hindi": "https://vimeo.com/1183624384",
+          "english": "https://vimeo.com/1187603763"
+        }
+      ]
+    }
+  ]
+}

@@ -225,7 +225,9 @@ model Video {
 model Note {
   id           String    @id @default(cuid())
   title        String
-  fileUrl      String
+  fileUrl      String    @default("")
+  htmlContent  String?
+  cssContent   String?
   isFree       Boolean   @default(false)
   displayOrder Int       @default(0)
   chapterId    String

@@ -322,11 +322,16 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
     const hasAccess = await userHasChapterAccess(chapter, req.user?.id);
     const isFirstChapter = await isFirstChapterInAnyCourse(chapter);
 
-    const notesWithAccess = notes.map((n: any, i: number) => ({
-      ...n,
-      hasAccess: n.isFree || (isFirstChapter && i === 0) || hasAccess,
-      fileUrl: n.isFree || (isFirstChapter && i === 0) || hasAccess ? n.fileUrl : "",
-    }));
+    const notesWithAccess = notes.map((n: any, i: number) => {
+      const canView = n.isFree || (isFirstChapter && i === 0) || hasAccess;
+      return {
+        ...n,
+        hasAccess: canView,
+        fileUrl: canView ? n.fileUrl : "",
+        htmlContent: canView ? n.htmlContent : null,
+        cssContent: canView ? n.cssContent : null,
+      };
+    });
 
     res.json(notesWithAccess);
   } catch (error) {
