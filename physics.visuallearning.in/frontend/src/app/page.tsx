@@ -124,12 +124,6 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-wrap gap-4 mb-10">
-              <Link href={learningCtaHref}>
-                <Button size="lg" className="group">
-                  Start Learning Free
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
               <Link href="/courses">
                 <Button variant="outline" size="lg">
                   <Play className="w-5 h-5 mr-2" />
