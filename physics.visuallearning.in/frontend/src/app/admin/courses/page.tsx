@@ -304,6 +304,8 @@ export default function AdminCoursesPage() {
     BASIC: "bg-accent/10 text-accent",
     ADVANCE: "bg-secondary/10 text-secondary-light",
     BRIDGE: "bg-orange-500/10 text-orange-400",
+    "11": "bg-accent/10 text-accent",
+    "12": "bg-secondary/10 text-secondary-light",
   };
   const getAnimationLabel = (key?: string | null) => chapterAnimationOptions.find((option) => option.key === key)?.label || "Auto by chapter name";
   const filteredLibraryChapters = allChapters.filter((chapter) => chapter.name.toLowerCase().includes(chapterSearch.toLowerCase()));
@@ -509,7 +511,7 @@ export default function AdminCoursesPage() {
               </div>
               <div><label className="block text-sm text-text-muted mb-1">Tier</label>
                 <select value={courseTier} onChange={(e) => setCourseTier(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-text focus:border-accent focus:outline-none">
-                  <option value="BRIDGE">Bridge</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option>
+                  <option value="11">Class 11</option><option value="12">Class 12</option><option value="BRIDGE">Bridge</option><option value="BASIC">Basic</option><option value="ADVANCE">Advance</option>
                 </select>
               </div>
               <div><label className="block text-sm text-text-muted mb-1">Display Order</label><Input type="number" value={courseOrder} onChange={(e) => setCourseOrder(parseInt(e.target.value) || 0)} /></div>

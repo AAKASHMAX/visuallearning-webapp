@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { getChapterAnimation } from "@/components/chapter-animations";
-import { useRequireAuth } from "@/lib/use-require-auth";
 
 interface Course {
   id: string;
@@ -54,6 +53,8 @@ const tierConfig: Record<string, { label: string; gradient: string; tagColor: st
   basic: { label: "Basic Course", gradient: "from-accent to-blue-600", tagColor: "bg-accent/10 text-accent" },
   advance: { label: "Advance Course", gradient: "from-secondary to-purple-600", tagColor: "bg-secondary/10 text-secondary-light" },
   bridge: { label: "Bridge Course", gradient: "from-orange-500 to-amber-600", tagColor: "bg-orange-500/10 text-orange-400" },
+  "11": { label: "Class 11 Physics", gradient: "from-accent to-blue-600", tagColor: "bg-accent/10 text-accent" },
+  "12": { label: "Class 12 Physics", gradient: "from-secondary to-purple-600", tagColor: "bg-secondary/10 text-secondary-light" },
 };
 
 // Map chapter names to icons
@@ -90,14 +91,11 @@ export default function TierCoursePage() {
   const params = useParams();
   const tier = (params.tier as string) || "free";
   const config = tierConfig[tier] || tierConfig.free;
-  const canViewCourses = useRequireAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!canViewCourses) return;
-
     async function fetchCourses() {
       try {
         const res = await api.get(`/courses/tier/${tier}`);
@@ -108,13 +106,11 @@ export default function TierCoursePage() {
       setLoading(false);
     }
     fetchCourses();
-  }, [tier, canViewCourses]);
+  }, [tier]);
 
   const allChapters = courses.flatMap((c) =>
     (c.chapters || []).map((ch) => ({ ...ch, courseName: c.name, courseId: c.id }))
   );
-
-  if (!canViewCourses) return null;
 
   return (
     <main className="min-h-screen bg-primary">
@@ -138,7 +134,9 @@ export default function TierCoursePage() {
             )}
           </h1>
           <p className="text-text-muted max-w-xl">
-            {tier === "free"
+            {tier === "11" || tier === "12"
+              ? "Animated chapters, notes, NCERT solutions, and practice for this class."
+              : tier === "free"
               ? "Start exploring physics with these free chapters. No subscription needed."
               : tier === "basic"
               ? "Complete animated video lectures, notes, and quizzes for every chapter."
