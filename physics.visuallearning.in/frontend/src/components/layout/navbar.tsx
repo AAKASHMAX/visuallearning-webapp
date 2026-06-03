@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/courses", label: "Courses", activePaths: ["/courses", "/course-details"] },
   { href: "/demo", label: "Demo", activePaths: ["/demo"] },
-  { href: "/subscription", label: "Pricing", activePaths: ["/subscription"] },
+  { href: "/pricing", label: "Pricing", activePaths: ["/pricing", "/subscription"] },
   { href: "/contact", label: "Contact Us", activePaths: ["/contact"] },
 ];
 

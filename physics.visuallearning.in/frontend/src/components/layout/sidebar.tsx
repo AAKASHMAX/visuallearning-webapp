@@ -11,7 +11,7 @@ import { BookOpen, PlayCircle, CreditCard, Phone, LayoutDashboard, User, LogOut,
 const links = [
   { href: "/courses", label: "Courses", icon: BookOpen, match: ["/courses", "/course-details"] },
   { href: "/demo", label: "Demo", icon: PlayCircle, match: ["/demo"] },
-  { href: "/subscription", label: "Pricing", icon: CreditCard, match: ["/subscription"] },
+  { href: "/pricing", label: "Pricing", icon: CreditCard, match: ["/pricing", "/subscription"] },
   { href: "/contact", label: "Contact", icon: Phone, match: ["/contact"] },
 ];
 
