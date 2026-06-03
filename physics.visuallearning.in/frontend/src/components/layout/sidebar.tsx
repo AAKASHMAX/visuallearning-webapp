@@ -8,12 +8,15 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { BookOpen, PlayCircle, CreditCard, Phone, LayoutDashboard, User, LogOut, LogIn } from "lucide-react";
 
-const links = [
+const publicLinks = [
   { href: "/courses", label: "Courses", icon: BookOpen, match: ["/courses", "/course-details"] },
   { href: "/demo", label: "Demo", icon: PlayCircle, match: ["/demo"] },
-  { href: "/pricing", label: "Pricing", icon: CreditCard, match: ["/pricing", "/subscription"] },
+  { href: "/pricing", label: "Subscription", icon: CreditCard, match: ["/pricing", "/subscription"] },
   { href: "/contact", label: "Contact", icon: Phone, match: ["/contact"] },
 ];
+
+const dashboardLink = { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, match: ["/dashboard"] };
+const profileLink = { href: "/profile", label: "Profile", icon: User, match: ["/profile"] };
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -29,6 +32,9 @@ export function Sidebar() {
         : "text-text-muted hover:bg-surface-light/70 hover:text-text-bright"
     );
 
+  // Order: Dashboard, Courses, Demo, Subscription, Contact, Profile
+  const navItems = isAuthenticated ? [dashboardLink, ...publicLinks, profileLink] : publicLinks;
+
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-50 w-64 flex-col border-r border-border bg-primary-dark/95 backdrop-blur-xl">
       <Link href="/" className="flex items-center gap-3 border-b border-border/60 px-5 py-[18px]">
@@ -40,7 +46,7 @@ export function Sidebar() {
       </Link>
 
       <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-5">
-        {links.map((l) => {
+        {navItems.map((l) => {
           const Icon = l.icon;
           return (
             <Link key={l.href} href={l.href} className={itemClass(isActive(l.match))}>
@@ -59,12 +65,6 @@ export function Sidebar() {
                 <LayoutDashboard className="h-4 w-4 shrink-0" />Admin Panel
               </Link>
             )}
-            <Link href="/dashboard" className={itemClass(isActive(["/dashboard"]))}>
-              <LayoutDashboard className="h-4 w-4 shrink-0" />Dashboard
-            </Link>
-            <Link href="/profile" className={itemClass(isActive(["/profile"]))}>
-              <User className="h-4 w-4 shrink-0" />Profile
-            </Link>
             <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-text-muted transition-all hover:bg-danger/10 hover:text-danger">
               <LogOut className="h-4 w-4 shrink-0" />Logout
             </button>
