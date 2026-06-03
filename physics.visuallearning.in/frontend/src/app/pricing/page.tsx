@@ -23,7 +23,7 @@ const isYearly = (p: Plan) => (p.durationDays || 0) >= 180;
 export default function PricingPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cycle, setCycle] = useState<"monthly" | "yearly">("yearly");
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
     api.get("/subscription/plans")
