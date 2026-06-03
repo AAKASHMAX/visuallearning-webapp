@@ -15,6 +15,11 @@ import {
   ChevronRight,
   FileText,
   X,
+  ZoomIn,
+  ZoomOut,
+  Download,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -116,6 +121,9 @@ export default function ContentViewerPage() {
   const [showResults, setShowResults] = useState(false);
 
   const notesRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,6 +206,49 @@ export default function ContentViewerPage() {
     })();
     return () => { cancelled = true; };
   }, [activeNote?.htmlContent]);
+
+  // Keep fullscreen state in sync with the native API.
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!viewerRef.current) return;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await viewerRef.current.requestFullscreen();
+    } catch {
+      setIsFullscreen((v) => !v);
+    }
+  };
+
+  function downloadNote(note: Note) {
+    if (note.fileUrl) {
+      window.open(note.fileUrl, "_blank", "noopener");
+      return;
+    }
+    if (!note.htmlContent) return;
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const delims = JSON.stringify([
+      { left: "$$", right: "$$", display: true },
+      { left: "$", right: "$", display: false },
+      { left: "\\(", right: "\\)", display: false },
+      { left: "\\[", right: "\\]", display: true },
+    ]);
+    w.document.write(
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + note.title + '</title>' +
+      '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">' +
+      '<style>' + (note.cssContent || "") + '</style></head><body>' + note.htmlContent +
+      '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"><\/script>' +
+      '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"><\/script>' +
+      '<script>window.addEventListener("load",function(){try{renderMathInElement(document.body,{delimiters:' + delims + ',throwOnError:false});}catch(e){}setTimeout(function(){window.print();},700);});<\/script>' +
+      '</body></html>'
+    );
+    w.document.close();
+  }
 
   if (loading) {
     return (
@@ -310,10 +361,20 @@ export default function ContentViewerPage() {
                   <Link href={`/subscription?plan=${tier.toUpperCase()}`}><Button>Subscribe Now</Button></Link>
                 </div>
               ) : activeNote.htmlContent ? (
-                <div className="relative h-[78vh] overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm">
-                  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
-                  {activeNote.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeNote.cssContent) }} />}
-                  <div ref={notesRef} className="physics-notes-viewer" dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+                <div ref={viewerRef} className={isFullscreen ? "fixed inset-0 z-[80] flex flex-col bg-primary p-3" : "relative"}>
+                  <div className="mb-2 flex items-center justify-end gap-1.5">
+                    <button onClick={() => setZoom((z) => Math.max(50, z - 10))} className="rounded-lg border border-border bg-card p-1.5 text-text-muted transition-colors hover:border-accent/40 hover:text-accent" aria-label="Zoom out"><ZoomOut className="h-4 w-4" /></button>
+                    <span className="w-11 text-center text-xs font-semibold text-text-muted">{zoom}%</span>
+                    <button onClick={() => setZoom((z) => Math.min(200, z + 10))} className="rounded-lg border border-border bg-card p-1.5 text-text-muted transition-colors hover:border-accent/40 hover:text-accent" aria-label="Zoom in"><ZoomIn className="h-4 w-4" /></button>
+                    <div className="mx-1 h-5 w-px bg-border" />
+                    <button onClick={() => downloadNote(activeNote)} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent"><Download className="h-3.5 w-3.5" /><span className="hidden sm:inline">PDF</span></button>
+                    <button onClick={toggleFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent">{isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span></button>
+                  </div>
+                  <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+                    {activeNote.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeNote.cssContent) }} />}
+                    <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100 } as React.CSSProperties} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+                  </div>
                 </div>
               ) : activeNote.fileUrl ? (
                 <div className="overflow-hidden rounded-2xl border border-border bg-slate-100">
