@@ -33,6 +33,8 @@ import {
   Flame,
   Sun,
   Radio,
+  BookMarked,
+  FileCheck,
 } from "lucide-react";
 import { DEMOS } from "./demo/_components/demo-list";
 
@@ -388,29 +390,36 @@ function FeaturesSection() {
       icon: Monitor,
       title: "3D Animated Videos",
       description:
-        "Watch complex physics concepts come alive with stunning 3D animations. Visualize electromagnetic waves, atomic structures, and more.",
+        "Watch complex physics concepts come alive with stunning 3D animations, in Hindi and English.",
       gradient: "from-accent to-blue-600",
     },
     {
-      icon: FlaskConical,
-      title: "Virtual Lab Experiments",
-      description:
-        "Conduct virtual physics experiments right in your browser. From optics to electricity - safe, interactive, and always available.",
-      gradient: "from-secondary to-purple-600",
-    },
-    {
       icon: BookOpen,
-      title: "Detailed Chapter Notes",
+      title: "Visual Notes",
       description:
-        "Download comprehensive PDF notes for every chapter. Revise formulas, derivations, and key concepts anytime.",
+        "Beautifully structured chapter notes with diagrams, derivations, and key takeaways for fast revision.",
       gradient: "from-emerald-500 to-teal-600",
     },
     {
-      icon: Target,
-      title: "MCQ Practice Quizzes",
+      icon: BookMarked,
+      title: "NCERT Solutions",
       description:
-        "Test your understanding with chapter-wise multiple choice quizzes. Get instant feedback and track your progress.",
-      gradient: "from-rose-500 to-pink-600",
+        "Step-by-step NCERT textbook solutions with exam tips and key insights for every question.",
+      gradient: "from-sky-500 to-cyan-600",
+    },
+    {
+      icon: FileCheck,
+      title: "PYQ Solutions",
+      description:
+        "Solved previous-year board questions with marking schemes and answer strategies.",
+      gradient: "from-orange-500 to-red-600",
+    },
+    {
+      icon: Target,
+      title: "Interactive Quiz",
+      description:
+        "Chapter-wise MCQ quizzes with instant feedback, scoring, and detailed solutions.",
+      gradient: "from-secondary to-purple-600",
     },
   ];
 
