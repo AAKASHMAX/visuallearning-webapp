@@ -39,9 +39,9 @@ export function Footer() {
               every concept click.
             </p>
             <div className="flex flex-col gap-2 text-sm text-text-muted">
-              <a href="mailto:support@visuallearning.in" className="flex items-center gap-2 hover:text-accent transition-colors">
+              <a href="mailto:visuallearning247@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
                 <Mail className="w-4 h-4" />
-                support@visuallearning.in
+                visuallearning247@gmail.com
               </a>
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
