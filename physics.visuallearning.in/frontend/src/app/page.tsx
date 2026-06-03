@@ -34,6 +34,7 @@ import {
   Sun,
   Radio,
 } from "lucide-react";
+import { DEMOS } from "./demo/_components/demo-list";
 
 /* ------------------------------------------------------------------ */
 /*  LANDING PAGE                                                       */
@@ -45,6 +46,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <StatsBar />
+      <DemoShowcase />
       <PhysicsCarousel />
       <FeaturesSection />
       <TopicsShowcase />
@@ -450,6 +452,61 @@ function FeaturesSection() {
               </p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  DEMO SHOWCASE                                                      */
+/* ------------------------------------------------------------------ */
+function DemoShowcase() {
+  return (
+    <section className="py-24 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span className="text-sm text-text-muted">No login required</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-text-bright mb-4">
+            Explore Interactive <span className="gradient-text">Demos</span>
+          </h2>
+          <p className="text-text-muted max-w-2xl mx-auto">
+            Try every feature with real Class 12 physics content — no sign-up needed.
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.map((demo) => {
+            const Icon = demo.icon;
+            return (
+              <Link
+                key={demo.href}
+                href={demo.href}
+                className="group rounded-2xl border border-border bg-card p-7 transition-all duration-500 hover:-translate-y-1 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5"
+              >
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${demo.gradient} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-bright mb-2">{demo.title}</h3>
+                <p className="text-text-muted text-sm leading-relaxed mb-4">{demo.description}</p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition-all group-hover:gap-2.5">
+                  Watch Demo
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+            );
+          })}
+
+          <Link
+            href="/demo"
+            className="group flex flex-col items-center justify-center rounded-2xl border border-dashed border-accent/30 bg-accent/5 p-7 text-center transition-all duration-500 hover:-translate-y-1 hover:border-accent/50"
+          >
+            <span className="text-base font-bold text-text-bright">Explore All Demos</span>
+            <ArrowRight className="mt-2 h-5 w-5 text-accent transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
     </section>
