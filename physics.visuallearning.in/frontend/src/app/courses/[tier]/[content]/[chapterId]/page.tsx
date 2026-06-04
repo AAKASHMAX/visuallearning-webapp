@@ -93,7 +93,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-primary">
       <Navbar />
-      <div className="pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="pt-20 pb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
       <Footer />
     </main>
   );
@@ -302,14 +302,14 @@ export default function ContentViewerPage() {
   return (
     <Shell>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-5">
+      <div className="flex items-center gap-3 mb-3">
         <Link href={`/courses/${tier}/${content}`} className="inline-flex items-center gap-1.5 text-text-muted hover:text-accent transition-colors shrink-0">
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm hidden sm:inline">Back</span>
         </Link>
-        <div className="rounded-xl border border-border bg-gradient-to-r from-accent/10 via-card to-secondary/10 px-4 py-2.5 flex-1 min-w-0">
-          <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">{label} · Class {tier}</p>
-          <h1 className="text-base sm:text-lg font-bold text-text-bright truncate">{chapterName}</h1>
+        <div className="flex items-baseline gap-2.5 rounded-xl border border-border bg-gradient-to-r from-accent/10 via-card to-secondary/10 px-3.5 py-1.5 flex-1 min-w-0">
+          <p className="text-[10px] text-accent font-semibold uppercase tracking-wider shrink-0">{label} · Class {tier}</p>
+          <h1 className="text-sm sm:text-base font-bold text-text-bright truncate">{chapterName}</h1>
         </div>
       </div>
 
@@ -400,13 +400,13 @@ export default function ContentViewerPage() {
                     <button onClick={() => downloadNote(activeNote)} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent"><Download className="h-3.5 w-3.5" /><span className="hidden sm:inline">PDF</span></button>
                     <button onClick={toggleFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent">{isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span></button>
                   </div>
-                  <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
+                  <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[calc(100vh-170px)] min-h-[420px]"}`}>
                     <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
                   </div>
                 </div>
               ) : activeNote.fileUrl ? (
                 <div className="overflow-hidden rounded-2xl border border-border bg-slate-100">
-                  <iframe src={activeNote.fileUrl} title={activeNote.title} className="w-full h-[78vh]" />
+                  <iframe src={activeNote.fileUrl} title={activeNote.title} className="w-full h-[calc(100vh-170px)] min-h-[420px]" />
                 </div>
               ) : (
                 <Empty icon={FileText} text="This note has no content yet." />
