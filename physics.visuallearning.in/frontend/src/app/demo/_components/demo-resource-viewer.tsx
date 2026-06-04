@@ -111,7 +111,30 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       try { (window as any).renderMathInElement(el, { delimiters: [{ left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }, { left: "\\(", right: "\\)", display: false }, { left: "\\[", right: "\\]", display: true }], throwOnError: false }); } catch {}
     })();
     return () => { cancelled = true; };
-  }, [activeNote?.htmlContent]);
+  }, [activeNote?.htmlContent, isFullscreen]);
+
+  // Inject the note's scoped CSS (and KaTeX CSS) into <head>. A <style> nested
+  // inside the viewer stops applying once the element enters the native
+  // fullscreen top layer (and stays broken after exit until a refresh), so we
+  // keep the note's stylesheet global where it always applies.
+  useEffect(() => {
+    if (!document.getElementById("katex-css")) {
+      const link = document.createElement("link");
+      link.id = "katex-css";
+      link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+      document.head.appendChild(link);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeNote?.cssContent) return;
+    const el = document.createElement("style");
+    el.setAttribute("data-physics-note-css", "");
+    el.textContent = scopeCSS(activeNote.cssContent);
+    document.head.appendChild(el);
+    return () => { el.remove(); };
+  }, [activeNote?.cssContent]);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -226,8 +249,6 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
               <button onClick={toggleFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:border-accent/40 hover:text-accent">{isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span></button>
             </div>
             <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
-              {activeNote.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeNote.cssContent) }} />}
               <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
             </div>
           </div>
