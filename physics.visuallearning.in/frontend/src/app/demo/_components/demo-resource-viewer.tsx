@@ -216,7 +216,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       )}
       <div className="min-w-0 flex-1">
         {!activeNote ? <StateBox icon={FileText} text="Select a note." /> : activeNote.htmlContent ? (
-          <div ref={viewerRef} className={isFullscreen ? "fixed inset-0 z-[80] flex flex-col bg-primary p-3" : "relative"}>
+          <div ref={viewerRef} className={isFullscreen ? "fixed inset-0 z-[80] flex flex-col overflow-auto bg-white p-3 sm:p-4" : "relative"}>
             <div className="mb-2 flex items-center justify-end gap-1.5">
               <button onClick={() => setZoom((z) => Math.max(50, z - 10))} className="rounded-lg border border-border bg-card p-1.5 text-text-muted hover:border-accent/40 hover:text-accent" aria-label="Zoom out"><ZoomOut className="h-4 w-4" /></button>
               <span className="w-11 text-center text-xs font-semibold text-text-muted">{zoom}%</span>

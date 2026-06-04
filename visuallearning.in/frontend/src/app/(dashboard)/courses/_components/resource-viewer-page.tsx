@@ -137,7 +137,7 @@ function filterDocuments(kind: ResourceKind, documents: ViewerDocument[]) {
 
   if (kind === "notes") {
     const cleanNotes = documents.filter(
-      (doc) => !hasSignal(doc, ["ppt", "pptx", "presentation", "slide", "question bank", "important question", "test paper", "pyq", "previous year"])
+      (doc) => !hasSignal(doc, ["ppt", "pptx", "presentation", "slide", "question bank", "important question", "test paper", "pyq", "previous year", "ncert"])
     );
     return cleanNotes.length > 0 ? cleanNotes : documents;
   }
