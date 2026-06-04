@@ -334,3 +334,17 @@ body {
   background-image: radial-gradient(circle, rgba(0, 212, 255, 0.15) 1px, transparent 1px);
   background-size: 30px 30px;
 }
+
+/*
+ * HTML notes are light documents (white sheet, dark ink) embedded inside the
+ * dark app. Their own styling is injected via a scoped <style>, but that does
+ * not reliably apply once the viewer enters the native fullscreen top layer,
+ * so the dark theme's light body text shows through and becomes invisible on
+ * the white page. Defining the document's base background + text colour here
+ * (a global stylesheet, which DOES apply in the top layer) keeps notes
+ * readable in both normal and fullscreen modes without touching the dark theme.
+ */
+.physics-notes-viewer {
+  background-color: #ffffff;
+  color: #1f2937;
+}

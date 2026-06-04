@@ -46,7 +46,7 @@ function scopeCSS(css: string): string {
   const m = css.match(/:root\s*\{([^}]+)\}/);
   const root = m ? `:root{${m[1]}}` : "";
   const rest = m ? css.replace(/:root\s*\{[^}]+\}/, "") : css;
-  return `${root}\n.physics-notes-viewer{color:#1f2937;}\n.physics-notes-viewer{${rest}}`;
+  return `${root}\n.physics-notes-viewer{${rest}}`;
 }
 
 function StateBox({ icon: Icon, text }: { icon: any; text: string }) {
@@ -216,7 +216,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       )}
       <div className="min-w-0 flex-1">
         {!activeNote ? <StateBox icon={FileText} text="Select a note." /> : activeNote.htmlContent ? (
-          <div ref={viewerRef} className={isFullscreen ? "fixed inset-0 z-[80] flex flex-col overflow-auto bg-white p-3 sm:p-4" : "relative"}>
+          <div ref={viewerRef} className={isFullscreen ? "fixed inset-0 z-[80] flex flex-col bg-primary p-3" : "relative"}>
             <div className="mb-2 flex items-center justify-end gap-1.5">
               <button onClick={() => setZoom((z) => Math.max(50, z - 10))} className="rounded-lg border border-border bg-card p-1.5 text-text-muted hover:border-accent/40 hover:text-accent" aria-label="Zoom out"><ZoomOut className="h-4 w-4" /></button>
               <span className="w-11 text-center text-xs font-semibold text-text-muted">{zoom}%</span>
@@ -228,7 +228,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
             <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
               <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
               {activeNote.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeNote.cssContent) }} />}
-              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100, color: "#1f2937", backgroundColor: "#ffffff", minHeight: "100%" } as React.CSSProperties} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
             </div>
           </div>
         ) : <StateBox icon={FileText} text="This note has no content yet." />}
