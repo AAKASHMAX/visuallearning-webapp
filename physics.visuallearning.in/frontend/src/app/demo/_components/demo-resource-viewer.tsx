@@ -228,7 +228,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
             <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
               <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
               {activeNote.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeNote.cssContent) }} />}
-              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100, color: "#1f2937" } as React.CSSProperties} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100, color: "#1f2937", backgroundColor: "#ffffff", minHeight: "100%" } as React.CSSProperties} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
             </div>
           </div>
         ) : <StateBox icon={FileText} text="This note has no content yet." />}
