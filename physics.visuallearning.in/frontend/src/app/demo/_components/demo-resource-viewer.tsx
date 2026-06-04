@@ -111,7 +111,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       try { (window as any).renderMathInElement(el, { delimiters: [{ left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }, { left: "\\(", right: "\\)", display: false }, { left: "\\[", right: "\\]", display: true }], throwOnError: false }); } catch {}
     })();
     return () => { cancelled = true; };
-  }, [activeNote?.htmlContent, isFullscreen]);
+  }, [activeNote?.htmlContent, isFullscreen, zoom]);
 
   // Inject the note's scoped CSS (and KaTeX CSS) into <head>. A <style> nested
   // inside the viewer stops applying once the element enters the native

@@ -212,7 +212,7 @@ export default function ContentViewerPage() {
       } catch {}
     })();
     return () => { cancelled = true; };
-  }, [activeNote?.htmlContent, isFullscreen]);
+  }, [activeNote?.htmlContent, isFullscreen, zoom]);
 
   // Inject the note's scoped CSS (and KaTeX CSS) into <head>. A <style> nested
   // inside the viewer stops applying once the element enters the native
