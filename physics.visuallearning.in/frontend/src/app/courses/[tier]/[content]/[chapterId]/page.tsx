@@ -86,7 +86,9 @@ function scopeCSS(css: string): string {
   const rootMatch = css.match(/:root\s*\{([^}]+)\}/);
   const rootVars = rootMatch ? `:root{${rootMatch[1]}}` : "";
   const rest = rootMatch ? css.replace(/:root\s*\{[^}]+\}/, "") : css;
-  return `${rootVars}\n.physics-notes-viewer{${rest}}`;
+  // Notes are authored for a light page; force a dark default so text the note
+  // doesn't explicitly colour stays readable on the light note sheet.
+  return `${rootVars}\n.physics-notes-viewer{color:#1f2937;}\n.physics-notes-viewer{${rest}}`;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {

@@ -46,7 +46,7 @@ function scopeCSS(css: string): string {
   const m = css.match(/:root\s*\{([^}]+)\}/);
   const root = m ? `:root{${m[1]}}` : "";
   const rest = m ? css.replace(/:root\s*\{[^}]+\}/, "") : css;
-  return `${root}\n.physics-notes-viewer{${rest}}`;
+  return `${root}\n.physics-notes-viewer{color:#1f2937;}\n.physics-notes-viewer{${rest}}`;
 }
 
 function StateBox({ icon: Icon, text }: { icon: any; text: string }) {
