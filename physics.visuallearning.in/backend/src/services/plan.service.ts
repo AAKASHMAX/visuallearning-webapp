@@ -130,9 +130,15 @@ export async function getPlanByCode(prisma: PrismaClient, code: string) {
   await ensureDefaultPlans(prisma);
   const normalizedCode = code.trim().toUpperCase();
   const baseCode = normalizedCode.replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
+  // Always resolve the EXACT requested billing cycle first. A monthly code
+  // must never fall back to the yearly plan (that overcharged customers:
+  // CLASS_11_MONTHLY ₹499 was billed as CLASS_11_YEARLY ₹1999). Bare/legacy
+  // base codes default to the cheaper monthly plan, never the yearly one.
   const candidates = normalizedCode.endsWith("_YEARLY")
     ? [normalizedCode, `${baseCode}_YEARLY`]
-    : [`${baseCode}_YEARLY`, normalizedCode, `${baseCode}_MONTHLY`, baseCode];
+    : normalizedCode.endsWith("_MONTHLY")
+      ? [normalizedCode, `${baseCode}_MONTHLY`]
+      : [baseCode, `${baseCode}_MONTHLY`, `${baseCode}_YEARLY`];
 
   for (const candidate of Array.from(new Set(candidates))) {
     const plan = await prisma.subscriptionPlan.findUnique({

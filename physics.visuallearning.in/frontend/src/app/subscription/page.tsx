@@ -108,10 +108,12 @@ function SubscriptionContent() {
         setRazorpayKeyId(paymentConfigRes.data?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
 
         const requestedPlan = requestedPlanParam?.toUpperCase().replace(/-/g, "_");
-        const requestedBasePlan = requestedPlan?.replace(/_YEARLY$/, "");
-        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === `${requestedBasePlan}_YEARLY`)
-          || activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
-          || activePlans.find((plan: PlanItem) => plan.code.replace(/_YEARLY$/, "") === requestedBasePlan);
+        const requestedBasePlan = requestedPlan?.replace(/_(YEARLY|MONTHLY)$/, "");
+        // Match the EXACT requested billing cycle first so the checkout shows
+        // (and bills) the plan the user picked. Bare codes default to monthly.
+        const matchingPlan = activePlans.find((plan: PlanItem) => plan.code === requestedPlan)
+          || activePlans.find((plan: PlanItem) => plan.code === `${requestedBasePlan}_MONTHLY`)
+          || activePlans.find((plan: PlanItem) => plan.code === `${requestedBasePlan}_YEARLY`);
         setSelectedPlan(matchingPlan?.code || "");
       } catch {
         toast.error("Failed to load subscription plans");
