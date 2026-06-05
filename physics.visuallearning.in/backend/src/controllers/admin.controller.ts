@@ -480,12 +480,10 @@ export async function grantSubscription(req: AuthRequest, res: Response) {
 export async function getSubscriptionPlans(req: AuthRequest, res: Response) {
   try {
     await ensureDefaultPlans(prisma);
+    // Surface every real plan (monthly AND yearly) so the admin can manage them.
     const plans = await prisma.subscriptionPlan.findMany({
-      where: {
-        code: { not: "FREE" },
-        OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
-      },
-      orderBy: { displayOrder: "asc" },
+      where: { code: { not: "FREE" } },
+      orderBy: [{ displayOrder: "asc" }, { price: "asc" }],
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
     });
     res.json(plans.map((plan) => ({
@@ -531,26 +529,28 @@ export async function createSubscriptionPlan(req: AuthRequest, res: Response) {
 
 export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
   try {
-    const { code, name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
-    const baseCode = String(code || name || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").replace(/_YEARLY$/, "").replace(/_MONTHLY$/, "");
-    if (!baseCode || !name) return res.status(400).json({ message: "Plan code and name are required" });
+    const { name, description, price, durationDays, features, freeOfferEnabled, freeOfferUntil, isActive, displayOrder, courseIds } = req.body;
+    const existing = await prisma.subscriptionPlan.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ message: "Plan not found" });
+    if (name !== undefined && !String(name).trim()) return res.status(400).json({ message: "Plan name is required" });
     const plan = await prisma.subscriptionPlan.update({
       where: { id: req.params.id },
       data: {
-        code: `${baseCode}_YEARLY`,
-        name,
-        description,
-        price,
-        durationDays: Math.max(Number(durationDays) || YEARLY_PLAN_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS),
-        features: Array.isArray(features) ? features : [],
-        freeOfferEnabled,
-        freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : null,
-        isActive,
-        displayOrder,
-        courses: {
-          deleteMany: {},
-          create: (courseIds || []).map((courseId: string) => ({ courseId })),
-        },
+        // The plan code (and therefore its monthly/yearly billing cycle) is
+        // preserved on edit, so a monthly plan can never silently become yearly.
+        name: name ?? existing.name,
+        description: description ?? existing.description,
+        price: price ?? existing.price,
+        durationDays: Number(durationDays) > 0 ? Number(durationDays) : existing.durationDays,
+        features: Array.isArray(features) ? features : (existing.features as any),
+        freeOfferEnabled: freeOfferEnabled ?? existing.freeOfferEnabled,
+        freeOfferUntil: freeOfferUntil ? new Date(freeOfferUntil) : (freeOfferUntil === null ? null : existing.freeOfferUntil),
+        isActive: isActive ?? existing.isActive,
+        displayOrder: displayOrder ?? existing.displayOrder,
+        // Only touch course assignments when explicitly provided.
+        ...(Array.isArray(courseIds)
+          ? { courses: { deleteMany: {}, create: courseIds.map((courseId: string) => ({ courseId })) } }
+          : {}),
       },
     });
     clearSubscriptionPlanCache();
