@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
-import { FeedbackPopup } from "@/components/layout/feedback-popup";
-import { FloatingContact } from "@/components/layout/floating-contact";
 import { Sidebar } from "@/components/layout/sidebar";
+import { SiteMain, SiteWidgets } from "@/components/layout/site-shell";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
@@ -53,9 +52,8 @@ export default function RootLayout({
       <body className="antialiased">
         {process.env.NEXT_PUBLIC_GA_ID && <AnalyticsTracker gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         <Sidebar />
-        <div className="lg:pl-64">{children}</div>
-        <FeedbackPopup />
-        <FloatingContact />
+        <SiteMain>{children}</SiteMain>
+        <SiteWidgets />
         <Toaster
           position="top-right"
           toastOptions={{

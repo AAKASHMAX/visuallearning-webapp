@@ -24,6 +24,9 @@ export function Sidebar() {
   const { isAuthenticated, user, logout, hydrate } = useAuth();
   useEffect(() => { hydrate(); }, [hydrate]);
 
+  // The admin section has its own sidebar/layout; don't render the public one there.
+  if (pathname.startsWith("/admin")) return null;
+
   const isActive = (match: string[]) => match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const itemClass = (active: boolean) =>
     cn(
