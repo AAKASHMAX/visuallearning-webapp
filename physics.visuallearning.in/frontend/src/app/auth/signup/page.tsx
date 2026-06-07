@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Atom, Mail, Lock, User, Eye, EyeOff, ArrowRight, Phone } from "lucide-react";
+import { Atom, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
@@ -15,31 +15,31 @@ export default function SignupPage() {
   const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const phoneDigits = phone.replace(/\D/g, "");
 
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       toast.error("Please fill all fields");
-      return;
-    }
-    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
-      toast.error("Enter a valid mobile number");
       return;
     }
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
     setLoading(true);
     try {
-      const res = await api.post("/auth/signup", { name, email, phone: phone.trim(), password });
+      const res = await api.post("/auth/signup", { name, email, password });
       login(res.data.user, res.data.token);
       toast.success("Account created. Welcome!");
       router.push("/");
@@ -139,22 +139,6 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm text-text-muted mb-2">Mobile Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="+91 9876543210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-11"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
               <label className="block text-sm text-text-muted mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -172,6 +156,28 @@ export default function SignupPage() {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-accent transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-text-muted mb-2">Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <Input
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-11 pr-11"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-accent transition-colors"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>

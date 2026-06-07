@@ -19,13 +19,14 @@ function generateToken(user: { id: string; email: string; role: string; name: st
 export async function signup(req: AuthRequest, res: Response) {
   try {
     const { name, email, password } = req.body;
+    // Phone is optional now; validate only if one is supplied.
     const phone = String(req.body.phone || req.body.mobile || "").trim();
     const phoneDigits = phone.replace(/\D/g, "");
 
-    if (!name || !email || !phone || !password) {
-      return res.status(400).json({ message: "Name, email, mobile number, and password are required" });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
     }
-    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+    if (phone && (phoneDigits.length < 10 || phoneDigits.length > 15)) {
       return res.status(400).json({ message: "Enter a valid mobile number" });
     }
     if (password.length < 6) {
