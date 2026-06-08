@@ -17,7 +17,9 @@ export default function VirtualLabGamePage() {
   const game = virtualLabGames.find((g) => g.slug === slug);
 
   useEffect(() => {
-    if (!user) return;
+    // Logged-out visitors are treated as not subscribed and sent to the
+    // subscription page (which prompts login/subscribe) rather than a blank screen.
+    if (!user) { setChecked(true); return; }
     if (user.role === "ADMIN") {
       setIsSubscribed(true);
       setChecked(true);
