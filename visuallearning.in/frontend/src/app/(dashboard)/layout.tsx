@@ -15,7 +15,7 @@ const ALWAYS_GATED = ["/courses/custom-plan", "/courses/my-custom-plan"];
 
 function isPublicPath(pathname: string) {
   if (ALWAYS_GATED.some((p) => pathname === p || pathname.startsWith(p + "/"))) return false;
-  return pathname.startsWith("/courses") || pathname.startsWith("/course-details");
+  return pathname.startsWith("/courses") || pathname.startsWith("/course-details") || pathname.startsWith("/pricing");
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
