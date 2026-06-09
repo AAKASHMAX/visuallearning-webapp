@@ -1,256 +1,125 @@
 "use client";
-
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  Check,
-  Crown,
-  GraduationCap,
-  Play,
-  Sparkles,
-  Star,
-  UsersRound,
-  X,
-} from "lucide-react";
+import { PageLoader } from "@/components/ui/loading";
+import api from "@/lib/api";
+import { Check, GraduationCap, Layers, Crown, Sparkles, type LucideIcon } from "lucide-react";
 
-const allFeatures = [
-  "3D animated video 9th - 12th",
-  "Visual notes",
-  "PPTs (Advanced)",
-  "NCERT Solution (Advanced)",
-  "PYQ Solution (Advanced)",
-  "Quiz",
-  "Download (Notes, NCERT Solution, PYQs)",
-];
+type BillingCycle = "monthly" | "yearly";
 
-// Features that have a live demo page.
-const demoLinks: Record<string, string> = {
-  "3D animated video 9th - 12th": "/demo/video",
-  "Visual notes": "/demo/visual-notes",
-  "PPTs (Advanced)": "/demo/ppt",
-  "NCERT Solution (Advanced)": "/demo/ncert-solution",
-  "PYQ Solution (Advanced)": "/demo/pyq",
-  "Quiz": "/demo/quiz",
+interface Plan {
+  id: string;
+  name: string;
+  monthlyPrice?: number;
+  yearlyPrice?: number;
+  features?: string[];
+  classSelection?: number;
+}
+
+const PLAN_ORDER = ["SINGLE_CLASS", "DUAL_CLASS", "FULL_ACCESS"];
+
+const PLAN_META: Record<string, { tagline: string; icon: LucideIcon; gradient: string; popular?: boolean }> = {
+  SINGLE_CLASS: { tagline: "Pick any 1 class", icon: GraduationCap, gradient: "from-sky-500 to-cyan-500" },
+  DUAL_CLASS: { tagline: "Pick any 2 classes", icon: Layers, gradient: "from-violet-500 to-purple-600", popular: true },
+  FULL_ACCESS: { tagline: "All 4 classes (9–12)", icon: Crown, gradient: "from-amber-500 to-orange-600" },
 };
 
-const plans = [
-  {
-    title: "Students",
-    subtitle: "Class 9-12 science learning with animated chapters, notes, quiz, and more.",
-    href: "/courses/students",
-    icon: GraduationCap,
-    gradient: "from-sky-600 to-sky-700",
-    btnGradient: "from-sky-600 to-sky-700",
-    accentText: "text-sky-600",
-    accentBg: "bg-sky-50",
-    glowColor: "shadow-sky-500/20",
-    ringColor: "ring-sky-100",
-    included: new Set([
-      "3D animated video 9th - 12th",
-      "Visual notes",
-      "NCERT Solution (Advanced)",
-      "PYQ Solution (Advanced)",
-      "Quiz",
-      "Download (Notes, NCERT Solution, PYQs)",
-      "Email support",
-    ]),
-  },
-  {
-    title: "Teachers",
-    subtitle: "Teaching resources with videos, notes, PPTs, and test papers.",
-    href: "/courses/teachers",
-    icon: UsersRound,
-    gradient: "from-emerald-600 to-emerald-700",
-    btnGradient: "from-emerald-600 to-emerald-700",
-    accentText: "text-emerald-600",
-    accentBg: "bg-emerald-50",
-    glowColor: "shadow-emerald-500/20",
-    ringColor: "ring-emerald-100",
-    popular: true,
-    included: new Set([
-      "3D animated video 9th - 12th",
-      "Visual notes",
-      "PPTs (Advanced)",
-      "NCERT Solution (Advanced)",
-      "PYQ Solution (Advanced)",
-      "Quiz",
-      "Download (Notes, NCERT Solution, PYQs)",
-      "Email support",
-      "Direct call support",
-      "Content on demand (Notes, PPT, PYQs, Test Paper)",
-    ]),
-  },
-  {
-    title: "Professionals",
-    subtitle: "Advanced subject tracks with PPTs, labs, and company collaboration.",
-    href: "/courses/professional",
-    icon: BriefcaseBusiness,
-    gradient: "from-violet-600 to-violet-700",
-    btnGradient: "from-violet-600 to-violet-700",
-    accentText: "text-violet-600",
-    accentBg: "bg-violet-50",
-    glowColor: "shadow-violet-500/20",
-    ringColor: "ring-violet-100",
-    included: new Set([
-      "3D animated video subject wise",
-      "Visual notes",
-      "PPTs (Advanced)",
-      "NCERT Solution (Advanced)",
-      "PYQ Solution (Advanced)",
-      "Quiz",
-      "Download (Notes, NCERT Solution, PYQs)",
-      "Email support",
-      "Direct call support",
-      "Content on demand (Notes, PPT, PYQs, Test Paper)",
-      "Collaborate with company",
-    ]),
-  },
-];
-
-function getFeatureLabel(feature: string, planTitle: string) {
-  if (feature === "3D animated video 9th - 12th" && planTitle === "Professionals") {
-    return "3D animated video subject wise";
-  }
-  return feature;
-}
-
-function isIncluded(feature: string, plan: (typeof plans)[number]) {
-  if (feature === "3D animated video 9th - 12th" && plan.title === "Professionals") {
-    return plan.included.has("3D animated video subject wise");
-  }
-  return plan.included.has(feature);
-}
-
-export default function CoursesPage() {
+export default function PricingPage() {
   const router = useRouter();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [cycle, setCycle] = useState<BillingCycle>("yearly");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/subscription/plans").then(({ data }) => {
+      setPlans(data.data?.plans || []);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const ordered = useMemo(
+    () => PLAN_ORDER.map((id) => plans.find((p) => p.id === id)).filter(Boolean) as Plan[],
+    [plans]
+  );
+
+  if (loading) return <PageLoader />;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-12 flex flex-col items-center gap-4 text-center">
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mb-8 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-4 py-1.5 text-xs font-black uppercase tracking-wider text-primary shadow-sm">
-          <Sparkles className="h-3.5 w-3.5" />
-          VisualLearning Courses
+          <Sparkles className="h-3.5 w-3.5" /> Plans &amp; Pricing
         </div>
-        <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl lg:text-5xl">
-          Choose Your Learning Path
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-          Pick the plan that suits you best. Tap <span className="font-bold text-primary">Watch demo</span> on any feature to preview it &mdash; no login required.
+        <h1 className="mt-4 text-3xl font-black tracking-tight text-heading sm:text-4xl">Choose your plan</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-text-muted sm:text-base">
+          Pick a single class, any two, or unlock everything. You choose exactly which classes at checkout.
         </p>
-      </div>
 
-      {/* Plan cards */}
-      <div className="grid items-start gap-6 lg:grid-cols-3">
-        {plans.map((plan) => {
-          const includedCount = allFeatures.filter((f) => isIncluded(f, plan)).length;
-          return (
-            <div
-              key={plan.title}
-              role="link"
-              tabIndex={0}
-              onClick={() => router.push(plan.href)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") router.push(plan.href);
-              }}
-              className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 ${
-                plan.popular
-                  ? `ring-2 ring-emerald-400/70 shadow-2xl ${plan.glowColor} lg:-translate-y-2 lg:scale-[1.03]`
-                  : "ring-1 ring-gray-100 shadow-md hover:shadow-2xl"
-              }`}
+        {/* Billing toggle */}
+        <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+          {(["monthly", "yearly"] as BillingCycle[]).map((c) => (
+            <button
+              key={c}
+              onClick={() => setCycle(c)}
+              className={`rounded-full px-5 py-2 text-sm font-bold capitalize transition-all ${cycle === c ? "bg-primary text-white" : "text-text-muted hover:text-heading"}`}
             >
-              {/* Popular ribbon */}
-              {plan.popular && (
-                <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 py-1.5 text-[10px] font-black uppercase tracking-widest text-white">
-                  <Crown className="h-3 w-3" />
-                  Most Popular
-                </div>
-              )}
-
-              {/* Gradient header */}
-              <div
-                className={`relative overflow-hidden bg-gradient-to-br ${plan.gradient} px-6 pb-7 ${plan.popular ? "pt-10" : "pt-7"}`}
-              >
-                <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
-                <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-white/10" />
-
-                <div className="relative flex items-start justify-between">
-                  <div className="min-w-0">
-                    <h2 className="text-2xl font-black text-white">{plan.title}</h2>
-                    <p className="mt-1.5 max-w-[230px] text-xs leading-relaxed text-white/80">
-                      {plan.subtitle}
-                    </p>
-                  </div>
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-transform group-hover:scale-110 group-hover:rotate-3">
-                    <plan.icon className="h-7 w-7" />
-                  </div>
-                </div>
-
-                <div className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
-                  <Star className="h-3 w-3" />
-                  {includedCount} of {allFeatures.length} features
-                </div>
-              </div>
-
-              {/* Features list */}
-              <div className="flex flex-1 flex-col px-5 pb-6 pt-4">
-                <div className="flex flex-1 flex-col gap-2">
-                  {allFeatures.map((feature) => {
-                    const included = isIncluded(feature, plan);
-                    const label = getFeatureLabel(feature, plan.title);
-                    const demoHref = demoLinks[feature];
-                    return (
-                      <div
-                        key={feature}
-                        className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 ${
-                          included ? "border-gray-100 bg-gray-50/70" : "border-gray-50 bg-white opacity-60"
-                        }`}
-                      >
-                        {included ? (
-                          <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${plan.accentBg}`}>
-                            <Check className={`h-3 w-3 ${plan.accentText}`} strokeWidth={3} />
-                          </div>
-                        ) : (
-                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                            <X className="h-3 w-3 text-gray-400" strokeWidth={3} />
-                          </div>
-                        )}
-                        <span
-                          className={`flex-1 text-[13px] leading-snug ${
-                            included ? "font-medium text-gray-700" : "font-normal text-gray-400 line-through"
-                          }`}
-                        >
-                          {label}
-                        </span>
-                        {included && demoHref && (
-                          <Link
-                            href={demoHref}
-                            onClick={(e) => e.stopPropagation()}
-                            className={`inline-flex shrink-0 items-center gap-0.5 text-[9px] font-bold ${plan.accentText} transition-all hover:gap-1 hover:underline`}
-                          >
-                            <Play className="h-2 w-2 fill-current" />
-                            Watch demo
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* CTA button */}
-                <div
-                  className={`mt-6 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${plan.btnGradient} px-5 py-3.5 text-sm font-bold text-white shadow-lg ${plan.glowColor} transition-all group-hover:gap-3 group-hover:shadow-xl`}
-                >
-                  Explore {plan.title}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              {c}
+              {c === "yearly" && <span className="ml-1.5 text-[10px] font-black text-emerald-500">Save</span>}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {ordered.length === 0 ? (
+        <div className="rounded-2xl bg-white p-10 text-center text-text-muted shadow-sm">No plans available right now.</div>
+      ) : (
+        <div className="grid items-start gap-6 lg:grid-cols-3">
+          {ordered.map((plan) => {
+            const meta = PLAN_META[plan.id] || PLAN_META.SINGLE_CLASS;
+            const Icon = meta.icon;
+            const price = cycle === "monthly" ? plan.monthlyPrice || 0 : plan.yearlyPrice || 0;
+            return (
+              <div
+                key={plan.id}
+                className={`relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 ${meta.popular ? "ring-2 ring-primary" : "border border-gray-100"}`}
+              >
+                {meta.popular && (
+                  <span className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-primary">Popular</span>
+                )}
+                <div className={`bg-gradient-to-br ${meta.gradient} px-6 py-6 text-white`}>
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white/20">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-black">{plan.name}</h3>
+                  <p className="mt-0.5 text-sm text-white/80">{meta.tagline}</p>
+                </div>
+
+                <div className="flex flex-1 flex-col p-6">
+                  <div className="mb-5">
+                    <span className="text-3xl font-black text-heading">₹{price.toLocaleString("en-IN")}</span>
+                    <span className="text-sm font-medium text-text-muted">/{cycle === "monthly" ? "month" : "year"}</span>
+                  </div>
+
+                  <ul className="mb-6 space-y-2.5">
+                    {(plan.features || []).map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-text-muted">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={() => router.push(`/subscription?plan=${plan.id}&billing=${cycle}`)}
+                    className={`mt-auto w-full rounded-xl bg-gradient-to-r py-3 text-sm font-black text-white transition-all hover:opacity-90 ${meta.gradient}`}
+                  >
+                    Choose {plan.name}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
