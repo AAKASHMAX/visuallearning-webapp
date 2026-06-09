@@ -454,13 +454,21 @@ export async function searchVideos(req: Request, res: Response) {
   }
 }
 
-// GET /api/organization — static org info
+// GET /api/organization — contact info from the admin-editable contact_info
+// setting (same source the website uses), with sensible fallbacks.
 export async function getOrganization(_req: Request, res: Response) {
+  let info: any = {};
+  try {
+    const setting = await prisma.setting.findUnique({ where: { key: "contact_info" } });
+    if (setting) info = JSON.parse(setting.value);
+  } catch {
+    info = {};
+  }
   return mobileSuccess(res, {
-    name: "Visual Learning",
-    email: "visuallearning247@gmail.com",
-    phone: "",
+    name: info.companyName || "Visual Learning",
+    email: info.email || "visuallearning247@gmail.com",
+    phone: info.phone || "",
     website: "https://visuallearning.in",
-    address: "",
+    address: info.address || "",
   });
 }

@@ -6,11 +6,34 @@ import { mobileSuccess, mobileError } from "../utils/response";
 
 // Feature list per plan type (same as webapp)
 const featureMap: Record<string, string[]> = {
+  SINGLE_CLASS: ["Access any 1 class (9-12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
+  DUAL_CLASS: ["Access any 2 classes (9-12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
+  FULL_ACCESS: ["All 4 classes (9, 10, 11, 12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Priority support"],
   FOUNDATION_PASS: ["Selected chapters", "Animated concept videos", "Progress tracking", "Mobile and desktop access"],
   ACADEMIC_PLUS: ["Class 9-10 science", "Selected senior content", "Chapter notes", "MCQ quizzes", "Performance analytics"],
   ELITE_LEARNING: ["Full 9-12 science", "Virtual labs", "3D visual learning", "Board exam practice", "Priority support"],
   FLEXI_PLAN: ["Choose your own subjects", "Animated videos", "Chapter notes", "MCQ quizzes", "Flexible pricing"],
 };
+
+// Canonical class-count plans (same as the webapp). Admin price edits stored in
+// the plans_config setting override these per key.
+const CLASS_PLANS: Record<string, any> = {
+  SINGLE_CLASS: { monthlyAmount: 19900, yearlyAmount: 149900, label: "Single Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 1 },
+  DUAL_CLASS: { monthlyAmount: 34900, yearlyAmount: 249900, label: "Dual Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 2 },
+  FULL_ACCESS: { monthlyAmount: 49900, yearlyAmount: 349900, label: "Full Access", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+};
+const CLASS_PLAN_ORDER = ["SINGLE_CLASS", "DUAL_CLASS", "FULL_ACCESS"];
+
+async function resolveClassPlans(): Promise<Record<string, any>> {
+  const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
+  let saved: Record<string, any> = {};
+  try { saved = setting ? JSON.parse(setting.value) : {}; } catch { saved = {}; }
+  const merged: Record<string, any> = {};
+  for (const key of CLASS_PLAN_ORDER) {
+    merged[key] = { ...CLASS_PLANS[key], ...(saved[key] || {}) };
+  }
+  return merged;
+}
 
 // Helper: validate coupon code, optionally checking if it applies to a specific plan
 async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
@@ -31,6 +54,9 @@ async function validateCoupon(code: string, planKey?: string): Promise<{ valid: 
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string): Promise<{ monthlyAmount: number; yearlyAmount: number; durationMonthly: number; durationYearly: number; label: string; classSelection: number; amount?: number; duration?: number }> {
+  // Class-count plans (Single/Dual/Full) resolve first, with admin overrides.
+  const classPlans = await resolveClassPlans();
+  if (classPlans[planKey]) return classPlans[planKey];
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
   if (setting) {
     const plans = JSON.parse(setting.value);
@@ -53,32 +79,25 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
   try {
     const classes = await prisma.class.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } });
 
-    const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-    let plansConfig: Record<string, any> = {};
-
-    if (setting) {
-      plansConfig = JSON.parse(setting.value);
-    } else {
-      plansConfig = {
-        FOUNDATION_PASS: { monthlyAmount: config.plans.FOUNDATION_PASS.monthlyAmount, yearlyAmount: config.plans.FOUNDATION_PASS.yearlyAmount, label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        ACADEMIC_PLUS:   { monthlyAmount: config.plans.ACADEMIC_PLUS.monthlyAmount, yearlyAmount: config.plans.ACADEMIC_PLUS.yearlyAmount, label: "Academic Plus", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        ELITE_LEARNING:  { monthlyAmount: config.plans.ELITE_LEARNING.monthlyAmount, yearlyAmount: config.plans.ELITE_LEARNING.yearlyAmount, label: "Elite Learning", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-        FLEXI_PLAN:      { monthlyAmount: config.plans.FLEXI_PLAN.monthlyAmount, yearlyAmount: config.plans.FLEXI_PLAN.yearlyAmount, label: "FlexiLearn", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-      };
-    }
-
-    const plans = Object.entries(plansConfig)
-      .filter(([_, v]: [string, any]) => v.enabled)
-      .map(([key, v]: [string, any]) => ({
-        id: key,
-        name: v.label,
-        price: (v.yearlyAmount !== undefined ? v.yearlyAmount : (v.amount || 0)) / 100,
-        duration: v.durationYearly !== undefined ? v.durationYearly : (v.duration || 365),
-        billingCycle: v.billingCycle || "yearly",
-        features: featureMap[key] || [],
-        classSelection: v.classSelection || 0,
-        popular: key === "ELITE_LEARNING",
-      }));
+    // Only the three class-count plans (Single / Dual / Full), matching the webapp.
+    const classPlans = await resolveClassPlans();
+    const plans = CLASS_PLAN_ORDER
+      .filter((key) => classPlans[key].enabled !== false)
+      .map((key) => {
+        const v = classPlans[key];
+        return {
+          id: key,
+          name: v.label,
+          price: (v.yearlyAmount ?? 0) / 100,
+          monthlyPrice: (v.monthlyAmount ?? 0) / 100,
+          yearlyPrice: (v.yearlyAmount ?? 0) / 100,
+          duration: v.durationYearly ?? 365,
+          billingCycle: "yearly",
+          features: featureMap[key] || [],
+          classSelection: v.classSelection || 0,
+          popular: key === "DUAL_CLASS",
+        };
+      });
 
     return mobileSuccess(res, { plans, classes });
   } catch (e) {
