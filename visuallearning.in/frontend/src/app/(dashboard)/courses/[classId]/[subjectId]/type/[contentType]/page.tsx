@@ -1,0 +1,110 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { PageLoader } from "@/components/ui/loading";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import api from "@/lib/api";
+import { ChevronRight, BookOpen, Sparkles, PlayCircle, FileText, HelpCircle, ClipboardList, type LucideIcon } from "lucide-react";
+
+interface Chapter {
+  id: string;
+  name: string;
+  order?: number;
+}
+
+// Route each content type to its existing viewer:
+//  - videos (3D animation / lecture) -> the chapter video player
+//  - notes / quiz / board papers      -> the resource viewer (?type=...)
+function chapterHref(classId: string, subjectId: string, chapterId: string, contentType: string, board: boolean) {
+  if (contentType === "animation" || contentType === "lecture") {
+    return `/courses/${classId}/${subjectId}/${chapterId}`;
+  }
+  let kind = contentType; // notes | quiz
+  if (contentType === "board_papers") kind = board ? "pyq" : "question-bank";
+  return `/courses/resource-viewer/${classId}/${subjectId}/${chapterId}?type=${kind}`;
+}
+
+const META: Record<string, { label: (board: boolean) => string; icon: LucideIcon; gradient: string }> = {
+  animation: { label: () => "3D Animated Videos", icon: Sparkles, gradient: "from-violet-500 to-purple-600" },
+  lecture: { label: () => "Lecture Videos", icon: PlayCircle, gradient: "from-blue-500 to-sky-500" },
+  notes: { label: () => "Notes", icon: FileText, gradient: "from-emerald-500 to-green-600" },
+  quiz: { label: () => "Quiz", icon: HelpCircle, gradient: "from-orange-500 to-amber-600" },
+  board_papers: { label: (b) => (b ? "Board Papers" : "Important Questions"), icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
+};
+
+export default function ChapterListPage() {
+  const params = useParams();
+  const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
+  const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
+  const contentType = Array.isArray(params.contentType) ? params.contentType[0] : (params.contentType as string);
+
+  const [subjectName, setSubjectName] = useState("");
+  const [className, setClassName] = useState("");
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get(`/courses/subjects/${subjectId}/chapters`).then(({ data }) => {
+      const d = data.data;
+      setSubjectName(d.subject.name);
+      setClassName(d.subject.class?.name || "");
+      setChapters(d.chapters || []);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [subjectId]);
+
+  if (loading) return <PageLoader />;
+
+  const meta = META[contentType] || META.animation;
+  const board = className.includes("10") || className.includes("12");
+  const label = meta.label(board);
+  const Icon = meta.icon;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      <Breadcrumb items={[
+        { label: className, href: `/courses/${classId}` },
+        { label: subjectName, href: `/courses/${classId}/${subjectId}` },
+        { label },
+      ]} />
+
+      {/* Header banner */}
+      <div className={`rounded-2xl bg-gradient-to-br ${meta.gradient} p-6 mb-6 shadow-lg flex items-center justify-between`}>
+        <div>
+          <h1 className="text-2xl font-bold text-white">{label}</h1>
+          <p className="text-white/80 text-sm mt-1">{subjectName} • {className}</p>
+          <p className="text-white/70 text-xs mt-1">{chapters.length} Chapters</p>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+      </div>
+
+      <h2 className="text-base font-semibold text-gray-500 mb-3">Chapters</h2>
+
+      {chapters.length === 0 ? (
+        <div className="rounded-2xl bg-white p-10 text-center text-gray-400 shadow-sm">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
+          <p className="text-sm">Chapters will be added soon.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {chapters.map((ch, idx) => (
+            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType, board)}>
+              <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
+                  {ch.order || idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-heading truncate">{ch.name}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
