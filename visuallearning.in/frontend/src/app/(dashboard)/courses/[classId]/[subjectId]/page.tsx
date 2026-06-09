@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
-import { Sparkles, PlayCircle, FileText, HelpCircle, ClipboardList, ChevronRight, type LucideIcon } from "lucide-react";
+import { Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, ChevronRight, type LucideIcon } from "lucide-react";
 
 interface ContentType {
   slug: string;
@@ -42,17 +42,12 @@ export default function SubjectContentTypesPage() {
 
   const contentTypes: ContentType[] = [
     { slug: "animation", title: "3D Animated Videos", subtitle: "Visual learning with animations", icon: Sparkles, gradient: "from-violet-500 to-purple-600", badge: "bg-violet-100 text-violet-700" },
-    { slug: "lecture", title: "Lecture Videos", subtitle: "Expert teacher explanations", icon: PlayCircle, gradient: "from-blue-500 to-sky-500", badge: "bg-blue-100 text-blue-700" },
     { slug: "notes", title: "Notes", subtitle: "Chapter-wise study notes", icon: FileText, gradient: "from-emerald-500 to-green-600", badge: "bg-emerald-100 text-emerald-700" },
+    { slug: "ncert", title: "NCERT Solution", subtitle: "Step-by-step textbook answers", icon: BookMarked, gradient: "from-sky-500 to-cyan-600", badge: "bg-sky-100 text-sky-700" },
+    hasBoardPapers
+      ? { slug: "pyq", title: "PYQs", subtitle: "Previous year questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700", badge: "bg-pink-100 text-pink-700" }
+      : { slug: "important", title: "Important Questions", subtitle: "Practice questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700", badge: "bg-pink-100 text-pink-700" },
     { slug: "quiz", title: "Quiz", subtitle: "Test your knowledge", icon: HelpCircle, gradient: "from-orange-500 to-amber-600", badge: "bg-orange-100 text-orange-700" },
-    {
-      slug: "board_papers",
-      title: hasBoardPapers ? "Board Papers" : "Important Questions",
-      subtitle: hasBoardPapers ? "Previous year papers" : "Practice questions",
-      icon: ClipboardList,
-      gradient: "from-pink-500 to-rose-700",
-      badge: "bg-pink-100 text-pink-700",
-    },
   ];
 
   return (

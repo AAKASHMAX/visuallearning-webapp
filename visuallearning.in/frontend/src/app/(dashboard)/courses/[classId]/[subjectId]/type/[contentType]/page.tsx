@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
-import { ChevronRight, BookOpen, Sparkles, PlayCircle, FileText, HelpCircle, ClipboardList, type LucideIcon } from "lucide-react";
+import { ChevronRight, BookOpen, Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, type LucideIcon } from "lucide-react";
 
 interface Chapter {
   id: string;
@@ -14,23 +14,24 @@ interface Chapter {
 }
 
 // Route each content type to its existing viewer:
-//  - videos (3D animation / lecture) -> the chapter video player
-//  - notes / quiz / board papers      -> the resource viewer (?type=...)
-function chapterHref(classId: string, subjectId: string, chapterId: string, contentType: string, board: boolean) {
-  if (contentType === "animation" || contentType === "lecture") {
+//  - 3D animated videos -> the chapter video player
+//  - notes / ncert / quiz / pyq / important -> the resource viewer (?type=...)
+function chapterHref(classId: string, subjectId: string, chapterId: string, contentType: string) {
+  if (contentType === "animation") {
     return `/courses/${classId}/${subjectId}/${chapterId}`;
   }
-  let kind = contentType; // notes | quiz
-  if (contentType === "board_papers") kind = board ? "pyq" : "question-bank";
+  let kind = contentType; // notes | ncert | quiz | pyq
+  if (contentType === "important") kind = "question-bank";
   return `/courses/resource-viewer/${classId}/${subjectId}/${chapterId}?type=${kind}`;
 }
 
-const META: Record<string, { label: (board: boolean) => string; icon: LucideIcon; gradient: string }> = {
-  animation: { label: () => "3D Animated Videos", icon: Sparkles, gradient: "from-violet-500 to-purple-600" },
-  lecture: { label: () => "Lecture Videos", icon: PlayCircle, gradient: "from-blue-500 to-sky-500" },
-  notes: { label: () => "Notes", icon: FileText, gradient: "from-emerald-500 to-green-600" },
-  quiz: { label: () => "Quiz", icon: HelpCircle, gradient: "from-orange-500 to-amber-600" },
-  board_papers: { label: (b) => (b ? "Board Papers" : "Important Questions"), icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
+const META: Record<string, { label: string; icon: LucideIcon; gradient: string }> = {
+  animation: { label: "3D Animated Videos", icon: Sparkles, gradient: "from-violet-500 to-purple-600" },
+  notes: { label: "Notes", icon: FileText, gradient: "from-emerald-500 to-green-600" },
+  ncert: { label: "NCERT Solution", icon: BookMarked, gradient: "from-sky-500 to-cyan-600" },
+  pyq: { label: "PYQs", icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
+  important: { label: "Important Questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
+  quiz: { label: "Quiz", icon: HelpCircle, gradient: "from-orange-500 to-amber-600" },
 };
 
 export default function ChapterListPage() {
@@ -56,8 +57,7 @@ export default function ChapterListPage() {
   if (loading) return <PageLoader />;
 
   const meta = META[contentType] || META.animation;
-  const board = className.includes("10") || className.includes("12");
-  const label = meta.label(board);
+  const label = meta.label;
   const Icon = meta.icon;
 
   return (
@@ -90,7 +90,7 @@ export default function ChapterListPage() {
       ) : (
         <div className="space-y-3">
           {chapters.map((ch, idx) => (
-            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType, board)}>
+            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)}>
               <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
                   {ch.order || idx + 1}

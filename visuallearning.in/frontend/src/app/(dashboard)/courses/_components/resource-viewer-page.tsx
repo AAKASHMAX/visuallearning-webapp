@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  BookMarked,
   Brain,
   CheckCircle2,
   ChevronRight,
@@ -28,7 +29,7 @@ import { PageLoader } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
 
-type ResourceKind = "notes" | "quiz" | "question-bank" | "pyq" | "ppts" | "test-series";
+type ResourceKind = "notes" | "ncert" | "quiz" | "question-bank" | "pyq" | "ppts" | "test-series";
 
 type ViewerDocument = {
   id: string;
@@ -61,10 +62,17 @@ const resourceMeta: Record<ResourceKind, { title: string; eyebrow: string; descr
     icon: Brain,
     accent: "from-violet-500 to-fuchsia-400",
   },
+  ncert: {
+    title: "NCERT Solutions",
+    eyebrow: "NCERT",
+    description: "Step-by-step NCERT textbook questions and solutions in a clean viewer.",
+    icon: BookMarked,
+    accent: "from-sky-500 to-cyan-400",
+  },
   "question-bank": {
-    title: "NCERT Questions and Solutions",
+    title: "Important Questions",
     eyebrow: "Questions",
-    description: "Review chapter questions and solutions in a clean scrollable viewer.",
+    description: "Review the most important chapter questions and their solutions.",
     icon: FileQuestion,
     accent: "from-amber-500 to-orange-400",
   },
@@ -95,7 +103,7 @@ const comingSoonResourceKinds = new Set<ResourceKind>(["ppts", "test-series"]);
 
 function normalizeResourceKind(value?: string | string[]): ResourceKind {
   const raw = Array.isArray(value) ? value[0] : value;
-  if (raw === "quiz" || raw === "question-bank" || raw === "pyq" || raw === "ppts" || raw === "test-series") return raw;
+  if (raw === "ncert" || raw === "quiz" || raw === "question-bank" || raw === "pyq" || raw === "ppts" || raw === "test-series") return raw;
   return "notes";
 }
 
@@ -127,8 +135,15 @@ function filterDocuments(kind: ResourceKind, documents: ViewerDocument[]) {
     return documents.filter((doc) => hasSignal(doc, ["ppt", "pptx", "presentation", "slide"]));
   }
 
+  if (kind === "ncert") {
+    return documents.filter((doc) => hasSignal(doc, ["ncert"]));
+  }
+
   if (kind === "question-bank") {
-    return documents.filter((doc) => hasSignal(doc, ["question", "important", "bank", "worksheet"]));
+    // Important Questions — exclude NCERT (it has its own section now).
+    return documents.filter(
+      (doc) => hasSignal(doc, ["important", "question bank", "worksheet"]) && !hasSignal(doc, ["ncert"])
+    );
   }
 
   if (kind === "pyq") {
