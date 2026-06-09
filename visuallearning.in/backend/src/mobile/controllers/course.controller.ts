@@ -464,11 +464,16 @@ export async function getOrganization(_req: Request, res: Response) {
   } catch {
     info = {};
   }
+  // Return the exact keys the mobile parses (organization_name, business_hours, etc.),
+  // with the real company details as fallbacks so phone/address are never blank.
   return mobileSuccess(res, {
-    name: info.companyName || "Visual Learning",
+    organization_id_PK: 1,
+    organization_name: info.companyName || "VISUALLEARNING AI PRIVATE LIMITED",
+    address: info.address || "4th floor, Balaji Business Center, Pune-Mumbai Highway, NH 4, next to Hotel Spice Court, Baner, Pune, Maharashtra 411045",
+    phone: info.phone || "9718154204",
     email: info.email || "visuallearning247@gmail.com",
-    phone: info.phone || "",
+    business_hours: info.businessHours || "Mon - Sat, 9:00 AM - 7:00 PM",
     website: "https://visuallearning.in",
-    address: info.address || "",
+    created_at: new Date().toISOString(),
   });
 }
