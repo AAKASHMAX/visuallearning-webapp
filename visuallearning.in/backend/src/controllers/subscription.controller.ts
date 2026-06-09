@@ -25,39 +25,39 @@ export const verifyPaymentSchema = z.object({
   billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
 });
 
+// Class-count based plans. Fixed price; the user picks `classSelection` classes
+// (Single = 1, Dual = 2) or all classes (Full = 0 -> empty classesAccess = all).
+// Default prices below are editable from the admin Subscription Plans page.
 const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
-  STUDENTS_PLAN: {
-    monthlyAmount: 24900,
-    yearlyAmount: 199900,
-    label: "Students",
+  SINGLE_CLASS: {
+    monthlyAmount: 19900,
+    yearlyAmount: 149900,
+    label: "Single Class",
     durationMonthly: 30,
     durationYearly: 365,
     enabled: true,
-    classSelection: 0,
-    unitType: "class",
-    audience: "students",
+    classSelection: 1,
+    unitType: "fixed",
   },
-  TEACHERS_PLAN: {
+  DUAL_CLASS: {
     monthlyAmount: 34900,
-    yearlyAmount: 299900,
-    label: "Teachers",
+    yearlyAmount: 249900,
+    label: "Dual Class",
     durationMonthly: 30,
     durationYearly: 365,
     enabled: true,
-    classSelection: 0,
-    unitType: "class",
-    audience: "teachers",
+    classSelection: 2,
+    unitType: "fixed",
   },
-  PROFESSIONAL_PLAN: {
-    monthlyAmount: 59900,
-    yearlyAmount: 499900,
-    label: "Professional",
+  FULL_ACCESS: {
+    monthlyAmount: 49900,
+    yearlyAmount: 349900,
+    label: "Full Access",
     durationMonthly: 30,
     durationYearly: 365,
     enabled: true,
     classSelection: 0,
-    unitType: "subject",
-    audience: "professional",
+    unitType: "fixed",
   },
 };
 
@@ -66,7 +66,7 @@ function mergeAudiencePlanDefaults(plans: Record<string, any>) {
 }
 
 function isAudiencePlan(planKey: string) {
-  return planKey === "STUDENTS_PLAN" || planKey === "TEACHERS_PLAN" || planKey === "PROFESSIONAL_PLAN";
+  return planKey === "SINGLE_CLASS" || planKey === "DUAL_CLASS" || planKey === "FULL_ACCESS";
 }
 
 function normalizeSubjectKeys(items: string[] = []) {
@@ -195,6 +195,9 @@ export async function getPlans(req: Request, res: Response) {
   const coursePriceMap = new Map(courses.map(c => [c.planKey, (c as any).price]));
 
   const featureMap: Record<string, string[]> = {
+    SINGLE_CLASS: ["Access any 1 class (9–12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
+    DUAL_CLASS:   ["Access any 2 classes (9–12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
+    FULL_ACCESS:  ["All 4 classes (9, 10, 11, 12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Priority support"],
     FOUNDATION_PASS: ["Selected chapters (9–12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
     ACADEMIC_PLUS:   ["Full Class 9–10 (PCB)", "Selected 11–12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
     ELITE_LEARNING:  ["Full 9–12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],

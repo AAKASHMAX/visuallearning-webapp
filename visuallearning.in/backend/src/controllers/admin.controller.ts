@@ -730,13 +730,9 @@ const DEFAULT_SETTINGS: Record<string, string> = {
     { key: "TELUGU", label: "Telugu" },
   ]),
   plans_config: JSON.stringify({
-    STUDENTS_PLAN:    { monthlyAmount: 0, yearlyAmount: 199900,    label: "Students",        durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "students" },
-    TEACHERS_PLAN:    { monthlyAmount: 0, yearlyAmount: 299900,    label: "Teachers",        durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "teachers" },
-    PROFESSIONAL_PLAN:{ monthlyAmount: 0, yearlyAmount: 499900,    label: "Professional",    durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "subject", audience: "professional" },
-    FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-    ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-    ELITE_LEARNING:  { monthlyAmount: 159900, yearlyAmount: 1599900,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-    FLEXI_PLAN:      { monthlyAmount: 0, yearlyAmount: 0,             label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+    SINGLE_CLASS: { monthlyAmount: 19900, yearlyAmount: 149900, label: "Single Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 1, unitType: "fixed" },
+    DUAL_CLASS:   { monthlyAmount: 34900, yearlyAmount: 249900, label: "Dual Class",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 2, unitType: "fixed" },
+    FULL_ACCESS:  { monthlyAmount: 49900, yearlyAmount: 349900, label: "Full Access",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "fixed" },
   }),
   contact_info: JSON.stringify({
     companyName: "VISUALLEARNING AI PRIVATE LIMITED",
@@ -747,9 +743,9 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
-  STUDENTS_PLAN: { monthlyAmount: 0, yearlyAmount: 199900, label: "Students", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "students" },
-  TEACHERS_PLAN: { monthlyAmount: 0, yearlyAmount: 299900, label: "Teachers", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "class", audience: "teachers" },
-  PROFESSIONAL_PLAN: { monthlyAmount: 0, yearlyAmount: 499900, label: "Professional", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "subject", audience: "professional" },
+  SINGLE_CLASS: { monthlyAmount: 19900, yearlyAmount: 149900, label: "Single Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 1, unitType: "fixed" },
+  DUAL_CLASS: { monthlyAmount: 34900, yearlyAmount: 249900, label: "Dual Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 2, unitType: "fixed" },
+  FULL_ACCESS: { monthlyAmount: 49900, yearlyAmount: 349900, label: "Full Access", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0, unitType: "fixed" },
 };
 
 function mergeAudiencePlanDefaults(plans: Record<string, any>) {
