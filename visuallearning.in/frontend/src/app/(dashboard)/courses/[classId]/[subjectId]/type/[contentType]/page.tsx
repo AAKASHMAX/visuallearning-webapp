@@ -90,9 +90,9 @@ export default function ChapterListPage() {
           <p className="text-sm">Chapters will be added soon.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {chapters.map((ch, idx) => (
-            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)}>
+            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)} className="block">
               <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
                   {ch.order || idx + 1}
