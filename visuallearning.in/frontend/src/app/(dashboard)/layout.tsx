@@ -5,17 +5,11 @@ import { Footer } from "@/components/layout/footer";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { Sidebar } from "@/components/layout/sidebar";
 
-// Everything under /courses and /course-details is freely explorable without
-// login. Locked (paid) content is still enforced by the backend — opening it
-// returns 401/403, which sends the user to login at that moment.
-//
-// Exceptions that still require login: the personal account pages
-// (/dashboard, /profile) and the checkout/custom-plan flows.
-const ALWAYS_GATED = ["/courses/custom-plan", "/courses/my-custom-plan"];
-
+// Only the courses landing (the class grid) and the pricing page are public.
+// Moving forward from there — clicking a class card into subjects, content
+// types, chapters or any viewer — requires login, as do all other pages.
 function isPublicPath(pathname: string) {
-  if (ALWAYS_GATED.some((p) => pathname === p || pathname.startsWith(p + "/"))) return false;
-  return pathname.startsWith("/courses") || pathname.startsWith("/course-details") || pathname.startsWith("/pricing");
+  return pathname === "/courses" || pathname.startsWith("/pricing");
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

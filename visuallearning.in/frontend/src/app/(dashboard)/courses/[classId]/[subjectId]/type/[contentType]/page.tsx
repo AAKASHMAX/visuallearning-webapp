@@ -17,12 +17,14 @@ interface Chapter {
 //  - 3D animated videos -> the chapter video player
 //  - notes / ncert / quiz / pyq / important -> the resource viewer (?type=...)
 function chapterHref(classId: string, subjectId: string, chapterId: string, contentType: string) {
+  // returnTo brings the viewer's back button to this chapter list (not content types).
+  const back = encodeURIComponent(`/courses/${classId}/${subjectId}/type/${contentType}`);
   if (contentType === "animation") {
-    return `/courses/${classId}/${subjectId}/${chapterId}`;
+    return `/courses/${classId}/${subjectId}/${chapterId}?returnTo=${back}`;
   }
   let kind = contentType; // notes | ncert | quiz | pyq
   if (contentType === "important") kind = "question-bank";
-  return `/courses/resource-viewer/${classId}/${subjectId}/${chapterId}?type=${kind}`;
+  return `/courses/resource-viewer/${classId}/${subjectId}/${chapterId}?type=${kind}&returnTo=${back}`;
 }
 
 const META: Record<string, { label: string; icon: LucideIcon; gradient: string }> = {
