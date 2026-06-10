@@ -3,7 +3,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain } from "lucide-react";
+
+const demos = [
+  { title: "3D Animated Video", desc: "Watch a sample 3D animation.", href: "/demo/video", icon: MonitorPlay, gradient: "from-violet-600 to-fuchsia-500" },
+  { title: "Notes", desc: "Browse visual chapter notes.", href: "/demo/visual-notes", icon: FileText, gradient: "from-sky-600 to-blue-500" },
+  { title: "NCERT", desc: "Step-by-step NCERT solutions.", href: "/demo/ncert-solution", icon: BookMarked, gradient: "from-emerald-600 to-teal-500" },
+  { title: "PYQs", desc: "Solved previous-year questions.", href: "/demo/pyq", icon: FileCheck2, gradient: "from-rose-600 to-orange-500" },
+  { title: "Quiz", desc: "Try an interactive quiz.", href: "/demo/quiz", icon: Brain, gradient: "from-amber-500 to-orange-500" },
+];
 
 interface ClassItem {
   id: string;
@@ -76,6 +84,26 @@ export default function CoursesClassGridPage() {
           <p className="text-sm">Classes will be available soon.</p>
         </div>
       )}
+
+      {/* Demo section — free sample of each content type from Chapter 1 */}
+      <div className="mt-10">
+        <h2 className="text-base font-semibold text-gray-500 mb-1">Demo</h2>
+        <p className="text-sm text-gray-400 mb-3">Try a free sample of each content type — no subscription needed.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {demos.map((d) => (
+            <Link key={d.href} href={d.href}>
+              <div className="group h-full flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer">
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${d.gradient} flex items-center justify-center mb-3 shadow-sm`}>
+                  <d.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 text-sm">{d.title}</h3>
+                <p className="text-xs text-gray-400 mt-1 flex-1">{d.desc}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">Try demo &rarr;</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
