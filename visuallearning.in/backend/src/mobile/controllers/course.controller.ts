@@ -263,6 +263,9 @@ export async function getNotesPdf(req: Request, res: Response) {
       chapter_id_FK: n.chapterId,
       pdf_title: n.title,
       pdf_url: n.pdfUrl,
+      // HTML notes (no PDF) so the app can render them in a WebView like the website.
+      html_content: (n as any).htmlContent || "",
+      css_content: (n as any).cssContent || "",
       is_paid: 0, // Notes don't have isFree flag in our DB, serve all
       created_at: n.createdAt.toISOString(),
       updated_at: null,
