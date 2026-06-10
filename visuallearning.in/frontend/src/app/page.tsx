@@ -158,9 +158,6 @@ function DemoShowcase() {
     { title: "Interactive Quiz", description: "MCQ quizzes with instant feedback, score tracking, and detailed result analysis.", href: "/demo/quiz", icon: Target, gradient: "from-amber-500 via-orange-500 to-rose-500", glow: "shadow-amber-500/20" },
   ];
 
-  // Duplicate for seamless infinite scroll
-  const items = [...demos, ...demos];
-
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-card-border to-transparent" />
@@ -181,15 +178,11 @@ function DemoShowcase() {
         </div>
       </div>
 
-      {/* Infinite scrolling marquee */}
-      <div className="relative">
-        {/* Fade edges */}
-        <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-surface to-transparent sm:w-32" />
-        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-surface to-transparent sm:w-32" />
-
-        <div className="flex animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused] gap-5 w-max px-4">
-          {items.map((d, i) => (
-            <div key={i} className="w-[280px] shrink-0 group">
+      {/* Static grid of content cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {demos.map((d, i) => (
+            <div key={i} className="group">
               <div className="h-full rounded-2xl border border-card-border bg-white p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#05BFDB]/30 card-shadow">
                 <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${d.gradient} flex items-center justify-center mb-4 shadow-lg ${d.glow} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
                   <d.icon className="w-7 h-7 text-white" />
