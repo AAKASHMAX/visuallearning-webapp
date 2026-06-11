@@ -87,8 +87,9 @@ function matchExisting(notes: { id: string; title: string; htmlContent: string |
 
     if (hit && hit.htmlContent && !FORCE) { skipped++; console.log(`  ~ SKIP (has content) ${tag}  ["${hit.title}"]`); continue; }
     if (hit) {
-      if (!DRY) await prisma.note.update({ where: { id: hit.id }, data: { title, htmlContent: it.htmlContent, cssContent: it.cssContent } });
-      updated++; console.log(`  * UPDATE ${tag} → "${title}"`);
+      // Clear pdfUrl so the new HTML replaces any old PDF note for this chapter.
+      if (!DRY) await prisma.note.update({ where: { id: hit.id }, data: { title, htmlContent: it.htmlContent, cssContent: it.cssContent, pdfUrl: "" } });
+      updated++; console.log(`  * UPDATE ${tag} → "${title}"${hit.htmlContent ? "" : "  (was PDF)"}`);
     } else {
       if (!DRY) await prisma.note.create({ data: { chapterId: target.id, title, pdfUrl: "", htmlContent: it.htmlContent, cssContent: it.cssContent } });
       created++; console.log(`  + CREATE ${tag} → "${title}"`);
