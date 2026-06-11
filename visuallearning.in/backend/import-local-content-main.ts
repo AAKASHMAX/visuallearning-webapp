@@ -21,6 +21,7 @@ type Item = { tier: string; type: "notes" | "ncert" | "pyq"; folderName: string;
 
 const OVERRIDES: Record<string, string> = {
   "7.Electronmanetic induction": "Electromagnetic Induction",
+  "9.Heredity and Evolution": "Heredity", // main Class-10 Biology chapter is just "Heredity"
 };
 
 const STOP = new Set(["and", "the", "of", "in", "a", "to", "&", "with"]);
