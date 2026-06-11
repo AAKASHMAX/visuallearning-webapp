@@ -41,6 +41,13 @@ const CATS: Record<string, Cat> = {
   "OUT11NCERT": { root: "N:/Codex Notes creation/Output/11th", tier: "11", type: "ncert", subDir: "NCERT solution" },
   "OUT12Notes": { root: "N:/Codex Notes creation/Output/12th", tier: "12", type: "notes", subDir: "Notes" },
   "OUT12NCERT": { root: "N:/Codex Notes creation/Output/12th", tier: "12", type: "ncert", subDir: "NCERT solution" },
+  // "Notes workflow/Output": Class-12 Arihant PYQ solutions, one PYQ SOLUTION/ subfolder per chapter.
+  "WFPYQ": { root: "N:/Notes workflow/Output", tier: "12", type: "pyq", subDir: "PYQ SOLUTION" },
+  // Codex Output 9th/10th = full Science (Physics+Chemistry+Biology). Importer maps each chapter to its subject.
+  "OUT9NCERT": { root: "N:/Codex Notes creation/Output/9th", tier: "9", type: "ncert", subDir: "NCERT solution" },
+  "OUT9Notes": { root: "N:/Codex Notes creation/Output/9th", tier: "9", type: "notes", subDir: "Notes" },
+  "OUT10NCERT": { root: "N:/Codex Notes creation/Output/10th", tier: "10", type: "ncert", subDir: "NCERT solution" },
+  "OUT10Notes": { root: "N:/Codex Notes creation/Output/10th", tier: "10", type: "notes", subDir: "Notes" },
 };
 
 const slug = (s: string) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
