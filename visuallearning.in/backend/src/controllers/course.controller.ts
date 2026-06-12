@@ -170,10 +170,6 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
   return result;
 }
 
-// Only this chapter (the public demo chapter) is viewable without a subscription.
-// Every other chapter — including each subject's first chapter — is gated.
-const DEMO_CHAPTER_ID = "cmmos51yc0001uuz8ecig0bew";
-
 async function isFirstChapterForSubject(chapterId: string, subjectId: string) {
   const firstChapter = await prisma.chapter.findFirst({
     where: { subjectId },
@@ -215,12 +211,12 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
-    const isDemoChapter = chapter.id === DEMO_CHAPTER_ID;
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
       hasAccess = true;
-    } else if (isDemoChapter) {
+    } else if (isFirstChapter) {
       hasAccess = true;
     } else if (req.user) {
       const classId = chapter.subject.class.id;
@@ -233,9 +229,6 @@ export async function getVideos(req: Request, res: Response) {
       const exists = !!(v.youtubeVideoId || v.vimeoVideoId);
       return {
         ...v,
-        // Don't leak the video IDs to non-subscribers — only expose them when unlocked.
-        youtubeVideoId: canWatch ? v.youtubeVideoId : null,
-        vimeoVideoId: canWatch ? v.vimeoVideoId : null,
         hasVideo: exists,
         locked: !canWatch,
         isFree: false,
@@ -266,9 +259,9 @@ export async function getVideoById(req: Request, res: Response) {
     });
     if (!video) return error(res, "Video not found", 404);
 
-    const isDemoChapter = video.chapter.id === DEMO_CHAPTER_ID;
+    const isFirstChapter = await isFirstChapterForSubject(video.chapter.id, video.chapter.subject.id);
 
-    if (!isDemoChapter) {
+    if (!isFirstChapter) {
       if (!req.user) return error(res, "Login required", 401);
       const isAdmin = req.user.role === "ADMIN";
       if (!isAdmin) {
@@ -303,7 +296,7 @@ export async function getNotes(req: Request, res: Response) {
 
     const notes = await prisma.note.findMany({ where: { chapterId: id } });
 
-    const isDemoChapter = chapter.id === DEMO_CHAPTER_ID;
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     let canDownload = false;
@@ -315,7 +308,7 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = result.hasAccess;
       canDownload = result.hasAccess;
     }
-    if (!hasAccess && isDemoChapter) {
+    if (!hasAccess && isFirstChapter) {
       hasAccess = true;
     }
 
@@ -346,12 +339,12 @@ export async function getQuestions(req: Request, res: Response) {
     });
     if (!chapter) return error(res, "Chapter not found", 404);
 
-    const isDemoChapter = chapter.id === DEMO_CHAPTER_ID;
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
       hasAccess = true;
-    } else if (isDemoChapter) {
+    } else if (isFirstChapter) {
       hasAccess = true;
     } else if (req.user) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
@@ -425,7 +418,8 @@ export async function getBoardPapers(req: Request, res: Response) {
 
     papers.forEach((p) => {
       if (!grouped[p.year]) grouped[p.year] = [];
-      const canView = hasAccess; // gated: only subscribers (demo chapter is the public preview)
+      const isFirstYear = p.year === years[years.length - 1];
+      const canView = hasAccess || isFirstYear;
       grouped[p.year].push({
         ...p,
         pdfUrl: canView ? p.pdfUrl : (p.pdfUrl ? "locked" : p.pdfUrl),
