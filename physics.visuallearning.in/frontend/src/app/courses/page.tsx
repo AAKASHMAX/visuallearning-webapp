@@ -70,14 +70,23 @@ interface Plan {
 
 const isYearly = (p: Plan) => (p.durationDays || 0) >= 180;
 
+// Seed the price cards so they paint instantly (same time as the class cards);
+// the API fetch below refines them. Mirrors backend defaultPlanSeeds.
+const DEFAULT_PLANS: Plan[] = [
+  { id: "seed-11m", code: "CLASS_11_MONTHLY", name: "Class 11 Physics", price: 499, durationDays: 30 },
+  { id: "seed-12m", code: "CLASS_12_MONTHLY", name: "Class 12 Physics", price: 699, durationDays: 30 },
+  { id: "seed-11y", code: "CLASS_11_YEARLY", name: "Class 11 Physics", price: 1999, durationDays: 365 },
+  { id: "seed-12y", code: "CLASS_12_YEARLY", name: "Class 12 Physics", price: 2999, durationDays: 365 },
+];
+
 export default function CoursesPage() {
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>(DEFAULT_PLANS);
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
     api.get("/subscription/plans")
-      .then((r) => setPlans(Array.isArray(r.data) ? r.data : []))
-      .catch(() => setPlans([]));
+      .then((r) => { if (Array.isArray(r.data) && r.data.length) setPlans(r.data); })
+      .catch(() => { /* keep the seeded defaults */ });
   }, []);
 
   const priceCards = plans.filter((p) =>
