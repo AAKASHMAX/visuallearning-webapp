@@ -249,7 +249,8 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
               <button onClick={toggleFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:border-accent/40 hover:text-accent">{isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span></button>
             </div>
             <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
-              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+              {/* Constrain the document to A4 width, centered like a paper page. */}
+              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100, maxWidth: "210mm", margin: "16px auto", background: "#ffffff", padding: "32px 36px", boxSizing: "border-box", boxShadow: "0 2px 12px rgba(0,0,0,0.10)", borderRadius: 6 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
             </div>
           </div>
         ) : <StateBox icon={FileText} text="This note has no content yet." />}
