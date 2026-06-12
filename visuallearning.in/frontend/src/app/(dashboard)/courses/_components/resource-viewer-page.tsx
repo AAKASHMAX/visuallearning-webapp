@@ -18,9 +18,11 @@ import {
   Maximize2,
   Minimize2,
   Minus,
+  Moon,
   Plus,
   Presentation,
   RotateCcw,
+  Sun,
   X,
 } from "lucide-react";
 import api from "@/lib/api";
@@ -468,6 +470,9 @@ function DocumentViewer({
   const viewerRef = useRef<HTMLElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  // PPTs ship as a light + dark PDF (dark URL carried in cssContent). Toggle between them.
+  const [pptDark, setPptDark] = useState(false);
+  const pptDarkUrl = kind === "ppts" ? activeDocument?.cssContent || null : null;
   const emptyCopy = kind === "ppts"
     ? "No PPT or slide PDF has been added for this chapter yet."
     : kind === "test-series"
@@ -564,6 +569,16 @@ function DocumentViewer({
             {/* Compact toolbar: controls only */}
             <div className="flex items-center justify-end gap-1.5 border-b border-gray-100 bg-white px-3 py-2">
               <div className="flex shrink-0 items-center gap-1.5">
+                {pptDarkUrl && (
+                  <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-gray-200 bg-surface p-0.5">
+                    <button type="button" onClick={() => setPptDark(false)} className={cn("flex h-7 items-center gap-1 rounded px-2 text-[11px] font-bold", !pptDark ? "bg-white text-heading shadow-sm" : "text-gray-400 hover:text-heading")}>
+                      <Sun className="h-3.5 w-3.5" /><span className="hidden sm:inline">Light</span>
+                    </button>
+                    <button type="button" onClick={() => setPptDark(true)} className={cn("flex h-7 items-center gap-1 rounded px-2 text-[11px] font-bold", pptDark ? "bg-heading text-white shadow-sm" : "text-gray-400 hover:text-heading")}>
+                      <Moon className="h-3.5 w-3.5" /><span className="hidden sm:inline">Dark</span>
+                    </button>
+                  </div>
+                )}
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   canDownload ? (
@@ -640,7 +655,7 @@ function DocumentViewer({
                   }}
                 >
                   <iframe
-                    src={pdfViewerUrl(activeDocument.pdfUrl!)}
+                    src={pdfViewerUrl((pptDark && pptDarkUrl) ? pptDarkUrl : activeDocument.pdfUrl!)}
                     title={activeDocument.title}
                     className="h-full w-full border-0"
                   />
