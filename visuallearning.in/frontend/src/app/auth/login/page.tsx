@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
+import { hasActiveSubscription } from "@/lib/subscription-access";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -24,7 +25,19 @@ export default function LoginPage() {
       const { data } = await api.post("/auth/login", { email, password });
       login(data.data.user, data.data.token);
       toast.success("Welcome back!");
-      router.push(data.data.user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      if (data.data.user.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else {
+        // Subscribed users land on the dashboard; everyone else on the courses page.
+        let subscribed = false;
+        try {
+          const { data: subRes } = await api.get("/subscription/my-subscription");
+          subscribed = hasActiveSubscription(subRes);
+        } catch {
+          subscribed = false;
+        }
+        router.push(subscribed ? "/dashboard" : "/courses");
+      }
     } catch (err: any) {
       const apiMsg = err.response?.data?.message;
       const validation =

@@ -28,7 +28,7 @@ export default function SignupPage() {
       const { data } = await api.post("/auth/signup", { name, email, password });
       login(data.data.user, data.data.token);
       toast.success("Account created! Check your email to verify.");
-      router.push("/dashboard");
+      router.push("/courses"); // new users aren't subscribed yet
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Signup failed");
     } finally {
