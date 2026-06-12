@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
-import { Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, ChevronRight, type LucideIcon } from "lucide-react";
+import { Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, Presentation, ChevronRight, type LucideIcon } from "lucide-react";
 
 interface ContentType {
   slug: string;
@@ -47,6 +47,7 @@ export default function SubjectContentTypesPage() {
     hasBoardPapers
       ? { slug: "pyq", title: "PYQs", subtitle: "Previous year questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700", badge: "bg-pink-100 text-pink-700" }
       : { slug: "important", title: "Important Questions", subtitle: "Practice questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700", badge: "bg-pink-100 text-pink-700" },
+    { slug: "ppts", title: "Presentations", subtitle: "Chapter slide decks (PPT)", icon: Presentation, gradient: "from-indigo-500 to-blue-600", badge: "bg-indigo-100 text-indigo-700" },
     { slug: "quiz", title: "Quiz", subtitle: "Test your knowledge", icon: HelpCircle, gradient: "from-orange-500 to-amber-600", badge: "bg-orange-100 text-orange-700" },
   ];
 

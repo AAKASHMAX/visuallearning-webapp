@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
-import { ChevronRight, BookOpen, Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, type LucideIcon } from "lucide-react";
+import { ChevronRight, BookOpen, Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, Presentation, type LucideIcon } from "lucide-react";
 
 interface Chapter {
   id: string;
@@ -33,6 +33,7 @@ const META: Record<string, { label: string; icon: LucideIcon; gradient: string }
   ncert: { label: "NCERT Solution", icon: BookMarked, gradient: "from-sky-500 to-cyan-600" },
   pyq: { label: "PYQs", icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
   important: { label: "Important Questions", icon: ClipboardList, gradient: "from-pink-500 to-rose-700" },
+  ppts: { label: "Presentations", icon: Presentation, gradient: "from-indigo-500 to-blue-600" },
   quiz: { label: "Quiz", icon: HelpCircle, gradient: "from-orange-500 to-amber-600" },
 };
 
