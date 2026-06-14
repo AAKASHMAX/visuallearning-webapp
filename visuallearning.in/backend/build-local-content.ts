@@ -48,6 +48,9 @@ const CATS: Record<string, Cat> = {
   "OUT9Notes": { root: "N:/Codex Notes creation/Output/9th", tier: "9", type: "notes", subDir: "Notes" },
   "OUT10NCERT": { root: "N:/Codex Notes creation/Output/10th", tier: "10", type: "ncert", subDir: "NCERT solution" },
   "OUT10Notes": { root: "N:/Codex Notes creation/Output/10th", tier: "10", type: "notes", subDir: "Notes" },
+  // Updated 9th/10th Science notes (each chapter folder has html/ + images/ directly).
+  "MD9Notes": { root: "N:/Main data/9th class/9th Notes/9th Science", tier: "9", type: "notes" },
+  "MD10Notes": { root: "N:/Main data/10th class/10th Notes/10th Science", tier: "10", type: "notes" },
 };
 
 const slug = (s: string) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
