@@ -25,7 +25,9 @@ export function clearSubscriptionPlanCache() {
 }
 
 function getBillingCycle(plan: { code: string; durationDays: number }) {
-  return "yearly";
+  if (plan.code.endsWith("_MONTHLY")) return "monthly";
+  if (plan.code.endsWith("_YEARLY")) return "yearly";
+  return plan.durationDays >= YEARLY_PLAN_DURATION_DAYS ? "yearly" : "monthly";
 }
 
 function getBasePlanCode(code: string) {
@@ -464,4 +466,174 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
 
 export async function activateFreePlan(req: AuthRequest, res: Response) {
   res.status(410).json({ message: "Free plans now require Rs 1 Razorpay verification." });
+}
+
+// ── Recurring (auto-renewal) subscriptions ──────────────────────────────────
+
+function getBillingCycleFromPlan(plan: { durationDays: number }) {
+  return plan.durationDays >= YEARLY_PLAN_DURATION_DAYS ? "YEARLY" : "MONTHLY";
+}
+
+// Create a Razorpay Subscription (auto-debit mandate). The customer authorises
+// it once in checkout; Razorpay then charges every cycle and notifies our
+// webhook. Returns the subscription id the frontend opens checkout with.
+export async function createSubscription(req: AuthRequest, res: Response) {
+  try {
+    const { plan } = req.body;
+    const razorpay = getRazorpayClient();
+    if (!razorpay) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
+
+    const planConfig = plan ? await getPlanByCode(prisma, plan) : null;
+    if (!plan || !planConfig) {
+      return res.status(400).json({ message: "Invalid plan" });
+    }
+
+    if (!planConfig.razorpayPlanId) {
+      return res.status(503).json({
+        message: "Auto-renewal is not set up for this plan yet. Please try again later.",
+      });
+    }
+
+    // total_count = how many cycles before the subscription completes on its own.
+    // Yearly: 10 years, Monthly: 10 years worth of months. Customer can cancel anytime.
+    const totalCount = planConfig.durationDays >= YEARLY_PLAN_DURATION_DAYS ? 10 : 120;
+
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: planConfig.razorpayPlanId,
+      total_count: totalCount,
+      customer_notify: 1,
+      notes: {
+        userId: req.user!.id,
+        plan: planConfig.code,
+      },
+    });
+
+    res.json({
+      subscriptionId: subscription.id,
+      plan: planConfig.code,
+      planName: planConfig.name,
+      amount: planConfig.price,
+      billingCycle: getBillingCycleFromPlan(planConfig),
+    });
+  } catch (error) {
+    console.error("Create subscription error:", error);
+    res.status(502).json({ message: getRazorpayErrorMessage(error) });
+  }
+}
+
+// Verify the first payment of a recurring subscription and activate access.
+// Renewals after this are handled entirely by the webhook.
+export async function verifySubscription(req: AuthRequest, res: Response) {
+  try {
+    const { razorpayPaymentId, razorpaySubscriptionId, razorpaySignature } = req.body;
+
+    if (!config.razorpay.keySecret) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
+    if (!razorpayPaymentId || !razorpaySubscriptionId || !razorpaySignature) {
+      return res.status(400).json({ message: "Missing payment confirmation details" });
+    }
+
+    // Subscription signature is HMAC(payment_id + "|" + subscription_id).
+    const body = razorpayPaymentId + "|" + razorpaySubscriptionId;
+    const expectedSignature = crypto
+      .createHmac("sha256", config.razorpay.keySecret)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpaySignature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    const razorpay = getRazorpayClient();
+    if (!razorpay) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
+
+    const rzpSub = await razorpay.subscriptions.fetch(razorpaySubscriptionId);
+    const subNotes = (rzpSub.notes || {}) as Record<string, any>;
+    if (subNotes.userId !== req.user!.id) {
+      return res.status(400).json({ message: "Subscription does not match this account" });
+    }
+
+    const planCode = typeof subNotes.plan === "string" ? subNotes.plan.trim().toUpperCase() : "";
+    const planConfig = await getPlanByCode(prisma, planCode);
+    if (!planConfig) {
+      return res.status(400).json({ message: "Invalid plan" });
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + planConfig.durationDays);
+
+    const subscription = await prisma.subscription.upsert({
+      where: { userId: req.user!.id },
+      update: {
+        plan: planConfig.code,
+        status: "ACTIVE",
+        startDate: new Date(),
+        expiryDate,
+        razorpaySubscriptionId,
+        razorpayPlanId: planConfig.razorpayPlanId,
+        billingCycle: getBillingCycleFromPlan(planConfig),
+        autoRenew: true,
+        cancelledAt: null,
+        razorpayPaymentId,
+        amount: planConfig.price,
+      },
+      create: {
+        userId: req.user!.id,
+        plan: planConfig.code,
+        status: "ACTIVE",
+        expiryDate,
+        razorpaySubscriptionId,
+        razorpayPlanId: planConfig.razorpayPlanId,
+        billingCycle: getBillingCycleFromPlan(planConfig),
+        autoRenew: true,
+        razorpayPaymentId,
+        amount: planConfig.price,
+      },
+    });
+
+    res.json({ message: "Auto-renewal subscription activated", subscription });
+  } catch (error) {
+    console.error("Verify subscription error:", error);
+    res.status(500).json({ message: "Failed to verify subscription" });
+  }
+}
+
+// Cancel auto-renewal. Defaults to cancel-at-cycle-end so the user keeps the
+// access they already paid for until expiryDate.
+export async function cancelSubscription(req: AuthRequest, res: Response) {
+  try {
+    const subscription = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
+    if (!subscription?.razorpaySubscriptionId) {
+      return res.status(400).json({ message: "No auto-renewal subscription to cancel" });
+    }
+    if (!subscription.autoRenew) {
+      return res.status(400).json({ message: "Auto-renewal is already cancelled" });
+    }
+
+    const razorpay = getRazorpayClient();
+    if (!razorpay) {
+      return res.status(503).json({ message: "Payment gateway is not configured" });
+    }
+
+    // true = cancel at the end of the current billing cycle (keep paid access).
+    await razorpay.subscriptions.cancel(subscription.razorpaySubscriptionId, true);
+
+    const updated = await prisma.subscription.update({
+      where: { userId: req.user!.id },
+      data: { autoRenew: false, cancelledAt: new Date() },
+    });
+
+    res.json({
+      message: "Auto-renewal cancelled. Your access continues until the current period ends.",
+      subscription: updated,
+    });
+  } catch (error) {
+    console.error("Cancel subscription error:", error);
+    res.status(502).json({ message: getRazorpayErrorMessage(error) });
+  }
 }

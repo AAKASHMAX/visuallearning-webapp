@@ -16,6 +16,8 @@ enum SubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
+  PENDING
+  HALTED
 }
 
 model User {
@@ -98,6 +100,12 @@ model Subscription {
   expiryDate      DateTime
   razorpayOrderId   String?
   razorpayPaymentId String?
+  // Recurring (auto-renewal) fields
+  razorpaySubscriptionId String?      @unique
+  razorpayPlanId         String?
+  billingCycle           String?      // "MONTHLY" | "YEARLY"
+  autoRenew              Boolean      @default(false)
+  cancelledAt            DateTime?
   couponCode      String?
   discountAmount  Int                @default(0)
   amount          Int                @default(0)
@@ -116,6 +124,7 @@ model SubscriptionPlan {
   description  String?
   price        Int          @default(0)
   durationDays Int          @default(30)
+  razorpayPlanId String?    // Razorpay recurring plan id (plan_xxx) for this billing cycle
   features     String[]     @default([])
   freeOfferEnabled Boolean   @default(false)
   freeOfferUntil   DateTime?

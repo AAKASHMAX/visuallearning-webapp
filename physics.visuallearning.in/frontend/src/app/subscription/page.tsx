@@ -4,11 +4,10 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles, Tag } from "lucide-react";
+import { CalendarDays, Check, CreditCard, Loader2, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { FreeOfferCountdown, FreePriceHighlight } from "@/components/subscription/free-offer";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -22,6 +21,8 @@ declare global {
 interface PlanItem {
   id: string;
   code: string;
+  baseCode?: string;
+  billingCycle?: string;
   name: string;
   description?: string | null;
   price: number;
@@ -38,6 +39,12 @@ interface SubscriptionItem {
   plan: string;
   status: string;
   expiryDate?: string;
+  autoRenew?: boolean;
+  billingCycle?: string;
+}
+
+function baseOf(code: string) {
+  return code.replace(/_(MONTHLY|YEARLY)$/, "");
 }
 
 function loadRazorpayScript() {
@@ -55,16 +62,21 @@ function loadRazorpayScript() {
   });
 }
 
-function planPeriod(durationDays: number, price: number) {
-  if (price <= 0) return "30-day free trial";
-  return "per year";
+function isYearly(plan: { code?: string; durationDays?: number } | undefined) {
+  if (!plan) return true;
+  if (plan.code?.endsWith("_MONTHLY")) return false;
+  if (plan.code?.endsWith("_YEARLY")) return true;
+  return (plan.durationDays || 0) >= 365;
 }
 
-function accessPeriod(durationDays: number, price: number) {
+function planPeriod(plan: PlanItem | undefined, price: number) {
+  if (price <= 0) return "30-day free trial";
+  return isYearly(plan) ? "per year" : "per month";
+}
+
+function accessPeriod(plan: PlanItem | undefined, price: number) {
   if (price <= 0) return "30 days free access";
-  if (durationDays >= 365) return `${Math.round(durationDays / 365)} year access`;
-  if (durationDays > 0) return `${durationDays} days access`;
-  return "Yearly access";
+  return isYearly(plan) ? "Renews every year" : "Renews every month";
 }
 
 function monthlyEquivalent(yearlyPrice: number) {
@@ -84,8 +96,6 @@ function SubscriptionContent() {
   const [subscription, setSubscription] = useState<SubscriptionItem | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [razorpayKeyId, setRazorpayKeyId] = useState(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
-  const [couponCode, setCouponCode] = useState("");
-  const [discountPercent, setDiscountPercent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
 
@@ -126,11 +136,13 @@ function SubscriptionContent() {
   }, [isAuthenticated, requestedPlanParam, searchParams]);
 
   const selected = plans.find((plan) => plan.code === selectedPlan);
+  const selectedBase = baseOf(selected?.code || selectedPlan);
+  const monthlyVariant = plans.find((plan) => plan.code === `${selectedBase}_MONTHLY`);
+  const yearlyVariant = plans.find((plan) => plan.code === `${selectedBase}_YEARLY`);
+  const currentCycle = selected && !isYearly(selected) ? "MONTHLY" : "YEARLY";
   const activePlan = subscription?.status === "ACTIVE" ? subscription.plan : "";
-  const discountedPrice = useMemo(() => {
-    if (!selected) return 0;
-    return Math.max(0, Math.round(selected.price * (1 - discountPercent / 100)));
-  }, [selected, discountPercent]);
+  const canCancelAutoRenew = subscription?.status === "ACTIVE" && subscription?.autoRenew;
+  const discountedPrice = selected ? selected.price : 0;
   const selectedAccessDays = selected ? (discountedPrice <= 0 ? 30 : selected.accessDurationDays || selected.durationDays || 365) : 0;
   const accessDates = useMemo(() => {
     const start = new Date();
@@ -146,28 +158,7 @@ function SubscriptionContent() {
     redirect("/courses");
   }
 
-  async function validateCoupon() {
-    if (!couponCode.trim() || !selected) {
-      toast.error("Enter a coupon code first");
-      return;
-    }
-
-    if (!isAuthenticated) {
-      router.push(`/auth/login?redirect=/subscription?plan=${selected.code}`);
-      return;
-    }
-
-    try {
-      const res = await api.get(`/subscription/validate-coupon?code=${couponCode.trim().toUpperCase()}&plan=${selected.code}`);
-      setDiscountPercent(res.data.discountPercent || 0);
-      toast.success(`${res.data.discountPercent}% discount applied`);
-    } catch (error: any) {
-      setDiscountPercent(0);
-      toast.error(error.response?.data?.message || "Invalid coupon");
-    }
-  }
-
-  async function startPayment(plan: PlanItem) {
+  async function startSubscription(plan: PlanItem) {
     if (!isAuthenticated) {
       router.push(`/auth/login?redirect=/subscription?plan=${plan.code}`);
       return;
@@ -187,19 +178,16 @@ function SubscriptionContent() {
         return;
       }
 
-      const { data } = await api.post("/subscription/create-order", {
+      const { data } = await api.post("/subscription/create-subscription", {
         plan: plan.code,
-        couponCode: couponCode.trim().toUpperCase() || undefined,
       });
-      const checkoutAmount = Number(data.amount) || 1;
+      const cycleLabel = data.billingCycle === "MONTHLY" ? "monthly" : "yearly";
 
       const razorpay = new window.Razorpay({
         key: paymentKeyId,
-        amount: checkoutAmount * 100,
-        currency: data.currency || "INR",
+        subscription_id: data.subscriptionId,
         name: "PhysicsLab",
-        description: data.minimumChargeApplied ? `${plan.name} verification payment` : `${plan.name} subscription`,
-        order_id: data.orderId,
+        description: `${plan.name} — ${cycleLabel} auto-renewal`,
         prefill: {
           name: user?.name,
           email: user?.email,
@@ -207,14 +195,12 @@ function SubscriptionContent() {
         theme: { color: "#00d4ff" },
         handler: async (response: any) => {
           try {
-            await api.post("/subscription/verify-payment", {
-              razorpayOrderId: response.razorpay_order_id,
+            await api.post("/subscription/verify-subscription", {
               razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySubscriptionId: response.razorpay_subscription_id,
               razorpaySignature: response.razorpay_signature,
-              plan: plan.code,
-              couponCode: couponCode.trim().toUpperCase() || undefined,
             });
-            toast.success("Subscription activated");
+            toast.success(`Subscription active — auto-renews ${cycleLabel}`);
             router.push("/dashboard");
           } catch (error: any) {
             toast.error(error.response?.data?.message || "Payment verification failed");
@@ -225,9 +211,23 @@ function SubscriptionContent() {
       razorpay.on("payment.failed", () => toast.error("Payment failed. Please try again."));
       razorpay.open();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to start payment");
+      toast.error(error.response?.data?.message || "Failed to start subscription");
     } finally {
       setPaying(false);
+    }
+  }
+
+  async function cancelAutoRenew() {
+    if (!window.confirm("Cancel auto-renewal? You'll keep access until your current period ends.")) {
+      return;
+    }
+    try {
+      await api.post("/subscription/cancel-subscription");
+      toast.success("Auto-renewal cancelled. Access continues until expiry.");
+      const { data } = await api.get("/subscription/my-subscription");
+      setSubscription(data);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to cancel auto-renewal");
     }
   }
 
@@ -256,13 +256,20 @@ function SubscriptionContent() {
                 <div>
                   <p className="text-sm font-semibold text-text-bright">Active plan: {activePlan}</p>
                   {subscription?.expiryDate && (
-                    <p className="text-xs text-text-muted">Expires {new Date(subscription.expiryDate).toLocaleDateString()}</p>
+                    <p className="text-xs text-text-muted">
+                      {canCancelAutoRenew ? "Auto-renews" : "Expires"} {new Date(subscription.expiryDate).toLocaleDateString()}
+                    </p>
                   )}
                 </div>
               </div>
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm">Go to Dashboard</Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                {canCancelAutoRenew && (
+                  <Button variant="outline" size="sm" onClick={cancelAutoRenew}>Cancel auto-renewal</Button>
+                )}
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm">Go to Dashboard</Button>
+                </Link>
+              </div>
             </div>
           )}
 
@@ -289,6 +296,30 @@ function SubscriptionContent() {
                       </div>
                     </div>
 
+                    {(monthlyVariant || yearlyVariant) && (
+                      <div className="mt-6 inline-flex rounded-full border border-border bg-surface/60 p-1">
+                        <button
+                          type="button"
+                          disabled={!monthlyVariant}
+                          onClick={() => monthlyVariant && setSelectedPlan(monthlyVariant.code)}
+                          className={`px-5 py-2 text-sm font-bold rounded-full transition ${currentCycle === "MONTHLY" ? "bg-accent text-primary" : "text-text-muted"} ${!monthlyVariant ? "opacity-40 cursor-not-allowed" : ""}`}
+                        >
+                          Monthly
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!yearlyVariant}
+                          onClick={() => yearlyVariant && setSelectedPlan(yearlyVariant.code)}
+                          className={`px-5 py-2 text-sm font-bold rounded-full transition ${currentCycle === "YEARLY" ? "bg-accent text-primary" : "text-text-muted"} ${!yearlyVariant ? "opacity-40 cursor-not-allowed" : ""}`}
+                        >
+                          Yearly
+                          {monthlyVariant && yearlyVariant && (
+                            <span className="ml-1 text-xs font-semibold opacity-80">save {Math.max(0, Math.round((1 - yearlyVariant.price / (monthlyVariant.price * 12)) * 100))}%</span>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
                     <div className="mt-8 grid gap-4 md:grid-cols-2">
                       <div className="rounded-2xl border border-border bg-surface/60 p-5">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Course Name</p>
@@ -306,16 +337,16 @@ function SubscriptionContent() {
                           ) : (
                             <FreePriceHighlight size="md" />
                           )}
-                          <span className="ml-2 text-sm text-text-muted">{planPeriod(selected.durationDays, selected.price)}</span>
-                          {selected.price > 0 && (
-                            <p className="mt-1 text-sm font-bold text-accent">Only Rs {monthlyEquivalent(selected.price)}/month</p>
+                          <span className="ml-2 text-sm text-text-muted">{planPeriod(selected, selected.price)}</span>
+                          {selected.price > 0 && isYearly(selected) && (
+                            <p className="mt-1 text-sm font-bold text-accent">Only Rs {monthlyEquivalent(selected.price)}/month, billed yearly</p>
                           )}
                           {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} />}
                         </div>
                       </div>
                       <div className="rounded-2xl border border-border bg-surface/60 p-5">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Time Period</p>
-                        <p className="mt-2 text-lg font-bold text-text-bright">{accessPeriod(selectedAccessDays, discountedPrice)}</p>
+                        <p className="mt-2 text-lg font-bold text-text-bright">{accessPeriod(selected, discountedPrice)}</p>
                       </div>
                       <div className="rounded-2xl border border-border bg-surface/60 p-5">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Start & End Date</p>
@@ -367,54 +398,38 @@ function SubscriptionContent() {
                       <p className="text-sm font-semibold text-text-bright">{selected.name}</p>
                       <p className="text-xs text-text-muted mt-1">{selected.description}</p>
                       <div className="flex items-end justify-between mt-4">
-                        <span className="text-xs text-text-muted">{planPeriod(selected.durationDays, selected.price)}</span>
+                        <span className="text-xs text-text-muted">{planPeriod(selected, selected.price)}</span>
                         <div>
-                          {discountPercent > 0 && (
-                            <p className="text-xs text-success text-right">{discountPercent}% off applied</p>
-                          )}
-                          {selected.isFreeOfferActive && (selected.originalPrice || 0) > selected.price && (
-                            <p className="text-xs text-text-muted line-through text-right">&#8377;{selected.originalPrice}</p>
-                          )}
-                          <div className={`text-right ${discountedPrice > 0 ? "text-2xl font-black text-text-bright" : ""}`}>
-                            {discountedPrice > 0 ? <>&#8377;{discountedPrice.toLocaleString("en-IN")}</> : <FreePriceHighlight size="sm" />}
+                          <div className="text-right text-2xl font-black text-text-bright">
+                            &#8377;{selected.price.toLocaleString("en-IN")}
                           </div>
-                          {discountedPrice > 0 && (
-                            <p className="mt-1 text-right text-xs font-semibold text-accent">Rs {monthlyEquivalent(discountedPrice)}/month</p>
-                          )}
-                          {discountedPrice <= 0 && (
-                            <p className="mt-1 text-right text-xs font-semibold text-accent">Razorpay checkout: &#8377;1</p>
+                          {isYearly(selected) ? (
+                            <p className="mt-1 text-right text-xs font-semibold text-accent">Rs {monthlyEquivalent(selected.price)}/month, billed yearly</p>
+                          ) : (
+                            <p className="mt-1 text-right text-xs font-semibold text-accent">billed monthly</p>
                           )}
                         </div>
                       </div>
-                      {selected.isFreeOfferActive && <FreeOfferCountdown until={selected.freeOfferUntil} className="mt-3" />}
                     </div>
 
-                    {selected.price > 0 && (
-                      <div className="mb-5">
-                        <label className="block text-sm text-text-muted mb-2">Coupon Code</label>
-                        <div className="flex gap-2">
-                          <Input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} placeholder="PHYSICS20" />
-                          <Button variant="outline" onClick={validateCoupon} className="px-4">
-                            <Tag className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <div className="mb-5 rounded-xl border border-border bg-surface/40 p-3 text-xs text-text-muted">
+                      Auto-renews {isYearly(selected) ? "every year" : "every month"} until you cancel. You can cancel anytime from this page or your dashboard.
+                    </div>
 
                     <Button
                       className="w-full"
                       size="lg"
-                      variant={discountedPrice > 0 ? "primary" : "outline"}
-                      onClick={() => startPayment(selected)}
+                      variant="primary"
+                      onClick={() => startSubscription(selected)}
                       disabled={paying || isCurrentPlan(selected, activePlan)}
                     >
                       {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Lock className="w-5 h-5 mr-2" />}
-                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : discountedPrice > 0 ? "Pay Securely" : "Pay Rs 1 Securely"}
+                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : "Subscribe & Auto-renew"}
                     </Button>
 
                     <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
                       <ShieldCheck className="w-4 h-4 text-success" />
-                      <span>{discountedPrice > 0 ? "Secured by Razorpay" : "Rs 1 verification payment via Razorpay"}</span>
+                      <span>Secured by Razorpay</span>
                     </div>
                   </>
                 ) : (

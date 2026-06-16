@@ -12,6 +12,7 @@ import subscriptionRoutes from "./routes/subscription.routes";
 import adminRoutes from "./routes/admin.routes";
 import notificationRoutes from "./routes/notification.routes";
 import feedbackRoutes from "./routes/feedback.routes";
+import { handleRazorpayWebhook } from "./controllers/webhook.controller";
 
 const app = express();
 
@@ -27,6 +28,11 @@ app.use(cors({
 }));
 app.use(compression({ level: 6 }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
+
+// Razorpay webhook needs the RAW body for signature verification, so it must be
+// registered before express.json() parses (and discards) the raw bytes.
+app.post("/api/subscription/webhook", express.raw({ type: "*/*" }), handleRazorpayWebhook);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
