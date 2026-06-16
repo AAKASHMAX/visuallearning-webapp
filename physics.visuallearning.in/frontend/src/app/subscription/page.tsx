@@ -412,10 +412,6 @@ function SubscriptionContent() {
                       </div>
                     </div>
 
-                    <div className="mb-5 rounded-xl border border-border bg-surface/40 p-3 text-xs text-text-muted">
-                      Auto-renews {isYearly(selected) ? "every year" : "every month"} until you cancel. You can cancel anytime from this page or your dashboard.
-                    </div>
-
                     <Button
                       className="w-full"
                       size="lg"
@@ -424,7 +420,7 @@ function SubscriptionContent() {
                       disabled={paying || isCurrentPlan(selected, activePlan)}
                     >
                       {paying ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Lock className="w-5 h-5 mr-2" />}
-                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : "Subscribe & Auto-renew"}
+                      {isCurrentPlan(selected, activePlan) ? "Current Plan" : "Subscribe"}
                     </Button>
 
                     <div className="flex items-center justify-center gap-2 text-xs text-text-muted mt-4">
