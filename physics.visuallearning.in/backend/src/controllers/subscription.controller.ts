@@ -496,6 +496,20 @@ export async function createSubscription(req: AuthRequest, res: Response) {
       });
     }
 
+    // Safety guard: never charge an amount that differs from the price we show.
+    // Razorpay plan amounts are immutable, so if the DB price was edited without
+    // re-linking the plan, refuse rather than silently charge the old amount.
+    const rzpPlan = await razorpay.plans.fetch(planConfig.razorpayPlanId);
+    const planAmount = Number((rzpPlan as any)?.item?.amount);
+    if (planAmount !== Math.round(planConfig.price * 100)) {
+      console.error(
+        `Razorpay plan ${planConfig.razorpayPlanId} amount ${planAmount} != DB price ${planConfig.price * 100} for ${planConfig.code}`
+      );
+      return res.status(409).json({
+        message: "This plan's price was just updated. Please refresh the page and try again.",
+      });
+    }
+
     // total_count = how many cycles before the subscription completes on its own.
     // Yearly: 10 years, Monthly: 10 years worth of months. Customer can cancel anytime.
     const totalCount = planConfig.durationDays >= YEARLY_PLAN_DURATION_DAYS ? 10 : 120;

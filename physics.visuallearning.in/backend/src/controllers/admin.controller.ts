@@ -5,6 +5,7 @@ import { AuthRequest } from "../middleware/auth";
 import { clearCourseCache } from "./course.controller";
 import { clearSubscriptionPlanCache } from "./subscription.controller";
 import { FREE_TRIAL_DURATION_DAYS, YEARLY_PLAN_DURATION_DAYS, clearDefaultPlansEnsureCache, ensureDefaultPlans, getEffectivePlanPrice, getPlanByCode, isFreeOfferActive } from "../services/plan.service";
+import { createRecurringPlan } from "../services/razorpay.service";
 
 const prisma = new PrismaClient();
 
@@ -533,14 +534,42 @@ export async function updateSubscriptionPlan(req: AuthRequest, res: Response) {
     const existing = await prisma.subscriptionPlan.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ message: "Plan not found" });
     if (name !== undefined && !String(name).trim()) return res.status(400).json({ message: "Plan name is required" });
+
+    const newPrice = price ?? existing.price;
+    const newName = name ?? existing.name;
+
+    // Razorpay plan amounts are immutable. If this plan has a linked recurring
+    // plan and the price changed, create a NEW Razorpay plan at the new amount
+    // and point to it. Existing subscribers keep their old plan/price; only new
+    // subscriptions use the new one. If Razorpay is unreachable we abort rather
+    // than leave the DB price out of sync with what would actually be charged.
+    let razorpayPlanId = existing.razorpayPlanId;
+    if (existing.razorpayPlanId && newPrice !== existing.price) {
+      try {
+        const created = await createRecurringPlan({
+          code: existing.code,
+          name: newName,
+          price: newPrice,
+          durationDays: existing.durationDays,
+        });
+        if (!created) {
+          return res.status(503).json({ message: "Payment gateway not configured — cannot change a recurring plan's price" });
+        }
+        razorpayPlanId = created;
+      } catch (error: any) {
+        return res.status(502).json({ message: error?.error?.description || "Razorpay rejected the new plan; price not changed" });
+      }
+    }
+
     const plan = await prisma.subscriptionPlan.update({
       where: { id: req.params.id },
       data: {
         // The plan code (and therefore its monthly/yearly billing cycle) is
         // preserved on edit, so a monthly plan can never silently become yearly.
-        name: name ?? existing.name,
+        name: newName,
         description: description ?? existing.description,
-        price: price ?? existing.price,
+        price: newPrice,
+        razorpayPlanId,
         durationDays: Number(durationDays) > 0 ? Number(durationDays) : existing.durationDays,
         features: Array.isArray(features) ? features : (existing.features as any),
         freeOfferEnabled: freeOfferEnabled ?? existing.freeOfferEnabled,
