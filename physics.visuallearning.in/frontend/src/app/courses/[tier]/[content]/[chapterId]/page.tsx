@@ -325,7 +325,7 @@ export default function ContentViewerPage() {
                       <h3 className="text-text-bright font-semibold text-sm truncate pr-3">{selectedVideo.title}</h3>
                       {(hasHindi || hasEnglish) && (
                         <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => setLanguage("HINDI")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${language === "HINDI" ? "bg-accent text-primary" : "bg-surface-light text-text-muted hover:text-text-bright"}`}>हिंदी</button>
+                          <button onClick={() => setLanguage("HINDI")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${language === "HINDI" ? "bg-accent text-primary" : "bg-surface-light text-text-muted hover:text-text-bright"}`}>Hinglish</button>
                           <button onClick={() => setLanguage("ENGLISH")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${language === "ENGLISH" ? "bg-accent text-primary" : "bg-surface-light text-text-muted hover:text-text-bright"}`}>English</button>
                         </div>
                       )}

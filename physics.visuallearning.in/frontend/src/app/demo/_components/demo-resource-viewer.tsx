@@ -169,7 +169,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
                   <h3 className="text-text-bright font-semibold text-sm truncate pr-3">{selectedVideo.title}</h3>
                   {hasHindi && hasEnglish && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => setLanguage("HINDI")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${language === "HINDI" ? "bg-accent text-primary" : "bg-surface-light text-text-muted"}`}>हिंदी</button>
+                      <button onClick={() => setLanguage("HINDI")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${language === "HINDI" ? "bg-accent text-primary" : "bg-surface-light text-text-muted"}`}>Hinglish</button>
                       <button onClick={() => setLanguage("ENGLISH")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${language === "ENGLISH" ? "bg-accent text-primary" : "bg-surface-light text-text-muted"}`}>English</button>
                     </div>
                   )}

@@ -19,7 +19,7 @@ interface LanguageState {
 // Fallback defaults
 const DEFAULT_LANGUAGES: LangOption[] = [
   { value: "ENGLISH", label: "English" },
-  { value: "HINDI", label: "Hindi" },
+  { value: "HINDI", label: "Hinglish" },
   { value: "MARATHI", label: "Marathi" },
   { value: "TAMIL", label: "Tamil" },
   { value: "TELUGU", label: "Telugu" },
@@ -68,10 +68,12 @@ export const useLanguage = create<LanguageState>((set, get) => ({
     try {
       const { data } = await api.get("/admin/public-settings");
       const rawLangs: any[] = data.data.languages || [];
-      const langs: LangOption[] = rawLangs.map((l: any) => ({
-        value: typeof l === "string" ? l : l.key,
-        label: typeof l === "string" ? l.charAt(0) + l.slice(1).toLowerCase() : l.label,
-      }));
+      const langs: LangOption[] = rawLangs.map((l: any) => {
+        const value = typeof l === "string" ? l : l.key;
+        const rawLabel = typeof l === "string" ? l.charAt(0) + l.slice(1).toLowerCase() : l.label;
+        // Display HINDI as "Hinglish" everywhere the language is shown.
+        return { value, label: value === "HINDI" ? "Hinglish" : rawLabel };
+      });
       const finalLangs = langs.length > 0 ? langs : DEFAULT_LANGUAGES;
       set({ enabledLanguages: finalLangs, loaded: true });
 
