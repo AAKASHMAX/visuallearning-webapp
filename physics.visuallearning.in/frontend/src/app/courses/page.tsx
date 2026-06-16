@@ -110,57 +110,36 @@ export default function CoursesPage() {
           </p>
         </div>
 
-        {/* Subscription price cards (above the class cards) — price only, no feature list. */}
-        {priceCards.length > 0 && (
-          <div className="mb-14">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-text-bright mb-3">
-                Subscription <span className="gradient-text">Plans</span>
-              </h2>
-              <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-card p-1">
-                {(["monthly", "yearly"] as const).map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setCycle(c)}
-                    className={`rounded-lg px-5 py-1.5 text-sm font-semibold capitalize transition-all ${
-                      cycle === c ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"
-                    }`}
-                  >
-                    {c}
-                    {c === "yearly" && <span className="ml-1.5 text-[10px] text-emerald-400">Save</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
-              {priceCards.map((p) => (
-                <div
-                  key={p.id}
-                  className="relative flex flex-col rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
-                >
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
-                      <CreditCard className="h-4 w-4 text-accent" />
-                    </span>
-                    <h3 className="text-lg font-bold text-text-bright">{p.name}</h3>
-                  </div>
-                  <div className="flex items-end gap-1">
-                    <span className="text-base text-text-muted">&#8377;</span>
-                    <span className="text-3xl font-extrabold text-text-bright">{p.price.toLocaleString("en-IN")}</span>
-                    <span className="mb-1 text-sm text-text-muted">/{isYearly(p) ? "year" : "month"}</span>
-                  </div>
-                  <Link
-                    href={`/subscription?plan=${p.code}`}
-                    className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-primary transition-all hover:gap-3 hover:bg-accent/90"
-                  >
-                    Subscribe
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
+        {/* Demo section — small cards, above the class cards. */}
+        <div className="mb-14">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-text-bright mb-2">
+              Try a Free <span className="gradient-text">Demo</span>
+            </h2>
+            <p className="text-text-muted text-sm">No login required — explore real Class 12 content.</p>
           </div>
-        )}
+          <div className="mx-auto grid max-w-5xl gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            {DEMOS.map((demo) => {
+              const Icon = demo.icon;
+              return (
+                <Link
+                  key={demo.href}
+                  href={demo.href}
+                  className="group flex flex-col items-center rounded-xl border border-border bg-card p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
+                >
+                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${demo.gradient} transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-bold leading-tight text-text-bright">{demo.title}</h3>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent transition-all group-hover:gap-1.5">
+                    Try
+                    <ArrowRight className="h-3 w-3" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Class (plan) cards */}
         <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
@@ -212,36 +191,57 @@ export default function CoursesPage() {
           })}
         </div>
 
-        {/* Demo section — small cards, below the class cards. */}
-        <div className="mt-16">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-text-bright mb-2">
-              Try a Free <span className="gradient-text">Demo</span>
-            </h2>
-            <p className="text-text-muted text-sm">No login required — explore real Class 12 content.</p>
-          </div>
-          <div className="mx-auto grid max-w-5xl gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-            {DEMOS.map((demo) => {
-              const Icon = demo.icon;
-              return (
-                <Link
-                  key={demo.href}
-                  href={demo.href}
-                  className="group flex flex-col items-center rounded-xl border border-border bg-card p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
+        {/* Subscription price cards (below the class cards) — price only, no feature list. */}
+        {priceCards.length > 0 && (
+          <div className="mt-16">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-text-bright mb-3">
+                Subscription <span className="gradient-text">Plans</span>
+              </h2>
+              <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-card p-1">
+                {(["monthly", "yearly"] as const).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCycle(c)}
+                    className={`rounded-lg px-5 py-1.5 text-sm font-semibold capitalize transition-all ${
+                      cycle === c ? "bg-accent text-primary" : "text-text-muted hover:text-text-bright"
+                    }`}
+                  >
+                    {c}
+                    {c === "yearly" && <span className="ml-1.5 text-[10px] text-emerald-400">Save</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
+              {priceCards.map((p) => (
+                <div
+                  key={p.id}
+                  className="relative flex flex-col rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
                 >
-                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${demo.gradient} transition-transform duration-300 group-hover:scale-110`}>
-                    <Icon className="h-5 w-5 text-white" />
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
+                      <CreditCard className="h-4 w-4 text-accent" />
+                    </span>
+                    <h3 className="text-lg font-bold text-text-bright">{p.name}</h3>
                   </div>
-                  <h3 className="text-sm font-bold leading-tight text-text-bright">{demo.title}</h3>
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent transition-all group-hover:gap-1.5">
-                    Try
-                    <ArrowRight className="h-3 w-3" />
-                  </span>
-                </Link>
-              );
-            })}
+                  <div className="flex items-end gap-1">
+                    <span className="text-base text-text-muted">&#8377;</span>
+                    <span className="text-3xl font-extrabold text-text-bright">{p.price.toLocaleString("en-IN")}</span>
+                    <span className="mb-1 text-sm text-text-muted">/{isYearly(p) ? "year" : "month"}</span>
+                  </div>
+                  <Link
+                    href={`/subscription?plan=${p.code}`}
+                    className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-primary transition-all hover:gap-3 hover:bg-accent/90"
+                  >
+                    Subscribe
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="text-center mt-12">
           <div className="inline-flex items-center gap-2 glass rounded-full px-6 py-3">
