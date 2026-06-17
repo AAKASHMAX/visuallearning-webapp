@@ -75,6 +75,22 @@ function vimeoEmbed(url: string): string {
   return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0` : url;
 }
 
+// Build a preview thumbnail URL from a video's youtubeUrl (which may be a
+// YouTube or Vimeo link). Returns null if no id can be parsed.
+function videoThumbnail(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.includes("vimeo.com")) {
+    const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    return m ? `https://vumbnail.com/${m[1]}.jpg` : null;
+  }
+  let id = "";
+  if (url.includes("youtu.be/")) id = url.split("youtu.be/")[1]?.split("?")[0] || "";
+  else if (url.includes("v=")) id = url.split("v=")[1]?.split("&")[0] || "";
+  else if (url.includes("/embed/")) id = url.split("/embed/")[1]?.split("?")[0] || "";
+  else if (url.includes("/shorts/")) id = url.split("/shorts/")[1]?.split("?")[0] || "";
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
 function noteMatches(content: string, title: string): boolean {
   const t = title.toLowerCase();
   if (content === "ncert") return t.includes("ncert");
@@ -344,12 +360,22 @@ export default function ContentViewerPage() {
             <div className="w-full lg:w-[42%] min-w-0 space-y-2 lg:max-h-[72vh] lg:overflow-y-auto lg:pr-1">
               {videos.map((video, idx) => {
                 const isActive = selectedVideo?.id === video.id;
+                const thumb = videoThumbnail(video.youtubeUrl);
                 return (
                   <div key={video.id} onClick={() => (video.hasAccess && video.youtubeUrl ? setSelectedVideo(video) : setShowSubscribe(true))}
                     className={`group flex items-center gap-3 rounded-xl border p-2.5 transition-all cursor-pointer ${isActive ? "border-accent/40 bg-accent/5" : "border-border bg-card hover:border-accent/30 hover:bg-card-hover"}`}>
                     <div className="relative w-24 h-14 rounded-lg overflow-hidden bg-surface-light shrink-0 flex items-center justify-center">
                       <Play className="w-6 h-6 text-accent/40" />
-                      {(video.isFree || (video.hasAccess && idx === 0)) && <span className="absolute top-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold bg-emerald-500/90 text-white">{video.isFree ? "FREE" : "PREVIEW"}</span>}
+                      {thumb && (
+                        <img
+                          src={thumb}
+                          alt={video.title}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      )}
+                      {(video.isFree || (video.hasAccess && idx === 0)) && <span className="absolute top-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold bg-emerald-500/90 text-white z-10">{video.isFree ? "FREE" : "PREVIEW"}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xs sm:text-sm font-semibold text-text-bright line-clamp-2">{idx + 1}. {video.title}</h3>

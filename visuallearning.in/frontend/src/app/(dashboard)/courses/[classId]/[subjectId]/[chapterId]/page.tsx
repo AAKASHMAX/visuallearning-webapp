@@ -253,7 +253,12 @@ export default function UnifiedChapterPage() {
                 ) : (
                   filteredVideos.map((video, idx) => {
                     const isActive = selectedVideo?.id === video.id;
-                    
+                    const thumb = video.vimeoVideoId
+                      ? `https://vumbnail.com/${video.vimeoVideoId}.jpg`
+                      : video.youtubeVideoId
+                      ? `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`
+                      : null;
+
                     return (
                       <div 
                         key={video.id} 
@@ -264,16 +269,17 @@ export default function UnifiedChapterPage() {
                         className={`group flex items-center gap-4 rounded-xl border p-3.5 mb-3 transition-all duration-300 ${isActive ? "border-accent bg-accent/5 ring-1 ring-accent/20" : video.locked ? "border-card-border bg-surface opacity-80" : "border-card-border bg-white card-shadow hover:border-accent/40 hover:-translate-y-0.5 cursor-pointer"}`}
                       >
                         <div className="relative w-36 h-20 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center">
-                          {video.vimeoVideoId ? (
+                          <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
+                            <Play className="w-4 h-4 fill-current ml-0.5" />
+                          </div>
+                          {thumb && (
                             <img
-                              src={`https://vumbnail.com/${video.vimeoVideoId}.jpg`}
+                              src={thumb}
                               alt={video.title}
+                              loading="lazy"
                               className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = "none"; }}
                             />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
-                            </div>
                           )}
                           {video.locked && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
