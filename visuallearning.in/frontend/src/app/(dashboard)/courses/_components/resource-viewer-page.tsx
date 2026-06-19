@@ -195,7 +195,8 @@ export function ResourceViewerPage({
   const [locked, setLocked] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [zoom, setZoom] = useState(0.75);
+  // Mobile defaults to 50% zoom so desktop-formatted documents fit the screen.
+  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? 0.5 : 0.75));
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [showQuestionAnswers, setShowQuestionAnswers] = useState(false);
@@ -333,7 +334,7 @@ export function ResourceViewerPage({
   const isDocumentViewer = !isComingSoonResource && !loadError && kind !== "quiz" && !(kind === "question-bank" && documents.length === 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-1 py-4 sm:px-6 lg:px-8">
       <div className="mb-3 flex items-center gap-3">
         <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
@@ -419,7 +420,7 @@ function ZoomControls({
     <div className="flex shrink-0 items-center gap-1 rounded-md border border-gray-200 bg-surface p-0.5">
       <button
         type="button"
-        onClick={() => setZoom((value) => Math.max(0.75, Number((value - 0.1).toFixed(2))))}
+        onClick={() => setZoom((value) => Math.max(0.5, Number((value - 0.1).toFixed(2))))}
         className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
         aria-label="Zoom out"
       >
@@ -626,7 +627,7 @@ function DocumentViewer({
                 {activeDocument.cssContent && (
                   <style dangerouslySetInnerHTML={{ __html: scopeCSS(activeDocument.cssContent) }} />
                 )}
-                <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 28px), 220.5mm) !important; max-width: 220.5mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
+                <style dangerouslySetInnerHTML={{ __html: `.notes-html-viewer .page { width: min(calc(100% - 8px), 220.5mm) !important; max-width: 220.5mm !important; margin-left: auto !important; margin-right: auto !important; }` }} />
                 <div
                   ref={notesContainerRef}
                   className="notes-html-viewer"
@@ -639,8 +640,8 @@ function DocumentViewer({
                 className={cn(
                   "overflow-auto bg-slate-100 py-4",
                   isFullscreen
-                    ? "h-[calc(100vh-64px)] px-4 sm:px-10 lg:px-24"
-                    : "h-[76vh] px-4 sm:px-10 lg:px-20 xl:px-28"
+                    ? "h-[calc(100vh-64px)] px-1 sm:px-10 lg:px-24"
+                    : "h-[76vh] px-1 sm:px-10 lg:px-20 xl:px-28"
                 )}
               >
                 <div

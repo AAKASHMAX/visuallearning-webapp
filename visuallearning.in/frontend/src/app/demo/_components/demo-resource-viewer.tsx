@@ -74,6 +74,9 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Mobile renders desktop-formatted notes at 50% so they fit the screen.
+  const [docZoom] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? 0.5 : 1));
+
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -283,7 +286,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       <div className={cn("relative overflow-auto rounded-2xl border border-gray-200 bg-slate-100 shadow-sm", docHeight)}>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
         {doc.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(doc.cssContent) }} />}
-        <div ref={containerRef} className="demo-notes-viewer" dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
+        <div ref={containerRef} className="demo-notes-viewer" style={{ zoom: docZoom }} dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
       </div>
     );
   }

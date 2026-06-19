@@ -68,7 +68,8 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   const [activeNoteId, setActiveNoteId] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
-  const [zoom, setZoom] = useState(100);
+  // Mobile defaults to 50% zoom so desktop-formatted documents fit the screen.
+  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? 50 : 100));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -250,7 +251,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
             </div>
             <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[78vh]"}`}>
               {/* Constrain the document to A4 width, centered like a paper page. */}
-              <div ref={notesRef} className="physics-notes-viewer" style={{ zoom: zoom / 100, maxWidth: "210mm", margin: "16px auto", background: "#ffffff", padding: "32px 36px", boxSizing: "border-box", boxShadow: "0 2px 12px rgba(0,0,0,0.10)", borderRadius: 6 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+              <div ref={notesRef} className="physics-notes-viewer mx-auto my-4 box-border max-w-[210mm] rounded-md bg-white px-3 py-5 shadow-[0_2px_12px_rgba(0,0,0,0.10)] sm:px-9 sm:py-8" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
             </div>
           </div>
         ) : <StateBox icon={FileText} text="This note has no content yet." />}
