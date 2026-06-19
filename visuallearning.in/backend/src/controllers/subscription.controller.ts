@@ -11,7 +11,7 @@ export const createOrderSchema = z.object({
   classesAccess: z.array(z.string()).optional(),
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
-  billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
+  billingCycle: z.enum(["monthly", "quarterly", "yearly"]).default("yearly"),
 });
 
 export const verifyPaymentSchema = z.object({
@@ -22,7 +22,7 @@ export const verifyPaymentSchema = z.object({
   classesAccess: z.array(z.string()).optional(),
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
-  billingCycle: z.enum(["monthly", "yearly"]).default("yearly"),
+  billingCycle: z.enum(["monthly", "quarterly", "yearly"]).default("yearly"),
 });
 
 // Class-count based plans. Fixed price; the user picks `classSelection` classes
@@ -31,9 +31,11 @@ export const verifyPaymentSchema = z.object({
 const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
   SINGLE_CLASS: {
     monthlyAmount: 19900,
+    quarterlyAmount: 219900,
     yearlyAmount: 149900,
     label: "Single Class",
     durationMonthly: 30,
+    durationQuarterly: 90,
     durationYearly: 365,
     enabled: true,
     classSelection: 1,
@@ -41,9 +43,11 @@ const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
   },
   DUAL_CLASS: {
     monthlyAmount: 34900,
+    quarterlyAmount: 279900,
     yearlyAmount: 249900,
     label: "Dual Class",
     durationMonthly: 30,
+    durationQuarterly: 90,
     durationYearly: 365,
     enabled: true,
     classSelection: 2,
@@ -51,9 +55,11 @@ const AUDIENCE_PLAN_DEFAULTS: Record<string, any> = {
   },
   FULL_ACCESS: {
     monthlyAmount: 49900,
+    quarterlyAmount: 399900,
     yearlyAmount: 349900,
     label: "Full Access",
     durationMonthly: 30,
+    durationQuarterly: 90,
     durationYearly: 365,
     enabled: true,
     classSelection: 0,
@@ -93,7 +99,9 @@ async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
 }
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
-async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
+async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarterly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
+  // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
+  const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
   // 1. Check Course table first for price updates from admin panel
   const course = await prisma.course.findFirst({ where: { planKey } });
   
@@ -111,10 +119,10 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
   if (course && !isAudiencePlan(planKey)) {
     // If course price exists, calculate monthly arbitrarily (price/10) if monthly is requested
     const basePrice = (course as any).price || 0;
-    const amount = billingCycle === "monthly" ? Math.round(basePrice * 100 / 10) : basePrice * 100;
+    const amount = pick(Math.round(basePrice * 100 / 10), Math.round(basePrice * 100 / 4), basePrice * 100);
     return {
       amount,
-      duration: billingCycle === "monthly" ? (configFromSetting?.durationMonthly || 30) : (configFromSetting?.durationYearly || 365),
+      duration: pick(configFromSetting?.durationMonthly || 30, configFromSetting?.durationQuarterly || 90, configFromSetting?.durationYearly || 365),
       label: course.name,
       classSelection: configFromSetting?.classSelection || 0,
       unitType: configFromSetting?.unitType || "fixed",
@@ -124,8 +132,8 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
   // 3. Fallback to settings DB if no course record linked
   if (configFromSetting) {
     return {
-      amount: billingCycle === "monthly" ? configFromSetting.monthlyAmount : configFromSetting.yearlyAmount,
-      duration: billingCycle === "monthly" ? configFromSetting.durationMonthly : configFromSetting.durationYearly,
+      amount: pick(configFromSetting.monthlyAmount, configFromSetting.quarterlyAmount, configFromSetting.yearlyAmount),
+      duration: pick(configFromSetting.durationMonthly, configFromSetting.durationQuarterly || 90, configFromSetting.durationYearly),
       label: configFromSetting.label,
       classSelection: configFromSetting.classSelection || 0,
       unitType: configFromSetting.unitType || "fixed",
@@ -134,10 +142,10 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "yearly"
   
   // 4. Last fallback to hardcoded config
   const fallback = (config.plans as any)[planKey];
-  return { 
-    amount: billingCycle === "monthly" ? fallback?.monthlyAmount || 0 : fallback?.yearlyAmount || 0, 
-    duration: billingCycle === "monthly" ? fallback?.durationMonthly || 30 : fallback?.durationYearly || 365, 
-    label: fallback?.label || planKey, 
+  return {
+    amount: pick(fallback?.monthlyAmount || 0, fallback?.quarterlyAmount, fallback?.yearlyAmount || 0),
+    duration: pick(fallback?.durationMonthly || 30, fallback?.durationQuarterly || 90, fallback?.durationYearly || 365),
+    label: fallback?.label || planKey,
     classSelection: 0,
     unitType: "fixed",
   };
@@ -219,8 +227,10 @@ export async function getPlans(req: Request, res: Response) {
         id: key,
         name: v.label,
         monthlyPrice: livePrice !== undefined ? livePrice : ((v.monthlyAmount !== undefined ? v.monthlyAmount : (v.amount || 0) / 10) / 100),
+        quarterlyPrice: livePrice !== undefined ? livePrice * 3 : ((v.quarterlyAmount !== undefined ? v.quarterlyAmount : (v.monthlyAmount || 0) * 3) / 100),
         yearlyPrice: livePrice !== undefined ? livePrice : ((v.yearlyAmount !== undefined ? v.yearlyAmount : (v.amount || 0)) / 100),
         durationMonthly: v.durationMonthly || 30,
+        durationQuarterly: v.durationQuarterly || 90,
         durationYearly: v.durationYearly || 365,
         features: featureMap[key] || [],
         classSelection: v.classSelection || 0,

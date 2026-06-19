@@ -6,12 +6,13 @@ import { RazorpayButton } from "@/components/payment/razorpay-button";
 import api from "@/lib/api";
 import { Check, GraduationCap, Layers, Crown, Sparkles, type LucideIcon } from "lucide-react";
 
-type BillingCycle = "monthly" | "yearly";
+type BillingCycle = "monthly" | "quarterly" | "yearly";
 
 interface Plan {
   id: string;
   name: string;
   monthlyPrice?: number;
+  quarterlyPrice?: number;
   yearlyPrice?: number;
   features?: string[];
   classSelection?: number;
@@ -79,7 +80,7 @@ export default function PricingPage() {
         </p>
 
         <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white p-1 shadow-sm">
-          {(["monthly", "yearly"] as BillingCycle[]).map((c) => (
+          {(["monthly", "quarterly", "yearly"] as BillingCycle[]).map((c) => (
             <button
               key={c}
               onClick={() => setCycle(c)}
@@ -102,7 +103,7 @@ export default function PricingPage() {
             const max = plan.classSelection ?? 0;
             const isFull = max === 0;
             const sel = isFull ? allClassIds : (selected[plan.id] || []);
-            const price = cycle === "monthly" ? plan.monthlyPrice || 0 : plan.yearlyPrice || 0;
+            const price = cycle === "monthly" ? plan.monthlyPrice || 0 : cycle === "quarterly" ? plan.quarterlyPrice || 0 : plan.yearlyPrice || 0;
             const ready = isFull || sel.length === max;
             const classesAccess = isFull ? allClassIds : sel;
 
@@ -128,7 +129,7 @@ export default function PricingPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-heading">₹{price.toLocaleString("en-IN")}</div>
-                    <div className="text-[11px] font-bold text-text-muted">/{cycle === "monthly" ? "month" : "year"}</div>
+                    <div className="text-[11px] font-bold text-text-muted">/{cycle === "monthly" ? "month" : cycle === "quarterly" ? "3 months" : "year"}</div>
                   </div>
                 </div>
 

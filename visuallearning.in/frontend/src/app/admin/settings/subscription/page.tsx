@@ -13,9 +13,11 @@ import {
 
 interface PlanConfig {
   monthlyAmount: number;
+  quarterlyAmount?: number;
   yearlyAmount: number;
   label: string;
   durationMonthly: number;
+  durationQuarterly?: number;
   durationYearly: number;
   enabled: boolean;
   classSelection: number;
@@ -65,8 +67,10 @@ export default function SubscriptionSettingsPage() {
   const [newPlanKey, setNewPlanKey] = useState("");
   const [newPlanLabel, setNewPlanLabel] = useState("");
   const [newPlanMonthlyRupees, setNewPlanMonthlyRupees] = useState(299);
+  const [newPlanQuarterlyRupees, setNewPlanQuarterlyRupees] = useState(799);
   const [newPlanYearlyRupees, setNewPlanYearlyRupees] = useState(2999);
   const [newPlanDurationMonthly, setNewPlanDurationMonthly] = useState(30);
+  const [newPlanDurationQuarterly, setNewPlanDurationQuarterly] = useState(90);
   const [newPlanDurationYearly, setNewPlanDurationYearly] = useState(365);
   const [newPlanClassSelection, setNewPlanClassSelection] = useState(0);
   const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
@@ -115,6 +119,9 @@ export default function SubscriptionSettingsPage() {
   const updatePlanMonthlyRupees = (key: string, rupees: number) =>
     updatePlan(key, "monthlyAmount", Math.round(rupees * 100));
 
+  const updatePlanQuarterlyRupees = (key: string, rupees: number) =>
+    updatePlan(key, "quarterlyAmount", Math.round(rupees * 100));
+
   const updatePlanYearlyRupees = (key: string, rupees: number) =>
     updatePlan(key, "yearlyAmount", Math.round(rupees * 100));
 
@@ -124,10 +131,10 @@ export default function SubscriptionSettingsPage() {
     if (plansConfig[key]) { toast.error("Plan key already exists"); return; }
     setPlansConfig({
       ...plansConfig,
-      [key]: { label: newPlanLabel.trim(), monthlyAmount: Math.round(newPlanMonthlyRupees * 100), yearlyAmount: Math.round(newPlanYearlyRupees * 100), durationMonthly: newPlanDurationMonthly, durationYearly: newPlanDurationYearly, enabled: true, classSelection: newPlanClassSelection },
+      [key]: { label: newPlanLabel.trim(), monthlyAmount: Math.round(newPlanMonthlyRupees * 100), quarterlyAmount: Math.round(newPlanQuarterlyRupees * 100), yearlyAmount: Math.round(newPlanYearlyRupees * 100), durationMonthly: newPlanDurationMonthly, durationQuarterly: newPlanDurationQuarterly, durationYearly: newPlanDurationYearly, enabled: true, classSelection: newPlanClassSelection },
     });
-    setNewPlanKey(""); setNewPlanLabel(""); setNewPlanMonthlyRupees(299); setNewPlanYearlyRupees(2999);
-    setNewPlanDurationMonthly(30); setNewPlanDurationYearly(365); setNewPlanClassSelection(0); setShowAddPlan(false);
+    setNewPlanKey(""); setNewPlanLabel(""); setNewPlanMonthlyRupees(299); setNewPlanQuarterlyRupees(799); setNewPlanYearlyRupees(2999);
+    setNewPlanDurationMonthly(30); setNewPlanDurationQuarterly(90); setNewPlanDurationYearly(365); setNewPlanClassSelection(0); setShowAddPlan(false);
   };
 
   const removePlan = (key: string) => {
@@ -195,6 +202,8 @@ export default function SubscriptionSettingsPage() {
                 { label: "Class Access (0=all)", el: <input type="number" min={0} value={newPlanClassSelection} onChange={(e) => setNewPlanClassSelection(parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Monthly Price (₹)", el: <input type="number" value={newPlanMonthlyRupees} onChange={(e) => setNewPlanMonthlyRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Monthly Duration (days)", el: <input type="number" value={newPlanDurationMonthly} onChange={(e) => setNewPlanDurationMonthly(parseInt(e.target.value) || 30)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Quarterly Price (₹)", el: <input type="number" value={newPlanQuarterlyRupees} onChange={(e) => setNewPlanQuarterlyRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
+                { label: "Quarterly Duration (days)", el: <input type="number" value={newPlanDurationQuarterly} onChange={(e) => setNewPlanDurationQuarterly(parseInt(e.target.value) || 90)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Yearly Price (₹)", el: <input type="number" value={newPlanYearlyRupees} onChange={(e) => setNewPlanYearlyRupees(parseFloat(e.target.value) || 0)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
                 { label: "Yearly Duration (days)", el: <input type="number" value={newPlanDurationYearly} onChange={(e) => setNewPlanDurationYearly(parseInt(e.target.value) || 365)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 bg-white" /> },
               ].map(({ label, el }) => (
@@ -271,6 +280,19 @@ export default function SubscriptionSettingsPage() {
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Monthly Dur. (days)</label>
                       <input type="number" value={plan.durationMonthly || 30} onChange={(e) => updatePlan(key, "durationMonthly", parseInt(e.target.value) || 30)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Quarterly Price (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">₹</span>
+                        <input type="number" value={Math.round((plan.quarterlyAmount || 0) / 100)} onChange={(e) => updatePlanQuarterlyRupees(key, parseFloat(e.target.value) || 0)}
+                          className={`w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm font-black ${theme.text} bg-white focus:outline-none focus:border-primary/50`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Quarterly Dur. (days)</label>
+                      <input type="number" value={plan.durationQuarterly || 90} onChange={(e) => updatePlan(key, "durationQuarterly", parseInt(e.target.value) || 90)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary/50" />
                     </div>
                     <div>

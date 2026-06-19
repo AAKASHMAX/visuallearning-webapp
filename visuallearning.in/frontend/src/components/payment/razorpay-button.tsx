@@ -12,7 +12,7 @@ interface RazorpayButtonProps {
   classesAccess?: string[];
   subjectsAccess?: string[];
   couponCode?: string;
-  billingCycle?: "monthly" | "yearly";
+  billingCycle?: "monthly" | "quarterly" | "yearly";
   onSuccess?: () => void;
   className?: string;
   buttonLabel?: string;
