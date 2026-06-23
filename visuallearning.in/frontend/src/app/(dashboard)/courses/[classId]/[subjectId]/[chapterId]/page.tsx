@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/loading";
+import { VimeoThumb } from "@/components/video-thumb";
 import { VideoPlayer } from "@/components/video/video-player";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
@@ -253,9 +254,7 @@ export default function UnifiedChapterPage() {
                 ) : (
                   filteredVideos.map((video, idx) => {
                     const isActive = selectedVideo?.id === video.id;
-                    const thumb = video.vimeoVideoId
-                      ? `https://vumbnail.com/${video.vimeoVideoId}.jpg`
-                      : video.youtubeVideoId
+                    const ytThumb = !video.vimeoVideoId && video.youtubeVideoId
                       ? `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`
                       : null;
 
@@ -272,15 +271,17 @@ export default function UnifiedChapterPage() {
                           <div className="w-9 h-9 rounded-full bg-accent/90 flex items-center justify-center text-white shadow-sm">
                             <Play className="w-4 h-4 fill-current ml-0.5" />
                           </div>
-                          {thumb && (
+                          {video.vimeoVideoId ? (
+                            <VimeoThumb vimeoId={video.vimeoVideoId} alt={video.title} className="absolute inset-0 w-full h-full object-cover" />
+                          ) : ytThumb ? (
                             <img
-                              src={thumb}
+                              src={ytThumb}
                               alt={video.title}
                               loading="lazy"
                               className="absolute inset-0 w-full h-full object-cover"
                               onError={(e) => { e.currentTarget.style.display = "none"; }}
                             />
-                          )}
+                          ) : null}
                           {video.locked && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                               <Lock className="w-6 h-6 text-white" />
