@@ -18,11 +18,23 @@ const featureMap: Record<string, string[]> = {
 // Canonical class-count plans (same as the webapp). Admin price edits stored in
 // the plans_config setting override these per key.
 const CLASS_PLANS: Record<string, any> = {
-  SINGLE_CLASS: { monthlyAmount: 19900, yearlyAmount: 149900, label: "Single Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 1 },
-  DUAL_CLASS: { monthlyAmount: 34900, yearlyAmount: 249900, label: "Dual Class", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 2 },
-  FULL_ACCESS: { monthlyAmount: 49900, yearlyAmount: 349900, label: "Full Access", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
+  SINGLE_CLASS: { monthlyAmount: 19900, quarterlyAmount: 219900, yearlyAmount: 149900, label: "Single Class", durationMonthly: 30, durationQuarterly: 90, durationYearly: 365, enabled: true, classSelection: 1 },
+  DUAL_CLASS: { monthlyAmount: 34900, quarterlyAmount: 279900, yearlyAmount: 249900, label: "Dual Class", durationMonthly: 30, durationQuarterly: 90, durationYearly: 365, enabled: true, classSelection: 2 },
+  FULL_ACCESS: { monthlyAmount: 49900, quarterlyAmount: 399900, yearlyAmount: 349900, label: "Full Access", durationMonthly: 30, durationQuarterly: 90, durationYearly: 365, enabled: true, classSelection: 0 },
 };
 const CLASS_PLAN_ORDER = ["SINGLE_CLASS", "DUAL_CLASS", "FULL_ACCESS"];
+
+// Pick the amount/duration for the requested billing cycle (quarterly falls back to ~3x monthly / 90d).
+function amountForCycle(pc: any, cycle: string): number {
+  if (cycle === "monthly") return pc.monthlyAmount ?? (pc.amount ? Math.round(pc.amount / 10) : 0);
+  if (cycle === "quarterly") return pc.quarterlyAmount ?? (pc.monthlyAmount ? pc.monthlyAmount * 3 : 0);
+  return pc.yearlyAmount ?? pc.amount ?? 0;
+}
+function durationForCycle(pc: any, cycle: string): number {
+  if (cycle === "monthly") return pc.durationMonthly ?? 30;
+  if (cycle === "quarterly") return pc.durationQuarterly ?? 90;
+  return pc.durationYearly ?? pc.duration ?? 365;
+}
 
 async function resolveClassPlans(): Promise<Record<string, any>> {
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
@@ -90,8 +102,10 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
           name: v.label,
           price: (v.yearlyAmount ?? 0) / 100,
           monthlyPrice: (v.monthlyAmount ?? 0) / 100,
+          quarterlyPrice: (v.quarterlyAmount ?? (v.monthlyAmount ? v.monthlyAmount * 3 : 0)) / 100,
           yearlyPrice: (v.yearlyAmount ?? 0) / 100,
           duration: v.durationYearly ?? 365,
+          durationQuarterly: v.durationQuarterly ?? 90,
           billingCycle: "yearly",
           features: featureMap[key] || [],
           classSelection: v.classSelection || 0,
@@ -179,10 +193,8 @@ export async function generateOrderId(req: Request, res: Response) {
       }
     }
 
-    const isMonthly = req.body.billingCycle === "monthly";
-    let amount = isMonthly 
-      ? (planConfig.monthlyAmount !== undefined ? planConfig.monthlyAmount : (planConfig.amount ? Math.round(planConfig.amount / 10) : 0))
-      : (planConfig.yearlyAmount !== undefined ? planConfig.yearlyAmount : (planConfig.amount || 0));
+    const cycle = req.body.billingCycle || "yearly";
+    let amount = amountForCycle(planConfig, cycle);
     
     let couponDiscount = 0;
 
@@ -233,10 +245,8 @@ export async function purchasePlan(req: Request, res: Response) {
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
     const planConfig = await getPlanConfig(planKey);
-    const isMonthly = req.body.billingCycle === "monthly";
-    let amount = isMonthly 
-      ? (planConfig.monthlyAmount !== undefined ? planConfig.monthlyAmount : (planConfig.amount ? Math.round(planConfig.amount / 10) : 0))
-      : (planConfig.yearlyAmount !== undefined ? planConfig.yearlyAmount : (planConfig.amount || 0));
+    const cycle = req.body.billingCycle || "yearly";
+    let amount = amountForCycle(planConfig, cycle);
     
     let discountAmount = 0;
 
@@ -258,9 +268,7 @@ export async function purchasePlan(req: Request, res: Response) {
 
     if (amount < 100) amount = 100;
 
-    const duration = isMonthly 
-      ? (planConfig.durationMonthly !== undefined ? planConfig.durationMonthly : 30)
-      : (planConfig.durationYearly !== undefined ? planConfig.durationYearly : (planConfig.duration || 365));
+    const duration = durationForCycle(planConfig, cycle);
 
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + duration);
