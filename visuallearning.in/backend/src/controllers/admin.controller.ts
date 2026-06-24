@@ -915,8 +915,11 @@ export async function getPublicSettings(_req: Request, res: Response) {
 export async function getSubscriptionSettings(_req: Request, res: Response) {
   try {
     const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
-    const data = setting ? JSON.parse(setting.value) : { upgradeDiscountPercent: 0 };
-    return success(res, data);
+    const data = setting ? JSON.parse(setting.value) : {};
+    return success(res, {
+      upgradeDiscountPercent: data.upgradeDiscountPercent ?? 0,
+      downloadAddonPercent: data.downloadAddonPercent ?? 50,
+    });
   } catch (e) {
     console.error("Get subscription settings error:", e);
     return error(res, "Failed to fetch subscription settings");
@@ -925,17 +928,27 @@ export async function getSubscriptionSettings(_req: Request, res: Response) {
 
 export async function updateSubscriptionSettings(req: Request, res: Response) {
   try {
-    const { upgradeDiscountPercent } = req.body;
-    if (typeof upgradeDiscountPercent !== "number" || upgradeDiscountPercent < 0 || upgradeDiscountPercent > 100) {
-      return error(res, "Upgrade discount must be between 0 and 100", 400);
+    const existing = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
+    const next: Record<string, any> = existing ? JSON.parse(existing.value) : {};
+
+    if (req.body.upgradeDiscountPercent !== undefined) {
+      const v = req.body.upgradeDiscountPercent;
+      if (typeof v !== "number" || v < 0 || v > 100) return error(res, "Upgrade discount must be between 0 and 100", 400);
+      next.upgradeDiscountPercent = v;
     }
-    const value = JSON.stringify({ upgradeDiscountPercent });
+    if (req.body.downloadAddonPercent !== undefined) {
+      const v = req.body.downloadAddonPercent;
+      if (typeof v !== "number" || v < 0 || v > 100) return error(res, "Download add-on percent must be between 0 and 100", 400);
+      next.downloadAddonPercent = v;
+    }
+
+    const value = JSON.stringify(next);
     await prisma.setting.upsert({
       where: { key: "subscription_settings" },
       update: { value },
       create: { key: "subscription_settings", value },
     });
-    return success(res, { upgradeDiscountPercent }, "Subscription settings updated");
+    return success(res, next, "Subscription settings updated");
   } catch (e) {
     console.error("Update subscription settings error:", e);
     return error(res, "Failed to update subscription settings");
