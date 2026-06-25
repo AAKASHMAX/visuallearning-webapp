@@ -171,6 +171,14 @@ function pdfViewerUrl(url: string) {
   return `${url}${separator}toolbar=0&navpanes=0&pagemode=none&scrollbar=1&view=Fit`;
 }
 
+// Force a file download (instead of opening in-browser) by adding Cloudinary's
+// fl_attachment flag, with a clean filename derived from the document title.
+function downloadUrl(url: string, title: string) {
+  if (!url || !url.includes("/upload/")) return url;
+  const name = (title || "document").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 60) || "document";
+  return url.replace("/upload/", `/upload/fl_attachment:${name}/`);
+}
+
 export function ResourceViewerPage({
   classId,
   subjectId,
@@ -584,9 +592,8 @@ function DocumentViewer({
                 {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   canDownload ? (
                     <a
-                      href={activeDocument.pdfUrl}
+                      href={downloadUrl(activeDocument.pdfUrl, activeDocument.title)}
                       download
-                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
                     >
