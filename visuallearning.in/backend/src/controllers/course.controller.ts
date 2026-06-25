@@ -314,11 +314,19 @@ export async function getNotes(req: Request, res: Response) {
 
     const notesWithAccess = notes.map((n) => {
       const canView = hasAccess;
+      // Protected delivery: once an image-based PDF has been generated for an
+      // HTML note we serve ONLY that PDF — the HTML source is withheld so it
+      // can't be copied or scraped from the network response. This only applies
+      // to real HTML notes; PPTs (which carry their dark-mode PDF URL in
+      // cssContent, not HTML) and notes without a generated PDF are untouched.
+      const isHtmlNote = !!(n.htmlContent && n.htmlContent.trim().length > 0);
+      const hasPdf = !!n.pdfUrl && n.pdfUrl !== "pending" && /\.pdf(\?|$)/i.test(n.pdfUrl);
+      const serveOnlyPdf = isHtmlNote && hasPdf;
       return {
         ...n,
         pdfUrl: canView ? n.pdfUrl : null,
-        htmlContent: canView ? n.htmlContent : null,
-        cssContent: canView ? n.cssContent : null,
+        htmlContent: canView && !serveOnlyPdf ? n.htmlContent : null,
+        cssContent: canView && !serveOnlyPdf ? n.cssContent : null,
         locked: !canView,
       };
     });
