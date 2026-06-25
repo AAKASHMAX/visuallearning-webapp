@@ -306,7 +306,8 @@ export async function getNotes(req: Request, res: Response) {
     } else if (req.user) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
       hasAccess = result.hasAccess;
-      canDownload = result.hasAccess;
+      // Downloading the (protected image-PDF) docs requires the download add-on.
+      canDownload = result.hasAccess && !!result.subscription?.downloadAddon;
     }
     if (!hasAccess && isFirstChapter) {
       hasAccess = true;

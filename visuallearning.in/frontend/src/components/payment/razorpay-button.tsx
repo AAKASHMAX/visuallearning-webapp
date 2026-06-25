@@ -13,6 +13,7 @@ interface RazorpayButtonProps {
   subjectsAccess?: string[];
   couponCode?: string;
   billingCycle?: "monthly" | "quarterly" | "yearly";
+  downloadAddon?: boolean;
   onSuccess?: () => void;
   className?: string;
   buttonLabel?: string;
@@ -43,6 +44,7 @@ export function RazorpayButton({
   subjectsAccess,
   couponCode,
   billingCycle,
+  downloadAddon,
   onSuccess,
   className,
   buttonLabel,
@@ -62,6 +64,7 @@ export function RazorpayButton({
         subjectsAccess,
         couponCode: couponCode || undefined,
         billingCycle,
+        downloadAddon,
       });
       const order = data.data;
 
@@ -85,6 +88,7 @@ export function RazorpayButton({
               subjectsAccess,
               couponCode: couponCode || undefined,
               billingCycle,
+              downloadAddon,
             });
             toast.success("Subscription activated!");
             onSuccess?.();

@@ -12,6 +12,7 @@ export const createOrderSchema = z.object({
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
   billingCycle: z.enum(["monthly", "quarterly", "yearly"]).default("yearly"),
+  downloadAddon: z.boolean().optional(),
 });
 
 export const verifyPaymentSchema = z.object({
@@ -23,6 +24,7 @@ export const verifyPaymentSchema = z.object({
   subjectsAccess: z.array(z.string()).optional(),
   couponCode: z.string().optional(),
   billingCycle: z.enum(["monthly", "quarterly", "yearly"]).default("yearly"),
+  downloadAddon: z.boolean().optional(),
 });
 
 // Class-count based plans. Fixed price; the user picks `classSelection` classes
@@ -161,6 +163,18 @@ async function getUpgradeDiscount(): Promise<number> {
   return 0;
 }
 
+// Helper: document-download add-on percentage (of the yearly price). Admin-editable.
+async function getDownloadAddonPercent(): Promise<number> {
+  const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
+  if (setting) {
+    try {
+      const c = JSON.parse(setting.value);
+      if (typeof c.downloadAddonPercent === "number") return c.downloadAddonPercent;
+    } catch { /* fall through */ }
+  }
+  return 50;
+}
+
 // Helper: validate and get coupon, optionally checking plan restriction
 async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
@@ -240,10 +254,11 @@ export async function getPlans(req: Request, res: Response) {
       };
     });
 
-  // Get upgrade discount
+  // Get upgrade discount + document-download add-on percentage
   const upgradeDiscountPercent = await getUpgradeDiscount();
+  const downloadAddonPercent = await getDownloadAddonPercent();
 
-  const result = { plans, classes, upgradeDiscountPercent };
+  const result = { plans, classes, upgradeDiscountPercent, downloadAddonPercent };
   cacheSet("plans", result, 60); // 1 min cache (reduced for live updates)
   return success(res, result);
 }
@@ -264,7 +279,7 @@ export async function validateCouponCode(req: Request, res: Response) {
 
 export async function createSubscriptionOrder(req: Request, res: Response) {
   try {
-    const { plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly" } = req.body;
+    const { plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly", downloadAddon } = req.body;
     const planConfig = await getPlanConfig(plan, billingCycle);
 
     // Validate classesAccess based on plan's classSelection setting
@@ -339,6 +354,14 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       amount -= couponDiscount;
     }
 
+    // Document-download add-on (yearly only) — added on top, after discounts.
+    let addOnAmount = 0;
+    const wantAddon = downloadAddon === true && billingCycle === "yearly";
+    if (wantAddon) {
+      addOnAmount = Math.round(originalAmount * (await getDownloadAddonPercent()) / 100);
+      amount += addOnAmount;
+    }
+
     // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
     if (amount < 100) amount = 100;
 
@@ -357,6 +380,8 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       originalAmount,
       upgradeDiscount,
       couponDiscount,
+      downloadAddon: wantAddon,
+      addOnAmount,
       isUpgrade: !!existing,
     });
   } catch (e: any) {
@@ -368,7 +393,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
 
 export async function verifyPayment(req: Request, res: Response) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly" } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly", downloadAddon } = req.body;
 
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
@@ -400,6 +425,8 @@ export async function verifyPayment(req: Request, res: Response) {
       }
     }
 
+    const baseAmount = amount; // yearly amount before discounts (for add-on calc)
+
     const existing = await prisma.subscription.findFirst({
       where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
     });
@@ -426,6 +453,12 @@ export async function verifyPayment(req: Request, res: Response) {
           data: { usedCount: { increment: 1 } },
         });
       }
+    }
+
+    // Document-download add-on (yearly only) — added on top, after discounts.
+    const wantAddon = downloadAddon === true && billingCycle === "yearly";
+    if (wantAddon) {
+      amount += Math.round(baseAmount * (await getDownloadAddonPercent()) / 100);
     }
 
     if (amount < 100) amount = 100;
@@ -485,6 +518,7 @@ export async function verifyPayment(req: Request, res: Response) {
         amount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         discountAmount,
+        downloadAddon: wantAddon,
       },
     });
 
