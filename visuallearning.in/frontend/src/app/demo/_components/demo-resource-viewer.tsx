@@ -42,7 +42,7 @@ function scopeCSS(css: string): string {
 
 function pdfViewerUrl(url: string) {
   const sep = url.includes("#") ? "&" : "#";
-  return `${url}${sep}toolbar=0&navpanes=0&pagemode=none&view=Fit`;
+  return `${url}${sep}toolbar=0&navpanes=0&pagemode=none&view=FitH`;
 }
 
 function hasTerm(title: string, term: string) {

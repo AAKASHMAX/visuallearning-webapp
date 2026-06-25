@@ -168,7 +168,7 @@ function normalizeOption(value: string) {
 
 function pdfViewerUrl(url: string) {
   const separator = url.includes("#") ? "&" : "#";
-  return `${url}${separator}toolbar=0&navpanes=0&pagemode=none&scrollbar=1&view=Fit`;
+  return `${url}${separator}toolbar=0&navpanes=0&pagemode=none&scrollbar=1&view=FitH`;
 }
 
 export function ResourceViewerPage({
