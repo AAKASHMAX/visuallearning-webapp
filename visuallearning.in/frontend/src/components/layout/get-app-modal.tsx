@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Smartphone, X } from "lucide-react";
-import { PLAY_STORE_URL } from "@/lib/app-links";
+import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
 
 // One-time popup inviting visitors to install the Android app.
 export function GetAppModal() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    if (!APP_PUBLISHED) return; // hidden until the app is live on Play
     if (typeof window === "undefined") return;
     try {
       if (localStorage.getItem("vl_get_app_seen")) return;
