@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { FeedbackPopup } from "@/components/layout/feedback-popup";
 import { FloatingContact } from "@/components/layout/floating-contact";
+import { GetAppModal } from "@/components/layout/get-app-modal";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {process.env.NEXT_PUBLIC_GA_ID && <AnalyticsTracker gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         {children}
+        <GetAppModal />
         <FeedbackPopup />
         <FloatingContact />
       </body>
