@@ -284,24 +284,19 @@ export async function getNotesPdf(req: Request, res: Response) {
 export async function getTestPaper(req: Request, res: Response) {
   try {
     const chapterId = req.params.id;
-    const chapter = await prisma.chapter.findUnique({
-      where: { id: chapterId },
-      include: { subject: true },
-    });
-    if (!chapter) return mobileError(res, "Chapter not found", 404);
+    // PYQ now comes from the chapter's "PYQ Solutions" note (the new image-PDF),
+    // matching the webapp. Chapters without one return empty -> app shows
+    // "Coming soon". (The old subject-wide board papers are no longer used here.)
+    const notes = await prisma.note.findMany({ where: { chapterId } });
+    const pyq = notes.filter((n) => /pyq|previous year/i.test(n.title) && (n.pdfUrl || "").trim() !== "");
 
-    const papers = await prisma.boardPaper.findMany({
-      where: { subjectId: chapter.subjectId },
-      orderBy: [{ year: "desc" }, { order: "asc" }],
-    });
-
-    const data = papers.map((p) => ({
-      testpaper_id_PK: p.id,
+    const data = pyq.map((n) => ({
+      testpaper_id_PK: n.id,
       chapter_id_FK: chapterId,
-      pdf_title: `${p.title} (${p.year})`,
-      pdf_url: p.pdfUrl,
+      pdf_title: n.title,
+      pdf_url: n.pdfUrl,
       is_paid: 0,
-      created_at: p.createdAt.toISOString(),
+      created_at: n.createdAt.toISOString(),
       updated_at: null,
     }));
 
