@@ -243,7 +243,7 @@ export default function UnifiedChapterPage() {
                 {filteredVideos.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
                     <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
-                    <p className="text-sm text-text-muted">No videos available in {language === "HINDI" ? "Hinglish" : "English"}</p>
+                    <p className="text-sm text-text-muted">Coming soon in {language === "HINDI" ? "Hinglish" : "English"}</p>
                     <button 
                       onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
                       className="text-xs text-accent font-bold mt-2 hover:underline"
@@ -359,7 +359,7 @@ export default function UnifiedChapterPage() {
                     Unlock Quiz
                   </Button>
                 ) : questions.length === 0 ? (
-                  <p className="text-xs text-gray-400">No questions available for this chapter yet.</p>
+                  <p className="text-xs text-gray-400">Quiz coming soon.</p>
                 ) : (
                   <Button 
                     className="w-full py-6 text-base font-bold bg-cta hover:bg-cta/90 text-white shadow-lg shadow-cta/20 transition-all hover:-translate-y-0.5" 

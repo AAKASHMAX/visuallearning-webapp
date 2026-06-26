@@ -482,11 +482,6 @@ function DocumentViewer({
   // PPTs ship as a light + dark PDF (dark URL carried in cssContent). Toggle between them.
   const [pptDark, setPptDark] = useState(false);
   const pptDarkUrl = kind === "ppts" ? activeDocument?.cssContent || null : null;
-  const emptyCopy = kind === "ppts"
-    ? "No PPT or slide PDF has been added for this chapter yet."
-    : kind === "test-series"
-      ? "No test paper has been added for this subject yet."
-      : "No PDF has been added for this chapter yet.";
 
   const notesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -555,7 +550,7 @@ function DocumentViewer({
   };
 
   if (documents.length === 0) {
-    return <EmptyPanel title="No files available" message={emptyCopy} icon={resourceMeta[kind].icon} />;
+    return <ComingSoonResourcePanel meta={resourceMeta[kind]} />;
   }
 
   return (
@@ -571,7 +566,7 @@ function DocumentViewer({
           activeDocument?.locked || locked ? (
             <LockedPanel />
           ) : (
-            <EmptyPanel title="File link missing" message="This item is listed, but no viewer link has been attached yet." icon={FileText} compact />
+            <ComingSoonResourcePanel meta={resourceMeta[kind]} />
           )
         ) : (
           <>
@@ -732,13 +727,7 @@ function QuestionViewer({
   if (locked) return <LockedPanel />;
 
   if (questions.length === 0) {
-    return (
-      <EmptyPanel
-        title={kind === "quiz" ? "No quiz added" : "No question bank added"}
-        message="Questions for this chapter will appear here after they are added in admin."
-        icon={kind === "quiz" ? Brain : FileQuestion}
-      />
-    );
+    return <ComingSoonResourcePanel meta={resourceMeta[kind === "quiz" ? "quiz" : "question-bank"]} />;
   }
 
   const score = questions.filter((question) => selectedAnswers?.[question.id] === normalizeOption(question.correctOption)).length;

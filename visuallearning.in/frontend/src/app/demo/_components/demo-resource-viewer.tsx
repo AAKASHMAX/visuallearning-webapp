@@ -196,7 +196,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
       return (
         <StateBox>
           <FileText className="h-7 w-7 opacity-30" />
-          <p className="text-sm font-medium">No quiz questions available.</p>
+          <p className="text-sm font-medium">Coming soon.</p>
         </StateBox>
       );
     }
