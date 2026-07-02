@@ -226,8 +226,6 @@ model Video {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  watchProgress WatchProgress[]
-
   @@index([chapterId])
 }
 
@@ -267,8 +265,9 @@ model WatchProgress {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+  // No FK to Video: with Option B (CONTENT_SOURCE=main) videoId holds MAIN-db
+  // video ids, which do not exist in this app's local Video table.
   videoId     String
-  video       Video    @relation(fields: [videoId], references: [id])
   progress    Float    @default(0)
   completed   Boolean  @default(false)
   updatedAt   DateTime @updatedAt

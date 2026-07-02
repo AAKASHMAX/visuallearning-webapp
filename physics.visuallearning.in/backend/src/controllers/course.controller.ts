@@ -2,8 +2,25 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/auth";
 import { userHasCourseAccess } from "../services/plan.service";
+import * as mainContent from "../services/main-content.service";
 
 const prisma = new PrismaClient();
+
+// Option B: the local physics Course row for a tier ("11"/"12"). It anchors
+// subscription access (PlanCourse maps to it) and supplies the course fields;
+// its chapters/content come from the main DB. Cached briefly.
+const courseByTier = new Map<string, { data: any; exp: number }>();
+async function physicsCourseByTier(tier: string) {
+  const hit = courseByTier.get(tier);
+  if (hit && hit.exp > Date.now()) return hit.data;
+  const course = await prisma.course.findFirst({ where: { tier, isActive: true }, orderBy: { displayOrder: "asc" } });
+  courseByTier.set(tier, { data: course, exp: Date.now() + 300000 });
+  return course;
+}
+function stripLocalChapters(course: any) {
+  const { chapters, courseChapters, ...rest } = course || {};
+  return rest;
+}
 
 // Simple in-memory cache
 const cache = new Map<string, { data: any; expiry: number }>();
@@ -141,6 +158,19 @@ export async function getCourses(req: AuthRequest, res: Response) {
       return res.json(cached);
     }
 
+    if (mainContent.mainContentEnabled()) {
+      const courses = await prisma.course.findMany({ where: { isActive: true, tier: { not: "FREE" } }, orderBy: { displayOrder: "asc" } });
+      const formatted = await Promise.all(
+        courses.map(async (course: any) => {
+          const chapters = await mainContent.getTierChapters(course.tier);
+          return { ...course, _count: { chapters: chapters.length } };
+        }),
+      );
+      setCache(cacheKey, formatted);
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return res.json(formatted);
+    }
+
     const courses = await prisma.course.findMany({
       where: { isActive: true, tier: { not: "FREE" } },
       orderBy: { displayOrder: "asc" },
@@ -176,6 +206,20 @@ export async function getCoursesByTier(req: AuthRequest, res: Response) {
     if (cached) {
       res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
       return res.json(cached);
+    }
+
+    if (mainContent.mainContentEnabled()) {
+      const course = await physicsCourseByTier(tier);
+      if (!course) return res.json([]);
+      const chapters = await mainContent.getTierChapters(tier);
+      const visible = [{ ...stripLocalChapters(course), chapters: chapters.map((c: any) => ({ ...c, courseId: course.id })) }];
+      if (cacheKey) {
+        setCache(cacheKey, visible, 60000);
+        res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      } else {
+        res.set("Cache-Control", "private, max-age=30");
+      }
+      return res.json(visible);
     }
 
     const courses = await prisma.course.findMany({
@@ -215,6 +259,11 @@ export async function getCourseById(req: AuthRequest, res: Response) {
       return res.status(403).json({ message: "Subscription required to access this course" });
     }
 
+    if (mainContent.mainContentEnabled()) {
+      const chapters = await mainContent.getTierChapters(course.tier);
+      return res.json({ ...stripLocalChapters(course), chapters: chapters.map((c: any) => ({ ...c, courseId: course.id })) });
+    }
+
     res.json(formatCourseChapters(course));
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch course" });
@@ -223,6 +272,19 @@ export async function getCourseById(req: AuthRequest, res: Response) {
 
 export async function getChapterVideos(req: AuthRequest, res: Response) {
   try {
+    if (mainContent.mainContentEnabled()) {
+      const ctx = await mainContent.getChapterContext(req.params.id);
+      if (!ctx) return res.status(404).json({ message: "Chapter not found" });
+      const course = await physicsCourseByTier(ctx.tier);
+      const hasAccess = course ? await userHasCourseAccess(prisma, req.user?.id, course) : false;
+      const videos = await mainContent.getChapterVideos(req.params.id);
+      const videosWithAccess = videos.map((v: any) => {
+        const canAccessVideo = ctx.isFirst || v.isFree || hasAccess;
+        return { ...v, hasAccess: canAccessVideo, thumbnailUrl: getVideoThumbnailUrl(v.youtubeUrl), youtubeUrl: canAccessVideo ? v.youtubeUrl : "" };
+      });
+      return res.json(videosWithAccess);
+    }
+
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
       include: {
@@ -261,6 +323,23 @@ export async function getChapterVideos(req: AuthRequest, res: Response) {
 
 export async function getVideoById(req: AuthRequest, res: Response) {
   try {
+    if (mainContent.mainContentEnabled()) {
+      const found = await mainContent.getVideoById(req.params.id);
+      if (!found) return res.status(404).json({ message: "Video not found" });
+      const ctx = await mainContent.getChapterContext(found.chapterId);
+      const course = ctx ? await physicsCourseByTier(ctx.tier) : null;
+      const hasAccess =
+        found.video.isFree || !!ctx?.isFirst || (course ? await userHasCourseAccess(prisma, req.user?.id, course) : false);
+      if (!hasAccess) return res.status(403).json({ message: "Subscription required to access this video" });
+      let progress = null;
+      if (req.user) {
+        progress = await prisma.watchProgress
+          .findUnique({ where: { userId_videoId: { userId: req.user.id, videoId: found.video.id } } })
+          .catch(() => null);
+      }
+      return res.json({ ...found.video, watchProgress: progress });
+    }
+
     const video = await prisma.video.findUnique({
       where: { id: req.params.id },
       include: {
@@ -300,6 +379,19 @@ export async function getVideoById(req: AuthRequest, res: Response) {
 
 export async function getChapterNotes(req: AuthRequest, res: Response) {
   try {
+    if (mainContent.mainContentEnabled()) {
+      const ctx = await mainContent.getChapterContext(req.params.id);
+      if (!ctx) return res.status(404).json({ message: "Chapter not found" });
+      const course = await physicsCourseByTier(ctx.tier);
+      const hasAccess = course ? await userHasCourseAccess(prisma, req.user?.id, course) : false;
+      const notes = await mainContent.getChapterNotes(req.params.id);
+      const notesWithAccess = notes.map((n: any) => {
+        const canView = n.isFree || ctx.isFirst || hasAccess;
+        return { ...n, hasAccess: canView, fileUrl: canView ? n.fileUrl : "", htmlContent: canView ? n.htmlContent : null, cssContent: canView ? n.cssContent : null };
+      });
+      return res.json(notesWithAccess);
+    }
+
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
       include: {
@@ -339,6 +431,18 @@ export async function getChapterNotes(req: AuthRequest, res: Response) {
 
 export async function getChapterQuestions(req: AuthRequest, res: Response) {
   try {
+    if (mainContent.mainContentEnabled()) {
+      const ctx = await mainContent.getChapterContext(req.params.id);
+      if (!ctx) return res.status(404).json({ message: "Chapter not found" });
+      const course = await physicsCourseByTier(ctx.tier);
+      const hasAccess = course ? await userHasCourseAccess(prisma, req.user?.id, course) : false;
+      if (!ctx.isFirst && !hasAccess) {
+        return res.status(403).json({ message: "Subscription required to access quizzes" });
+      }
+      const questions = await mainContent.getChapterQuestions(req.params.id);
+      return res.json(questions);
+    }
+
     const chapter = await prisma.chapter.findUnique({
       where: { id: req.params.id },
       include: {

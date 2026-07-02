@@ -14,6 +14,13 @@ export const config = {
   },
   resendApiKey: process.env.RESEND_API_KEY || "",
   fromEmail: process.env.FROM_EMAIL || "noreply@visuallearning.in",
+  // Option B: read Physics 11/12 content (chapters/notes/videos/quizzes) from the
+  // MAIN webapp DB instead of this app's local content tables. Users, subscriptions
+  // and plans always stay in this app's own DB.
+  //   CONTENT_SOURCE=main   -> serve content from the main DB (needs MAIN_DATABASE_URL)
+  //   CONTENT_SOURCE=local  -> serve content from local tables (default / fallback)
+  contentSource: (process.env.CONTENT_SOURCE || "local").toLowerCase(),
+  mainDatabaseUrl: process.env.MAIN_DATABASE_URL || "",
 };
 
 export const PLANS: Record<string, { name: string; price: number; duration: number }> = {
