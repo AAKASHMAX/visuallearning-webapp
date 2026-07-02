@@ -345,6 +345,7 @@ body {
  * readable in both normal and fullscreen modes without touching the dark theme.
  */
 .physics-notes-viewer {
-  background-color: #ffffff;
+  /* No forced background: notes render as .page sheets (white, from the note's
+     own CSS) centered on the viewer's gray backdrop — matches the main webapp. */
   color: #1f2937;
 }

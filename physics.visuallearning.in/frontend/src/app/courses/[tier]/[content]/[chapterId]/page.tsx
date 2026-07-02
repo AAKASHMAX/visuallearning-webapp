@@ -231,13 +231,16 @@ export default function ContentViewerPage() {
   }, []);
 
   useEffect(() => {
-    if (!activeNote?.cssContent) return;
+    if (!activeNote?.htmlContent) return;
     const el = document.createElement("style");
     el.setAttribute("data-physics-note-css", "");
-    el.textContent = scopeCSS(activeNote.cssContent);
+    el.textContent =
+      (activeNote.cssContent ? scopeCSS(activeNote.cssContent) : "") +
+      // Force each .page block to full A4 width, centered — same as the main webapp viewer.
+      "\n.physics-notes-viewer .page{width:min(calc(100% - 8px),220.5mm)!important;max-width:220.5mm!important;margin-left:auto!important;margin-right:auto!important;}";
     document.head.appendChild(el);
     return () => { el.remove(); };
-  }, [activeNote?.cssContent]);
+  }, [activeNote?.id, activeNote?.cssContent, activeNote?.htmlContent]);
 
   // Keep fullscreen state in sync with the native API.
   useEffect(() => {
@@ -404,8 +407,8 @@ export default function ContentViewerPage() {
                     <button onClick={toggleFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent">{isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span></button>
                   </div>
                   <div className={`relative overflow-auto rounded-2xl border border-border bg-slate-100 shadow-sm ${isFullscreen ? "flex-1" : "h-[calc(100vh-170px)] min-h-[420px]"}`}>
-                    {/* Constrain the document to A4 width, centered like a paper page. */}
-                    <div ref={notesRef} className="physics-notes-viewer mx-auto my-4 box-border max-w-[210mm] rounded-md bg-white px-3 py-5 shadow-[0_2px_12px_rgba(0,0,0,0.10)] sm:px-9 sm:py-8" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
+                    {/* Notes render as A4 .page sheets (styled by the note's own CSS), centered on the gray backdrop — matches the main webapp. */}
+                    <div ref={notesRef} className="physics-notes-viewer py-4" style={{ zoom: zoom / 100 }} dangerouslySetInnerHTML={{ __html: activeNote.htmlContent }} />
                   </div>
                 </div>
               ) : activeNote.fileUrl ? (
