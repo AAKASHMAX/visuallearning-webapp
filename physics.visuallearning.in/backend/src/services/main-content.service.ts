@@ -38,8 +38,10 @@ export function clearMainContentCache() {
 
 // ---- mappers: main row -> physics API shape ----
 function videoUrl(v: any): string {
-  if (v.youtubeVideoId) return `https://www.youtube.com/watch?v=${v.youtubeVideoId}`;
+  // Prefer Vimeo (main's primary source); fall back to YouTube. The physics
+  // player embeds both. Empty when the video has no source (placeholder row).
   if (v.vimeoVideoId) return `https://vimeo.com/${v.vimeoVideoId}`;
+  if (v.youtubeVideoId) return `https://www.youtube.com/watch?v=${v.youtubeVideoId}`;
   return "";
 }
 function mapVideo(v: any, i: number, chapterId: string) {
@@ -105,7 +107,7 @@ export async function getTierChapters(tier: string): Promise<any[]> {
   return cached(`chs:${tier}`, 60 * 1000, async () => {
     const rows: any[] = await mainDb!.$queryRawUnsafe(
       `SELECT ch.id, ch.name, ch."order" AS "order",
-         (SELECT count(*)::int FROM "Video"    v WHERE v."chapterId" = ch.id) AS videos,
+         (SELECT count(*)::int FROM "Video"    v WHERE v."chapterId" = ch.id AND (COALESCE(v."youtubeVideoId",'') <> '' OR COALESCE(v."vimeoVideoId",'') <> '')) AS videos,
          (SELECT count(*)::int FROM "Note"     n WHERE n."chapterId" = ch.id AND n.title !~* '(ppt|presentation|slide)') AS notes,
          (SELECT count(*)::int FROM "Question" q WHERE q."chapterId" = ch.id) AS questions
        FROM "Chapter" ch WHERE ch."subjectId" = $1 ORDER BY ch."order" ASC`,
@@ -159,7 +161,8 @@ export async function getChapterVideos(chapterId: string): Promise<any[]> {
      FROM "Video" WHERE "chapterId" = $1 ORDER BY "order" ASC, "createdAt" ASC`,
     chapterId,
   );
-  return rows.map((v, i) => mapVideo(v, i, chapterId));
+  // Skip sourceless placeholder rows (no youtube/vimeo) so no broken players show.
+  return rows.map((v, i) => mapVideo(v, i, chapterId)).filter((v) => v.youtubeUrl);
 }
 
 export async function getVideoById(id: string): Promise<{ video: any; chapterId: string } | null> {
