@@ -10,7 +10,7 @@ export function WhatsAppChatButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
-      className="group fixed bottom-5 left-5 z-[70] inline-flex items-center gap-2.5 rounded-full bg-white py-2 pl-4 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+      className="group fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2.5 rounded-full bg-white py-2 pl-4 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
     >
       <span className="text-sm font-bold text-gray-800">Chat With Us</span>
       <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366]">

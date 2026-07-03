@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { FeedbackPopup } from "./feedback-popup";
-import { FloatingContact } from "./floating-contact";
 import { WhatsAppChatButton } from "./whatsapp-chat-button";
 
 /**
@@ -22,7 +21,6 @@ export function SiteWidgets() {
   return (
     <>
       <FeedbackPopup />
-      <FloatingContact />
       <WhatsAppChatButton />
     </>
   );
