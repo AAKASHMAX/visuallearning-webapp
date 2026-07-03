@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 import { FeedbackPopup } from "@/components/layout/feedback-popup";
 import { GetAppModal } from "@/components/layout/get-app-modal";
 import { WhatsAppChatButton } from "@/components/layout/whatsapp-chat-button";
+import { CatalogModal } from "@/components/layout/catalog-modal";
+import { CatalogButton } from "@/components/layout/catalog-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
@@ -48,6 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GetAppModal />
         <FeedbackPopup />
         <WhatsAppChatButton />
+        <CatalogButton />
+        <CatalogModal />
       </body>
     </html>
   );
