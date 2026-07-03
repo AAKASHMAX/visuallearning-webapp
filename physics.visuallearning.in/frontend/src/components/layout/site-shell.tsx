@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { FeedbackPopup } from "./feedback-popup";
 import { FloatingContact } from "./floating-contact";
+import { WhatsAppChatButton } from "./whatsapp-chat-button";
 
 /**
  * Public content wrapper. Adds the sidebar gutter (lg:pl-64) on the public
@@ -22,6 +23,7 @@ export function SiteWidgets() {
     <>
       <FeedbackPopup />
       <FloatingContact />
+      <WhatsAppChatButton />
     </>
   );
 }
