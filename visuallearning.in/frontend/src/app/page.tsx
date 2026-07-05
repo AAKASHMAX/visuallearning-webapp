@@ -50,19 +50,19 @@ function HeroSection() {
           <div className="animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-6">
               <Sparkles className="w-4 h-4 text-[#05BFDB]" />
-              <span className="text-sm text-white/70">India&apos;s #1 Visual Learning Platform</span>
+              <span className="text-sm text-white/70">CBSE &amp; State Boards &middot; Class 9&ndash;12</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-              <span className="text-white">See Science.</span><br />
-              <span className="text-[#05BFDB]">Feel Science.</span><br />
-              <span className="text-white">Master Science.</span>
+              <span className="text-white">Master Your</span><br />
+              <span className="text-[#05BFDB]">Boards &amp; Exams</span><br />
+              <span className="text-white">&mdash; Visually.</span>
             </h1>
 
             <p className="text-lg text-white/60 leading-relaxed max-w-lg mb-8">
-              Transform how you learn with breathtaking 3D animations,
-              interactive virtual experiments, and crystal-clear video lectures.
-              From Class 9 to 12 &mdash; every concept visualized.
+              Complete school-board education and exam preparation for Class 9&ndash;12,
+              aligned to CBSE &amp; state boards &mdash; brought to life with amazing 3D
+              animated videos, visual notes, NCERT &amp; PYQ solutions and exam-focused quizzes.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-10">
@@ -80,7 +80,7 @@ function HeroSection() {
             </div>
 
             <div className="flex items-center gap-6 text-sm text-white/50">
-              {["Free tier available", "3D Animations", "CBSE Aligned"].map((t) => (
+              {["CBSE & State Boards", "NCERT & PYQ Solutions", "Exam-Ready Practice"].map((t) => (
                 <div key={t} className="flex items-center gap-1.5">
                   <Check className="w-4 h-4 text-[#05BFDB]" /><span>{t}</span>
                 </div>
