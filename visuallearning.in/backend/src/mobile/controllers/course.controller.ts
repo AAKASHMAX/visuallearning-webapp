@@ -2,18 +2,27 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { mobileSuccess, mobileError } from "../utils/response";
 
-// In-memory cache for Vimeo thumbnails
-const vimeoThumbCache = new Map<string, string>();
+// In-memory cache for Vimeo thumbnails. oEmbed returns the CURRENT, content-hashed
+// thumbnail URL, so it reflects the latest thumbnail. Cached with a TTL so updated
+// thumbnails propagate to the app (an unbounded cache never picked up changes).
+const THUMB_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const vimeoThumbCache = new Map<string, { url: string; ts: number }>();
+
+function cachedVimeoThumb(vimeoId: string): string | null {
+  const hit = vimeoThumbCache.get(vimeoId);
+  return hit && Date.now() - hit.ts < THUMB_TTL_MS ? hit.url : null;
+}
 
 async function getVimeoThumbnail(vimeoId: string): Promise<string> {
-  if (vimeoThumbCache.has(vimeoId)) return vimeoThumbCache.get(vimeoId)!;
+  const fresh = cachedVimeoThumb(vimeoId);
+  if (fresh) return fresh;
   try {
     const resp = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`);
     if (resp.ok) {
       const data: any = await resp.json();
       const thumb = (data.thumbnail_url || "").replace(/_\d+x\d+/, "_640x360");
       if (thumb) {
-        vimeoThumbCache.set(vimeoId, thumb);
+        vimeoThumbCache.set(vimeoId, { url: thumb, ts: Date.now() });
         return thumb;
       }
     }
@@ -143,7 +152,7 @@ export async function getVideoList(req: Request, res: Response) {
 
     function getThumbUrl(v: typeof videos[0]): string {
       const vimeoId = getEffectiveVimeoId(v);
-      if (vimeoId) return vimeoThumbCache.get(vimeoId) || `https://vumbnail.com/${vimeoId}.jpg`;
+      if (vimeoId) return cachedVimeoThumb(vimeoId) || `https://vumbnail.com/${vimeoId}.jpg`;
       if (v.youtubeVideoId) return `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg`;
       return "";
     }
@@ -151,8 +160,12 @@ export async function getVideoList(req: Request, res: Response) {
     // Free preview: only the first video of the first chapter is free
     const isFirstChapter = chapter.order === 1;
 
-    // Group videos by order+type to create hindi/english pairs
-    // Key = "order:type" so animation and lecture at the same order stay separate
+    // Pair the Hindi + English versions of the same video into one entry, keyed by
+    // normalized title + type. (Previously keyed by order+type, but the two
+    // languages frequently have DIFFERENT order values — e.g. Hindi order=-3,
+    // English order=1 — which split one video into two mismatched entries and made
+    // the list differ from the website. Title is stable across languages.)
+    const normTitle = (t: string) => (t || "").toLowerCase().replace(/\s+/g, " ").trim();
     const videoMap = new Map<string, any>();
     // Collect all Vimeo IDs (including misplaced ones) to fetch thumbnails in parallel
     const vimeoIds = new Set<string>();
@@ -166,12 +179,13 @@ export async function getVideoList(req: Request, res: Response) {
     for (const v of videos) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
-      const groupKey = `${v.order}:${v.type}`;
+      const groupKey = `${normTitle(v.title)}:${v.type}`;
       const canWatch = isFirstChapter || hasAccess;
       if (!videoMap.has(groupKey)) {
         const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
         videoMap.set(groupKey, {
+          _sort: v.order,
           video_id_PK: v.id,
           chapter_id_FK: v.chapterId,
           video_title: v.title,
@@ -201,7 +215,9 @@ export async function getVideoList(req: Request, res: Response) {
         }
       } else {
         entry.video_url_english = canWatch ? videoUrl : "";
-        // Use English video's data as primary
+        // Use English video's data as primary (incl. its order for sorting, so the
+        // list matches the website's default English ordering).
+        entry._sort = v.order;
         entry.video_id_PK = v.id;
         entry.video_title = v.title;
         entry.content_type = v.type === "LECTURE_VIDEO" ? "lecture" : "animation";
@@ -215,14 +231,17 @@ export async function getVideoList(req: Request, res: Response) {
       }
     }
 
-    // If videos aren't paired by order, fallback: each video as its own entry
+    // Sort paired entries by the primary (English) order to match the website,
+    // and strip the internal _sort key. Fallback: each video as its own entry.
     const data = videoMap.size > 0
       ? Array.from(videoMap.values())
+          .sort((a: any, b: any) => (a._sort ?? 0) - (b._sort ?? 0))
+          .map(({ _sort, ...rest }: any) => rest)
       : videos.map((v) => {
           const isVimeo = !!v.vimeoVideoId;
           const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
           const thumbUrl = isVimeo
-            ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
+            ? (cachedVimeoThumb(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
             : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
           const canWatch = isFirstChapter || hasAccess;
           return {
@@ -422,7 +441,7 @@ export async function searchVideos(req: Request, res: Response) {
       const isVimeo = !!v.vimeoVideoId;
       const videoUrl = isVimeo ? (v.vimeoVideoId || "") : (v.youtubeVideoId || "");
       const thumbUrl = isVimeo
-        ? (vimeoThumbCache.get(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
+        ? (cachedVimeoThumb(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
         : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
       const isFirstChapter = v.chapter.order === 1;
       return {
