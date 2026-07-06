@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { GetAppModal } from "@/components/layout/get-app-modal";
 import { WhatsAppChatButton } from "@/components/layout/whatsapp-chat-button";
+import { TelegramNotesButton } from "@/components/layout/telegram-notes-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <GetAppModal />
         <WhatsAppChatButton />
+        <TelegramNotesButton />
       </body>
     </html>
   );
