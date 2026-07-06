@@ -211,12 +211,11 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
-    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
+    // First-chapter videos are locked like every other chapter (no free preview);
+    // unsubscribed users see thumbnails and get the subscription/trial popup on click.
     const isAdmin = req.user?.role === "ADMIN";
     let hasAccess = false;
     if (isAdmin) {
-      hasAccess = true;
-    } else if (isFirstChapter) {
       hasAccess = true;
     } else if (req.user) {
       const classId = chapter.subject.class.id;

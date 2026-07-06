@@ -157,8 +157,9 @@ export async function getVideoList(req: Request, res: Response) {
       return "";
     }
 
-    // Free preview: only the first video of the first chapter is free
-    const isFirstChapter = chapter.order === 1;
+    // First-chapter videos are now locked like every other chapter (no free
+    // preview). Users still see thumbnails; tapping shows the subscription popup.
+    const isFirstChapter = false;
 
     // Pair the Hindi + English versions of the same video into one entry, keyed by
     // normalized title + type. (Previously keyed by order+type, but the two
@@ -443,7 +444,7 @@ export async function searchVideos(req: Request, res: Response) {
       const thumbUrl = isVimeo
         ? (cachedVimeoThumb(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
         : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
-      const isFirstChapter = v.chapter.order === 1;
+      const isFirstChapter = false; // first-chapter videos are locked (no free preview)
       return {
         video_id_PK: v.id,
         chapter_id_FK: v.chapterId,
