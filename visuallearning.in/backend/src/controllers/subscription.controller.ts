@@ -102,12 +102,6 @@ async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarterly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
-  // 7-day free trial: full content access for 7 days, no document downloads.
-  // The plan is free, but Razorpay's minimum charge (₹1 / 100 paise) is collected
-  // as a transaction fee. Fixed regardless of admin settings.
-  if (planKey === "TRIAL") {
-    return { amount: 100, duration: 7, label: "7-Day Free Trial", classSelection: 0, unitType: "fixed" };
-  }
   // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
   const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
   // 1. Check Course table first for price updates from admin panel
@@ -288,16 +282,6 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     const { plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly", downloadAddon } = req.body;
     const planConfig = await getPlanConfig(plan, billingCycle);
 
-    // 7-day free trial: one per account; not for users who already subscribed.
-    if (plan === "TRIAL") {
-      const existingTrialOrActive = await prisma.subscription.findFirst({
-        where: { userId: req.user!.id, OR: [{ plan: "TRIAL" }, { status: "ACTIVE", expiryDate: { gt: new Date() } }] },
-      });
-      if (existingTrialOrActive) {
-        return error(res, existingTrialOrActive.plan === "TRIAL" ? "You have already used your free 7-day trial." : "You already have an active subscription.", 400);
-      }
-    }
-
     // Validate classesAccess based on plan's classSelection setting
     if (planConfig.unitType === "fixed" && planConfig.classSelection > 0) {
       if (!classesAccess || classesAccess.length !== planConfig.classSelection) {
@@ -371,9 +355,8 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     // Document-download add-on (yearly only) — added on top, after discounts.
-    // Never available on the free trial.
     let addOnAmount = 0;
-    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "TRIAL";
+    const wantAddon = downloadAddon === true && billingCycle === "yearly";
     if (wantAddon) {
       addOnAmount = Math.round(originalAmount * (await getDownloadAddonPercent()) / 100);
       amount += addOnAmount;
@@ -414,12 +397,6 @@ export async function verifyPayment(req: Request, res: Response) {
 
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
-
-    // 7-day free trial: guard against a second trial (replay / double submit).
-    if (plan === "TRIAL") {
-      const usedTrial = await prisma.subscription.findFirst({ where: { userId: req.user!.id, plan: "TRIAL" } });
-      if (usedTrial) return error(res, "You have already used your free 7-day trial.", 400);
-    }
 
     const planConfig = await getPlanConfig(plan, billingCycle);
     const expiryDate = new Date();
@@ -479,14 +456,10 @@ export async function verifyPayment(req: Request, res: Response) {
     }
 
     // Document-download add-on (yearly only) — added on top, after discounts.
-    // Never available on the free trial.
-    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "TRIAL";
+    const wantAddon = downloadAddon === true && billingCycle === "yearly";
     if (wantAddon) {
       amount += Math.round(baseAmount * (await getDownloadAddonPercent()) / 100);
     }
-
-    // The trial is always ₹1 (Razorpay transaction fee) regardless of any coupon/upgrade logic.
-    if (plan === "TRIAL") amount = 100;
 
     if (amount < 100) amount = 100;
 
