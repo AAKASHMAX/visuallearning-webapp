@@ -23,11 +23,12 @@ import {
   CheckCircle2, 
   X, 
   Globe,
-  Crown
+  Crown,
+  MonitorPlay
 } from "lucide-react";
 import { Video, Note, Question, BoardPaper } from "@/types";
 
-type Tab = "videos" | "notes" | "quiz" | "quiz_active";
+type Tab = "videos" | "lecture" | "notes" | "quiz" | "quiz_active";
 
 export default function UnifiedChapterPage() {
   const params = useParams();
@@ -90,9 +91,9 @@ export default function UnifiedChapterPage() {
 
         // Initial Video Selection
         const initialLang = "HINDI";
-        const langVideos = videoList.filter((v: Video) => v.language === initialLang);
-        // Initial Video Selection: Load first video from the list (even if locked)
-        const firstVideo = langVideos[0] || videoList[0];
+        // Default tab is 3D animated, so select the first animated video.
+        const langVideos = videoList.filter((v: Video) => v.language === initialLang && v.type !== "LECTURE_VIDEO");
+        const firstVideo = langVideos[0] || videoList.filter((v: Video) => v.type !== "LECTURE_VIDEO")[0] || videoList[0];
         if (firstVideo) setSelectedVideo(firstVideo);
         
       } catch (err) {
@@ -104,15 +105,25 @@ export default function UnifiedChapterPage() {
     fetchData();
   }, [chapterId, subjectId]);
 
-  // Filtered videos by language
-  const filteredVideos = allVideos.filter((v) => v.language === language);
+  // Videos split by content type (3D animated vs lecture), filtered by language.
+  // `filteredVideos` is the list for the active tab, so the list rendering below
+  // works unchanged for both tabs.
+  const animatedVideos = allVideos.filter((v) => v.language === language && v.type !== "LECTURE_VIDEO");
+  const lectureVideos = allVideos.filter((v) => v.language === language && v.type === "LECTURE_VIDEO");
+  const hasLectures = allVideos.some((v) => v.type === "LECTURE_VIDEO");
+  const filteredVideos = activeTab === "lecture" ? lectureVideos : animatedVideos;
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
+    if (tab === "videos" || tab === "lecture") {
+      const list = allVideos.filter((v) => v.language === language && (tab === "lecture" ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO"));
+      if (list.length) setSelectedVideo(list[0]);
+    }
   };
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
-    { key: "videos", label: "Video(3D)", icon: Play, count: filteredVideos.length },
+    { key: "videos", label: "3D Animated", icon: Play, count: animatedVideos.length },
+    ...(hasLectures ? [{ key: "lecture" as Tab, label: "Lecture Videos", icon: MonitorPlay, count: lectureVideos.length }] : []),
   ];
 
   const returnTo = searchParams.get("returnTo");
@@ -237,8 +248,8 @@ export default function UnifiedChapterPage() {
           </div>
 
           <div className="space-y-3 max-h-[60vh] lg:max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-            {/* Videos List */}
-            {activeTab === "videos" && (
+            {/* Videos List (3D animated or lecture, per active tab) */}
+            {(activeTab === "videos" || activeTab === "lecture") && (
               <>
                 {filteredVideos.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
