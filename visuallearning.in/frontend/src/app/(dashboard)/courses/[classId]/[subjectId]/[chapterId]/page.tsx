@@ -37,6 +37,7 @@ export default function UnifiedChapterPage() {
   
   const fromCourse = searchParams.get("fromCourse");
   const fromDetails = searchParams.get("fromDetails");
+  const wantLecture = searchParams.get("tab") === "lecture";
 
   const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
   const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
@@ -45,8 +46,8 @@ export default function UnifiedChapterPage() {
   const [chapterName, setChapterName] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
-  // Notes and Quiz have their own dedicated sections now; this page only lists videos.
-  const [activeTab, setActiveTab] = useState<Tab>("videos");
+  // Video-only page with 3D-animated and lecture tabs; open lecture when requested.
+  const [activeTab, setActiveTab] = useState<Tab>(wantLecture ? "lecture" : "videos");
   
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -91,9 +92,10 @@ export default function UnifiedChapterPage() {
 
         // Initial Video Selection
         const initialLang = "HINDI";
-        // Default tab is 3D animated, so select the first animated video.
-        const langVideos = videoList.filter((v: Video) => v.language === initialLang && v.type !== "LECTURE_VIDEO");
-        const firstVideo = langVideos[0] || videoList.filter((v: Video) => v.type !== "LECTURE_VIDEO")[0] || videoList[0];
+        // Select the first video of the requested tab (lecture, else 3D animated).
+        const isWanted = (v: Video) => (wantLecture ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO");
+        const langVideos = videoList.filter((v: Video) => v.language === initialLang && isWanted(v));
+        const firstVideo = langVideos[0] || videoList.filter(isWanted)[0] || videoList[0];
         if (firstVideo) setSelectedVideo(firstVideo);
         
       } catch (err) {
