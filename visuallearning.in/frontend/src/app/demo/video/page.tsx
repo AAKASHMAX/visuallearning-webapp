@@ -19,16 +19,22 @@ type DemoVideo = {
   vimeoId: string;
 };
 
-// Curated sample of real 3D animated lessons (Hindi) from the video library.
+// Real 3D animated lessons (Hindi) from Class 12 Physics — Chapter 1:
+// Electric Charges and Fields.
 const videos: DemoVideo[] = [
-  { title: "Gauss's Theorem", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958272" },
-  { title: "Electric Potential", klass: "Class 12", subject: "Physics", chapter: "Electrostatic Potential and Capacitance", vimeoId: "1183254112" },
-  { title: "Kirchhoff's Rules", klass: "Class 12", subject: "Physics", chapter: "Current Electricity", vimeoId: "1183254625" },
-  { title: "Photoelectric Effect", klass: "Class 12", subject: "Physics", chapter: "Dual Nature of Radiation and Matter", vimeoId: "1183623574" },
-  { title: "Bernoulli's Theorem", klass: "Class 11", subject: "Physics", chapter: "Mechanical Properties of Fluids", vimeoId: "1186852505" },
-  { title: "Rutherford's Model of Atom", klass: "Class 12", subject: "Physics", chapter: "Atoms", vimeoId: "1183623647" },
-  { title: "Wave Front & Huygens' Principle", klass: "Class 12", subject: "Physics", chapter: "Wave Optics", vimeoId: "1183623397" },
-  { title: "Young's Double Slit Experiment & Fringe Width", klass: "Class 12", subject: "Physics", chapter: "Wave Optics", vimeoId: "1183623426" },
+  { title: "Electric charges", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182881776" },
+  { title: "Conservation of charge", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182892651" },
+  { title: "Coulomb's law", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182902747" },
+  { title: "Coulomb's law in vector form", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182902820" },
+  { title: "Superposition principle", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182902852" },
+  { title: "Electric field & field lines", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182902894" },
+  { title: "Electric dipole", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182902972" },
+  { title: "Torque on a dipole", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182957820" },
+  { title: "Electric flux", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958103" },
+  { title: "Gauss's theorem", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958272" },
+  { title: "Field due to an infinitely long straight wire", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958407" },
+  { title: "Uniformly charged infinite plane sheet", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958529" },
+  { title: "Uniformly charged thin spherical shell", klass: "Class 12", subject: "Physics", chapter: "Electric Charges and Fields", vimeoId: "1182958652" },
 ];
 
 function embedUrl(vimeoId: string, autoplay: boolean) {
