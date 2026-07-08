@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
-import { Sparkles, GraduationCap, FileText, BookMarked, HelpCircle, ClipboardList, ChevronRight, type LucideIcon } from "lucide-react";
+import { Sparkles, FileText, BookMarked, HelpCircle, ClipboardList, ChevronRight, type LucideIcon } from "lucide-react";
 
 interface ContentType {
   slug: string;
@@ -42,7 +42,6 @@ export default function SubjectContentTypesPage() {
 
   const contentTypes: ContentType[] = [
     { slug: "animation", title: "3D Animated Videos", subtitle: "Visual learning with animations", icon: Sparkles, gradient: "from-violet-500 to-purple-600", badge: "bg-violet-100 text-violet-700" },
-    { slug: "lecture", title: "Lecture Videos", subtitle: "Concept lectures by expert teachers", icon: GraduationCap, gradient: "from-sky-500 to-blue-600", badge: "bg-sky-100 text-sky-700" },
     { slug: "notes", title: "Notes", subtitle: "Chapter-wise study notes", icon: FileText, gradient: "from-emerald-500 to-green-600", badge: "bg-emerald-100 text-emerald-700" },
     { slug: "ncert", title: "NCERT Solution", subtitle: "Step-by-step textbook answers", icon: BookMarked, gradient: "from-sky-500 to-cyan-600", badge: "bg-sky-100 text-sky-700" },
     hasBoardPapers

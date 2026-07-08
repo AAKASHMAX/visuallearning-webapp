@@ -7,7 +7,6 @@ import { BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2,
 
 const demos = [
   { title: "3D Animated Video", desc: "Watch a sample 3D animation.", href: "/demo/video", icon: MonitorPlay, gradient: "from-violet-600 to-fuchsia-500" },
-  { title: "Lecture Video", desc: "Watch a sample lecture.", href: "/demo/lecture-video", icon: GraduationCap, gradient: "from-sky-600 to-indigo-500" },
   { title: "Notes", desc: "Browse visual chapter notes.", href: "/demo/visual-notes", icon: FileText, gradient: "from-sky-600 to-blue-500" },
   { title: "NCERT", desc: "Step-by-step NCERT solutions.", href: "/demo/ncert-solution", icon: BookMarked, gradient: "from-emerald-600 to-teal-500" },
   { title: "PYQs", desc: "Solved previous-year questions.", href: "/demo/pyq", icon: FileCheck2, gradient: "from-rose-600 to-orange-500" },

@@ -151,7 +151,6 @@ function StatsBar() {
 function DemoShowcase() {
   const demos = [
     { title: "3D Animated Videos", description: "Watch complex concepts come alive with immersive 3D animations and walkthroughs.", href: "/demo/video", icon: Monitor, gradient: "from-violet-600 via-purple-500 to-fuchsia-500", glow: "shadow-violet-500/20" },
-    { title: "Lecture Videos", description: "Clear, exam-focused lectures that break down every concept step by step.", href: "/demo/lecture-video", icon: GraduationCap, gradient: "from-sky-600 via-blue-500 to-indigo-500", glow: "shadow-sky-500/20" },
     { title: "Visual Notes", description: "Beautifully structured notes with highlights, diagrams, and key takeaways for revision.", href: "/demo/visual-notes", icon: BookOpen, gradient: "from-sky-600 via-cyan-500 to-blue-500", glow: "shadow-sky-500/20" },
     { title: "Presentations (PPTs)", description: "Ready-to-use teaching slides with clear visuals and structured chapter flow.", href: "/demo/ppt", icon: Presentation, gradient: "from-indigo-600 via-blue-500 to-cyan-500", glow: "shadow-indigo-500/20" },
     { title: "NCERT Solutions", description: "Step-by-step NCERT answers with exam tips and key insights for every question.", href: "/demo/ncert-solution", icon: BookMarked, gradient: "from-emerald-600 via-teal-500 to-cyan-500", glow: "shadow-emerald-500/20" },
