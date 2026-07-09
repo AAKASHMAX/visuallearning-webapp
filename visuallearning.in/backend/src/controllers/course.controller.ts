@@ -115,8 +115,8 @@ export async function getChapters(req: Request, res: Response) {
 }
 
 // Helper: check if user has access to a specific chapter/class/subject (cached for 60s)
-async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string): Promise<{ hasAccess: boolean; subscription: any }> {
-  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}`;
+async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string, forNotes = false): Promise<{ hasAccess: boolean; subscription: any }> {
+  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}:${forNotes ? "n" : "a"}`;
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
   if (cached) return cached;
 
@@ -132,6 +132,8 @@ async function checkClassAccess(userId: string, classId: string, subjectId?: str
 
   // Check each active subscription for access
   for (const sub of activeSubscriptions) {
+    // The Notes plan grants access to NOTES only — skip it for videos/quiz/etc.
+    if (sub.plan === "NOTES_PLAN" && !forNotes) continue;
     const subjectsAccess = sub.subjectsAccess as string[];
     const classesAccess = sub.classesAccess as string[];
 
@@ -303,9 +305,10 @@ export async function getNotes(req: Request, res: Response) {
       hasAccess = true;
       canDownload = true;
     } else if (req.user) {
-      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
+      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id, true);
       hasAccess = result.hasAccess;
       // Downloading the (protected image-PDF) docs requires the download add-on.
+      // The Notes plan is view-only, so it never has the add-on.
       canDownload = result.hasAccess && !!result.subscription?.downloadAddon;
     }
     if (!hasAccess && isFirstChapter) {

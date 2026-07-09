@@ -102,6 +102,11 @@ async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarterly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
+  // Notes-only plan: ₹99 for VIEW-ONLY access to all notes of ONE chosen class
+  // (no videos/quiz, no downloads), for a year.
+  if (planKey === "NOTES_PLAN") {
+    return { amount: 9900, duration: 365, label: "Notes Plan", classSelection: 1, unitType: "fixed" };
+  }
   // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
   const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
   // 1. Check Course table first for price updates from admin panel
@@ -355,8 +360,9 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     // Document-download add-on (yearly only) — added on top, after discounts.
+    // Never available on the view-only Notes plan.
     let addOnAmount = 0;
-    const wantAddon = downloadAddon === true && billingCycle === "yearly";
+    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "NOTES_PLAN";
     if (wantAddon) {
       addOnAmount = Math.round(originalAmount * (await getDownloadAddonPercent()) / 100);
       amount += addOnAmount;
@@ -456,7 +462,8 @@ export async function verifyPayment(req: Request, res: Response) {
     }
 
     // Document-download add-on (yearly only) — added on top, after discounts.
-    const wantAddon = downloadAddon === true && billingCycle === "yearly";
+    // Never available on the view-only Notes plan.
+    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "NOTES_PLAN";
     if (wantAddon) {
       amount += Math.round(baseAmount * (await getDownloadAddonPercent()) / 100);
     }
