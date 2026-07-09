@@ -40,7 +40,7 @@ export function NotesPlanCard() {
           <h2 className="mt-3 flex items-baseline gap-2 text-2xl font-black text-heading">
             Notes Plan
             <span className="text-emerald-600">₹99</span>
-            <span className="text-sm font-semibold text-gray-400">/ year</span>
+            <span className="text-sm font-semibold text-gray-400">/ month</span>
           </h2>
           <p className="mt-1 text-sm text-text-muted">Read all the notes for any one class — the budget way to revise.</p>
           <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
@@ -73,7 +73,7 @@ export function NotesPlanCard() {
               amount={99}
               label="Notes Plan"
               classesAccess={selected ? [selected] : []}
-              billingCycle="yearly"
+              billingCycle="monthly"
               downloadAddon={false}
               buttonLabel="Get Notes Access — ₹99"
               onSuccess={() => router.push("/dashboard")}

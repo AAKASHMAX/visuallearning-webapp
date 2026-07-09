@@ -102,10 +102,10 @@ async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarterly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
-  // Notes-only plan: ₹99 for VIEW-ONLY access to all notes of ONE chosen class
-  // (no videos/quiz, no downloads), for a year.
+  // Notes-only plan: ₹99/month for VIEW-ONLY access to all notes of ONE chosen
+  // class (no videos/quiz, no downloads). Monthly only.
   if (planKey === "NOTES_PLAN") {
-    return { amount: 9900, duration: 365, label: "Notes Plan", classSelection: 1, unitType: "fixed" };
+    return { amount: 9900, duration: 30, label: "Notes Plan", classSelection: 1, unitType: "fixed" };
   }
   // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
   const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
