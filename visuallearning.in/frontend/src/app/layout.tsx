@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { GetAppModal } from "@/components/layout/get-app-modal";
-import { WhatsAppChatButton } from "@/components/layout/whatsapp-chat-button";
+import { EmailButton } from "@/components/layout/email-button";
 import { TelegramNotesButton } from "@/components/layout/telegram-notes-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {process.env.NEXT_PUBLIC_GA_ID && <AnalyticsTracker gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         {children}
         <GetAppModal />
-        <WhatsAppChatButton />
+        <EmailButton />
         <TelegramNotesButton />
       </body>
     </html>
