@@ -11,6 +11,18 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
+  // Force all traffic onto the registered domain (visuallearning.in) so Razorpay
+  // never sees payments originate from the unregistered *.vercel.app URL.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "visuallearning-webapp.vercel.app" }],
+        destination: "https://www.visuallearning.in/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
