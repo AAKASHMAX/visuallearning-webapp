@@ -18,7 +18,6 @@ interface SubRow {
   course?: { id: string; name: string; slug: string; planKey?: string; accentColor?: string; icon?: string } | null;
 }
 
-type AudiencePlanId = "STUDENTS_PLAN" | "TEACHERS_PLAN" | "PROFESSIONAL_PLAN";
 type SubjectKey = "physics" | "chemistry" | "biology";
 
 interface PlanOption {
@@ -29,7 +28,6 @@ interface PlanOption {
   audience?: string | null;
 }
 
-const audiencePlanOrder: AudiencePlanId[] = ["STUDENTS_PLAN", "TEACHERS_PLAN", "PROFESSIONAL_PLAN"];
 const professionalSubjects = [
   { key: "physics" as SubjectKey, name: "Physics" },
   { key: "chemistry" as SubjectKey, name: "Chemistry" },
@@ -117,12 +115,14 @@ export default function AdminSubscriptionsPage() {
       const labels: Record<string, string> = {};
       Object.entries(plans).forEach(([k, v]: [string, any]) => { labels[k] = v.label; });
       setPlanLabels(labels);
-      setPlanKeys(audiencePlanOrder.filter((key) => plans[key]));
+      // Edit-form plan dropdown: all configured plans (audience plans no longer exist).
+      setPlanKeys(Object.keys(plans));
     });
     api.get("/subscription/plans").then(({ data }) => {
-      const planList = ((data.data?.plans || []) as PlanOption[])
-        .filter((plan) => audiencePlanOrder.includes(plan.id as AudiencePlanId))
-        .sort((a, b) => audiencePlanOrder.indexOf(a.id as AudiencePlanId) - audiencePlanOrder.indexOf(b.id as AudiencePlanId));
+      // Grant dropdown: every enabled plan (getPlans already returns only enabled).
+      // Previously filtered to STUDENTS/TEACHERS/PROFESSIONAL_PLAN, which aren't in
+      // plans_config anymore, so the dropdown came up empty.
+      const planList = ((data.data?.plans || []) as PlanOption[]);
       setPlans(planList);
       setGrantForm((f) => ({
         ...f,
