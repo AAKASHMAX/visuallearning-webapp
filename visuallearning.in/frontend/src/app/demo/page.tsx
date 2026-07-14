@@ -7,6 +7,7 @@ import {
   Brain,
   FileCheck2,
   FileText,
+  GraduationCap,
   MonitorPlay,
   Presentation,
   Sparkles,
@@ -20,6 +21,14 @@ const demos = [
     icon: MonitorPlay,
     gradient: "from-violet-600 via-purple-500 to-fuchsia-500",
     glow: "shadow-violet-500/20",
+  },
+  {
+    title: "Lecture Videos",
+    description: "Recorded teacher lessons that walk through each concept step by step, chapter by chapter.",
+    href: "/demo/lecture",
+    icon: GraduationCap,
+    gradient: "from-sky-500 via-blue-500 to-indigo-600",
+    glow: "shadow-blue-500/20",
   },
   {
     title: "Visual Notes",

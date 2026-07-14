@@ -181,7 +181,10 @@ export async function getVideoList(req: Request, res: Response) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
       const groupKey = `${normTitle(v.title)}:${v.type}`;
-      const canWatch = isFirstChapter || hasAccess;
+      // Lecture videos flagged isFree are unlocked for everyone (e.g. Class 12
+      // Physics Ch-1). Animated videos are never free-previewed.
+      const free = v.isFree === true && v.type === "LECTURE_VIDEO";
+      const canWatch = isFirstChapter || hasAccess || free;
       if (!videoMap.has(groupKey)) {
         const videoUrl = isVimeo ? (effectiveVimeoId || "") : (v.youtubeVideoId || "");
 
@@ -196,7 +199,7 @@ export async function getVideoList(req: Request, res: Response) {
           vimeo_video_id: effectiveVimeoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
           description: "",
-          is_paid: isFirstChapter ? 2 : 1,
+          is_paid: (isFirstChapter || free) ? 2 : 1,
           is_purchase: canWatch ? 2 : 1,
           thumbnail_url: getThumbUrl(v),
           duration: v.duration || "",
@@ -244,7 +247,8 @@ export async function getVideoList(req: Request, res: Response) {
           const thumbUrl = isVimeo
             ? (cachedVimeoThumb(v.vimeoVideoId!) || `https://vumbnail.com/${v.vimeoVideoId}.jpg`)
             : v.youtubeVideoId ? `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg` : "";
-          const canWatch = isFirstChapter || hasAccess;
+          const free = v.isFree === true && v.type === "LECTURE_VIDEO";
+          const canWatch = isFirstChapter || hasAccess || free;
           return {
             video_id_PK: v.id,
             chapter_id_FK: v.chapterId,
@@ -255,7 +259,7 @@ export async function getVideoList(req: Request, res: Response) {
             vimeo_video_id: v.vimeoVideoId || null,
             content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
             description: "",
-            is_paid: isFirstChapter ? 2 : 1,
+            is_paid: (isFirstChapter || free) ? 2 : 1,
             is_purchase: canWatch ? 2 : 1,
             thumbnail_url: thumbUrl,
             duration: v.duration || "",

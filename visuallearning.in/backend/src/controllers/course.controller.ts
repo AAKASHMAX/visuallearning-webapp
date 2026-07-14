@@ -226,13 +226,16 @@ export async function getVideos(req: Request, res: Response) {
     }
 
     const videosWithAccess = videos.map((v) => {
-      const canWatch = hasAccess;
       const exists = !!(v.youtubeVideoId || v.vimeoVideoId);
+      // Lecture videos can be individually unlocked for everyone via isFree
+      // (e.g. Class 12 Physics Ch-1). Animated videos are never free-previewed.
+      const free = v.isFree === true && v.type === "LECTURE_VIDEO";
+      const canWatch = hasAccess || free;
       return {
         ...v,
         hasVideo: exists,
         locked: !canWatch,
-        isFree: false,
+        isFree: free,
       };
     });
 

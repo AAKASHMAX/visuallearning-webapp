@@ -112,7 +112,6 @@ export default function UnifiedChapterPage() {
   // works unchanged for both tabs.
   const animatedVideos = allVideos.filter((v) => v.language === language && v.type !== "LECTURE_VIDEO");
   const lectureVideos = allVideos.filter((v) => v.language === language && v.type === "LECTURE_VIDEO");
-  const hasLectures = allVideos.some((v) => v.type === "LECTURE_VIDEO");
   const filteredVideos = activeTab === "lecture" ? lectureVideos : animatedVideos;
 
   const handleTabChange = (tab: Tab) => {
@@ -125,7 +124,7 @@ export default function UnifiedChapterPage() {
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
     { key: "videos", label: "3D Animated", icon: Play, count: animatedVideos.length },
-    ...(hasLectures ? [{ key: "lecture" as Tab, label: "Lecture Videos", icon: MonitorPlay, count: lectureVideos.length }] : []),
+    { key: "lecture", label: "Lecture Videos", icon: MonitorPlay, count: lectureVideos.length },
   ];
 
   const returnTo = searchParams.get("returnTo");
