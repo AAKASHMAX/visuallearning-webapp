@@ -1,5 +1,7 @@
 // Floating "Get Free Notes" Telegram button — opens the Telegram channel.
-const TELEGRAM_URL = "https://t.me/visuallearning3D";
+// Use telegram.me (official alt domain) because some ISPs DNS-block t.me
+// (users see DNS_PROBE_FINISHED_NXDOMAIN); telegram.me resolves the same channel.
+const TELEGRAM_URL = "https://telegram.me/visuallearning3D";
 
 export function TelegramNotesButton() {
   return (
