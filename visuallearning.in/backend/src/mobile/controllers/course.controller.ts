@@ -157,9 +157,13 @@ export async function getVideoList(req: Request, res: Response) {
       return "";
     }
 
-    // First-chapter videos are now locked like every other chapter (no free
-    // preview). Users still see thumbnails; tapping shows the subscription popup.
-    const isFirstChapter = false;
+    // The first chapter of every subject is a free preview — unlocked for everyone.
+    const firstCh = await prisma.chapter.findFirst({
+      where: { subjectId: chapter.subject.id },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
+      select: { id: true },
+    });
+    const isFirstChapter = firstCh?.id === chapter.id;
 
     // Pair the Hindi + English versions of the same video into one entry, keyed by
     // normalized title + type. (Previously keyed by order+type, but the two
@@ -349,8 +353,15 @@ export async function getQuizList(req: Request, res: Response) {
       return mobileSuccess(res, []);
     }
 
-    // Quiz is free only for the first chapter
-    const isFree = chapter.order === 1;
+    // Quiz is free for the first chapter of the subject (free preview). Use the
+    // actual first chapter (min order), not order===1, so it stays correct when
+    // chapters are added/removed.
+    const firstCh = await prisma.chapter.findFirst({
+      where: { subjectId: chapter.subject.id },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
+      select: { id: true },
+    });
+    const isFree = firstCh?.id === chapterId;
 
     // Check subscription access
     let hasAccess = false;

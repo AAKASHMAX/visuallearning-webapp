@@ -213,9 +213,9 @@ export async function getVideos(req: Request, res: Response) {
       }
     }
 
-    // First-chapter videos are locked like every other chapter (no free preview);
-    // unsubscribed users see thumbnails and get the subscription/trial popup on click.
+    // The first chapter of every subject is a free preview — unlocked for everyone.
     const isAdmin = req.user?.role === "ADMIN";
+    const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     let hasAccess = false;
     if (isAdmin) {
       hasAccess = true;
@@ -227,9 +227,10 @@ export async function getVideos(req: Request, res: Response) {
 
     const videosWithAccess = videos.map((v) => {
       const exists = !!(v.youtubeVideoId || v.vimeoVideoId);
-      // Lecture videos can be individually unlocked for everyone via isFree
-      // (e.g. Class 12 Physics Ch-1). Animated videos are never free-previewed.
-      const free = v.isFree === true && v.type === "LECTURE_VIDEO";
+      // Free for everyone when: it's the first (preview) chapter, or a lecture
+      // video individually flagged isFree (e.g. Class 12 Physics Ch-1). Non-first
+      // animated videos are never free-previewed.
+      const free = isFirstChapter || (v.isFree === true && v.type === "LECTURE_VIDEO");
       const canWatch = hasAccess || free;
       return {
         ...v,
