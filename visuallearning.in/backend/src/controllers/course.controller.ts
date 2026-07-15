@@ -105,7 +105,48 @@ export async function getChapters(req: Request, res: Response) {
       }));
     }
 
-    const chapterResult = { subject, chapters: chaptersWithCount };
+    // Per-chapter content counts by type, so the UI can flag empty chapters as
+    // "Coming Soon" for each content type (animation, lecture, notes, ncert, pyq,
+    // important, quiz). Two grouped queries — no N+1.
+    const chapterIds = chaptersWithCount.map((ch) => ch.id);
+    const vGroups = chapterIds.length
+      ? await prisma.video.groupBy({ by: ["chapterId", "type"], where: { chapterId: { in: chapterIds } }, _count: true })
+      : [];
+    const noteRows = chapterIds.length
+      ? await prisma.note.findMany({ where: { chapterId: { in: chapterIds } }, select: { chapterId: true, title: true } })
+      : [];
+    const vMap = new Map<string, { animation: number; lecture: number }>();
+    const nMap = new Map<string, { notes: number; ncert: number; pyq: number; important: number }>();
+    for (const cid of chapterIds) {
+      vMap.set(cid, { animation: 0, lecture: 0 });
+      nMap.set(cid, { notes: 0, ncert: 0, pyq: 0, important: 0 });
+    }
+    for (const g of vGroups) {
+      const e = vMap.get(g.chapterId)!;
+      if (g.type === "LECTURE_VIDEO") e.lecture += g._count; else e.animation += g._count;
+    }
+    for (const n of noteRows) {
+      const t = (n.title || "").toLowerCase();
+      const e = nMap.get(n.chapterId)!;
+      if (t.includes("ncert")) e.ncert++;
+      else if (/pyq|previous year|board paper/.test(t)) e.pyq++;
+      else if (t.includes("important")) e.important++;
+      else e.notes++;
+    }
+    const chaptersWithCounts = chaptersWithCount.map((ch: any) => ({
+      ...ch,
+      counts: {
+        animation: vMap.get(ch.id)?.animation || 0,
+        lecture: vMap.get(ch.id)?.lecture || 0,
+        notes: nMap.get(ch.id)?.notes || 0,
+        ncert: nMap.get(ch.id)?.ncert || 0,
+        pyq: nMap.get(ch.id)?.pyq || 0,
+        important: nMap.get(ch.id)?.important || 0,
+        quiz: ch._count?.questions || 0,
+      },
+    }));
+
+    const chapterResult = { subject, chapters: chaptersWithCounts };
     cacheSet(chapterCacheKey, chapterResult, CACHE_TTL);
     return success(res, chapterResult);
   } catch (e) {

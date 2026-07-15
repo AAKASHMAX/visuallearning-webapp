@@ -11,6 +11,7 @@ interface Chapter {
   id: string;
   name: string;
   order?: number;
+  counts?: Record<string, number>;
 }
 
 // Route each content type to its existing viewer:
@@ -95,20 +96,38 @@ export default function ChapterListPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {chapters.map((ch, idx) => (
-            <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)} className="block">
-              <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
-                  {ch.order || idx + 1}
+          {chapters.map((ch, idx) => {
+            // "Coming soon" when the chapter has no content of this type yet.
+            const isEmpty = (ch.counts?.[contentType] ?? 0) === 0;
+            if (isEmpty) {
+              return (
+                <div key={ch.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm opacity-90 cursor-not-allowed">
+                  <div className="w-11 h-11 rounded-xl bg-gray-200 flex items-center justify-center shrink-0 text-gray-400 font-bold">
+                    {ch.order || idx + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-400 truncate">{ch.name}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                  </div>
+                  <span className="rounded-full bg-amber-100 text-amber-700 px-2.5 py-1 text-[11px] font-bold shrink-0">Coming soon</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-heading truncate">{ch.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+              );
+            }
+            return (
+              <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)} className="block">
+                <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
+                    {ch.order || idx + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-heading truncate">{ch.name}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
