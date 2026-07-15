@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import { BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain } from "lucide-react";
-import { NotesPlanCard } from "@/components/subscription/notes-plan-card";
+import { TrialCard } from "@/components/subscription/trial-card";
 
 const demos = [
   { title: "3D Animated Video", desc: "Watch a sample 3D animation.", href: "/demo/video", icon: MonitorPlay, gradient: "from-violet-600 to-fuchsia-500" },
@@ -56,8 +56,8 @@ export default function CoursesClassGridPage() {
         </Link>
       </div>
 
-      {/* Notes-only plan (₹99, one class, view-only) */}
-      <NotesPlanCard />
+      {/* 3-day free trial (hidden for users who already have a subscription) */}
+      <TrialCard />
 
       <h2 className="text-base font-semibold text-gray-500 mb-3">Classes</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

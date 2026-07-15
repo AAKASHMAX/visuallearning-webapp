@@ -23,9 +23,11 @@ import {
   CheckCircle2, 
   X, 
   Globe,
-  Crown,
-  MonitorPlay
+  MonitorPlay,
+  Gift,
+  Check
 } from "lucide-react";
+import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { Video, Note, Question, BoardPaper } from "@/types";
 
 type Tab = "videos" | "lecture" | "notes" | "quiz" | "quiz_active";
@@ -200,13 +202,13 @@ export default function UnifiedChapterPage() {
                       className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-md z-20 cursor-pointer group"
                       onClick={() => setShowLockedModal(true)}
                     >
-                      <div className="w-20 h-20 rounded-full bg-cta/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <Crown className="w-10 h-10 text-cta" />
+                      <div className="w-20 h-20 rounded-full bg-[#00c896]/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Gift className="w-10 h-10 text-[#00c896]" />
                       </div>
                       <h4 className="text-white font-bold text-lg mb-2">Premium Content</h4>
-                      <p className="text-gray-400 text-sm px-8 text-center max-w-sm">Subscribe to a plan to unlock all 3D animations and expert lessons for this chapter.</p>
-                      <Button className="mt-6 bg-cta hover:bg-cta/90 text-white font-bold px-8 py-2 rounded-full">
-                        Unlock Now
+                      <p className="text-gray-400 text-sm px-8 text-center max-w-sm">Start a <span className="text-white font-semibold">free 3-day trial</span> to unlock all 3D animations and expert lessons — only ₹1 transaction fee.</p>
+                      <Button className="mt-6 bg-[#00c896] hover:bg-[#00b184] text-white font-bold px-8 py-2 rounded-full">
+                        Get Free Trial
                       </Button>
                     </div>
                   ) : (
@@ -444,20 +446,38 @@ export default function UnifiedChapterPage() {
         </div>
       </div>
 
-      {/* Subscription Locked Modal */}
+      {/* Locked Modal — leads with the free 3-day trial */}
       {showLockedModal && (
         <div className="fixed inset-0 bg-heading/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-fade-in border border-card-border">
-            <div className="mx-auto w-16 h-16 bg-cta/10 rounded-full flex items-center justify-center mb-6">
-              <Crown className="w-8 h-8 text-cta" />
+            <div className="mx-auto w-16 h-16 bg-[#00c896]/10 rounded-full flex items-center justify-center mb-5">
+              <Gift className="w-8 h-8 text-[#00c896]" />
             </div>
-            <h3 className="text-xl font-bold text-heading mb-2">Unlock Premium Content</h3>
-            <p className="text-text-muted text-sm mb-8">This video is part of our premium curriculum. Subscribe to a plan to unlock all 3D animations and expert lessons.</p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={() => router.push("/subscription")} className="w-full py-6 text-base bg-primary hover:bg-primary-dark text-white font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
-                View Courses &amp; Plans
-              </Button>
-              <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-heading font-medium py-2">
+            <h3 className="text-xl font-bold text-heading mb-2">Get your Free Trial</h3>
+            <p className="text-text-muted text-sm mb-4">
+              Watch all 3D animations, notes, NCERT, PYQ &amp; quizzes. Not subscribed yet? Start a{" "}
+              <span className="font-bold text-heading">free 3-day trial</span> — you only pay Razorpay&apos;s ₹1 transaction fee.
+            </p>
+            <ul className="text-left text-xs text-text-muted mb-6 space-y-1.5 mx-auto max-w-[15rem]">
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#00c896]" /> Full access for 3 days</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#00c896]" /> All classes &amp; subjects</li>
+            </ul>
+            <div className="flex flex-col gap-2">
+              <RazorpayButton
+                plan="TRIAL"
+                amount={1}
+                label="3-Day Free Trial"
+                classesAccess={[]}
+                billingCycle="yearly"
+                downloadAddon={false}
+                buttonLabel="Get Free Trial"
+                onSuccess={() => window.location.reload()}
+                className="w-full bg-[#00c896] hover:bg-[#00b184] text-white"
+              />
+              <button onClick={() => router.push("/pricing")} className="text-sm text-primary hover:text-primary-dark font-semibold py-1.5">
+                View all plans
+              </button>
+              <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-heading font-medium py-1">
                 Maybe later
               </button>
             </div>

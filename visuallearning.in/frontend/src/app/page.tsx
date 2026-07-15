@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import { TrialCard } from "@/components/subscription/trial-card";
 import Link from "next/link";
 import {
   Atom, Zap, Play, BookOpen, FlaskConical, GraduationCap, Star,
@@ -15,6 +16,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-surface overflow-hidden">
       <Navbar />
+      {/* 3-day free trial banner at the very top (blends with the dark hero) */}
+      <div className="bg-[#122348] px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <TrialCard />
+        </div>
+      </div>
       <HeroSection />
       <StatsBar />
       <DemoShowcase />
