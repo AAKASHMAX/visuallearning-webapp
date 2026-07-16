@@ -87,7 +87,7 @@ export async function getAllUsers(req: Request, res: Response) {
 
     const where = {
       role: "STUDENT" as const,
-      ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { email: { contains: search, mode: "insensitive" as const } }] } : {}),
+      ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { email: { contains: search, mode: "insensitive" as const } }, { phone: { contains: search, mode: "insensitive" as const } }] } : {}),
     };
 
     const [users, total] = await Promise.all([
@@ -96,7 +96,7 @@ export async function getAllUsers(req: Request, res: Response) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-        select: { id: true, name: true, email: true, blocked: true, emailVerified: true, createdAt: true },
+        select: { id: true, name: true, email: true, phone: true, blocked: true, emailVerified: true, createdAt: true },
       }),
       prisma.user.count({ where }),
     ]);

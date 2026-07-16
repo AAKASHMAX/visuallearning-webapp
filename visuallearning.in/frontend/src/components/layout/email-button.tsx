@@ -1,7 +1,13 @@
+"use client";
+import { usePathname } from "next/navigation";
+
 // Floating "Email Us" button — opens the mail client to support.
 const EMAIL = "visuallearning247@gmail.com";
 
 export function EmailButton() {
+  const pathname = usePathname();
+  // Hidden on the sign-in / sign-up pages.
+  if (pathname?.startsWith("/auth")) return null;
   return (
     <a
       href={`mailto:${EMAIL}`}

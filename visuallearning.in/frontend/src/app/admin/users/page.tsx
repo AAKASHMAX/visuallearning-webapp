@@ -9,7 +9,7 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 interface UserRow {
-  id: string; name: string; email: string; blocked: boolean; createdAt: string;
+  id: string; name: string; email: string; phone: string | null; blocked: boolean; createdAt: string;
   subscription: { plan: string; expiryDate: string } | null;
 }
 
@@ -61,14 +61,14 @@ export default function AdminUsersPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">User Management</h1>
       <div className="mb-4 max-w-md">
-        <Input placeholder="Search by name or email..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+        <Input placeholder="Search by name, email or mobile..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
       {loading ? <PageLoader /> : (
         <Card>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b text-left bg-gray-50">
-                <th className="p-4">User ID</th><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Subscription</th><th className="p-4">Status</th><th className="p-4">Actions</th>
+                <th className="p-4">User ID</th><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Mobile</th><th className="p-4">Subscription</th><th className="p-4">Status</th><th className="p-4">Actions</th>
               </tr></thead>
               <tbody>
                 {users.map((u) => (
@@ -84,6 +84,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="p-4 font-medium">{u.name}</td>
                     <td className="p-4 text-gray-500">{u.email}</td>
+                    <td className="p-4 text-gray-500">{u.phone || <span className="text-gray-300">—</span>}</td>
                     <td className="p-4">{u.subscription ? <Badge variant="success">{u.subscription.plan}</Badge> : <Badge variant="default">None</Badge>}</td>
                     <td className="p-4">{u.blocked ? <Badge variant="danger">Blocked</Badge> : <Badge variant="success">Active</Badge>}</td>
                     <td className="p-4">

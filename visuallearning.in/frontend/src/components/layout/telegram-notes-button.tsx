@@ -1,9 +1,15 @@
+"use client";
+import { usePathname } from "next/navigation";
+
 // Floating "Get Free Notes" Telegram button — opens the Telegram channel.
 // Use telegram.me (official alt domain) because some ISPs DNS-block t.me
 // (users see DNS_PROBE_FINISHED_NXDOMAIN); telegram.me resolves the same channel.
 const TELEGRAM_URL = "https://telegram.me/visuallearning3D";
 
 export function TelegramNotesButton() {
+  const pathname = usePathname();
+  // Hidden on the sign-in / sign-up pages.
+  if (pathname?.startsWith("/auth")) return null;
   return (
     <a
       href={TELEGRAM_URL}

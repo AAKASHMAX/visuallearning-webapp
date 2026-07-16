@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,13 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanPhone = phone.replace(/\D/g, "").replace(/^0+/, "").replace(/^91(?=\d{10}$)/, "");
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) { toast.error("Enter a valid 10-digit mobile number"); return; }
     if (password !== confirm) { toast.error("Passwords don't match"); return; }
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/signup", { name, email, password });
+      const { data } = await api.post("/auth/signup", { name, email, phone: cleanPhone, password });
       login(data.data.user, data.data.token);
       toast.success("Account created! Check your email to verify.");
       router.push("/courses"); // new users aren't subscribed yet
@@ -50,6 +53,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
             <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            <Input label="Mobile Number" type="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="10-digit mobile number" required />
             <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" required />
             <Input label="Confirm Password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" required />
             <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating account..." : "Create Account"}</Button>

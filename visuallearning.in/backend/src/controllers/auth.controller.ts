@@ -10,6 +10,10 @@ import { sendVerificationEmail, sendResetPasswordEmail } from "../utils/email";
 export const signupSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
+  phone: z
+    .string()
+    .transform((s) => s.replace(/\D/g, "").replace(/^0+/, "").replace(/^91(?=\d{10}$)/, ""))
+    .refine((s) => /^[6-9]\d{9}$/.test(s), "Enter a valid 10-digit mobile number"),
   password: z.string().min(6).max(100),
 });
 
@@ -33,7 +37,7 @@ export const updateProfileSchema = z.object({
 
 export async function signup(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return error(res, "Email already registered", 409);
@@ -42,7 +46,7 @@ export async function signup(req: Request, res: Response) {
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, verificationToken },
+      data: { name, email, phone, password: hashed, verificationToken },
     });
 
     try {
