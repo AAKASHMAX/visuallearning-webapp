@@ -141,7 +141,6 @@ function SubscriptionContent() {
   const yearlyVariant = plans.find((plan) => plan.code === `${selectedBase}_YEARLY`);
   const currentCycle = selected && !isYearly(selected) ? "MONTHLY" : "YEARLY";
   const activePlan = subscription?.status === "ACTIVE" ? subscription.plan : "";
-  const canCancelAutoRenew = subscription?.status === "ACTIVE" && subscription?.autoRenew;
   const discountedPrice = selected ? selected.price : 0;
   const selectedAccessDays = selected ? (discountedPrice <= 0 ? 30 : selected.accessDurationDays || selected.durationDays || 365) : 0;
   const accessDates = useMemo(() => {
@@ -178,16 +177,18 @@ function SubscriptionContent() {
         return;
       }
 
-      const { data } = await api.post("/subscription/create-subscription", {
+      // One-time payment (no auto-renewal): create an order, pay once, activate.
+      const { data } = await api.post("/subscription/create-order", {
         plan: plan.code,
       });
-      const cycleLabel = data.billingCycle === "MONTHLY" ? "monthly" : "yearly";
 
       const razorpay = new window.Razorpay({
         key: paymentKeyId,
-        subscription_id: data.subscriptionId,
+        order_id: data.orderId,
+        amount: Math.round((data.amount ?? 1) * 100),
+        currency: data.currency || "INR",
         name: "PhysicsLab",
-        description: `${plan.name} — ${cycleLabel} auto-renewal`,
+        description: plan.name,
         prefill: {
           name: user?.name,
           email: user?.email,
@@ -195,12 +196,13 @@ function SubscriptionContent() {
         theme: { color: "#00d4ff" },
         handler: async (response: any) => {
           try {
-            await api.post("/subscription/verify-subscription", {
+            await api.post("/subscription/verify-payment", {
+              razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySubscriptionId: response.razorpay_subscription_id,
               razorpaySignature: response.razorpay_signature,
+              plan: plan.code,
             });
-            toast.success(`Subscription active — auto-renews ${cycleLabel}`);
+            toast.success("Subscription activated!");
             router.push("/dashboard");
           } catch (error: any) {
             toast.error(error.response?.data?.message || "Payment verification failed");
@@ -214,20 +216,6 @@ function SubscriptionContent() {
       toast.error(error.response?.data?.message || "Failed to start subscription");
     } finally {
       setPaying(false);
-    }
-  }
-
-  async function cancelAutoRenew() {
-    if (!window.confirm("Cancel auto-renewal? You'll keep access until your current period ends.")) {
-      return;
-    }
-    try {
-      await api.post("/subscription/cancel-subscription");
-      toast.success("Auto-renewal cancelled. Access continues until expiry.");
-      const { data } = await api.get("/subscription/my-subscription");
-      setSubscription(data);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to cancel auto-renewal");
     }
   }
 
@@ -257,15 +245,12 @@ function SubscriptionContent() {
                   <p className="text-sm font-semibold text-text-bright">Active plan: {activePlan}</p>
                   {subscription?.expiryDate && (
                     <p className="text-xs text-text-muted">
-                      {canCancelAutoRenew ? "Auto-renews" : "Expires"} {new Date(subscription.expiryDate).toLocaleDateString()}
+                      Expires {new Date(subscription.expiryDate).toLocaleDateString()}
                     </p>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {canCancelAutoRenew && (
-                  <Button variant="outline" size="sm" onClick={cancelAutoRenew}>Cancel auto-renewal</Button>
-                )}
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm">Go to Dashboard</Button>
                 </Link>

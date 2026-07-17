@@ -49,6 +49,7 @@ export async function getUsers(req: AuthRequest, res: Response) {
       where.OR = [
         { name: { contains: search as string, mode: "insensitive" } },
         { email: { contains: search as string, mode: "insensitive" } },
+        { phone: { contains: search as string, mode: "insensitive" } },
       ];
     }
 
@@ -59,7 +60,7 @@ export async function getUsers(req: AuthRequest, res: Response) {
         take: parseInt(limit as string),
         orderBy: { createdAt: "desc" },
         select: {
-          id: true, name: true, email: true, blocked: true, createdAt: true,
+          id: true, name: true, email: true, phone: true, blocked: true, createdAt: true,
           subscription: { select: { plan: true, status: true, expiryDate: true } },
         },
       }),

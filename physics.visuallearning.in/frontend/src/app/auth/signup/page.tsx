@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Atom, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Atom, Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
@@ -15,6 +15,7 @@ export default function SignupPage() {
   const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,8 +25,13 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       toast.error("Please fill all fields");
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, "").replace(/^0+/, "").replace(/^91(?=\d{10}$)/, "");
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      toast.error("Enter a valid 10-digit mobile number");
       return;
     }
     if (password.length < 6) {
@@ -39,7 +45,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const res = await api.post("/auth/signup", { name, email, password });
+      const res = await api.post("/auth/signup", { name, email, phone: cleanPhone, password });
       login(res.data.user, res.data.token);
       toast.success("Account created. Welcome!");
       router.push("/");
@@ -132,6 +138,23 @@ export default function SignupPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="pl-11"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-text-muted mb-2">Mobile Number</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                   className="pl-11"
                   required
                 />

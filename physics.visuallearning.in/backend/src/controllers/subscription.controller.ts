@@ -111,7 +111,7 @@ export async function getPlans(req: AuthRequest, res: Response) {
     let plans = await prisma.subscriptionPlan.findMany({
       where: {
         isActive: true,
-        code: { not: "FREE" },
+        code: { notIn: ["FREE", "TRIAL"] },
       },
       orderBy: { displayOrder: "asc" },
       include: { courses: { include: { course: { select: { id: true, name: true, tier: true } } } } },
@@ -122,7 +122,7 @@ export async function getPlans(req: AuthRequest, res: Response) {
       plans = await prisma.subscriptionPlan.findMany({
         where: {
           isActive: true,
-          code: { not: "FREE" },
+          code: { notIn: ["FREE", "TRIAL"] },
           OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
         },
         orderBy: { displayOrder: "asc" },
@@ -182,7 +182,7 @@ export async function getPlanDetails(req: AuthRequest, res: Response) {
       const allPlans = await prisma.subscriptionPlan.findMany({
         where: {
           isActive: true,
-          code: { not: "FREE" },
+          code: { notIn: ["FREE", "TRIAL"] },
           OR: [{ code: { endsWith: "_YEARLY" } }, { durationDays: { gte: YEARLY_PLAN_DURATION_DAYS } }],
         },
         orderBy: { durationDays: "asc" },
@@ -327,6 +327,17 @@ export async function createOrder(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
+    // 3-day trial: one per account; not for users who already subscribed.
+    if (planConfig.code === "TRIAL") {
+      const existing = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
+      if (existing && existing.status === "ACTIVE" && existing.expiryDate > new Date()) {
+        return res.status(400).json({ message: "You already have an active subscription." });
+      }
+      if (existing && existing.plan === "TRIAL") {
+        return res.status(400).json({ message: "You have already used your free 3-day trial." });
+      }
+    }
+
     let amount = getEffectivePlanPrice(planConfig);
 
     // Apply coupon
@@ -405,6 +416,17 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
     const planConfig = await getPlanByCode(prisma, orderPlan);
     if (!planConfig) {
       return res.status(400).json({ message: "Invalid plan" });
+    }
+
+    // 3-day trial: guard against a repeat trial (replay / double submit).
+    if (planConfig.code === "TRIAL") {
+      const existing = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
+      if (existing && existing.status === "ACTIVE" && existing.expiryDate > new Date() && existing.plan !== "TRIAL") {
+        return res.status(400).json({ message: "You already have an active subscription." });
+      }
+      if (existing && existing.plan === "TRIAL") {
+        return res.status(400).json({ message: "You have already used your free 3-day trial." });
+      }
     }
 
     const effectivePrice = getEffectivePlanPrice(planConfig);

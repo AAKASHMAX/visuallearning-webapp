@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import api from "@/lib/api";
 import { Check, Loader2, Sparkles, ArrowRight, CreditCard } from "lucide-react";
+import { TrialCard } from "@/components/subscription/trial-card";
 
 interface Plan {
   id: string;
@@ -67,6 +68,9 @@ export default function PricingPage() {
             ))}
           </div>
         </div>
+
+        {/* 3-day free trial (hidden for existing subscribers) */}
+        <TrialCard />
 
         {loading ? (
           <div className="flex flex-col items-center py-24">

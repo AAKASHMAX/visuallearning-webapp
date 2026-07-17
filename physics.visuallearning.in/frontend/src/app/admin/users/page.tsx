@@ -10,6 +10,7 @@ interface UserItem {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   blocked: boolean;
   createdAt: string;
   subscription: { plan: string; status: string; expiryDate: string } | null;
@@ -81,7 +82,7 @@ export default function AdminUsersPage() {
       <div className="relative mb-6 max-w-md">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <Input
-          placeholder="Search by name or email..."
+          placeholder="Search by name, email or mobile..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="pl-11"
@@ -95,6 +96,7 @@ export default function AdminUsersPage() {
             <tr className="border-b border-border bg-surface-light/50">
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Name</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Email</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Mobile</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Plan</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Joined</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Status</th>
@@ -105,12 +107,12 @@ export default function AdminUsersPage() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  <td colSpan={6} className="px-6 py-4"><div className="h-4 bg-surface-light rounded animate-pulse" /></td>
+                  <td colSpan={7} className="px-6 py-4"><div className="h-4 bg-surface-light rounded animate-pulse" /></td>
                 </tr>
               ))
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
+                <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
                   <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   No users found
                 </td>
@@ -120,6 +122,7 @@ export default function AdminUsersPage() {
                 <tr key={user.id} className="border-b border-border hover:bg-surface-light/30 transition-colors">
                   <td className="px-6 py-4 text-sm text-text-bright font-medium">{user.name}</td>
                   <td className="px-6 py-4 text-sm text-text-muted">{user.email}</td>
+                  <td className="px-6 py-4 text-sm text-text-muted">{user.phone || "—"}</td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
                       user.subscription?.plan === "ADVANCE" ? "bg-secondary/10 text-secondary-light" :

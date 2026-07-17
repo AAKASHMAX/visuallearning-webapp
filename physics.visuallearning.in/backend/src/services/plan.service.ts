@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-export const FREE_TRIAL_DURATION_DAYS = 30;
+export const FREE_TRIAL_DURATION_DAYS = 3;
 export const YEARLY_PLAN_DURATION_DAYS = 365;
 
 const CLASS_PLAN_FEATURES = ["3D Animated Videos", "Visual Notes", "NCERT Solutions", "PYQ Solutions", "Interactive Quiz"];
@@ -44,6 +44,20 @@ export const defaultPlanSeeds = [
     durationDays: YEARLY_PLAN_DURATION_DAYS,
     displayOrder: 4,
     tier: "12",
+    features: CLASS_PLAN_FEATURES,
+  },
+  {
+    // 3-day trial: full access to every course for FREE_TRIAL_DURATION_DAYS,
+    // charged as Razorpay's ₹1 minimum. price 0 -> effective price 0 -> ₹1.
+    // tier "TRIAL" matches no course, so access is granted via a special-case
+    // (see userHasCourseAccess / getAccessibleCoursesForUser).
+    code: "TRIAL",
+    name: "3-Day Free Trial",
+    description: "Full access to all Physics courses for 3 days.",
+    price: 0,
+    durationDays: FREE_TRIAL_DURATION_DAYS,
+    displayOrder: 0,
+    tier: "TRIAL",
     features: CLASS_PLAN_FEATURES,
   },
 ];
@@ -169,6 +183,10 @@ export async function userHasCourseAccess(prisma: PrismaClient, userId: string |
   if (subscriptions.length === 0) return false;
 
   const planCodes = subscriptions.map((sub) => sub.plan);
+
+  // The 3-day trial unlocks every course while active.
+  if (planCodes.includes("TRIAL")) return true;
+
   const plans = await prisma.subscriptionPlan.findMany({
     where: { code: { in: planCodes }, isActive: true },
     include: { courses: { select: { courseId: true } } },
@@ -210,6 +228,24 @@ export async function getAccessibleCoursesForUser(prisma: PrismaClient, userId: 
 
   const subscriptions = await getActiveUserSubscriptions(prisma, userId);
   const planCodes = subscriptions.map((sub) => sub.plan);
+
+  // The 3-day trial unlocks every active course while it's running.
+  if (planCodes.includes("TRIAL")) {
+    const trialCourses = await prisma.course.findMany({
+      where: { isActive: true, tier: { not: "FREE" } },
+      orderBy: { displayOrder: "asc" },
+      include: {
+        _count: { select: { chapters: true, courseChapters: true } },
+        chapters: { select: { id: true } },
+        courseChapters: { select: { chapterId: true } },
+      },
+    });
+    return trialCourses.map(({ chapters, courseChapters, ...course }: any) => ({
+      ...course,
+      _count: { ...course._count, chapters: courseChapterCount({ chapters, courseChapters }) },
+    }));
+  }
+
   const plans = await prisma.subscriptionPlan.findMany({
     where: { code: { in: planCodes }, isActive: true },
     include: { courses: { select: { courseId: true } } },
