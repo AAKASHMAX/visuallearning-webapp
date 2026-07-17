@@ -14,6 +14,7 @@ import {
   FileCheck,
   FileQuestion,
   FileText,
+  Gift,
   Lock,
   Maximize2,
   Minimize2,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { PageLoader } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
@@ -835,20 +837,35 @@ function LockedPanel() {
   return (
     <div className="flex min-h-[420px] items-center justify-center p-6">
       <div className="max-w-sm text-center">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-          <Lock className="h-8 w-8" />
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#00c896]/10 text-[#00c896]">
+          <Gift className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-black text-heading">Subscribe the plan to access this resource</h2>
+        <h2 className="text-xl font-black text-heading">Unlock with a Free Trial</h2>
         <p className="mt-3 text-sm leading-6 text-text-muted">
-          The first chapter stays open for preview. Subscribe to unlock the full course resources.
+          The first chapter stays open for preview. Not subscribed yet? Start a{" "}
+          <span className="font-bold text-heading">free 3-day trial</span> to read all notes,
+          NCERT &amp; PYQ solutions — you only pay Razorpay&apos;s ₹1 transaction fee.
         </p>
-        <Link
-          href="/subscription"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-heading px-5 py-3 text-sm font-black text-white hover:bg-primary"
-        >
-          View Plans
-          <ChevronRight className="h-4 w-4" />
-        </Link>
+        <div className="mt-6 flex flex-col gap-2">
+          <RazorpayButton
+            plan="TRIAL"
+            amount={1}
+            label="3-Day Free Trial"
+            classesAccess={[]}
+            billingCycle="yearly"
+            downloadAddon={false}
+            buttonLabel="Get Free Trial"
+            onSuccess={() => window.location.reload()}
+            className="w-full bg-[#00c896] hover:bg-[#00b184] text-white"
+          />
+          <Link
+            href="/pricing"
+            className="inline-flex items-center justify-center gap-1 py-1.5 text-sm font-semibold text-primary hover:text-primary-dark"
+          >
+            View all plans
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </div>
   );
