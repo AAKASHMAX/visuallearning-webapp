@@ -45,34 +45,26 @@ function HeroSection() {
     { title: "Competitive Exams", subtitle: "Preparation", icon: Trophy, gradient: "from-amber-500 to-yellow-600" },
   ];
   return (
-    <section className="relative min-h-screen flex items-center pt-20" style={{ background: 'linear-gradient(135deg, #122348 0%, #1A3263 50%, #122348 100%)' }}>
-      {/* Grid texture overlay */}
-      <div className="absolute inset-0 bg-grid-dark" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-[120px]" />
+    <section className="relative min-h-screen flex items-center pt-20 bg-surface">
+      {/* Subtle light decoration */}
+      <div className="absolute inset-0 bg-dots opacity-40" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#05BFDB]/10 rounded-full blur-[100px]" />
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="absolute w-1 h-1 bg-[#05BFDB]/40 rounded-full"
-            style={{ left: `${15 + i * 15}%`, top: `${20 + (i % 3) * 25}%`, animation: `particle-float ${8 + i * 2}s linear infinite`, animationDelay: `${i * 1.5}s` }} />
-        ))}
-      </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         <div className="animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-6">
-            <Sparkles className="w-4 h-4 text-[#05BFDB]" />
-            <span className="text-sm text-white/70">CBSE &amp; State Boards &middot; JEE &middot; NEET &middot; Class 9&ndash;12</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+            <Sparkles className="w-4 h-4 text-cta" />
+            <span className="text-sm text-text-muted">CBSE &amp; State Boards &middot; JEE &middot; NEET &middot; Class 9&ndash;12</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold leading-tight mb-5">
-            <span className="text-white">Build Strong Concepts.</span>{" "}
-            <span className="text-[#05BFDB]">Visualize Learning.</span>{" "}
-            <span className="text-white">Crack Every Exam.</span>
+            <span className="text-heading">Build Strong Concepts.</span>{" "}
+            <span className="gradient-text">Visualize Learning.</span>{" "}
+            <span className="text-heading">Crack Every Exam.</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-white/60 leading-relaxed max-w-2xl mx-auto mb-10">
+          <p className="text-base sm:text-lg text-text-muted leading-relaxed max-w-2xl mx-auto mb-10">
             One visual learning platform for school boards and competitive exams &mdash; from
             Class 9&ndash;12 concepts to JEE, NEET &amp; more, powered by 3D animated videos,
             visual notes, NCERT &amp; PYQ solutions and exam-focused practice.
@@ -84,13 +76,13 @@ function HeroSection() {
               <Link
                 key={t.title}
                 href="/courses"
-                className="group rounded-2xl glass-dark border border-white/10 p-4 sm:p-5 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:border-[#05BFDB]/40 hover:shadow-lg hover:shadow-[#05BFDB]/10"
+                className="group rounded-2xl bg-white border border-gray-100 card-shadow p-4 sm:p-5 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:border-[#05BFDB]/40 hover:shadow-md"
               >
                 <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${t.gradient} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   <t.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">{t.title}</h3>
-                <p className="text-[10px] sm:text-[11px] text-white/50 mt-1">{t.subtitle}</p>
+                <h3 className="text-xs sm:text-sm font-bold text-heading leading-tight">{t.title}</h3>
+                <p className="text-[10px] sm:text-[11px] text-text-muted mt-1">{t.subtitle}</p>
               </Link>
             ))}
           </div>
@@ -103,7 +95,7 @@ function HeroSection() {
               </Button>
             </Link>
             <Link href="/courses">
-              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
+              <Button variant="outline" size="lg" className="border-gray-300 text-heading hover:bg-gray-50">
                 <Play className="w-5 h-5 mr-2" /> Explore Courses
               </Button>
             </Link>
