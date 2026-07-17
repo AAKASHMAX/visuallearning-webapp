@@ -7,7 +7,7 @@ import { TrialCard } from "@/components/subscription/trial-card";
 import Link from "next/link";
 import {
   Atom, Zap, Play, BookOpen, FlaskConical, GraduationCap, Star,
-  Check, ArrowRight, Sparkles, Monitor, Trophy, Users, ChevronRight,
+  ArrowRight, Sparkles, Monitor, Trophy, Users, ChevronRight,
   Waves, Orbit, Lightbulb, Target, Rocket, Flame, Brain, PenTool,
   Beaker, Microscope, Dna, Presentation, BookMarked, FileCheck,
 } from "lucide-react";
@@ -16,14 +16,14 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-surface overflow-hidden">
       <Navbar />
-      {/* 3-day free trial banner at the very top (blends with the dark hero) */}
-      <div className="bg-[#122348] px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <TrialCard />
-        </div>
-      </div>
       <HeroSection />
       <StatsBar />
+      {/* Limited-time offer — 3-day free trial, right after the hero */}
+      <section className="pt-12 sm:pt-14">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TrialCard />
+        </div>
+      </section>
       <DemoShowcase />
       <FeaturesSection />
       <TopicsShowcase />
@@ -37,6 +37,13 @@ export default function HomePage() {
 
 /* ── HERO ── */
 function HeroSection() {
+  const examTracks = [
+    { title: "State Board Exam", subtitle: "Class 9–12", icon: GraduationCap, gradient: "from-emerald-500 to-teal-600" },
+    { title: "CBSE Board Exam", subtitle: "Class 9–12", icon: BookMarked, gradient: "from-violet-500 to-purple-600" },
+    { title: "JEE", subtitle: "Engineering", icon: Rocket, gradient: "from-sky-500 to-blue-600" },
+    { title: "NEET", subtitle: "Medical", icon: Microscope, gradient: "from-rose-500 to-orange-500" },
+    { title: "Competitive Exams", subtitle: "Preparation", icon: Trophy, gradient: "from-amber-500 to-yellow-600" },
+  ];
   return (
     <section className="relative min-h-screen flex items-center pt-20" style={{ background: 'linear-gradient(135deg, #122348 0%, #1A3263 50%, #122348 100%)' }}>
       {/* Grid texture overlay */}
@@ -52,74 +59,54 @@ function HeroSection() {
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-6">
-              <Sparkles className="w-4 h-4 text-[#05BFDB]" />
-              <span className="text-sm text-white/70">CBSE &amp; State Boards &middot; Class 9&ndash;12</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-              <span className="text-white">Master Your</span><br />
-              <span className="text-[#05BFDB]">Boards &amp; Exams</span><br />
-              <span className="text-white">&mdash; Visually.</span>
-            </h1>
-
-            <p className="text-lg text-white/60 leading-relaxed max-w-lg mb-8">
-              Complete school-board education and exam preparation for Class 9&ndash;12,
-              aligned to CBSE &amp; state boards &mdash; brought to life with amazing 3D
-              animated videos, visual notes, NCERT &amp; PYQ solutions and exam-focused quizzes.
-            </p>
-
-            <div className="flex flex-wrap gap-4 mb-10">
-              <Link href="/demo">
-                <Button size="lg" className="group bg-[#05BFDB] hover:bg-[#05BFDB]/90 text-white">
-                  Watch Demo
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link href="/courses">
-                <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
-                  <Play className="w-5 h-5 mr-2" /> Explore Courses
-                </Button>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-6 text-sm text-white/50">
-              {["CBSE & State Boards", "NCERT & PYQ Solutions", "Exam-Ready Practice"].map((t) => (
-                <div key={t} className="flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-[#05BFDB]" /><span>{t}</span>
-                </div>
-              ))}
-            </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <div className="animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark mb-6">
+            <Sparkles className="w-4 h-4 text-[#05BFDB]" />
+            <span className="text-sm text-white/70">CBSE &amp; State Boards &middot; JEE &middot; NEET &middot; Class 9&ndash;12</span>
           </div>
 
-          {/* Atom visual */}
-          <div className="hidden lg:flex justify-center items-center animate-fade-in delay-300">
-            <div className="relative w-80 h-80">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-[#05BFDB] to-primary animate-pulse-glow flex items-center justify-center z-10">
-                <Atom className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute inset-4 border border-[#05BFDB]/20 rounded-full animate-spin" style={{ animationDuration: "12s" }}>
-                <div className="absolute -top-1.5 left-1/2 w-3 h-3 rounded-full bg-[#05BFDB] shadow-[0_0_10px_rgba(5,191,219,0.6)]" />
-              </div>
-              <div className="absolute inset-12 border border-primary-light/30 rounded-full animate-spin" style={{ animationDuration: "8s", animationDirection: "reverse" }}>
-                <div className="absolute top-1/2 -right-1.5 w-3 h-3 rounded-full bg-primary-light shadow-[0_0_10px_rgba(9,99,126,0.6)]" />
-              </div>
-              <div className="absolute inset-0 border border-cta/10 rounded-full animate-spin" style={{ animationDuration: "16s" }}>
-                <div className="absolute bottom-2 left-8 w-2 h-2 rounded-full bg-cta shadow-[0_0_10px_rgba(255,159,67,0.6)]" />
-              </div>
-              <div className="absolute -top-4 -right-4 glass-dark rounded-xl px-4 py-2 animate-float">
-                <span className="text-[#05BFDB] font-mono text-sm">E = mc²</span>
-              </div>
-              <div className="absolute -bottom-4 -left-4 glass-dark rounded-xl px-4 py-2 animate-float delay-200">
-                <span className="text-cta font-mono text-sm">F = ma</span>
-              </div>
-              <div className="absolute top-8 -left-12 glass-dark rounded-xl px-4 py-2 animate-float delay-400">
-                <span className="text-success font-mono text-sm">V = IR</span>
-              </div>
-            </div>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold leading-tight mb-5">
+            <span className="text-white">Build Strong Concepts.</span>{" "}
+            <span className="text-[#05BFDB]">Visualize Learning.</span>{" "}
+            <span className="text-white">Crack Every Exam.</span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-white/60 leading-relaxed max-w-2xl mx-auto mb-10">
+            One visual learning platform for school boards and competitive exams &mdash; from
+            Class 9&ndash;12 concepts to JEE, NEET &amp; more, powered by 3D animated videos,
+            visual notes, NCERT &amp; PYQ solutions and exam-focused practice.
+          </p>
+
+          {/* Exam-track cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-10">
+            {examTracks.map((t) => (
+              <Link
+                key={t.title}
+                href="/courses"
+                className="group rounded-2xl glass-dark border border-white/10 p-4 sm:p-5 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:border-[#05BFDB]/40 hover:shadow-lg hover:shadow-[#05BFDB]/10"
+              >
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${t.gradient} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <t.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">{t.title}</h3>
+                <p className="text-[10px] sm:text-[11px] text-white/50 mt-1">{t.subtitle}</p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/demo">
+              <Button size="lg" className="group bg-[#05BFDB] hover:bg-[#05BFDB]/90 text-white">
+                Watch Demo
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
+                <Play className="w-5 h-5 mr-2" /> Explore Courses
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

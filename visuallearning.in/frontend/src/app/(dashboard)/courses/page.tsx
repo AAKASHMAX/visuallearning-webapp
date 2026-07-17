@@ -56,9 +56,6 @@ export default function CoursesClassGridPage() {
         </Link>
       </div>
 
-      {/* 3-day free trial (hidden for users who already have a subscription) */}
-      <TrialCard />
-
       <h2 className="text-base font-semibold text-gray-500 mb-3">Classes</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {classes.map((cls, i) => {
@@ -107,6 +104,11 @@ export default function CoursesClassGridPage() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* 3-day free trial — after the demo cards (hidden for existing subscribers) */}
+      <div className="mt-10">
+        <TrialCard />
       </div>
     </div>
   );
