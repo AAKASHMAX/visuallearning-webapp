@@ -31,12 +31,14 @@ export function tgSendChannel(text: string) {
 }
 
 // Register our webhook URL with Telegram so /start and replies reach the backend.
-export async function tgSetWebhook(url: string, secretToken: string) {
-  return tgCall("setWebhook", {
-    url,
-    secret_token: secretToken,
-    allowed_updates: ["message"],
-  });
+export async function tgSetWebhook(url: string, secretToken?: string) {
+  const body: Record<string, any> = { url, allowed_updates: ["message"] };
+  if (secretToken) body.secret_token = secretToken;
+  return tgCall("setWebhook", body);
+}
+
+export function tgGetWebhookInfo() {
+  return tgCall("getWebhookInfo", {});
 }
 
 export const telegramConfigured = () => Boolean(config.telegram.botToken);

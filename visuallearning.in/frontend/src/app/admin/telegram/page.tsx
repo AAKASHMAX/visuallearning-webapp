@@ -9,17 +9,30 @@ import toast from "react-hot-toast";
 
 type Audience = "channel" | "users";
 
+type Status = { configured: boolean; channel: string; connectedUsers: number; webhookUrl?: string | null; canAutoRegister?: boolean };
+
 export default function AdminTelegramPage() {
-  const [status, setStatus] = useState<{ configured: boolean; channel: string; connectedUsers: number } | null>(null);
+  const [status, setStatus] = useState<Status | null>(null);
   const [audience, setAudience] = useState<Audience>("channel");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [sending, setSending] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
-  useEffect(() => {
-    api.get("/admin/telegram/status").then(({ data }) => setStatus(data.data)).catch(() => {});
-  }, []);
+  const loadStatus = () => api.get("/admin/telegram/status").then(({ data }) => setStatus(data.data)).catch(() => {});
+  useEffect(() => { loadStatus(); }, []);
+
+  const registerWebhook = async () => {
+    setRegistering(true);
+    try {
+      const { data } = await api.post("/admin/telegram/register-webhook");
+      toast.success(`Webhook registered: ${data.data.url}`);
+      loadStatus();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to register webhook");
+    } finally { setRegistering(false); }
+  };
 
   const draft = async () => {
     if (topic.trim().length < 3) { toast.error("Enter a topic first"); return; }
@@ -58,6 +71,22 @@ export default function AdminTelegramPage() {
       {status && !status.configured && (
         <div className="my-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           Telegram bot isn’t configured yet. Set <code>TELEGRAM_BOT_TOKEN</code> (and <code>ANTHROPIC_API_KEY</code>) in the backend env, then reload.
+        </div>
+      )}
+
+      {status?.configured && (
+        <div className="my-4 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm">
+          <div>
+            <span className="font-semibold text-gray-700">Bot webhook</span>{" "}
+            <span className="text-gray-500">(needed for “Connect Telegram”): </span>
+            {status.webhookUrl
+              ? <span className="font-medium text-emerald-600">Registered ✓</span>
+              : <span className="text-gray-500">not registered yet</span>}
+          </div>
+          <Button onClick={registerWebhook} disabled={registering} variant="outline" className="shrink-0 gap-1.5">
+            {registering ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {status.webhookUrl ? "Re-register" : "Register webhook"}
+          </Button>
         </div>
       )}
 

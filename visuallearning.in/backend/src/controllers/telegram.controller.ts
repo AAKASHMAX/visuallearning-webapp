@@ -4,7 +4,7 @@ import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { success, error } from "../utils/apiResponse";
 import { draftTelegramMessage } from "../services/ai-draft";
-import { tgSend, tgSendChannel, telegramConfigured } from "../services/telegram";
+import { tgSend, tgSendChannel, tgSetWebhook, tgGetWebhookInfo, telegramConfigured } from "../services/telegram";
 
 export const draftSchema = z.object({
   topic: z.string().min(3).max(500),
@@ -20,14 +20,35 @@ export const sendSchema = z.object({
 export async function getTelegramStatus(_req: Request, res: Response) {
   try {
     const connectedUsers = await prisma.user.count({ where: { telegramChatId: { not: null } } });
+    let webhookUrl: string | null = null;
+    if (telegramConfigured()) {
+      try { webhookUrl = (await tgGetWebhookInfo())?.url || null; } catch { /* ignore */ }
+    }
     return success(res, {
       configured: telegramConfigured(),
       channel: config.telegram.channel,
       connectedUsers,
+      webhookUrl,
+      canAutoRegister: Boolean(config.telegram.publicUrl),
     });
   } catch (e) {
     console.error("Telegram status error:", e);
     return error(res, "Failed to load Telegram status");
+  }
+}
+
+// POST /admin/telegram/register-webhook — self-registers using this backend's own URL.
+export async function registerWebhook(_req: Request, res: Response) {
+  try {
+    if (!telegramConfigured()) return error(res, "Set TELEGRAM_BOT_TOKEN first", 400);
+    const base = config.telegram.publicUrl;
+    if (!base) return error(res, "Can't determine backend URL. Set PUBLIC_API_URL env to https://your-api.onrender.com", 400);
+    const url = `${base.replace(/\/+$/, "")}/api/telegram/webhook`;
+    await tgSetWebhook(url, config.telegram.webhookSecret);
+    return success(res, { url }, "Webhook registered");
+  } catch (e: any) {
+    console.error("Telegram register-webhook error:", e);
+    return error(res, e.message || "Failed to register webhook", 502);
   }
 }
 

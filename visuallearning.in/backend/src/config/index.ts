@@ -21,6 +21,8 @@ export const config = {
     channel: process.env.TELEGRAM_CHANNEL || "@visuallearning3D",
     // Shared secret Telegram echoes back on every webhook call (set when we register the webhook).
     webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
+    // Public base URL of this backend (Render sets RENDER_EXTERNAL_URL automatically).
+    publicUrl: process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || "",
   },
   smtp: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",

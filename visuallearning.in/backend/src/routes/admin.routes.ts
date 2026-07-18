@@ -27,7 +27,7 @@ import {
   getAllNotifications, createNotification, updateNotification, toggleNotificationPublish, deleteNotification, notificationSchema,
 } from "../controllers/notification.controller";
 import {
-  getTelegramStatus, draftTelegram, sendTelegram, draftSchema, sendSchema,
+  getTelegramStatus, draftTelegram, sendTelegram, registerWebhook, draftSchema, sendSchema,
 } from "../controllers/telegram.controller";
 import { deleteFeedback, getFeedbacks, markFeedbackRead } from "../controllers/feedback.controller";
 
@@ -45,6 +45,7 @@ router.get("/stats", getStats);
 
 // Telegram outreach (AI-drafted announcements + 1:1 messages)
 router.get("/telegram/status", getTelegramStatus);
+router.post("/telegram/register-webhook", registerWebhook);
 router.post("/telegram/draft", validate(draftSchema), draftTelegram);
 router.post("/telegram/send", validate(sendSchema), sendTelegram);
 
