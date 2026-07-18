@@ -13,13 +13,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Pages a logged-out visitor is allowed to see. A background 401 here (e.g. the
+// navbar notifications call) must NOT bounce them to login — otherwise anonymous
+// visitors can't stay on /courses, /pricing, home or the demos (and can't see the
+// free-trial offer). Gated pages still redirect on 401.
+function isPublicPage(path: string) {
+  return (
+    path === "/" ||
+    path === "/courses" ||
+    path.startsWith("/pricing") ||
+    path.startsWith("/demo") ||
+    path.startsWith("/auth/")
+  );
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("vl_token");
-      localStorage.removeItem("vl_user");
-      if (!window.location.pathname.includes("/auth/")) {
+      if (!isPublicPage(window.location.pathname)) {
+        localStorage.removeItem("vl_token");
+        localStorage.removeItem("vl_user");
         window.location.href = "/auth/login";
       }
     }
