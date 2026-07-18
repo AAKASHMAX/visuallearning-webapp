@@ -22,6 +22,7 @@ model User {
   name              String
   email             String         @unique
   phone             String?
+  telegramChatId    String?        @unique
   password          String
   role              Role           @default(STUDENT)
   emailVerified     Boolean        @default(false)

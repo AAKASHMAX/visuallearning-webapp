@@ -14,6 +14,14 @@ export const config = {
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
   },
   resendApiKey: process.env.RESEND_API_KEY || "",
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN || "",
+    botUsername: process.env.TELEGRAM_BOT_USERNAME || "",
+    channel: process.env.TELEGRAM_CHANNEL || "@visuallearning3D",
+    // Shared secret Telegram echoes back on every webhook call (set when we register the webhook).
+    webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
+  },
   smtp: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: parseInt(process.env.SMTP_PORT || "587"),

@@ -13,6 +13,7 @@ import progressRoutes from "./routes/progress.routes";
 import adminRoutes from "./routes/admin.routes";
 import feedbackRoutes from "./routes/feedback.routes";
 import notificationRoutes from "./routes/notification.routes";
+import telegramRoutes from "./routes/telegram.routes";
 import mobileRoutes from "./mobile/routes";
 import { prisma } from "./config/prisma";
 
@@ -103,6 +104,7 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/telegram", telegramRoutes);
 
 // Mobile app compatibility routes (separate from web API)
 app.use("/api", mobileRoutes);
