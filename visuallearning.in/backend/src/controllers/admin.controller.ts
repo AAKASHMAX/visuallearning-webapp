@@ -949,6 +949,24 @@ export async function updateTrialPlan(req: Request, res: Response) {
   }
 }
 
+// GET /admin/leads/status — is the sheet sync configured, and when did it last run?
+export async function getLeadsStatus(_req: Request, res: Response) {
+  try {
+    const configured = Boolean(process.env.LEADS_SHEET_ID && process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+    const s = await prisma.setting.findUnique({ where: { key: "leads_last_sync" } });
+    const pending = await prisma.user.count({
+      where: {
+        role: "STUDENT",
+        createdAt: { gt: s?.value ? new Date(s.value) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+    });
+    return success(res, { configured, lastSync: s?.value || null, pending });
+  } catch (e) {
+    console.error("Leads status error:", e);
+    return error(res, "Failed to fetch leads status");
+  }
+}
+
 // POST /admin/leads/sync — append new signups to the calling team's sheet now.
 // Also usable by an external scheduler if the host instance sleeps.
 export async function syncLeadsNow(_req: Request, res: Response) {
