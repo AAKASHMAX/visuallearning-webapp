@@ -37,7 +37,7 @@ router.post("/video/search", courseCtrl.searchVideos);
 router.get("/organization", courseCtrl.getOrganization);
 
 // ============ SUBSCRIPTIONS ============
-router.get("/subscription-plan", subCtrl.getSubscriptionPlans);
+router.get("/subscription-plan", optionalAuth, subCtrl.getSubscriptionPlans);
 router.get("/subscription-plan/validate-coupon", subCtrl.validateCouponCode);
 router.get("/subscription-plan/user-subcription/:id", authenticate, subCtrl.getUserSubscription);
 router.post("/subscription-plan/generate-order-id", authenticate, subCtrl.generateOrderId);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { config } from "../../config";
 import { createOrder, verifySignature } from "../../services/razorpay";
+import { getTrialConfig, trialAmountPaise } from "../../services/trial.service";
 import { mobileSuccess, mobileError } from "../utils/response";
 
 // Feature list per plan type (same as webapp)
@@ -64,6 +65,13 @@ async function resolveClassPlans(): Promise<Record<string, any>> {
   return merged;
 }
 
+// One trial per account, ever (matches the webapp guard).
+async function hasUsedTrial(userId?: string): Promise<boolean> {
+  if (!userId) return false;
+  const prior = await prisma.subscription.findFirst({ where: { userId, plan: "TRIAL" }, select: { id: true } });
+  return !!prior;
+}
+
 // Helper: validate coupon code, optionally checking if it applies to a specific plan
 async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
@@ -83,6 +91,17 @@ async function validateCoupon(code: string, planKey?: string): Promise<{ valid: 
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string): Promise<{ monthlyAmount: number; yearlyAmount: number; durationMonthly: number; durationYearly: number; label: string; classSelection: number; amount?: number; duration?: number }> {
+  // Free trial: admin-controlled price/duration, all classes, every billing cycle
+  // resolves to the same short window so it can never be sold as a yearly plan.
+  if (planKey === "TRIAL") {
+    const t = await getTrialConfig();
+    const paise = trialAmountPaise(t);
+    return {
+      monthlyAmount: paise, quarterlyAmount: paise, yearlyAmount: paise,
+      durationMonthly: t.durationDays, durationQuarterly: t.durationDays, durationYearly: t.durationDays,
+      label: t.label, classSelection: 0,
+    } as any;
+  }
   // Class-count plans (Single/Dual/Full) resolve first, with admin overrides.
   const classPlans = await resolveClassPlans();
   if (classPlans[planKey]) return classPlans[planKey];
@@ -104,7 +123,7 @@ async function getPlanConfig(planKey: string): Promise<{ monthlyAmount: number; 
 }
 
 // GET /api/subscription-plan — list plans with features, classSelection, classes (matches webapp)
-export async function getSubscriptionPlans(_req: Request, res: Response) {
+export async function getSubscriptionPlans(req: Request, res: Response) {
   try {
     const classes = await prisma.class.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } });
 
@@ -132,6 +151,31 @@ export async function getSubscriptionPlans(_req: Request, res: Response) {
           downloadAddonPrice: downloadAddonAmount(v, downloadAddonPercent) / 100,
         };
       });
+
+    // Free trial goes first, but only while it's enabled and this user hasn't used it.
+    const trial = await getTrialConfig();
+    if (trial.enabled && !(await hasUsedTrial(req.user?.id))) {
+      const price = trialAmountPaise(trial) / 100;
+      plans.unshift({
+        id: "TRIAL",
+        name: trial.label,
+        price, monthlyPrice: price, quarterlyPrice: price, yearlyPrice: price,
+        duration: trial.durationDays,
+        durationQuarterly: trial.durationDays,
+        billingCycle: "yearly",
+        features: [
+          `Full access for ${trial.durationDays} days`,
+          "All 4 classes (9, 10, 11, 12)",
+          "3D animated & lecture videos",
+          "Notes, NCERT solutions & PYQs",
+          "Downloads not included",
+        ],
+        classSelection: 0,
+        popular: false,
+        isTrial: true,
+        downloadAddonPrice: 0,
+      } as any);
+    }
 
     return mobileSuccess(res, { plans, classes, downloadAddonPercent });
   } catch (e) {
@@ -208,6 +252,12 @@ export async function generateOrderId(req: Request, res: Response) {
     const planConfig = await getPlanConfig(planKey);
     if (!planConfig) return mobileError(res, "Invalid plan", 400);
 
+    if (planKey === "TRIAL") {
+      const trial = await getTrialConfig();
+      if (!trial.enabled) return mobileError(res, "The free trial is not available right now", 400);
+      if (await hasUsedTrial(req.user.id)) return mobileError(res, "You have already used your free trial", 400);
+    }
+
     // Validate classesAccess based on plan's classSelection
     if (planConfig.classSelection > 0) {
       if (!classesAccess || classesAccess.length !== planConfig.classSelection) {
@@ -216,7 +266,7 @@ export async function generateOrderId(req: Request, res: Response) {
     }
 
     const cycle = req.body.billingCycle || "yearly";
-    const wantAddon = req.body.downloadAddon === true && cycle === "yearly";
+    const wantAddon = req.body.downloadAddon === true && cycle === "yearly" && planKey !== "TRIAL";
     let amount = amountForCycle(planConfig, cycle);
 
     let couponDiscount = 0;
@@ -276,9 +326,15 @@ export async function purchasePlan(req: Request, res: Response) {
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
+    if (planKey === "TRIAL") {
+      const trial = await getTrialConfig();
+      if (!trial.enabled) return mobileError(res, "The free trial is not available right now", 400);
+      if (await hasUsedTrial(req.user.id)) return mobileError(res, "You have already used your free trial", 400);
+    }
+
     const planConfig = await getPlanConfig(planKey);
     const cycle = req.body.billingCycle || "yearly";
-    const wantAddon = req.body.downloadAddon === true && cycle === "yearly";
+    const wantAddon = req.body.downloadAddon === true && cycle === "yearly" && planKey !== "TRIAL";
     let amount = amountForCycle(planConfig, cycle);
 
     let discountAmount = 0;

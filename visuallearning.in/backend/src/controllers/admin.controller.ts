@@ -5,6 +5,7 @@ import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { success, error } from "../utils/apiResponse";
 import { cacheInvalidate } from "../utils/cache";
+import { getTrialConfig, DEFAULT_TRIAL } from "../services/trial.service";
 
 // --- Cloudinary setup ---
 cloudinary.config({
@@ -920,8 +921,36 @@ export async function updateAnnouncement(req: Request, res: Response) {
   }
 }
 
+// PUT /admin/settings/trial — admin-controlled free-trial plan (price/duration/label)
+export async function updateTrialPlan(req: Request, res: Response) {
+  try {
+    const t = req.body?.trial;
+    if (!t || typeof t !== "object") return error(res, "Invalid trial config", 400);
+    const price = Number(t.priceRupees);
+    const days = Number(t.durationDays);
+    if (!Number.isFinite(price) || price < 1) return error(res, "Price must be at least ₹1 (Razorpay minimum)", 400);
+    if (!Number.isFinite(days) || days < 1 || days > 90) return error(res, "Duration must be between 1 and 90 days", 400);
+    const clean = {
+      enabled: Boolean(t.enabled),
+      label: String(t.label || DEFAULT_TRIAL.label).slice(0, 60),
+      priceRupees: Math.round(price),
+      durationDays: Math.round(days),
+    };
+    await prisma.setting.upsert({
+      where: { key: "trial_plan" },
+      update: { value: JSON.stringify(clean) },
+      create: { key: "trial_plan", value: JSON.stringify(clean) },
+    });
+    return success(res, { trial: clean }, "Trial plan updated");
+  } catch (e) {
+    console.error("Update trial plan error:", e);
+    return error(res, "Failed to update trial plan");
+  }
+}
+
 export async function getPublicSettings(_req: Request, res: Response) {
   try {
+    const trial = await getTrialConfig();
     const [enabledLanguages, plansConfig, contactInfo, announcementRaw] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
@@ -950,7 +979,7 @@ export async function getPublicSettings(_req: Request, res: Response) {
         enabled: v.enabled,
       }));
 
-    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo), announcement });
+    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo), announcement, trial });
   } catch (e) {
     console.error("Get public settings error:", e);
     return error(res, "Failed to fetch settings");

@@ -5,7 +5,11 @@ import { RazorpayButton } from "@/components/payment/razorpay-button";
 import api from "@/lib/api";
 import { Gift, Check, Info } from "lucide-react";
 
-// "3-Day Free Trial" card. Free access to everything for 3 days (no document
+type Trial = { enabled: boolean; label: string; priceRupees: number; durationDays: number };
+const DEFAULT_TRIAL: Trial = { enabled: true, label: "3-Day Free Trial", priceRupees: 1, durationDays: 3 };
+
+// Free-trial card. Price, duration, name and on/off all come from the admin panel
+// (Settings -> Free Trial). Free access to everything for the trial window (no document
 // downloads); Razorpay collects its ₹1 minimum as a transaction fee. Hidden for
 // users who already have an active subscription. Logged-out visitors (e.g. on the
 // public home page) are routed to sign up first (a trial is one per account).
@@ -13,8 +17,14 @@ export function TrialCard() {
   const [ready, setReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasSub, setHasSub] = useState(false);
+  const [trial, setTrial] = useState<Trial>(DEFAULT_TRIAL);
 
   useEffect(() => {
+    // Public endpoint — works for logged-out visitors too.
+    api.get("/admin/public-settings")
+      .then(({ data }) => { if (data?.data?.trial) setTrial({ ...DEFAULT_TRIAL, ...data.data.trial }); })
+      .catch(() => {});
+
     const token = typeof window !== "undefined" ? localStorage.getItem("vl_token") : null;
     if (!token) { setLoggedIn(false); setReady(true); return; }
     setLoggedIn(true);
@@ -28,12 +38,13 @@ export function TrialCard() {
       .finally(() => setReady(true));
   }, []);
 
-  if (!ready || hasSub) return null;
+  if (!ready || hasSub || !trial.enabled) return null;
 
+  const days = `${trial.durationDays} day${trial.durationDays === 1 ? "" : "s"}`;
   const perks = [
     "All classes, subjects & chapters",
     "3D animated videos, notes, NCERT, PYQ & quizzes",
-    "Full access for 3 days — cancel anytime",
+    `Full access for ${days} — cancel anytime`,
   ];
 
   return (
@@ -43,9 +54,9 @@ export function TrialCard() {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00c896]/20 px-3 py-1 text-xs font-bold text-[#7cf2d0]">
             <Gift className="h-3.5 w-3.5" /> LIMITED-TIME OFFER
           </span>
-          <h2 className="mt-3 text-2xl font-black text-white">Start your 3-day free trial</h2>
+          <h2 className="mt-3 text-2xl font-black text-white">Start your {trial.durationDays}-day free trial</h2>
           <p className="mt-1 text-sm text-white/70">
-            Unlock the entire platform free for 3 days — pay only Razorpay&apos;s ₹1 transaction fee.
+            Unlock the entire platform free for {days} — pay only Razorpay&apos;s ₹{trial.priceRupees} transaction fee.
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {perks.map((p) => (
@@ -62,14 +73,14 @@ export function TrialCard() {
         <div className="w-full shrink-0 lg:w-64">
           <div className="rounded-xl bg-white/10 p-4 text-center backdrop-blur">
             <div className="text-3xl font-black text-white">
-              ₹0<span className="ml-1 align-middle text-sm font-semibold text-white/60">/ 3 days</span>
+              ₹0<span className="ml-1 align-middle text-sm font-semibold text-white/60">/ {days}</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-white/55">+ ₹1 Razorpay transaction fee</div>
+            <div className="mt-0.5 text-[11px] text-white/55">+ ₹{trial.priceRupees} Razorpay transaction fee</div>
             {loggedIn ? (
               <RazorpayButton
                 plan="TRIAL"
-                amount={1}
-                label="3-Day Free Trial"
+                amount={trial.priceRupees}
+                label={trial.label}
                 classesAccess={[]}
                 billingCycle="yearly"
                 downloadAddon={false}

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { createOrder, verifySignature } from "../services/razorpay";
+import { getTrialConfig, trialAmountPaise } from "../services/trial.service";
 import { success, error } from "../utils/apiResponse";
 import { cacheGet, cacheSet } from "../utils/cache";
 
@@ -102,11 +103,11 @@ async function resolveProfessionalSubjectAccess(subjectKeys: string[]) {
 
 // Helper: get plan config from settings DB, fallback to hardcoded config
 async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarterly" | "yearly" = "yearly"): Promise<{ amount: number; duration: number; label: string; classSelection: number; unitType: "fixed" | "class" | "subject" }> {
-  // 3-day free trial: full content access for 3 days, no document downloads.
-  // The plan is free, but Razorpay's minimum charge (₹1 / 100 paise) is collected
-  // as a transaction fee. Fixed regardless of admin settings.
+  // Free trial: full content access for a short window, no document downloads.
+  // Price/duration/label are admin-controlled (Settings -> Trial Plan).
   if (planKey === "TRIAL") {
-    return { amount: 100, duration: 3, label: "3-Day Free Trial", classSelection: 0, unitType: "fixed" };
+    const t = await getTrialConfig();
+    return { amount: trialAmountPaise(t), duration: t.durationDays, label: t.label, classSelection: 0, unitType: "fixed" };
   }
   // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
   const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
@@ -380,7 +381,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     // The free trial is always ₹1 (Razorpay's minimum transaction fee).
-    if (plan === "TRIAL") amount = 100;
+    if (plan === "TRIAL") amount = trialAmountPaise(await getTrialConfig());
 
     // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
     if (amount < 100) amount = 100;
@@ -489,7 +490,7 @@ export async function verifyPayment(req: Request, res: Response) {
     }
 
     // The free trial is always ₹1 (Razorpay transaction fee) regardless of coupon/upgrade.
-    if (plan === "TRIAL") amount = 100;
+    if (plan === "TRIAL") amount = trialAmountPaise(await getTrialConfig());
 
     if (amount < 100) amount = 100;
 
