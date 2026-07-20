@@ -876,13 +876,59 @@ export async function updateContactInfo(req: Request, res: Response) {
 }
 
 // --- Public settings (no auth needed) ---
+const DEFAULT_ANNOUNCEMENT = {
+  enabled: false,
+  title: "",
+  subtitle: "",
+  ctaText: "",
+  ctaUrl: "",
+  bgColor: "#062a4d",
+  bgColor2: "#0b5a53",
+};
+
+function parseAnnouncement(raw: string) {
+  try {
+    return raw ? { ...DEFAULT_ANNOUNCEMENT, ...JSON.parse(raw) } : { ...DEFAULT_ANNOUNCEMENT };
+  } catch {
+    return { ...DEFAULT_ANNOUNCEMENT };
+  }
+}
+
+// POST /admin/settings/announcement — admin-controlled home banner (offers etc.)
+export async function updateAnnouncement(req: Request, res: Response) {
+  try {
+    const a = req.body?.announcement;
+    if (!a || typeof a !== "object") return error(res, "Invalid announcement", 400);
+    const clean = {
+      enabled: Boolean(a.enabled),
+      title: String(a.title || "").slice(0, 120),
+      subtitle: String(a.subtitle || "").slice(0, 240),
+      ctaText: String(a.ctaText || "").slice(0, 40),
+      ctaUrl: String(a.ctaUrl || "").slice(0, 500),
+      bgColor: String(a.bgColor || DEFAULT_ANNOUNCEMENT.bgColor).slice(0, 9),
+      bgColor2: String(a.bgColor2 || DEFAULT_ANNOUNCEMENT.bgColor2).slice(0, 9),
+    };
+    await prisma.setting.upsert({
+      where: { key: "announcement" },
+      update: { value: JSON.stringify(clean) },
+      create: { key: "announcement", value: JSON.stringify(clean) },
+    });
+    return success(res, { announcement: clean }, "Announcement updated");
+  } catch (e) {
+    console.error("Update announcement error:", e);
+    return error(res, "Failed to update announcement");
+  }
+}
+
 export async function getPublicSettings(_req: Request, res: Response) {
   try {
-    const [enabledLanguages, plansConfig, contactInfo] = await Promise.all([
+    const [enabledLanguages, plansConfig, contactInfo, announcementRaw] = await Promise.all([
       getSetting("enabled_languages"),
       getSetting("plans_config"),
       getSetting("contact_info"),
+      getSetting("announcement"),
     ]);
+    const announcement = parseAnnouncement(announcementRaw);
 
     const rawLanguages = JSON.parse(enabledLanguages);
     // Normalize: support both old format (string[]) and new format ({key, label}[])
@@ -904,7 +950,7 @@ export async function getPublicSettings(_req: Request, res: Response) {
         enabled: v.enabled,
       }));
 
-    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo) });
+    return success(res, { languages, plans: enabledPlans, contactInfo: JSON.parse(contactInfo), announcement });
   } catch (e) {
     console.error("Get public settings error:", e);
     return error(res, "Failed to fetch settings");
