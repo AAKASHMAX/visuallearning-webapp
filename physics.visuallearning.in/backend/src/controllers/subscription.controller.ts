@@ -327,15 +327,9 @@ export async function createOrder(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
-    // 3-day trial: one per account; not for users who already subscribed.
+    // The free trial never goes through Razorpay — see activateFreePlan().
     if (planConfig.code === "TRIAL") {
-      const existing = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
-      if (existing && existing.status === "ACTIVE" && existing.expiryDate > new Date()) {
-        return res.status(400).json({ message: "You already have an active subscription." });
-      }
-      if (existing && existing.plan === "TRIAL") {
-        return res.status(400).json({ message: "You have already used your free 3-day trial." });
-      }
+      return res.status(400).json({ message: "The free trial does not require payment" });
     }
 
     let amount = getEffectivePlanPrice(planConfig);
@@ -418,15 +412,9 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
       return res.status(400).json({ message: "Invalid plan" });
     }
 
-    // 3-day trial: guard against a repeat trial (replay / double submit).
+    // The free trial never goes through Razorpay — see activateFreePlan().
     if (planConfig.code === "TRIAL") {
-      const existing = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
-      if (existing && existing.status === "ACTIVE" && existing.expiryDate > new Date() && existing.plan !== "TRIAL") {
-        return res.status(400).json({ message: "You already have an active subscription." });
-      }
-      if (existing && existing.plan === "TRIAL") {
-        return res.status(400).json({ message: "You have already used your free 3-day trial." });
-      }
+      return res.status(400).json({ message: "The free trial does not require payment" });
     }
 
     const effectivePrice = getEffectivePlanPrice(planConfig);
@@ -486,8 +474,58 @@ export async function verifyPayment(req: AuthRequest, res: Response) {
   }
 }
 
+// POST /subscription/activate-free — activate a zero-cost plan (the free trial)
+// without any payment step. One trial per account.
 export async function activateFreePlan(req: AuthRequest, res: Response) {
-  res.status(410).json({ message: "Free plans now require Rs 1 Razorpay verification." });
+  try {
+    const planCode = String(req.body?.plan || "TRIAL").toUpperCase();
+    const planConfig = await getPlanByCode(prisma, planCode);
+    if (!planConfig) return res.status(400).json({ message: "Invalid plan" });
+
+    // Only genuinely free plans may be activated this way — never a paid one.
+    if (getEffectivePlanPrice(planConfig) > 0) {
+      return res.status(400).json({ message: "This plan requires payment" });
+    }
+
+    const existing = await prisma.subscription.findUnique({ where: { userId: req.user!.id } });
+    if (existing && existing.plan === "TRIAL") {
+      return res.status(400).json({ message: "You have already used your free trial." });
+    }
+    if (existing && existing.status === "ACTIVE" && existing.expiryDate > new Date()) {
+      return res.status(400).json({ message: "You already have an active subscription." });
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + FREE_TRIAL_DURATION_DAYS);
+
+    const subscription = await prisma.subscription.upsert({
+      where: { userId: req.user!.id },
+      update: {
+        plan: planConfig.code,
+        status: "ACTIVE",
+        startDate: new Date(),
+        expiryDate,
+        razorpayOrderId: null,
+        razorpayPaymentId: null,
+        couponCode: null,
+        discountAmount: 0,
+        amount: 0,
+      },
+      create: {
+        userId: req.user!.id,
+        plan: planConfig.code,
+        status: "ACTIVE",
+        expiryDate,
+        discountAmount: 0,
+        amount: 0,
+      },
+    });
+
+    res.json({ message: `Your ${FREE_TRIAL_DURATION_DAYS}-day free trial is active`, subscription });
+  } catch (error) {
+    console.error("Activate free plan error:", error);
+    res.status(500).json({ message: "Could not start your free trial" });
+  }
 }
 
 // ── Recurring (auto-renewal) subscriptions ──────────────────────────────────

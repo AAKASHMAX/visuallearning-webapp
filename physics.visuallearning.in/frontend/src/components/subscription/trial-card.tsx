@@ -7,32 +7,14 @@ import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import toast from "react-hot-toast";
 
-declare global {
-  interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => { open: () => void; on: (event: string, callback: () => void) => void };
-  }
-}
-
-function loadRazorpayScript() {
-  return new Promise<boolean>((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-// 3-day free trial card: full access for 3 days, charged as Razorpay's ₹1
-// minimum. Hidden for users who already have an active subscription or have
-// already used their trial. One-time payment (no auto-renewal).
+// 3-day free trial card: full access for 3 days, activated in one click with no
+// payment step at all. Hidden for users who already have an active subscription
+// or have already used their trial.
 export function TrialCard() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [show, setShow] = useState(false);
   const [paying, setPaying] = useState(false);
-  const [keyId, setKeyId] = useState(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "");
 
   useEffect(() => {
     api
@@ -43,10 +25,6 @@ export function TrialCard() {
         setShow(!active && !usedTrial);
       })
       .catch(() => setShow(true)); // not logged in / no subscription -> eligible
-    api
-      .get("/subscription/payment-config")
-      .then(({ data }) => setKeyId(data?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || ""))
-      .catch(() => {});
   }, []);
 
   if (!show) return null;
@@ -56,47 +34,13 @@ export function TrialCard() {
       router.push("/auth/login?redirect=/pricing");
       return;
     }
-    if (!keyId) {
-      toast.error("Payment key is not configured");
-      return;
-    }
     setPaying(true);
     try {
-      const loaded = await loadRazorpayScript();
-      if (!loaded || !window.Razorpay) {
-        toast.error("Failed to load payment gateway");
-        return;
-      }
-      const { data } = await api.post("/subscription/create-order", { plan: "TRIAL" });
-      const razorpay = new window.Razorpay({
-        key: keyId,
-        order_id: data.orderId,
-        amount: Math.round((data.amount ?? 1) * 100),
-        currency: data.currency || "INR",
-        name: "PhysicsLab",
-        description: "3-Day Free Trial",
-        prefill: { name: user?.name, email: user?.email },
-        theme: { color: "#00d4ff" },
-        handler: async (response: any) => {
-          try {
-            await api.post("/subscription/verify-payment", {
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-              plan: "TRIAL",
-            });
-            toast.success("Free trial activated!");
-            router.push("/dashboard");
-          } catch (error: any) {
-            toast.error(error.response?.data?.message || "Payment verification failed");
-          }
-        },
-      });
-      razorpay.on("payment.failed", () => toast.error("Payment failed. Please try again."));
-      razorpay.open();
+      const { data } = await api.post("/subscription/activate-free", { plan: "TRIAL" });
+      toast.success(data?.message || "Free trial activated!");
+      router.push("/dashboard");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to start trial");
-    } finally {
+      toast.error(error.response?.data?.message || "Could not start your free trial");
       setPaying(false);
     }
   }
@@ -116,7 +60,7 @@ export function TrialCard() {
           </span>
           <h2 className="mt-3 text-2xl font-bold text-text-bright">Start your 3-day free trial</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Unlock everything for 3 days — pay only ₹1 Razorpay transaction fee. No auto-renewal.
+            Unlock everything for 3 days. No payment required — no card, no charge.
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {perks.map((p) => (
@@ -131,7 +75,7 @@ export function TrialCard() {
             <div className="text-3xl font-extrabold text-text-bright">
               ₹0<span className="ml-1 align-middle text-sm font-semibold text-text-muted">/ 3 days</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-text-muted">+ ₹1 Razorpay transaction fee</div>
+            <div className="mt-0.5 text-[11px] text-text-muted">No payment required</div>
             <button
               onClick={startTrial}
               disabled={paying}
