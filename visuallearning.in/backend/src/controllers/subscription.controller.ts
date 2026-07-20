@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { createOrder, verifySignature } from "../services/razorpay";
-import { getTrialConfig, trialAmountPaise } from "../services/trial.service";
+import { getTrialConfig } from "../services/trial.service";
 import { success, error } from "../utils/apiResponse";
 import { cacheGet, cacheSet } from "../utils/cache";
 
@@ -107,7 +107,7 @@ async function getPlanConfig(planKey: string, billingCycle: "monthly" | "quarter
   // Price/duration/label are admin-controlled (Settings -> Trial Plan).
   if (planKey === "TRIAL") {
     const t = await getTrialConfig();
-    return { amount: trialAmountPaise(t), duration: t.durationDays, label: t.label, classSelection: 0, unitType: "fixed" };
+    return { amount: 0, duration: t.durationDays, label: t.label, classSelection: 0, unitType: "fixed" };
   }
   // Pick the value for the requested billing cycle (quarterly falls back to ~3x monthly / 90 days).
   const pick = (m: number, q: number | undefined, y: number) => (billingCycle === "monthly" ? m : billingCycle === "quarterly" ? (q ?? m * 3) : y);
@@ -289,15 +289,8 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     const { plan, classesAccess, subjectsAccess, couponCode, billingCycle = "yearly", downloadAddon } = req.body;
     const planConfig = await getPlanConfig(plan, billingCycle);
 
-    // 3-day free trial: one per account; not for users who already subscribed.
-    if (plan === "TRIAL") {
-      const existingTrialOrActive = await prisma.subscription.findFirst({
-        where: { userId: req.user!.id, OR: [{ plan: "TRIAL" }, { status: "ACTIVE", expiryDate: { gt: new Date() } }] },
-      });
-      if (existingTrialOrActive) {
-        return error(res, existingTrialOrActive.plan === "TRIAL" ? "You have already used your free 3-day trial." : "You already have an active subscription.", 400);
-      }
-    }
+    // The trial is free and never goes through Razorpay — see startTrial().
+    if (plan === "TRIAL") return error(res, "The free trial does not require payment", 400);
 
     // Validate classesAccess based on plan's classSelection setting
     if (planConfig.unitType === "fixed" && planConfig.classSelection > 0) {
@@ -381,7 +374,6 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     // The free trial is always ₹1 (Razorpay's minimum transaction fee).
-    if (plan === "TRIAL") amount = trialAmountPaise(await getTrialConfig());
 
     // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
     if (amount < 100) amount = 100;
@@ -419,11 +411,8 @@ export async function verifyPayment(req: Request, res: Response) {
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return error(res, "Payment verification failed", 400);
 
-    // 3-day free trial: guard against a second trial (replay / double submit).
-    if (plan === "TRIAL") {
-      const usedTrial = await prisma.subscription.findFirst({ where: { userId: req.user!.id, plan: "TRIAL" } });
-      if (usedTrial) return error(res, "You have already used your free 3-day trial.", 400);
-    }
+    // The trial is free and never goes through Razorpay — see startTrial().
+    if (plan === "TRIAL") return error(res, "The free trial does not require payment", 400);
 
     const planConfig = await getPlanConfig(plan, billingCycle);
     const expiryDate = new Date();
@@ -488,9 +477,6 @@ export async function verifyPayment(req: Request, res: Response) {
     if (wantAddon) {
       amount += Math.round(baseAmount * (await getDownloadAddonPercent()) / 100);
     }
-
-    // The free trial is always ₹1 (Razorpay transaction fee) regardless of coupon/upgrade.
-    if (plan === "TRIAL") amount = trialAmountPaise(await getTrialConfig());
 
     if (amount < 100) amount = 100;
 
@@ -557,6 +543,51 @@ export async function verifyPayment(req: Request, res: Response) {
   } catch (e) {
     console.error("Verify payment error:", e);
     return error(res, "Payment verification failed");
+  }
+}
+
+// POST /subscription/start-trial — activate the free trial. No payment gateway
+// involved: one click, one per account, all classes, no document downloads.
+export async function startTrial(req: Request, res: Response) {
+  try {
+    const trial = await getTrialConfig();
+    if (!trial.enabled) return error(res, "The free trial is not available right now", 400);
+
+    const existing = await prisma.subscription.findFirst({
+      where: { userId: req.user!.id, OR: [{ plan: "TRIAL" }, { status: "ACTIVE", expiryDate: { gt: new Date() } }] },
+    });
+    if (existing) {
+      return error(
+        res,
+        existing.plan === "TRIAL"
+          ? "You have already used your free trial."
+          : "You already have an active subscription.",
+        400
+      );
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + trial.durationDays);
+
+    const allClasses = await prisma.class.findMany({ select: { id: true } });
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId: req.user!.id,
+        plan: "TRIAL",
+        classesAccess: allClasses.map((c) => c.id),
+        expiryDate,
+        status: "ACTIVE",
+        amount: 0,
+        discountAmount: 0,
+        downloadAddon: false, // trials never include document downloads
+      },
+    });
+
+    return success(res, subscription, `Your ${trial.durationDays}-day free trial is active`);
+  } catch (e) {
+    console.error("Start trial error:", e);
+    return error(res, "Could not start your free trial");
   }
 }
 

@@ -844,7 +844,7 @@ function LockedPanel() {
         <p className="mt-3 text-sm leading-6 text-text-muted">
           The first chapter stays open for preview. Not subscribed yet? Start a{" "}
           <span className="font-bold text-heading">free 3-day trial</span> to read all notes,
-          NCERT &amp; PYQ solutions — you only pay Razorpay&apos;s ₹1 transaction fee.
+          NCERT &amp; PYQ solutions — no payment required.
         </p>
         <div className="mt-6 flex flex-col gap-2">
           <RazorpayButton

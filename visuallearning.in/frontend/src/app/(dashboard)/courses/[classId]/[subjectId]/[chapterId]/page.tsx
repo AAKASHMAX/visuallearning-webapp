@@ -206,7 +206,7 @@ export default function UnifiedChapterPage() {
                         <Gift className="w-10 h-10 text-[#00c896]" />
                       </div>
                       <h4 className="text-white font-bold text-lg mb-2">Premium Content</h4>
-                      <p className="text-gray-400 text-sm px-8 text-center max-w-sm">Start a <span className="text-white font-semibold">free 3-day trial</span> to unlock all 3D animations and expert lessons — only ₹1 transaction fee.</p>
+                      <p className="text-gray-400 text-sm px-8 text-center max-w-sm">Start a <span className="text-white font-semibold">free 3-day trial</span> to unlock all 3D animations and expert lessons — no payment required.</p>
                       <Button className="mt-6 bg-[#00c896] hover:bg-[#00b184] text-white font-bold px-8 py-2 rounded-full">
                         Get Free Trial
                       </Button>
@@ -456,7 +456,7 @@ export default function UnifiedChapterPage() {
             <h3 className="text-xl font-bold text-heading mb-2">Get your Free Trial</h3>
             <p className="text-text-muted text-sm mb-4">
               Watch all 3D animations, notes, NCERT, PYQ &amp; quizzes. Not subscribed yet? Start a{" "}
-              <span className="font-bold text-heading">free 3-day trial</span> — you only pay Razorpay&apos;s ₹1 transaction fee.
+              <span className="font-bold text-heading">free 3-day trial</span> — no payment required.
             </p>
             <ul className="text-left text-xs text-text-muted mb-6 space-y-1.5 mx-auto max-w-[15rem]">
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#00c896]" /> Full access for 3 days</li>

@@ -41,6 +41,7 @@ router.get("/subscription-plan", optionalAuth, subCtrl.getSubscriptionPlans);
 router.get("/subscription-plan/validate-coupon", subCtrl.validateCouponCode);
 router.get("/subscription-plan/user-subcription/:id", authenticate, subCtrl.getUserSubscription);
 router.post("/subscription-plan/generate-order-id", authenticate, subCtrl.generateOrderId);
+router.post("/subscription-plan/start-trial", authenticate, subCtrl.startTrial);
 router.post("/subscription-plan/purchase-plan", authenticate, subCtrl.purchasePlan);
 router.get("/subscription-plan/cancel-plan/:id", authenticate, subCtrl.cancelPlan);
 

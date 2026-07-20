@@ -8,9 +8,9 @@ import { Gift } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
-type Trial = { enabled: boolean; label: string; priceRupees: number; durationDays: number };
+type Trial = { enabled: boolean; label: string; durationDays: number };
 
-const DEFAULT: Trial = { enabled: true, label: "3-Day Free Trial", priceRupees: 1, durationDays: 3 };
+const DEFAULT: Trial = { enabled: true, label: "3-Day Free Trial", durationDays: 3 };
 
 export default function TrialSettingsPage() {
   const [t, setT] = useState<Trial>(DEFAULT);
@@ -54,7 +54,7 @@ export default function TrialSettingsPage() {
         <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-5">
           <h3 className="text-xl font-black">{t.label || "Free Trial"}</h3>
           <p className="mt-1 text-sm text-gray-600">
-            Full access to every class for <b>{t.durationDays} day{t.durationDays === 1 ? "" : "s"}</b> — pay only ₹{t.priceRupees} as the Razorpay transaction fee.
+            Full access to every class for <b>{t.durationDays} day{t.durationDays === 1 ? "" : "s"}</b> — activated in one click, no payment required.
           </p>
           <p className="mt-1 text-xs text-gray-500">Document downloads are not included. One trial per account.</p>
         </div>
@@ -69,23 +69,13 @@ export default function TrialSettingsPage() {
             <span className="text-sm font-semibold">Offer the free trial</span>
           </label>
           <Input label="Plan name" value={t.label} onChange={(e) => set("label", e.target.value)} placeholder="3-Day Free Trial" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Input
-                label="Duration (days)" type="number" min={1} max={90}
-                value={String(t.durationDays)}
-                onChange={(e) => set("durationDays", Number(e.target.value))}
-              />
-              <p className="mt-1 text-xs text-gray-500">Between 1 and 90 days.</p>
-            </div>
-            <div>
-              <Input
-                label="Price (₹)" type="number" min={1}
-                value={String(t.priceRupees)}
-                onChange={(e) => set("priceRupees", Number(e.target.value))}
-              />
-              <p className="mt-1 text-xs text-gray-500">Razorpay's minimum is ₹1.</p>
-            </div>
+          <div>
+            <Input
+              label="Duration (days)" type="number" min={1} max={90}
+              value={String(t.durationDays)}
+              onChange={(e) => set("durationDays", Number(e.target.value))}
+            />
+            <p className="mt-1 text-xs text-gray-500">Between 1 and 90 days. The trial is free — users are never sent to a payment page.</p>
           </div>
           <div className="flex justify-end">
             <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/prisma";
 import { config } from "../../config";
 import { createOrder, verifySignature } from "../../services/razorpay";
-import { getTrialConfig, trialAmountPaise } from "../../services/trial.service";
+import { getTrialConfig } from "../../services/trial.service";
 import { mobileSuccess, mobileError } from "../utils/response";
 
 // Feature list per plan type (same as webapp)
@@ -95,9 +95,8 @@ async function getPlanConfig(planKey: string): Promise<{ monthlyAmount: number; 
   // resolves to the same short window so it can never be sold as a yearly plan.
   if (planKey === "TRIAL") {
     const t = await getTrialConfig();
-    const paise = trialAmountPaise(t);
     return {
-      monthlyAmount: paise, quarterlyAmount: paise, yearlyAmount: paise,
+      monthlyAmount: 0, quarterlyAmount: 0, yearlyAmount: 0,
       durationMonthly: t.durationDays, durationQuarterly: t.durationDays, durationYearly: t.durationDays,
       label: t.label, classSelection: 0,
     } as any;
@@ -155,11 +154,10 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
     // Free trial goes first, but only while it's enabled and this user hasn't used it.
     const trial = await getTrialConfig();
     if (trial.enabled && !(await hasUsedTrial(req.user?.id))) {
-      const price = trialAmountPaise(trial) / 100;
       plans.unshift({
         id: "TRIAL",
         name: trial.label,
-        price, monthlyPrice: price, quarterlyPrice: price, yearlyPrice: price,
+        price: 0, monthlyPrice: 0, quarterlyPrice: 0, yearlyPrice: 0,
         duration: trial.durationDays,
         durationQuarterly: trial.durationDays,
         billingCycle: "yearly",
@@ -181,6 +179,52 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
   } catch (e) {
     console.error("Mobile getSubscriptionPlans error:", e);
     return mobileError(res, "Failed to fetch plans");
+  }
+}
+
+// POST /api/subscription-plan/start-trial — activate the free trial, no payment.
+export async function startTrial(req: Request, res: Response) {
+  try {
+    if (!req.user) return mobileError(res, "Authentication required", 401);
+
+    const trial = await getTrialConfig();
+    if (!trial.enabled) return mobileError(res, "The free trial is not available right now", 400);
+    if (await hasUsedTrial(req.user.id)) return mobileError(res, "You have already used your free trial", 400);
+
+    const active = await prisma.subscription.findFirst({
+      where: { userId: req.user.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (active) return mobileError(res, "You already have an active subscription", 400);
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + trial.durationDays);
+
+    const allClasses = await prisma.class.findMany({ select: { id: true } });
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId: req.user.id,
+        plan: "TRIAL",
+        classesAccess: allClasses.map((c) => c.id),
+        expiryDate,
+        status: "ACTIVE",
+        amount: 0,
+        discountAmount: 0,
+        downloadAddon: false,
+      },
+    });
+
+    return mobileSuccess(res, {
+      subscription_id: subscription.id,
+      status: 1,
+      expiry_date: subscription.expiryDate.toISOString(),
+      plan: "TRIAL",
+      download_addon: 0,
+    }, `Your ${trial.durationDays}-day free trial is active`);
+  } catch (e) {
+    console.error("Mobile start trial error:", e);
+    return mobileError(res, "Could not start your free trial");
   }
 }
 
@@ -252,11 +296,8 @@ export async function generateOrderId(req: Request, res: Response) {
     const planConfig = await getPlanConfig(planKey);
     if (!planConfig) return mobileError(res, "Invalid plan", 400);
 
-    if (planKey === "TRIAL") {
-      const trial = await getTrialConfig();
-      if (!trial.enabled) return mobileError(res, "The free trial is not available right now", 400);
-      if (await hasUsedTrial(req.user.id)) return mobileError(res, "You have already used your free trial", 400);
-    }
+    // The trial is free — it never goes through Razorpay. See startTrial().
+    if (planKey === "TRIAL") return mobileError(res, "The free trial does not require payment", 400);
 
     // Validate classesAccess based on plan's classSelection
     if (planConfig.classSelection > 0) {
@@ -326,11 +367,8 @@ export async function purchasePlan(req: Request, res: Response) {
     const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) return mobileError(res, "Payment verification failed", 400);
 
-    if (planKey === "TRIAL") {
-      const trial = await getTrialConfig();
-      if (!trial.enabled) return mobileError(res, "The free trial is not available right now", 400);
-      if (await hasUsedTrial(req.user.id)) return mobileError(res, "You have already used your free trial", 400);
-    }
+    // The trial is free — it never goes through Razorpay. See startTrial().
+    if (planKey === "TRIAL") return mobileError(res, "The free trial does not require payment", 400);
 
     const planConfig = await getPlanConfig(planKey);
     const cycle = req.body.billingCycle || "yearly";

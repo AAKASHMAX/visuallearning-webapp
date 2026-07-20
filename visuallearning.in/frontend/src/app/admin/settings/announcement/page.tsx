@@ -78,7 +78,7 @@ export default function AnnouncementSettingsPage() {
             <span className="text-sm font-semibold">Show announcement</span>
           </label>
           <Input label="Title" value={a.title} onChange={(e) => set("title", e.target.value)} placeholder="🎉 3-Day Free Trial" />
-          <Input label="Subtitle" value={a.subtitle} onChange={(e) => set("subtitle", e.target.value)} placeholder="Full access for just ₹1 — cancel anytime" />
+          <Input label="Subtitle" value={a.subtitle} onChange={(e) => set("subtitle", e.target.value)} placeholder="Full access free for 3 days — no payment needed" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Button text (optional)" value={a.ctaText} onChange={(e) => set("ctaText", e.target.value)} placeholder="Start Trial" />
             <Input label="Button link (optional)" value={a.ctaUrl} onChange={(e) => set("ctaUrl", e.target.value)} placeholder="https://visuallearning.in/pricing" />

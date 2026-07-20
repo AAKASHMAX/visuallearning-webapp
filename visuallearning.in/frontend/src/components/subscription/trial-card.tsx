@@ -1,22 +1,23 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RazorpayButton } from "@/components/payment/razorpay-button";
 import api from "@/lib/api";
 import { Gift, Check, Info } from "lucide-react";
+import toast from "react-hot-toast";
 
-type Trial = { enabled: boolean; label: string; priceRupees: number; durationDays: number };
-const DEFAULT_TRIAL: Trial = { enabled: true, label: "3-Day Free Trial", priceRupees: 1, durationDays: 3 };
+type Trial = { enabled: boolean; label: string; durationDays: number };
+const DEFAULT_TRIAL: Trial = { enabled: true, label: "3-Day Free Trial", durationDays: 3 };
 
-// Free-trial card. Price, duration, name and on/off all come from the admin panel
-// (Settings -> Free Trial). Free access to everything for the trial window (no document
-// downloads); Razorpay collects its ₹1 minimum as a transaction fee. Hidden for
-// users who already have an active subscription. Logged-out visitors (e.g. on the
+// Free-trial card. Duration, name and on/off all come from the admin panel
+// (Settings -> Free Trial). Activated in one click with no payment step at all.
+// Full access for the trial window, minus document downloads. Hidden for users
+// who already have an active subscription. Logged-out visitors (e.g. on the
 // public home page) are routed to sign up first (a trial is one per account).
 export function TrialCard() {
   const [ready, setReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasSub, setHasSub] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [trial, setTrial] = useState<Trial>(DEFAULT_TRIAL);
 
   useEffect(() => {
@@ -38,6 +39,18 @@ export function TrialCard() {
       .finally(() => setReady(true));
   }, []);
 
+  const startTrial = async () => {
+    setStarting(true);
+    try {
+      await api.post("/subscription/start-trial", {});
+      toast.success(`Your ${trial.durationDays}-day free trial is active!`);
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not start your free trial");
+      setStarting(false);
+    }
+  };
+
   if (!ready || hasSub || !trial.enabled) return null;
 
   const days = `${trial.durationDays} day${trial.durationDays === 1 ? "" : "s"}`;
@@ -56,7 +69,7 @@ export function TrialCard() {
           </span>
           <h2 className="mt-3 text-2xl font-black text-white">Start your {trial.durationDays}-day free trial</h2>
           <p className="mt-1 text-sm text-white/70">
-            Unlock the entire platform free for {days} — pay only Razorpay&apos;s ₹{trial.priceRupees} transaction fee.
+            Unlock the entire platform free for {days}. No payment required — no card, no charge.
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {perks.map((p) => (
@@ -75,19 +88,15 @@ export function TrialCard() {
             <div className="text-3xl font-black text-white">
               ₹0<span className="ml-1 align-middle text-sm font-semibold text-white/60">/ {days}</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-white/55">+ ₹{trial.priceRupees} Razorpay transaction fee</div>
+            <div className="mt-0.5 text-[11px] text-white/55">No payment required</div>
             {loggedIn ? (
-              <RazorpayButton
-                plan="TRIAL"
-                amount={trial.priceRupees}
-                label={trial.label}
-                classesAccess={[]}
-                billingCycle="yearly"
-                downloadAddon={false}
-                buttonLabel="Start Free Trial"
-                onSuccess={() => window.location.reload()}
-                className="mt-3 w-full bg-[#00c896] text-white hover:bg-[#00b184]"
-              />
+              <button
+                onClick={startTrial}
+                disabled={starting}
+                className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-[#00c896] px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#00b184] disabled:opacity-60"
+              >
+                {starting ? "Activating..." : "Start Free Trial"}
+              </button>
             ) : (
               <Link
                 href="/auth/signup?redirect=/courses"

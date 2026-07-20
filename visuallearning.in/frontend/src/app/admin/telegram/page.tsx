@@ -113,7 +113,7 @@ export default function AdminTelegramPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">Topic / key points (for AI)</label>
             <div className="flex gap-2">
-              <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. New Class 12 Physics lecture videos are live; 3-day ₹1 trial" />
+              <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. New Class 12 Physics lecture videos are live; free 3-day trial" />
               <Button onClick={draft} disabled={drafting} className="shrink-0 gap-1.5">
                 {drafting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Draft
               </Button>
