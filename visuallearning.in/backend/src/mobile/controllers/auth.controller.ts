@@ -15,7 +15,7 @@ async function formatUserForMobile(user: any, token: string) {
     user_id: user.id,
     full_name: user.name,
     email: user.email,
-    mobile: "",
+    mobile: user.phone || "",
     referral_code: null,
     is_subscribe: sub ? 2 : 1,
     expiry_date: sub ? sub.expiryDate.toISOString() : null,
@@ -48,15 +48,18 @@ export async function login(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   try {
-    const { full_name, email, password, name } = req.body;
+    const { full_name, email, password, name, mobile, phone } = req.body;
     const userName = full_name || name;
     if (!userName || !email || !password) return mobileError(res, "Name, email and password required", 400);
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return mobileError(res, "Email already registered", 409);
 
+    // The app sends the number as `mobile`; the column is `phone`.
+    const phoneNumber = String(mobile || phone || "").trim() || null;
+
     const hashed = await hashPassword(password);
-    const user = await prisma.user.create({ data: { name: userName, email, password: hashed } });
+    const user = await prisma.user.create({ data: { name: userName, email, password: hashed, phone: phoneNumber } });
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role, name: user.name });
     const mobileUser = await formatUserForMobile(user, token);
