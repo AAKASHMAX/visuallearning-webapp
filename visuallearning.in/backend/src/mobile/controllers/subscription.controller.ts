@@ -168,7 +168,7 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
           "All 4 classes (9, 10, 11, 12)",
           "3D animated & lecture videos",
           "Notes, NCERT solutions & PYQs",
-          "Downloads not included",
+          "-Document downloads not included", // leading "-" renders as an exclusion in the app
         ],
         classSelection: 0,
         popular: false,
