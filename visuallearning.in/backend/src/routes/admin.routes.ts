@@ -18,7 +18,7 @@ import {
   getAllSubscriptions, grantSubscription, updateSubscription, cancelSubscription,
   grantSubscriptionSchema, updateSubscriptionSchema,
   getSettings, updateLanguageSettings, updatePlanSettings, updateContactInfo,
-  getPublicSettings, updateAnnouncement, updateTrialPlan,
+  getPublicSettings, updateAnnouncement, updateTrialPlan, syncLeadsNow,
   getSubscriptionSettings, updateSubscriptionSettings,
   getAllCoupons, createCoupon, toggleCoupon, deleteCoupon, couponSchema,
   clearAllSubscriptions,
@@ -81,6 +81,9 @@ router.put("/settings/plans", updatePlanSettings);
 router.put("/settings/contact", updateContactInfo);
 router.put("/settings/announcement", updateAnnouncement);
 router.put("/settings/trial", updateTrialPlan);
+
+// Leads sync (new signups -> Google Sheet for the calling team)
+router.post("/leads/sync", syncLeadsNow);
 
 // Subscription Settings (upgrade discount)
 router.get("/settings/subscription", getSubscriptionSettings);

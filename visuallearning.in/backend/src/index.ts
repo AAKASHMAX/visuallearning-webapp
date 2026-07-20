@@ -4,7 +4,9 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import cron from "node-cron";
 import { config } from "./config";
+import { syncLeadsToSheet } from "./services/leads-sync.service";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.routes";
 import courseRoutes from "./routes/course.routes";
@@ -145,11 +147,30 @@ async function seedCourses() {
   }
 }
 
+// Hourly append of new signups to the calling team's Google Sheet. Only runs
+// when configured, so local/dev instances stay quiet.
+function scheduleLeadsSync() {
+  if (!process.env.LEADS_SHEET_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    console.log("Leads sync: not configured, skipping schedule");
+    return;
+  }
+  cron.schedule("0 * * * *", async () => {
+    try {
+      const { added } = await syncLeadsToSheet();
+      if (added > 0) console.log(`Leads sync: appended ${added} new signup(s)`);
+    } catch (e: any) {
+      console.error("Leads sync failed:", e?.message || e);
+    }
+  });
+  console.log("Leads sync: scheduled hourly");
+}
+
 app.listen(config.port, async () => {
   console.log(`VisualLearning API running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
   await migratePlansConfig();
   await seedCourses();
+  scheduleLeadsSync();
 });
 
 export default app;

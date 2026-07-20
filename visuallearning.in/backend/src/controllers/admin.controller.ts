@@ -6,6 +6,7 @@ import { config } from "../config";
 import { success, error } from "../utils/apiResponse";
 import { cacheInvalidate } from "../utils/cache";
 import { getTrialConfig, DEFAULT_TRIAL } from "../services/trial.service";
+import { syncLeadsToSheet } from "../services/leads-sync.service";
 
 // --- Cloudinary setup ---
 cloudinary.config({
@@ -945,6 +946,18 @@ export async function updateTrialPlan(req: Request, res: Response) {
   } catch (e) {
     console.error("Update trial plan error:", e);
     return error(res, "Failed to update trial plan");
+  }
+}
+
+// POST /admin/leads/sync — append new signups to the calling team's sheet now.
+// Also usable by an external scheduler if the host instance sleeps.
+export async function syncLeadsNow(_req: Request, res: Response) {
+  try {
+    const result = await syncLeadsToSheet();
+    return success(res, result, `Appended ${result.added} new signup(s)`);
+  } catch (e: any) {
+    console.error("Manual leads sync error:", e);
+    return error(res, e?.message || "Failed to sync leads");
   }
 }
 
