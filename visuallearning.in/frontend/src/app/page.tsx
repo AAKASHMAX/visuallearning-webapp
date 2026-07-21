@@ -32,12 +32,12 @@ export default function HomePage() {
           <TrialCard />
         </div>
       </section>
+      <AboutSection />
       <DemoShowcase />
       <FeaturesSection />
       <TopicsShowcase />
 
       <TestimonialsSection />
-      <AboutSection />
       <CTASection />
       <Footer />
     </main>
