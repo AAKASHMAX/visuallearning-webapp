@@ -1,12 +1,25 @@
 "use client";
 
-import { Youtube, CheckCircle2, Play } from "lucide-react";
+import { CheckCircle2, Play } from "lucide-react";
 
 // ── Channel details ───────────────────────────────────────────────────────────
 const CHANNEL_URL = "https://www.youtube.com/@visuallearning3D";
 const CHANNEL_NAME = "Visual Learning";
 const SUBSCRIBERS = "3,00,000+";
 // ──────────────────────────────────────────────────────────────────────────────
+
+// The real YouTube brand mark: red rounded "play button" with a white triangle.
+function YouTubeLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="#FF0000"
+        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"
+      />
+      <path fill="#fff" d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
 
 // Social-proof card for the home page: leans on the trust already built with
 // the YouTube audience so first-time visitors feel they're in safe hands.
@@ -21,9 +34,9 @@ export function YouTubeTrustCard() {
       <div className="flex flex-col items-stretch gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
         {/* Brand mark */}
         <div className="flex items-center gap-4">
-          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-red-600 shadow-md shadow-red-500/30 sm:h-16 sm:w-16">
-            <Youtube className="h-8 w-8 text-white sm:h-9 sm:w-9" fill="white" strokeWidth={1.5} />
-            <span className="absolute inset-0 rounded-2xl bg-red-500/40 blur-md -z-10 animate-pulse" />
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50 ring-1 ring-red-100 sm:h-16 sm:w-16">
+            <YouTubeLogo className="h-9 w-9 sm:h-11 sm:w-11 drop-shadow-sm" />
+            <span className="absolute inset-0 rounded-2xl bg-red-500/20 blur-md -z-10" />
           </div>
           <div className="sm:hidden">
             <p className="text-xs font-semibold uppercase tracking-wide text-red-600">As seen on YouTube</p>
