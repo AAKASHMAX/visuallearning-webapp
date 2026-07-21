@@ -6,6 +6,7 @@ import { hashPassword, comparePassword } from "../utils/password";
 import { generateToken } from "../utils/jwt";
 import { success, error } from "../utils/apiResponse";
 import { sendVerificationEmail, sendResetPasswordEmail } from "../utils/email";
+import { getTrialConfig } from "../services/trial.service";
 
 export const signupSchema = z.object({
   name: z.string().min(2).max(100),
@@ -56,11 +57,40 @@ export async function signup(req: Request, res: Response) {
       // Don't block signup, just log it
     }
 
+    // Every new user gets the free trial automatically (when it's enabled):
+    // full content access for the trial window, no document downloads.
+    let trial: { days: number } | null = null;
+    try {
+      const cfg = await getTrialConfig();
+      if (cfg.enabled) {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + cfg.durationDays);
+        const allClasses = await prisma.class.findMany({ select: { id: true } });
+        await prisma.subscription.create({
+          data: {
+            userId: user.id,
+            plan: "TRIAL",
+            classesAccess: allClasses.map((c) => c.id),
+            expiryDate,
+            status: "ACTIVE",
+            amount: 0,
+            discountAmount: 0,
+            downloadAddon: false,
+          },
+        });
+        trial = { days: cfg.durationDays };
+      }
+    } catch (e) {
+      console.error("Failed to auto-grant trial on signup:", e);
+      // Don't block signup if the trial grant fails.
+    }
+
     const token = generateToken({ id: user.id, email: user.email, role: user.role, name: user.name });
 
     return success(res, {
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      trial,
     }, "Account created successfully", 201);
   } catch (e) {
     console.error("Signup error:", e);

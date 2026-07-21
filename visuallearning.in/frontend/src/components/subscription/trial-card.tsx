@@ -67,9 +67,13 @@ export function TrialCard() {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00c896]/20 px-3 py-1 text-xs font-bold text-[#7cf2d0]">
             <Gift className="h-3.5 w-3.5" /> LIMITED-TIME OFFER
           </span>
-          <h2 className="mt-3 text-2xl font-black text-white">Start your {trial.durationDays}-day free trial</h2>
+          <h2 className="mt-3 text-2xl font-black text-white">
+            {loggedIn ? `Start your ${trial.durationDays}-day free trial` : `Sign up & get a ${trial.durationDays}-day free trial`}
+          </h2>
           <p className="mt-1 text-sm text-white/70">
-            Unlock the entire platform free for {days}. No payment required — no card, no charge.
+            {loggedIn
+              ? `Unlock the entire platform free for ${days}. No payment required — no card, no charge.`
+              : `Create your free account and instantly unlock the entire platform for ${days}. No payment required — no card, no charge.`}
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {perks.map((p) => (
@@ -102,7 +106,7 @@ export function TrialCard() {
                 href="/auth/signup?redirect=/courses"
                 className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-[#00c896] px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#00b184]"
               >
-                Start Free Trial
+                Sign Up &amp; Get Free Trial
               </Link>
             )}
           </div>
