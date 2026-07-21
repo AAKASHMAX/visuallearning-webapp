@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { TrialCard } from "@/components/subscription/trial-card";
+import { YouTubeTrustCard } from "@/components/home/youtube-trust-card";
 import Link from "next/link";
 import {
   Atom, Zap, Play, BookOpen, FlaskConical, GraduationCap, Star,
@@ -16,6 +17,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-surface overflow-hidden">
       <Navbar />
+      {/* YouTube social proof — first thing visitors see, builds trust up front */}
+      <section className="pt-24 sm:pt-28">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <YouTubeTrustCard />
+        </div>
+      </section>
       <HeroSection />
       <StatsBar />
       {/* Limited-time offer — 3-day free trial, right after the hero */}
