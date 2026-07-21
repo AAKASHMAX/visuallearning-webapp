@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { TrialCard } from "@/components/subscription/trial-card";
 import { YouTubeTrustCard } from "@/components/home/youtube-trust-card";
+import { AboutSection } from "@/components/home/about-section";
 import Link from "next/link";
 import {
   Atom, Zap, Play, BookOpen, FlaskConical, GraduationCap, Star,
@@ -36,6 +37,7 @@ export default function HomePage() {
       <TopicsShowcase />
 
       <TestimonialsSection />
+      <AboutSection />
       <CTASection />
       <Footer />
     </main>
