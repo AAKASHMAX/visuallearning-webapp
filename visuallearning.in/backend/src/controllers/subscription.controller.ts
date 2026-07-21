@@ -546,6 +546,32 @@ export async function verifyPayment(req: Request, res: Response) {
   }
 }
 
+// GET /subscription/trial-status — can this user still claim the free trial?
+// Eligible only if they've never had a trial AND have no active subscription.
+// One trial per account, ever — including expired ones.
+export async function getTrialStatus(req: Request, res: Response) {
+  try {
+    const trial = await getTrialConfig();
+    const [usedTrial, activeSub] = await Promise.all([
+      prisma.subscription.findFirst({ where: { userId: req.user!.id, plan: "TRIAL" }, select: { id: true } }),
+      prisma.subscription.findFirst({
+        where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
+        select: { id: true },
+      }),
+    ]);
+    return success(res, {
+      enabled: trial.enabled,
+      used: !!usedTrial,
+      hasActive: !!activeSub,
+      eligible: trial.enabled && !usedTrial && !activeSub,
+      durationDays: trial.durationDays,
+    });
+  } catch (e) {
+    console.error("Trial status error:", e);
+    return error(res, "Failed to check trial status");
+  }
+}
+
 // POST /subscription/start-trial — activate the free trial. No payment gateway
 // involved: one click, one per account, all classes, no document downloads.
 export async function startTrial(req: Request, res: Response) {

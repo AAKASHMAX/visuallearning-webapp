@@ -16,7 +16,7 @@ const DEFAULT_TRIAL: Trial = { enabled: true, label: "3-Day Free Trial", duratio
 export function TrialCard() {
   const [ready, setReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [hasSub, setHasSub] = useState(false);
+  const [eligible, setEligible] = useState(true);
   const [starting, setStarting] = useState(false);
   const [trial, setTrial] = useState<Trial>(DEFAULT_TRIAL);
 
@@ -29,13 +29,11 @@ export function TrialCard() {
     const token = typeof window !== "undefined" ? localStorage.getItem("vl_token") : null;
     if (!token) { setLoggedIn(false); setReady(true); return; }
     setLoggedIn(true);
+    // One trial per account, ever: eligible only if never used AND no active sub.
     api
-      .get("/subscription/my-subscription")
-      .then(({ data }) => {
-        const subs = Array.isArray(data?.data) ? data.data : [];
-        setHasSub(subs.length > 0); // has an active subscription -> not eligible
-      })
-      .catch(() => setHasSub(false)) // on error still show; backend enforces eligibility
+      .get("/subscription/trial-status")
+      .then(({ data }) => setEligible(Boolean(data?.data?.eligible)))
+      .catch(() => setEligible(false)) // on error, hide rather than offer a trial they may have used
       .finally(() => setReady(true));
   }, []);
 
@@ -51,7 +49,10 @@ export function TrialCard() {
     }
   };
 
-  if (!ready || hasSub || !trial.enabled) return null;
+  // Hide entirely if the trial is off, or a logged-in user has already used it
+  // / has an active plan. Logged-out visitors always see it (prompt to sign up).
+  if (!ready || !trial.enabled) return null;
+  if (loggedIn && !eligible) return null;
 
   const days = `${trial.durationDays} day${trial.durationDays === 1 ? "" : "s"}`;
   const perks = [
