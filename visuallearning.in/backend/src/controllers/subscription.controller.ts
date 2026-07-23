@@ -338,23 +338,12 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
     }
 
     let couponDiscount = 0;
-    let upgradeDiscount = 0;
+    // Upgrade discount removed: every user now starts on a free 3-day trial, so
+    // an "existing active subscription" is no longer a meaningful upgrade signal
+    // — it applied to everyone and halved every price.
+    const upgradeDiscount = 0;
 
     const originalAmount = amount;
-
-    // Check for existing active subscription (upgrade flow)
-    const existing = await prisma.subscription.findFirst({
-      where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
-    });
-
-    if (existing) {
-      // Apply upgrade discount
-      const upgradeDiscountPercent = await getUpgradeDiscount();
-      if (upgradeDiscountPercent > 0) {
-        upgradeDiscount = Math.round(amount * upgradeDiscountPercent / 100);
-        amount -= upgradeDiscount;
-      }
-    }
 
     // Apply coupon if provided
     if (couponCode) {
@@ -395,7 +384,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       couponDiscount,
       downloadAddon: wantAddon,
       addOnAmount,
-      isUpgrade: !!existing,
+      isUpgrade: false,
     });
   } catch (e: any) {
     console.error("Create order error:", e);
@@ -443,18 +432,8 @@ export async function verifyPayment(req: Request, res: Response) {
 
     const baseAmount = amount; // yearly amount before discounts (for add-on calc)
 
-    const existing = await prisma.subscription.findFirst({
-      where: { userId: req.user!.id, status: "ACTIVE", expiryDate: { gt: new Date() } },
-    });
-
-    if (existing) {
-      const upgradeDiscountPercent = await getUpgradeDiscount();
-      if (upgradeDiscountPercent > 0) {
-        const upgradeDiscount = Math.round(amount * upgradeDiscountPercent / 100);
-        discountAmount += upgradeDiscount;
-        amount -= upgradeDiscount;
-      }
-    }
+    // Upgrade discount removed — see createSubscriptionOrder. Kept out of the
+    // verify path too so the charged amount always matches the order amount.
 
     if (couponCode) {
       const couponResult = await validateCoupon(couponCode, plan);

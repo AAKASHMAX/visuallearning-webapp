@@ -431,19 +431,10 @@ export default function SubscriptionSettingsPage() {
           </div>
           <div>
             <h2 className="text-base font-black text-gray-900">Pricing Settings</h2>
-            <p className="text-xs text-gray-500">Upgrade discount and the offline-downloads add-on price</p>
+            <p className="text-xs text-gray-500">Offline-downloads add-on price</p>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-4">
-          <div className="w-44">
-            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Upgrade Discount (%)</label>
-            <div className="relative">
-              <input type="number" value={upgradeDiscountPercent} min={0} max={100}
-                onChange={(e) => setUpgradeDiscountPercent(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm pr-8 focus:outline-none focus:border-primary/50" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">%</span>
-            </div>
-          </div>
           <div className="w-56">
             <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Offline Downloads Add-on (% of yearly)</label>
             <div className="relative">
@@ -457,12 +448,6 @@ export default function SubscriptionSettingsPage() {
           <Button size="sm" onClick={saveUpgradeDiscount} disabled={savingDiscount} className="rounded-xl font-bold gap-1.5">
             <Save className="w-4 h-4" />{savingDiscount ? "Saving..." : "Save"}
           </Button>
-          {upgradeDiscountPercent > 0 && (
-            <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-bold">
-              <CheckCircle2 className="w-4 h-4" />
-              {upgradeDiscountPercent}% off on upgrades
-            </div>
-          )}
         </div>
       </div>
 
