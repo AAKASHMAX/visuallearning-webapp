@@ -9,8 +9,10 @@ export type TrialConfig = {
   durationDays: number;
 };
 
+// Trial retired: new users get the free first chapter of every subject instead
+// of a full-access trial. Existing active trials run until they expire.
 export const DEFAULT_TRIAL: TrialConfig = {
-  enabled: true,
+  enabled: false,
   label: "3-Day Free Trial",
   durationDays: 3,
 };

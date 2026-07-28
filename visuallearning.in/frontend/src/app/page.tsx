@@ -3,7 +3,6 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
-import { TrialCard } from "@/components/subscription/trial-card";
 import { YouTubeTrustCard } from "@/components/home/youtube-trust-card";
 import { AboutSection } from "@/components/home/about-section";
 import Link from "next/link";
@@ -26,12 +25,6 @@ export default function HomePage() {
       </section>
       <HeroSection />
       <StatsBar />
-      {/* Limited-time offer — 3-day free trial, right after the hero */}
-      <section className="pt-12 sm:pt-14">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <TrialCard />
-        </div>
-      </section>
       <AboutSection />
       <DemoShowcase />
       <FeaturesSection />

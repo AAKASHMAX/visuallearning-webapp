@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageLoader } from "@/components/ui/loading";
 import { RazorpayButton } from "@/components/payment/razorpay-button";
-import { TrialCard } from "@/components/subscription/trial-card";
 import api from "@/lib/api";
 import { Check, GraduationCap, Layers, Crown, Sparkles, type LucideIcon } from "lucide-react";
 
@@ -96,9 +95,6 @@ export default function PricingPage() {
           ))}
         </div>
       </div>
-
-      {/* 3-day free trial — above the standard plans */}
-      <TrialCard />
 
       {ordered.length === 0 ? (
         <div className="rounded-2xl bg-white p-10 text-center text-text-muted shadow-sm">No plans available right now.</div>
