@@ -1,14 +1,15 @@
 "use client";
 
-import { Gift, Check, Info } from "lucide-react";
+import { PartyPopper, Check, Info } from "lucide-react";
 
-// Shown once, right after signup, to tell the new user their free trial is live.
-export function TrialWelcomeModal({ days, onClose }: { days: number; onClose: () => void }) {
+// Shown once, right after signup: everyone gets free access to the study
+// material (Notes, NCERT, PYQ, Quiz). Downloads require a subscription.
+export function SignupWelcomeModal({ onClose }: { onClose: () => void }) {
   const perks = [
-    "3D animated videos & lecture videos",
-    "Visual notes, NCERT & PYQ solutions",
-    "Quizzes & exam practice",
-    "Every class, subject & chapter",
+    "All Notes",
+    "NCERT Solutions",
+    "Previous Year Questions (PYQ)",
+    "Quizzes & practice questions",
   ];
 
   return (
@@ -17,18 +18,16 @@ export function TrialWelcomeModal({ days, onClose }: { days: number; onClose: ()
         {/* Header */}
         <div className="bg-gradient-to-br from-[#062a4d] via-[#0a3b63] to-[#0b5a53] px-6 py-8 text-center text-white">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/15">
-            <Gift className="h-8 w-8 text-[#7cf2d0]" />
+            <PartyPopper className="h-8 w-8 text-[#7cf2d0]" />
           </div>
           <h2 className="text-2xl font-black">Congratulations! 🎉</h2>
-          <p className="mt-1 text-white/80">
-            You&apos;ve unlocked a <span className="font-bold text-white">{days}-day free trial</span>
-          </p>
+          <p className="mt-1 text-white/80">Your account is ready</p>
         </div>
 
         {/* Body */}
         <div className="px-6 py-6">
           <p className="text-sm font-semibold text-heading">
-            For the next {days} days you get full access to <span className="text-cta">all types of content</span>:
+            You can now access all of this <span className="text-cta">for free</span>:
           </p>
           <ul className="mt-3 space-y-2">
             {perks.map((p) => (
@@ -38,10 +37,11 @@ export function TrialWelcomeModal({ days, onClose }: { days: number; onClose: ()
             ))}
           </ul>
 
-          <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 p-3">
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-3">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <p className="text-xs text-amber-800">
-              Document (PDF) downloads are <span className="font-semibold">not included</span> in the free trial.
+              Downloads (PDFs) and 3D animated videos require a subscription — but reading and
+              practising everything above is completely free.
             </p>
           </div>
 

@@ -5,7 +5,7 @@ import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import {
-  CreditCard, Save, Plus, Trash2, X, Percent,
+  CreditCard, Save, Plus, Trash2, X,
   Star, Zap, Crown, Layers, CheckCircle2,
   ToggleLeft, ToggleRight, Pencil, IndianRupee,
   Atom, FlaskConical, Dna, Calculator, Sparkles
@@ -73,9 +73,6 @@ export default function SubscriptionSettingsPage() {
   const [newPlanDurationQuarterly, setNewPlanDurationQuarterly] = useState(90);
   const [newPlanDurationYearly, setNewPlanDurationYearly] = useState(365);
   const [newPlanClassSelection, setNewPlanClassSelection] = useState(0);
-  const [upgradeDiscountPercent, setUpgradeDiscountPercent] = useState(0);
-  const [downloadAddonPercent, setDownloadAddonPercent] = useState(50);
-  const [savingDiscount, setSavingDiscount] = useState(false);
 
   // Subject pricing
   const [subjectPricing, setSubjectPricing] = useState<any[]>([]);
@@ -86,12 +83,9 @@ export default function SubscriptionSettingsPage() {
   useEffect(() => {
     Promise.all([
       api.get("/admin/settings"),
-      api.get("/admin/settings/subscription"),
       api.get("/admin/subjects/access"),
-    ]).then(([settingsRes, subSettingsRes, pricingRes]) => {
+    ]).then(([settingsRes, pricingRes]) => {
       setPlansConfig(settingsRes.data.data.plansConfig);
-      setUpgradeDiscountPercent(subSettingsRes.data.data.upgradeDiscountPercent || 0);
-      setDownloadAddonPercent(subSettingsRes.data.data.downloadAddonPercent ?? 50);
       const pricing = pricingRes.data.data || [];
       setSubjectPricing(pricing);
       setActiveClassTab(pricing[0]?.id ?? "");
@@ -154,16 +148,6 @@ export default function SubscriptionSettingsPage() {
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save");
     } finally { setSaving(false); }
-  };
-
-  const saveUpgradeDiscount = async () => {
-    setSavingDiscount(true);
-    try {
-      await api.put("/admin/settings/subscription", { upgradeDiscountPercent, downloadAddonPercent });
-      toast.success("Upgrade discount saved");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save");
-    } finally { setSavingDiscount(false); }
   };
 
   if (loading) return <PageLoader />;
@@ -421,34 +405,6 @@ export default function SubscriptionSettingsPage() {
             </Button>
           </div>
         )}
-      </div>
-
-      {/* Upgrade Discount */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
-            <Percent className="w-4 h-4 text-amber-600" />
-          </div>
-          <div>
-            <h2 className="text-base font-black text-gray-900">Pricing Settings</h2>
-            <p className="text-xs text-gray-500">Offline-downloads add-on price</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="w-56">
-            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Offline Downloads Add-on (% of yearly)</label>
-            <div className="relative">
-              <input type="number" value={downloadAddonPercent} min={0} max={100}
-                onChange={(e) => setDownloadAddonPercent(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm pr-8 focus:outline-none focus:border-primary/50" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">%</span>
-            </div>
-            <p className="mt-1 text-[10px] font-bold text-gray-400">Yearly-only add-on; {downloadAddonPercent}% of each plan&apos;s yearly price</p>
-          </div>
-          <Button size="sm" onClick={saveUpgradeDiscount} disabled={savingDiscount} className="rounded-xl font-bold gap-1.5">
-            <Save className="w-4 h-4" />{savingDiscount ? "Saving..." : "Save"}
-          </Button>
-        </div>
       </div>
 
     </div>

@@ -38,14 +38,11 @@ export default function PricingPage() {
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [cycle, setCycle] = useState<BillingCycle>("yearly");
   const [selected, setSelected] = useState<Record<string, string[]>>({});
-  const [addon, setAddon] = useState<Record<string, boolean>>({});
-  const [downloadAddonPercent, setDownloadAddonPercent] = useState(50);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get("/subscription/plans").then(({ data }) => {
       setPlans(data.data?.plans || []);
-      setDownloadAddonPercent(data.data?.downloadAddonPercent ?? 50);
       const cls = ((data.data?.classes || []) as ClassInfo[]).filter((c) => ["9", "10", "11", "12"].some((n) => c.name.includes(n)));
       setClasses(cls);
     }).catch(() => {}).finally(() => setLoading(false));
@@ -109,11 +106,7 @@ export default function PricingPage() {
             const price = cycle === "monthly" ? plan.monthlyPrice || 0 : cycle === "quarterly" ? plan.quarterlyPrice || 0 : plan.yearlyPrice || 0;
             const ready = isFull || sel.length === max;
             const classesAccess = isFull ? allClassIds : sel;
-            // Document-download add-on: yearly only, price = % of the yearly price.
-            const addonAvailable = cycle === "yearly";
-            const addonPrice = Math.round((price * downloadAddonPercent) / 100);
-            const addonOn = addonAvailable && !!addon[plan.id];
-            const total = price + (addonOn ? addonPrice : 0);
+            const total = price;
 
             return (
               <div
@@ -179,23 +172,6 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Offline document-download add-on (yearly only) */}
-                {addonAvailable && (
-                  <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-2.5">
-                    <input
-                      type="checkbox"
-                      checked={addonOn}
-                      onChange={(e) => setAddon((prev) => ({ ...prev, [plan.id]: e.target.checked }))}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
-                    />
-                    <span className="text-[11px] leading-snug text-heading">
-                      <span className="font-black">Add offline document downloads</span>{" "}
-                      <span className="font-bold text-emerald-700">+₹{addonPrice.toLocaleString("en-IN")}/year</span>
-                      <span className="block font-medium text-text-muted">Download Notes, NCERT &amp; PYQ as protected PDFs for offline study.</span>
-                    </span>
-                  </label>
-                )}
-
                 {/* Action */}
                 <div className="mt-6">
                   {ready ? (
@@ -205,7 +181,7 @@ export default function PricingPage() {
                       label={plan.name}
                       classesAccess={classesAccess}
                       billingCycle={cycle}
-                      downloadAddon={addonOn}
+                      downloadAddon={true}
                       onSuccess={() => router.push("/dashboard")}
                       buttonLabel={`Subscribe • ₹${total.toLocaleString("en-IN")}`}
                       className={`w-full rounded-xl bg-gradient-to-r py-3 text-sm font-black text-white transition-all hover:opacity-90 ${meta.gradient}`}

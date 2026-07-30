@@ -344,26 +344,28 @@ export async function getNotes(req: Request, res: Response) {
 
     const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
-    let hasAccess = false;
-    let canDownload = false;
-    if (isAdmin) {
-      hasAccess = true;
-      canDownload = true;
-    } else if (req.user) {
+
+    // A signed-up user can read Notes / NCERT / PYQ for free. PPT presentations
+    // stay premium (subscription or the first-chapter preview only).
+    const isPpt = (n: { title: string; pdfUrl: string | null }) => {
+      const t = `${n.title} ${n.pdfUrl || ""}`.toLowerCase();
+      return ["ppt", "pptx", "presentation", "slide"].some((k) => t.includes(k));
+    };
+
+    // Subscription check drives both premium (PPT) viewing and downloads.
+    let subAccess = false;
+    if (req.user && !isAdmin) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id, true);
-      hasAccess = result.hasAccess;
-      // Downloading the (protected image-PDF) docs requires the download add-on.
-      // The Notes plan is view-only, so it never has the add-on.
-      canDownload = result.hasAccess && !!result.subscription?.downloadAddon;
+      subAccess = result.hasAccess;
     }
-    if (!hasAccess && isFirstChapter) {
-      hasAccess = true;
-    }
+    // Downloads (protected image-PDFs) are for subscribers only — no add-on needed.
+    const canDownload = isAdmin || subAccess;
 
     const notesWithAccess = notes.map((n) => {
-      const canView = hasAccess;
-      // Viewer shows the HTML content; the generated image-PDF (pdfUrl) is the
-      // protected DOWNLOAD artifact. So serve both htmlContent and pdfUrl.
+      const freeDoc = !isPpt(n);
+      // Free docs (notes/NCERT/PYQ) are viewable by any signed-up user; PPTs need
+      // a subscription or the first-chapter preview.
+      const canView = isAdmin || subAccess || isFirstChapter || (!!req.user && freeDoc);
       return {
         ...n,
         pdfUrl: canView ? n.pdfUrl : null,
@@ -373,6 +375,7 @@ export async function getNotes(req: Request, res: Response) {
       };
     });
 
+    const hasAccess = isAdmin || subAccess || isFirstChapter || !!req.user;
     return success(res, { notes: notesWithAccess, hasAccess, canDownload, chapter: { name: chapter.name } });
   } catch (e) {
     console.error("Get notes error:", e);
@@ -391,15 +394,8 @@ export async function getQuestions(req: Request, res: Response) {
 
     const isFirstChapter = await isFirstChapterForSubject(chapter.id, chapter.subject.id);
     const isAdmin = req.user?.role === "ADMIN";
-    let hasAccess = false;
-    if (isAdmin) {
-      hasAccess = true;
-    } else if (isFirstChapter) {
-      hasAccess = true;
-    } else if (req.user) {
-      const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id);
-      hasAccess = result.hasAccess;
-    }
+    // Quiz & important questions are free for any signed-up user.
+    const hasAccess = isAdmin || isFirstChapter || !!req.user;
 
     if (!hasAccess) {
       return success(res, { questions: [], hasAccess: false, locked: true });

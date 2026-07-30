@@ -170,18 +170,6 @@ async function getUpgradeDiscount(): Promise<number> {
   return 0;
 }
 
-// Helper: document-download add-on percentage (of the yearly price). Admin-editable.
-async function getDownloadAddonPercent(): Promise<number> {
-  const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
-  if (setting) {
-    try {
-      const c = JSON.parse(setting.value);
-      if (typeof c.downloadAddonPercent === "number") return c.downloadAddonPercent;
-    } catch { /* fall through */ }
-  }
-  return 50;
-}
-
 // Helper: validate and get coupon, optionally checking plan restriction
 async function validateCoupon(code: string, planKey?: string): Promise<{ valid: boolean; discountPercent: number; message: string; applicablePlans: string[] }> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
@@ -261,11 +249,9 @@ export async function getPlans(req: Request, res: Response) {
       };
     });
 
-  // Get upgrade discount + document-download add-on percentage
   const upgradeDiscountPercent = await getUpgradeDiscount();
-  const downloadAddonPercent = await getDownloadAddonPercent();
 
-  const result = { plans, classes, upgradeDiscountPercent, downloadAddonPercent };
+  const result = { plans, classes, upgradeDiscountPercent };
   cacheSet("plans", result, 60); // 1 min cache (reduced for live updates)
   return success(res, result);
 }
@@ -353,16 +339,9 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       amount -= couponDiscount;
     }
 
-    // Document-download add-on (yearly only) — added on top, after discounts.
-    // Never available on the view-only Notes plan.
-    let addOnAmount = 0;
-    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "TRIAL";
-    if (wantAddon) {
-      addOnAmount = Math.round(originalAmount * (await getDownloadAddonPercent()) / 100);
-      amount += addOnAmount;
-    }
-
-    // The free trial is always ₹1 (Razorpay's minimum transaction fee).
+    // Document downloads are now included free with every subscription — the
+    // paid add-on has been removed.
+    const addOnAmount = 0;
 
     // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
     if (amount < 100) amount = 100;
@@ -382,7 +361,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       originalAmount,
       upgradeDiscount,
       couponDiscount,
-      downloadAddon: wantAddon,
+      downloadAddon: true, // downloads included with every subscription
       addOnAmount,
       isUpgrade: false,
     });
@@ -430,7 +409,6 @@ export async function verifyPayment(req: Request, res: Response) {
       }
     }
 
-    const baseAmount = amount; // yearly amount before discounts (for add-on calc)
 
     // Upgrade discount removed — see createSubscriptionOrder. Kept out of the
     // verify path too so the charged amount always matches the order amount.
@@ -450,13 +428,7 @@ export async function verifyPayment(req: Request, res: Response) {
       }
     }
 
-    // Document-download add-on (yearly only) — added on top, after discounts.
-    // Never available on the free trial.
-    const wantAddon = downloadAddon === true && billingCycle === "yearly" && plan !== "TRIAL";
-    if (wantAddon) {
-      amount += Math.round(baseAmount * (await getDownloadAddonPercent()) / 100);
-    }
-
+    // Download add-on removed — downloads are included with every subscription.
     if (amount < 100) amount = 100;
 
 
@@ -514,7 +486,7 @@ export async function verifyPayment(req: Request, res: Response) {
         amount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         discountAmount,
-        downloadAddon: wantAddon,
+        downloadAddon: true,
       },
     });
 

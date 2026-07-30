@@ -1021,7 +1021,6 @@ export async function getSubscriptionSettings(_req: Request, res: Response) {
     const data = setting ? JSON.parse(setting.value) : {};
     return success(res, {
       upgradeDiscountPercent: data.upgradeDiscountPercent ?? 0,
-      downloadAddonPercent: data.downloadAddonPercent ?? 50,
     });
   } catch (e) {
     console.error("Get subscription settings error:", e);
@@ -1038,11 +1037,6 @@ export async function updateSubscriptionSettings(req: Request, res: Response) {
       const v = req.body.upgradeDiscountPercent;
       if (typeof v !== "number" || v < 0 || v > 100) return error(res, "Upgrade discount must be between 0 and 100", 400);
       next.upgradeDiscountPercent = v;
-    }
-    if (req.body.downloadAddonPercent !== undefined) {
-      const v = req.body.downloadAddonPercent;
-      if (typeof v !== "number" || v < 0 || v > 100) return error(res, "Download add-on percent must be between 0 and 100", 400);
-      next.downloadAddonPercent = v;
     }
 
     const value = JSON.stringify(next);

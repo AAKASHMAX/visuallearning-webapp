@@ -9,6 +9,7 @@ import { BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { SignupWelcomeModal } from "@/components/subscription/signup-welcome-modal";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -17,6 +18,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [welcome, setWelcome] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -30,8 +32,7 @@ export default function SignupPage() {
     try {
       const { data } = await api.post("/auth/signup", { name, email, phone: cleanPhone, password });
       login(data.data.user, data.data.token);
-      toast.success("Account created! Check your email to verify.");
-      router.push("/courses");
+      setWelcome(true); // congratulations popup; redirect on close
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Signup failed");
     } finally {
@@ -39,8 +40,14 @@ export default function SignupPage() {
     }
   };
 
+  const closeWelcome = () => {
+    setWelcome(false);
+    router.push("/courses");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center p-4">
+      {welcome && <SignupWelcomeModal onClose={closeWelcome} />}
       <Card className="w-full max-w-md">
         <CardContent className="p-8">
           <div className="text-center mb-8">

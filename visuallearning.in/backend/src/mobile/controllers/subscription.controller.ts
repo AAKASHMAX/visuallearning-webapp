@@ -37,22 +37,8 @@ function durationForCycle(pc: any, cycle: string): number {
   return pc.durationYearly ?? pc.duration ?? 365;
 }
 
-// Offline-downloads add-on: a % of the plan's yearly price (default 50%),
-// editable from the admin panel (subscription_settings.downloadAddonPercent).
-async function getDownloadAddonPercent(): Promise<number> {
-  const setting = await prisma.setting.findUnique({ where: { key: "subscription_settings" } });
-  if (setting) {
-    try {
-      const c = JSON.parse(setting.value);
-      if (typeof c.downloadAddonPercent === "number") return c.downloadAddonPercent;
-    } catch { /* fall through */ }
-  }
-  return 50;
-}
-// Add-on amount (paise) for a plan; only applies to yearly subscriptions.
-function downloadAddonAmount(pc: any, percent: number): number {
-  return Math.round((pc.yearlyAmount ?? 0) * percent / 100);
-}
+// Document downloads are included with every subscription — the paid add-on
+// has been removed.
 
 async function resolveClassPlans(): Promise<Record<string, any>> {
   const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
@@ -128,7 +114,6 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
 
     // Only the three class-count plans (Single / Dual / Full), matching the webapp.
     const classPlans = await resolveClassPlans();
-    const downloadAddonPercent = await getDownloadAddonPercent();
     const plans = CLASS_PLAN_ORDER
       .filter((key) => classPlans[key].enabled !== false)
       .map((key) => {
@@ -146,8 +131,7 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
           features: featureMap[key] || [],
           classSelection: v.classSelection || 0,
           popular: key === "DUAL_CLASS",
-          // Offline-downloads add-on price for this plan (yearly only).
-          downloadAddonPrice: downloadAddonAmount(v, downloadAddonPercent) / 100,
+          downloadAddonPrice: 0, // downloads included; add-on removed
         };
       });
 
@@ -166,7 +150,6 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
           "All 4 classes (9, 10, 11, 12)",
           "3D animated & lecture videos",
           "Notes, NCERT solutions & PYQs",
-          "-Document downloads not included", // leading "-" renders as an exclusion in the app
         ],
         classSelection: 0,
         popular: false,
@@ -175,7 +158,7 @@ export async function getSubscriptionPlans(req: Request, res: Response) {
       } as any);
     }
 
-    return mobileSuccess(res, { plans, classes, downloadAddonPercent });
+    return mobileSuccess(res, { plans, classes, downloadAddonPercent: 0 });
   } catch (e) {
     console.error("Mobile getSubscriptionPlans error:", e);
     return mobileError(res, "Failed to fetch plans");
@@ -307,7 +290,6 @@ export async function generateOrderId(req: Request, res: Response) {
     }
 
     const cycle = req.body.billingCycle || "yearly";
-    const wantAddon = req.body.downloadAddon === true && cycle === "yearly" && planKey !== "TRIAL";
     let amount = amountForCycle(planConfig, cycle);
 
     let couponDiscount = 0;
@@ -320,13 +302,7 @@ export async function generateOrderId(req: Request, res: Response) {
       amount -= couponDiscount;
     }
 
-    // Offline-downloads add-on (yearly only) — added at full price after any coupon.
-    let addOnAmount = 0;
-    if (wantAddon) {
-      addOnAmount = downloadAddonAmount(planConfig, await getDownloadAddonPercent());
-      amount += addOnAmount;
-    }
-
+    // Downloads are included with every subscription — add-on removed.
     // Ensure minimum amount (Razorpay requires at least 100 paise = Rs 1)
     if (amount < 100) amount = 100;
 
@@ -343,8 +319,8 @@ export async function generateOrderId(req: Request, res: Response) {
       originalAmount: amount + couponDiscount,
       couponDiscount,
       couponCode,
-      downloadAddon: wantAddon,
-      addOnAmount,
+      downloadAddon: true,
+      addOnAmount: 0,
     });
   } catch (e: any) {
     console.error("Mobile generateOrderId error:", e);
@@ -372,7 +348,6 @@ export async function purchasePlan(req: Request, res: Response) {
 
     const planConfig = await getPlanConfig(planKey);
     const cycle = req.body.billingCycle || "yearly";
-    const wantAddon = req.body.downloadAddon === true && cycle === "yearly" && planKey !== "TRIAL";
     let amount = amountForCycle(planConfig, cycle);
 
     let discountAmount = 0;
@@ -392,9 +367,6 @@ export async function purchasePlan(req: Request, res: Response) {
         });
       }
     }
-
-    // Offline-downloads add-on (yearly only) — added at full price after any coupon.
-    if (wantAddon) amount += downloadAddonAmount(planConfig, await getDownloadAddonPercent());
 
     if (amount < 100) amount = 100;
 
@@ -431,7 +403,7 @@ export async function purchasePlan(req: Request, res: Response) {
         amount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         discountAmount,
-        downloadAddon: wantAddon,
+        downloadAddon: true,
       },
     });
 
@@ -441,7 +413,7 @@ export async function purchasePlan(req: Request, res: Response) {
       expiry_date: subscription.expiryDate.toISOString(),
       plan: planKey,
       classesAccess: resolvedClassesAccess,
-      download_addon: wantAddon ? 1 : 0,
+      download_addon: 1,
     }, "Payment verified and subscription activated");
   } catch (e) {
     console.error("Mobile purchasePlan error:", e);

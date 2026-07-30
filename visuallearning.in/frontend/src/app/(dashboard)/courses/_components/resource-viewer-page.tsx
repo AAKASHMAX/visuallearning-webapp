@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { RazorpayButton } from "@/components/payment/razorpay-button";
 import { PageLoader } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
@@ -834,38 +833,56 @@ function QuestionViewer({
 }
 
 function LockedPanel() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  useEffect(() => {
+    setLoggedIn(typeof window !== "undefined" && !!localStorage.getItem("vl_token"));
+  }, []);
+
   return (
     <div className="flex min-h-[420px] items-center justify-center p-6">
       <div className="max-w-sm text-center">
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#00c896]/10 text-[#00c896]">
           <Gift className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-black text-heading">Unlock with a Free Trial</h2>
-        <p className="mt-3 text-sm leading-6 text-text-muted">
-          The first chapter stays open for preview. Not subscribed yet? Start a{" "}
-          <span className="font-bold text-heading">free 3-day trial</span> to read all notes,
-          NCERT &amp; PYQ solutions — no payment required.
-        </p>
-        <div className="mt-6 flex flex-col gap-2">
-          <RazorpayButton
-            plan="TRIAL"
-            amount={1}
-            label="3-Day Free Trial"
-            classesAccess={[]}
-            billingCycle="yearly"
-            downloadAddon={false}
-            buttonLabel="Get Free Trial"
-            onSuccess={() => window.location.reload()}
-            className="w-full bg-[#00c896] hover:bg-[#00b184] text-white"
-          />
-          <Link
-            href="/pricing"
-            className="inline-flex items-center justify-center gap-1 py-1.5 text-sm font-semibold text-primary hover:text-primary-dark"
-          >
-            View all plans
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
+        {loggedIn ? (
+          <>
+            <h2 className="text-xl font-black text-heading">Subscribe to unlock</h2>
+            <p className="mt-3 text-sm leading-6 text-text-muted">
+              This is premium content. Subscribe to a plan to unlock it &mdash; and to download
+              Notes, NCERT &amp; PYQ as protected PDFs.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/pricing"
+                className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-primary py-2.5 text-sm font-bold text-white hover:bg-primary-dark"
+              >
+                View plans <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-black text-heading">Read free — just sign up</h2>
+            <p className="mt-3 text-sm leading-6 text-text-muted">
+              Create a <span className="font-bold text-heading">free account</span> to read all
+              Notes, NCERT &amp; PYQ solutions and take quizzes &mdash; no payment required.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <Link
+                href="/auth/signup?redirect=/courses"
+                className="inline-flex w-full items-center justify-center rounded-lg bg-[#00c896] py-2.5 text-sm font-bold text-white hover:bg-[#00b184]"
+              >
+                Sign Up Free
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center gap-1 py-1.5 text-sm font-semibold text-primary hover:text-primary-dark"
+              >
+                View all plans <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
