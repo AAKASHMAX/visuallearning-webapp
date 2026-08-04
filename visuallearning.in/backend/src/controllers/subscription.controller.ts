@@ -199,13 +199,9 @@ export async function getPlans(req: Request, res: Response) {
   if (setting) {
     plansConfig = mergeAudiencePlanDefaults(JSON.parse(setting.value));
   } else {
-    // Fallback to hardcoded defaults
-    plansConfig = mergeAudiencePlanDefaults({
-      FOUNDATION_PASS: { monthlyAmount: config.plans.FOUNDATION_PASS.monthlyAmount, yearlyAmount: config.plans.FOUNDATION_PASS.yearlyAmount, label: "Foundation Pass", durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-      ACADEMIC_PLUS:   { monthlyAmount: config.plans.ACADEMIC_PLUS.monthlyAmount,   yearlyAmount: config.plans.ACADEMIC_PLUS.yearlyAmount,   label: "Academic Plus",   durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-      ELITE_LEARNING:  { monthlyAmount: config.plans.ELITE_LEARNING.monthlyAmount,  yearlyAmount: config.plans.ELITE_LEARNING.yearlyAmount,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-      FLEXI_PLAN:      { monthlyAmount: config.plans.FLEXI_PLAN.monthlyAmount,      yearlyAmount: config.plans.FLEXI_PLAN.yearlyAmount,      label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365, enabled: true, classSelection: 0 },
-    });
+    // Only the three class-count plans are offered; their defaults come from
+    // mergeAudiencePlanDefaults.
+    plansConfig = mergeAudiencePlanDefaults({});
   }
 
   // Also fetch courses to get live prices
@@ -216,17 +212,6 @@ export async function getPlans(req: Request, res: Response) {
     SINGLE_CLASS: ["Access any 1 class (9–12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
     DUAL_CLASS:   ["Access any 2 classes (9–12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
     FULL_ACCESS:  ["All 4 classes (9, 10, 11, 12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Priority support"],
-    FOUNDATION_PASS: ["Selected chapters (9–12 PCB)", "Animated concept videos", "Beginner-friendly path", "Progress tracking", "Mobile & desktop access"],
-    ACADEMIC_PLUS:   ["Full Class 9–10 (PCB)", "Selected 11–12 Physics & Chemistry", "Chapter notes (PDF)", "MCQ quizzes + solutions", "Performance analytics", "Email support (24hr)"],
-    ELITE_LEARNING:  ["Full 9–12 Physics + Chemistry + Biology", "64+ Virtual Labs", "3D Visual Learning", "Board exam practice", "Notes + formula sheets", "Priority WhatsApp support", "Deep concept tools"],
-    CLASS_9:         ["Full 9th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
-    CLASS_10:        ["Full 10th Grade Curriculum", "3D Animated Videos", "Virtual Labs & Simulations", "Board exam prep", "Chapter notes", "Expert support"],
-    CLASS_11:        ["Full 11th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Competitive exam base", "Formula sheets", "Priority support"],
-    CLASS_12:        ["Full 12th Grade Curriculum", "Advanced 3D Visuals", "Complex Simulations", "Board & Competitive prep", "Formula sheets", "Priority support"],
-    FLEXI_PLAN:      ["Choose your own subjects", "3D Animated Videos", "Chapter notes (PDF)", "MCQ quizzes", "Flexible pricing per subject"],
-    STUDENTS_PLAN:   ["Choose one or more classes", "Animated videos", "Chapter notes", "Quiz", "Question bank"],
-    TEACHERS_PLAN:   ["Choose one or more classes", "Animated videos", "PPTs", "Test series", "Question bank"],
-    PROFESSIONAL_PLAN: ["Choose one or more subjects", "Advanced animated videos", "PPTs", "Virtual lab", "Test series"],
   };
 
   const plans = Object.entries(plansConfig)
@@ -246,7 +231,7 @@ export async function getPlans(req: Request, res: Response) {
         classSelection: v.classSelection || 0,
         unitType: v.unitType || "fixed",
         audience: v.audience || null,
-        popular: key === "ELITE_LEARNING",
+        popular: key === "DUAL_CLASS",
       };
     });
 

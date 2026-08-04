@@ -36,10 +36,7 @@ export const config = {
     apiKey: process.env.CLOUDINARY_API_KEY || "727822633118353",
     apiSecret: process.env.CLOUDINARY_API_SECRET || "D41LANrVz7TTgOiGFMs4gfNIEpg",
   },
-  plans: {
-    FOUNDATION_PASS: { monthlyAmount: 0, yearlyAmount: 0,             label: "Foundation Pass", durationMonthly: 30, durationYearly: 365 },
-    ACADEMIC_PLUS:   { monthlyAmount: 89900, yearlyAmount: 899900,    label: "Academic Plus",   durationMonthly: 30, durationYearly: 365 },
-    ELITE_LEARNING:  { monthlyAmount: 159900, yearlyAmount: 1599900,  label: "Elite Learning",  durationMonthly: 30, durationYearly: 365 },
-    FLEXI_PLAN:      { monthlyAmount: 0, yearlyAmount: 0,             label: "FlexiLearn",      durationMonthly: 30, durationYearly: 365 },
-  },
+  // Only the three class-count plans remain. Prices live in the plans_config
+  // Setting (admin-editable); defaults are in subscription.controller.
+  plans: {} as Record<string, { monthlyAmount: number; yearlyAmount: number; label: string; durationMonthly: number; durationYearly: number }>,
 };

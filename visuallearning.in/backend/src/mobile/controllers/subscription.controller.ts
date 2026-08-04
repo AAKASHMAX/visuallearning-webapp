@@ -11,10 +11,6 @@ const featureMap: Record<string, string[]> = {
   SINGLE_CLASS: ["Access any 1 class (9-12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
   DUAL_CLASS: ["Access any 2 classes (9-12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Mobile & desktop access"],
   FULL_ACCESS: ["All 4 classes (9, 10, 11, 12)", "3D animated videos", "Notes & NCERT solutions", "PYQs / Important questions", "Quizzes", "Priority support"],
-  FOUNDATION_PASS: ["Selected chapters", "Animated concept videos", "Progress tracking", "Mobile and desktop access"],
-  ACADEMIC_PLUS: ["Class 9-10 science", "Selected senior content", "Chapter notes", "MCQ quizzes", "Performance analytics"],
-  ELITE_LEARNING: ["Full 9-12 science", "Virtual labs", "3D visual learning", "Board exam practice", "Priority support"],
-  FLEXI_PLAN: ["Choose your own subjects", "Animated videos", "Chapter notes", "MCQ quizzes", "Flexible pricing"],
 };
 
 // Canonical class-count plans (same as the webapp). Admin price edits stored in

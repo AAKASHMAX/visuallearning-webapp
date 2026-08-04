@@ -20,37 +20,31 @@ import affiliateRoutes from "./routes/affiliate.routes";
 import mobileRoutes from "./mobile/routes";
 import { prisma } from "./config/prisma";
 
-const NEW_PLANS = {
-  FOUNDATION_PASS: { amount: 0,       label: "Foundation Pass", duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-  ACADEMIC_PLUS:   { amount: 899900,  label: "Academic Plus",   duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-  ELITE_LEARNING:  { amount: 1599900, label: "Elite Learning",  duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-  FLEXI_PLAN:      { amount: 0,       label: "FlexiLearn",      duration: 365, enabled: true, classSelection: 0, billingCycle: "yearly" },
-};
+// The only offered plans are the three class-count plans.
+const KEEP_PLAN_KEYS = ["SINGLE_CLASS", "DUAL_CLASS", "FULL_ACCESS"];
 
-// Ensure DB always has the correct plan keys on startup
+// Self-heal plans_config on startup: keep only the three class plans (preserving
+// their admin-set prices) and drop any legacy keys, so retired plans can't
+// reappear in the admin panel or checkout.
 async function migratePlansConfig() {
   try {
     const setting = await prisma.setting.findUnique({ where: { key: "plans_config" } });
-
-    if (!setting) {
-      // No record at all — create with new plans
-      await prisma.setting.create({ data: { key: "plans_config", value: JSON.stringify(NEW_PLANS) } });
-      console.log("✅ Plans config created with new plans");
-      return;
-    }
-
     let plans: Record<string, any> = {};
-    try { plans = JSON.parse(setting.value); } catch { /* invalid JSON — replace */ }
+    if (setting) { try { plans = JSON.parse(setting.value); } catch { /* replace */ } }
 
-    // Already has new keys — skip
-    const hasNewKeys = ["FOUNDATION_PASS", "ACADEMIC_PLUS", "ELITE_LEARNING"].some((k) => k in plans);
-    if (hasNewKeys) return;
+    const cleaned: Record<string, any> = {};
+    for (const k of KEEP_PLAN_KEYS) if (plans[k]) cleaned[k] = plans[k];
 
-    // Empty or has old keys — replace with new plans
-    await prisma.setting.update({ where: { key: "plans_config" }, data: { value: JSON.stringify(NEW_PLANS) } });
-    console.log("✅ Plans config migrated to Foundation Pass / Academic Plus / Elite Learning / FlexiLearn");
+    if (JSON.stringify(cleaned) !== JSON.stringify(plans)) {
+      await prisma.setting.upsert({
+        where: { key: "plans_config" },
+        update: { value: JSON.stringify(cleaned) },
+        create: { key: "plans_config", value: JSON.stringify(cleaned) },
+      });
+      console.log("✅ plans_config cleaned to Single / Dual / Full Access only");
+    }
   } catch (e) {
-    console.error("Plan migration error:", e);
+    console.error("Plan config cleanup error:", e);
   }
 }
 
@@ -121,34 +115,6 @@ app.get("/api/health", (_req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Ensure default courses exist linked to plan keys
-async function seedCourses() {
-  try {
-    const coursesToSeed = [
-      { name: "Foundation Pass", slug: "foundation-pass", planKey: "FOUNDATION_PASS", accentColor: "#06b6d4", icon: "Sparkles", description: "Begin your science journey with curated introductory chapters" },
-      { name: "Academic Plus", slug: "academic-plus", planKey: "ACADEMIC_PLUS", accentColor: "#3b82f6", icon: "GraduationCap", description: "Comprehensive coverage of Class 9-10 with selected 11-12 content" },
-      { name: "Elite Learning", slug: "elite-learning", planKey: "ELITE_LEARNING", accentColor: "#8b5cf6", icon: "Crown", description: "Complete 9-12 Physics, Chemistry & Biology with advanced tools" },
-    ];
-
-    for (const c of coursesToSeed) {
-      await prisma.course.upsert({
-        where: { slug: c.slug },
-        update: {
-          planKey: c.planKey,
-          icon: c.icon,
-          accentColor: c.accentColor,
-          description: c.description,
-          name: c.name
-        },
-        create: c
-      });
-      console.log(`  Seeded/Updated course: ${c.name}`);
-    }
-  } catch (e) {
-    console.error("Course seed error:", e);
-  }
-}
-
 // Hourly append of new signups to the calling team's Google Sheet. Only runs
 // when configured, so local/dev instances stay quiet.
 function scheduleLeadsSync() {
@@ -171,7 +137,6 @@ app.listen(config.port, async () => {
   console.log(`VisualLearning API running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
   await migratePlansConfig();
-  await seedCourses();
   scheduleLeadsSync();
 });
 
