@@ -54,16 +54,28 @@ export default function PricingPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  // Accept either a bare code or a full referral link pasted in — pull the code
+  // out of a ?ref=CODE / ?coupon=CODE URL, else use the last path segment.
+  const extractCode = (input: string) => {
+    let v = (input || "").trim();
+    if (!v) return "";
+    const param = v.match(/[?&](?:ref|coupon|code)=([^&\s]+)/i);
+    if (param) v = decodeURIComponent(param[1]);
+    else if (/^https?:\/\//i.test(v)) v = v.replace(/[/?#].*$/, "").split("/").pop() || v;
+    return v.trim().toUpperCase();
+  };
+
   // Auto-apply a referral code captured from a ?ref=CODE link.
   useEffect(() => {
     const ref = typeof window !== "undefined" ? localStorage.getItem("vl_ref") : null;
-    if (ref) { setCouponInput(ref); applyCoupon(ref, true); }
+    if (ref) { const c = extractCode(ref); setCouponInput(c); applyCoupon(c, true); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyCoupon = async (raw?: string, silent = false) => {
-    const code = (raw ?? couponInput).trim().toUpperCase();
+    const code = extractCode(raw ?? couponInput);
     if (!code) return;
+    setCouponInput(code); // normalise the box if a full link was pasted
     setCheckingCoupon(true);
     try {
       const { data } = await api.get(`/subscription/validate-coupon?code=${encodeURIComponent(code)}`);
