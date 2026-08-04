@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,10 @@ export default function AffiliatePage() {
               placeholder={payoutMethod === "UPI" ? "yourname@upi" : "A/C no, IFSC, name"}
             />
             <Button onClick={apply} disabled={applying} className="w-full">{applying ? "Submitting..." : "Become an Affiliate"}</Button>
+            <p className="text-center text-xs text-text-muted">
+              By applying you agree to the{" "}
+              <Link href="/affiliate-terms" className="font-semibold text-primary hover:underline">Affiliate Terms</Link>.
+            </p>
           </div>
         </div>
       )}

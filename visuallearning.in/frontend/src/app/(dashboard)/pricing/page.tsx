@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { PageLoader } from "@/components/ui/loading";
 import { RazorpayButton } from "@/components/payment/razorpay-button";
 import api from "@/lib/api";
-import { Check, GraduationCap, Layers, Crown, Sparkles, type LucideIcon } from "lucide-react";
+import { Check, GraduationCap, Layers, Crown, Sparkles, Tag, X, type LucideIcon } from "lucide-react";
+import toast from "react-hot-toast";
 
 type BillingCycle = "monthly" | "quarterly" | "yearly";
 
@@ -40,6 +41,11 @@ export default function PricingPage() {
   const [selected, setSelected] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
+  // Coupon / referral code
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discountPercent: number; applicablePlans: string[] } | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
   useEffect(() => {
     api.get("/subscription/plans").then(({ data }) => {
       setPlans(data.data?.plans || []);
@@ -47,6 +53,38 @@ export default function PricingPage() {
       setClasses(cls);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  // Auto-apply a referral code captured from a ?ref=CODE link.
+  useEffect(() => {
+    const ref = typeof window !== "undefined" ? localStorage.getItem("vl_ref") : null;
+    if (ref) { setCouponInput(ref); applyCoupon(ref, true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const applyCoupon = async (raw?: string, silent = false) => {
+    const code = (raw ?? couponInput).trim().toUpperCase();
+    if (!code) return;
+    setCheckingCoupon(true);
+    try {
+      const { data } = await api.get(`/subscription/validate-coupon?code=${encodeURIComponent(code)}`);
+      const r = data.data;
+      if (r?.valid) {
+        setCoupon({ code, discountPercent: r.discountPercent, applicablePlans: r.applicablePlans || [] });
+        if (!silent) toast.success(`Code applied — ${r.discountPercent}% off`);
+      } else {
+        setCoupon(null);
+        if (!silent) toast.error(r?.message || "Invalid code");
+      }
+    } catch (err: any) {
+      setCoupon(null);
+      if (!silent) toast.error(err.response?.data?.message || "Could not check code");
+    } finally { setCheckingCoupon(false); }
+  };
+
+  const removeCoupon = () => { setCoupon(null); setCouponInput(""); localStorage.removeItem("vl_ref"); };
+  const couponApplies = (planId: string) => !!coupon && (coupon.applicablePlans.length === 0 || coupon.applicablePlans.includes(planId));
+  const discounted = (price: number, planId: string) =>
+    couponApplies(planId) ? Math.max(1, Math.round(price * (1 - coupon!.discountPercent / 100))) : price;
 
   const ordered = useMemo(
     () => PLAN_ORDER.map((id) => plans.find((p) => p.id === id)).filter(Boolean) as Plan[],
@@ -93,6 +131,35 @@ export default function PricingPage() {
         </div>
       </div>
 
+      {/* Coupon / referral code */}
+      <div className="mx-auto mb-8 max-w-md">
+        {coupon ? (
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
+            <span className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+              <Tag className="h-4 w-4" /> {coupon.code} — {coupon.discountPercent}% off applied
+            </span>
+            <button onClick={removeCoupon} className="text-emerald-700 hover:text-emerald-900"><X className="h-4 w-4" /></button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                placeholder="Have a referral / coupon code?"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:border-primary/50 focus:outline-none"
+              />
+            </div>
+            <button onClick={() => applyCoupon()} disabled={checkingCoupon || !couponInput.trim()}
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+              {checkingCoupon ? "..." : "Apply"}
+            </button>
+          </div>
+        )}
+      </div>
+
       {ordered.length === 0 ? (
         <div className="rounded-2xl bg-white p-10 text-center text-text-muted shadow-sm">No plans available right now.</div>
       ) : (
@@ -106,7 +173,8 @@ export default function PricingPage() {
             const price = cycle === "monthly" ? plan.monthlyPrice || 0 : cycle === "quarterly" ? plan.quarterlyPrice || 0 : plan.yearlyPrice || 0;
             const ready = isFull || sel.length === max;
             const classesAccess = isFull ? allClassIds : sel;
-            const total = price;
+            const hasDiscount = couponApplies(plan.id);
+            const total = discounted(price, plan.id);
 
             return (
               <div
@@ -129,7 +197,8 @@ export default function PricingPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-black text-heading">₹{price.toLocaleString("en-IN")}</div>
+                    {hasDiscount && <div className="text-xs font-bold text-text-muted line-through">₹{price.toLocaleString("en-IN")}</div>}
+                    <div className="text-2xl font-black text-heading">₹{total.toLocaleString("en-IN")}</div>
                     <div className="text-[11px] font-bold text-text-muted">/{cycle === "monthly" ? "month" : cycle === "quarterly" ? "3 months" : "year"}</div>
                   </div>
                 </div>
@@ -181,6 +250,7 @@ export default function PricingPage() {
                       label={plan.name}
                       classesAccess={classesAccess}
                       billingCycle={cycle}
+                      couponCode={hasDiscount ? coupon?.code : undefined}
                       downloadAddon={true}
                       onSuccess={() => router.push("/dashboard")}
                       buttonLabel={`Subscribe • ₹${total.toLocaleString("en-IN")}`}
