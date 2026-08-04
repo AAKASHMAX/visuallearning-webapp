@@ -15,6 +15,7 @@ const adminLinks = [
   { href: "/admin/telegram", label: "Telegram", icon: Send },
   { href: "/admin/feedback", label: "Feedback", icon: MessageSquareText },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  { href: "/admin/affiliates", label: "Affiliates", icon: Users },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

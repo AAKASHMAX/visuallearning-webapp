@@ -2,13 +2,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, BookOpen, User, MessageSquare, Phone, CreditCard, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, MessageSquare, Phone, CreditCard, LogOut, Gift } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/courses", label: "Courses", icon: BookOpen },
   { href: "/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/affiliate", label: "Earn (Affiliate)", icon: Gift },
   { href: "/contact", label: "Contact Us", icon: Phone },
   { href: "/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/profile", label: "Profile", icon: User },

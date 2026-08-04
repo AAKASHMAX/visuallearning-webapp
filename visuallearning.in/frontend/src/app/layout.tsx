@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { GetAppModal } from "@/components/layout/get-app-modal";
 import { ConnectTelegramButton } from "@/components/layout/connect-telegram-button";
+import { RefCapture } from "@/components/affiliate/ref-capture";
 import { TelegramNotesButton } from "@/components/layout/telegram-notes-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {process.env.NEXT_PUBLIC_GA_ID && <AnalyticsTracker gaId={process.env.NEXT_PUBLIC_GA_ID} />}
+        <RefCapture />
         {children}
         <GetAppModal />
         <ConnectTelegramButton />

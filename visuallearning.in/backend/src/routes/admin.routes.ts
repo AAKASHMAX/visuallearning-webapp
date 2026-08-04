@@ -30,6 +30,10 @@ import {
   getTelegramStatus, draftTelegram, sendTelegram, registerWebhook, draftSchema, sendSchema,
 } from "../controllers/telegram.controller";
 import { deleteFeedback, getFeedbacks, markFeedbackRead } from "../controllers/feedback.controller";
+import {
+  adminListAffiliates, adminUpdateAffiliate, adminAffiliateCommissions, adminMarkAffiliatePaid,
+  getAffiliateSettingsAdmin, updateAffiliateSettings,
+} from "../controllers/affiliate.controller";
 
 const router = Router();
 const upload = multer({ dest: "uploads/", limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
@@ -85,6 +89,14 @@ router.put("/settings/trial", updateTrialPlan);
 // Leads sync (new signups -> Google Sheet for the calling team)
 router.get("/leads/status", getLeadsStatus);
 router.post("/leads/sync", syncLeadsNow);
+
+// Affiliate program
+router.get("/affiliates", adminListAffiliates);
+router.patch("/affiliates/:id", adminUpdateAffiliate);
+router.get("/affiliates/:id/commissions", adminAffiliateCommissions);
+router.post("/affiliates/:id/mark-paid", adminMarkAffiliatePaid);
+router.get("/settings/affiliate", getAffiliateSettingsAdmin);
+router.put("/settings/affiliate", updateAffiliateSettings);
 
 // Subscription Settings (upgrade discount)
 router.get("/settings/subscription", getSubscriptionSettings);

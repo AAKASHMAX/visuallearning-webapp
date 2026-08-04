@@ -4,6 +4,7 @@ import { prisma } from "../config/prisma";
 import { config } from "../config";
 import { createOrder, verifySignature } from "../services/razorpay";
 import { getTrialConfig } from "../services/trial.service";
+import { recordAffiliateCommission } from "../services/affiliate.service";
 import { success, error } from "../utils/apiResponse";
 import { cacheGet, cacheSet } from "../utils/cache";
 
@@ -489,6 +490,9 @@ export async function verifyPayment(req: Request, res: Response) {
         downloadAddon: true,
       },
     });
+
+    // Credit the affiliate if this sale used their referral code.
+    await recordAffiliateCommission(subscription);
 
     return success(res, subscription, "Payment verified and subscription activated");
   } catch (e) {

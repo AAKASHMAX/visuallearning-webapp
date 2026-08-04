@@ -3,6 +3,7 @@ import { prisma } from "../../config/prisma";
 import { config } from "../../config";
 import { createOrder, verifySignature } from "../../services/razorpay";
 import { getTrialConfig } from "../../services/trial.service";
+import { recordAffiliateCommission } from "../../services/affiliate.service";
 import { mobileSuccess, mobileError } from "../utils/response";
 
 // Feature list per plan type (same as webapp)
@@ -406,6 +407,9 @@ export async function purchasePlan(req: Request, res: Response) {
         downloadAddon: true,
       },
     });
+
+    // Credit the affiliate if this sale used their referral code.
+    await recordAffiliateCommission(subscription);
 
     return mobileSuccess(res, {
       subscription_id: subscription.id,

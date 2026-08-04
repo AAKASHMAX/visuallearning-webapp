@@ -37,9 +37,52 @@ model User {
   watchProgress     WatchProgress[]
   notificationReads NotificationRead[]
   feedback          Feedback[]
+  affiliate         Affiliate?
 
   @@index([email])
   @@index([role])
+}
+
+enum AffiliateStatus {
+  PENDING
+  APPROVED
+  BLOCKED
+}
+
+// An approved affiliate = a coupon (their code, giving buyers a discount) plus
+// commission tracking. Attribution rides on Subscription.couponCode.
+model Affiliate {
+  id                String          @id @default(cuid())
+  userId            String          @unique
+  code              String          @unique
+  commissionPercent Int?            // null = use the admin default
+  status            AffiliateStatus @default(PENDING)
+  payoutMethod      String?         // "UPI" | "BANK"
+  payoutDetails     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commissions       AffiliateCommission[]
+
+  @@index([status])
+}
+
+model AffiliateCommission {
+  id               String    @id @default(cuid())
+  affiliateId      String
+  subscriptionId   String    @unique
+  userId           String    // the buyer
+  saleAmount       Int       // paise
+  commissionAmount Int       // paise
+  status           String    @default("PENDING") // PENDING | PAID
+  createdAt        DateTime  @default(now())
+  paidAt           DateTime?
+
+  affiliate        Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId])
+  @@index([status])
 }
 
 model Notification {
