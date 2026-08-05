@@ -28,8 +28,11 @@ import {
   Check
 } from "lucide-react";
 import { Video, Note, Question, BoardPaper } from "@/types";
+import { useLanguage } from "@/lib/language";
 
 type Tab = "videos" | "lecture" | "notes" | "quiz" | "quiz_active";
+
+const LANG_LABEL: Record<string, string> = { HINDI: "Hinglish", ENGLISH: "English" };
 
 export default function UnifiedChapterPage() {
   const params = useParams();
@@ -54,7 +57,12 @@ export default function UnifiedChapterPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState<string>("HINDI");
+
+  // Language comes from the saved preference (Sidebar → Language). Switching it
+  // here changes the default for every chapter, so we confirm first.
+  const { language, setLanguage, hydrate: hydrateLanguage } = useLanguage();
+  const [pendingLang, setPendingLang] = useState<string | null>(null);
+  useEffect(() => { hydrateLanguage(); }, [hydrateLanguage]);
 
   // Video player state
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -91,8 +99,8 @@ export default function UnifiedChapterPage() {
         setQuestions(quizData.questions || quizData || []);
         setQuizLocked(quizData.locked || false);
 
-        // Initial Video Selection
-        const initialLang = "HINDI";
+        // Initial Video Selection — honour the saved language preference.
+        const initialLang = (typeof window !== "undefined" && localStorage.getItem("vl_language")) || "HINDI";
         // Select the first video of the requested tab (lecture, else 3D animated).
         const isWanted = (v: Video) => (wantLecture ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO");
         const langVideos = videoList.filter((v: Video) => v.language === initialLang && isWanted(v));
@@ -121,6 +129,19 @@ export default function UnifiedChapterPage() {
       const list = allVideos.filter((v) => v.language === language && (tab === "lecture" ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO"));
       if (list.length) setSelectedVideo(list[0]);
     }
+  };
+
+  // Ask before switching, since this changes the default language for every chapter.
+  const requestLanguage = (lang: string) => {
+    if (lang !== language) setPendingLang(lang);
+  };
+  const confirmLanguage = () => {
+    if (!pendingLang) return;
+    setLanguage(pendingLang); // persists as the new default
+    // Re-select the first video of the current tab in the new language.
+    const list = allVideos.filter((v) => v.language === pendingLang && (activeTab === "lecture" ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO"));
+    if (list.length) setSelectedVideo(list[0]);
+    setPendingLang(null);
   };
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
@@ -181,14 +202,14 @@ export default function UnifiedChapterPage() {
                 <div className="flex items-center justify-between px-5 py-3 border-b border-card-border bg-alternate">
                   <h3 className="text-heading font-bold text-sm sm:text-base truncate pr-3">{selectedVideo.title}</h3>
                   <div className="flex items-center gap-1 shrink-0">
-                    <button 
-                      onClick={() => setLanguage("HINDI")} 
+                    <button
+                      onClick={() => requestLanguage("HINDI")}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "HINDI" ? "bg-accent text-white shadow-md" : "bg-white text-text-muted hover:bg-surface"}`}
                     >
                       Hinglish
                     </button>
-                    <button 
-                      onClick={() => setLanguage("ENGLISH")} 
+                    <button
+                      onClick={() => requestLanguage("ENGLISH")}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === "ENGLISH" ? "bg-accent text-white shadow-md" : "bg-white text-text-muted hover:bg-surface"}`}
                     >
                       English
@@ -257,8 +278,8 @@ export default function UnifiedChapterPage() {
                   <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
                     <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
                     <p className="text-sm text-text-muted">Coming soon in {language === "HINDI" ? "Hinglish" : "English"}</p>
-                    <button 
-                      onClick={() => setLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
+                    <button
+                      onClick={() => requestLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
                       className="text-xs text-accent font-bold mt-2 hover:underline"
                     >
                       Switch to {language === "HINDI" ? "English" : "Hinglish"}
@@ -467,6 +488,36 @@ export default function UnifiedChapterPage() {
               </button>
               <button onClick={() => setShowLockedModal(false)} className="text-sm text-text-muted hover:text-heading font-medium py-1">
                 Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Language switch confirmation */}
+      {pendingLang && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-heading/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-card-border bg-white p-6 text-center shadow-2xl animate-fade-in">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
+              <Globe className="h-7 w-7 text-accent" />
+            </div>
+            <h3 className="text-lg font-bold text-heading">Switch to {LANG_LABEL[pendingLang]}?</h3>
+            <p className="mt-2 text-sm text-text-muted">
+              This will set <span className="font-bold text-heading">{LANG_LABEL[pendingLang]}</span> as your
+              default language, and every chapter will open in it. You can change it anytime from the sidebar.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={() => setPendingLang(null)}
+                className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-bold text-heading hover:bg-surface"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLanguage}
+                className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent/90"
+              >
+                Set as default
               </button>
             </div>
           </div>
