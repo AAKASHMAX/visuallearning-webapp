@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, BookOpen, User, MessageSquare, Phone, CreditCard, LogOut, Gift, Languages, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -28,8 +29,9 @@ export function Sidebar() {
   const { logout } = useAuth();
   const { language, setLanguage, hydrate } = useLanguage();
   const [langOpen, setLangOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => { hydrate(); setMounted(true); }, [hydrate]);
 
   const currentLabel = LANG_OPTIONS.find((l) => l.value === language)?.label || "Hinglish";
 
@@ -75,9 +77,10 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Language picker modal */}
-      {langOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setLangOpen(false)}>
+      {/* Language picker modal — portalled to <body> so it's never trapped
+          behind page content by the sidebar's stacking context. */}
+      {mounted && langOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setLangOpen(false)}>
           <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-2">
               <Languages className="h-5 w-5 text-primary" />
@@ -100,7 +103,8 @@ export function Sidebar() {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </aside>
   );
