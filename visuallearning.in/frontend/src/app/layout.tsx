@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { GetAppModal } from "@/components/layout/get-app-modal";
-import { ConnectTelegramButton } from "@/components/layout/connect-telegram-button";
 import { RefCapture } from "@/components/affiliate/ref-capture";
 import { TelegramNotesButton } from "@/components/layout/telegram-notes-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RefCapture />
         {children}
         <GetAppModal />
-        <ConnectTelegramButton />
         <TelegramNotesButton />
       </body>
     </html>
