@@ -122,9 +122,17 @@ export async function getVideoList(req: Request, res: Response) {
     });
     if (!chapter) return mobileError(res, "Chapter not found", 404);
 
-    const videos = await prisma.video.findMany({
+    const rawVideos = await prisma.video.findMany({
       where: { chapterId },
       orderBy: { order: "asc" },
+    });
+    // YouTube is legitimate only for lecture videos. An animated video counts
+    // only if it has a real Vimeo source (in vimeoVideoId, or a numeric id in
+    // youtubeVideoId); a non-numeric YouTube id on an animated row is a
+    // placeholder, so it's dropped and the chapter reads as "coming soon".
+    const videos = rawVideos.filter((v) => {
+      if (v.type === "LECTURE_VIDEO") return !!((v.youtubeVideoId || "").trim() || (v.vimeoVideoId || "").trim());
+      return !!(v.vimeoVideoId || "").trim() || /^\d{7,}$/.test((v.youtubeVideoId || "").trim());
     });
 
     // Check subscription access

@@ -5,6 +5,21 @@ import { cacheGet, cacheSet } from "../utils/cache";
 
 const CACHE_TTL = 300; // 5 minutes for static content
 
+// Real content rule: YouTube links are legitimate only for lecture videos.
+// An animated video counts only if it has a real Vimeo source — either in
+// vimeoVideoId, or as a numeric id in youtubeVideoId (legacy: some Vimeo ids
+// were stored there). A non-numeric YouTube id on an animated video (e.g. the
+// rickroll placeholder dQw4w9WgXcQ) is junk and treated as "no content".
+function animatedHasVimeo(v: { youtubeVideoId: string | null; vimeoVideoId: string | null }) {
+  const yt = (v.youtubeVideoId || "").trim();
+  const vm = (v.vimeoVideoId || "").trim();
+  return !!vm || /^\d{7,}$/.test(yt);
+}
+function isRealVideo(v: { type: string; youtubeVideoId: string | null; vimeoVideoId: string | null }) {
+  if (v.type === "LECTURE_VIDEO") return !!((v.youtubeVideoId || "").trim() || (v.vimeoVideoId || "").trim());
+  return animatedHasVimeo(v);
+}
+
 export async function getClasses(_req: Request, res: Response) {
   try {
     const cached = cacheGet("classes");
@@ -60,11 +75,10 @@ export async function getChapters(req: Request, res: Response) {
     });
     if (!subject) return error(res, "Subject not found", 404);
 
-    // Build where clause based on content type filter
+    // Content-type filter. The animated filter is applied after counting, since
+    // it needs the real-video check (a Vimeo source), not just any video row.
     const chapterWhere: any = { subjectId: id };
-    if (contentType === "animated_videos") {
-      chapterWhere.videos = { some: { type: "ANIMATED_VIDEO" } };
-    } else if (contentType === "notes") {
+    if (contentType === "notes") {
       chapterWhere.notes = { some: {} };
     } else if (contentType === "quiz" || contentType === "question_bank") {
       chapterWhere.questions = { some: {} };
@@ -78,52 +92,24 @@ export async function getChapters(req: Request, res: Response) {
       },
     });
 
-    // If filtering by content type, add specific content count (single query instead of N+1)
-    let chaptersWithCount = chapters;
-    if (contentType === "animated_videos") {
-      const videoType = "ANIMATED_VIDEO";
-      const chapterIds = chapters.map((ch) => ch.id);
-      const counts = await prisma.video.groupBy({
-        by: ["chapterId"],
-        where: { chapterId: { in: chapterIds }, type: videoType },
-        _count: true,
-      });
-      const countMap = new Map(counts.map((c) => [c.chapterId, c._count]));
-      chaptersWithCount = chapters.map((ch) => ({
-        ...ch,
-        contentCount: countMap.get(ch.id) || 0,
-      }));
-    } else if (contentType === "notes") {
-      chaptersWithCount = chapters.map((ch) => ({
-        ...ch,
-        contentCount: ch._count.notes,
-      }));
-    } else if (contentType === "quiz" || contentType === "question_bank") {
-      chaptersWithCount = chapters.map((ch) => ({
-        ...ch,
-        contentCount: ch._count.questions,
-      }));
-    }
-
     // Per-chapter content counts by type, so the UI can flag empty chapters as
-    // "Coming Soon" for each content type (animation, lecture, notes, ncert, pyq,
-    // important, quiz). Two grouped queries — no N+1.
-    const chapterIds = chaptersWithCount.map((ch) => ch.id);
-    const vGroups = chapterIds.length
-      ? await prisma.video.groupBy({ by: ["chapterId", "type"], where: { chapterId: { in: chapterIds } }, _count: true })
-      : [];
-    const noteRows = chapterIds.length
-      ? await prisma.note.findMany({ where: { chapterId: { in: chapterIds } }, select: { chapterId: true, title: true } })
-      : [];
+    // "Coming Soon". One video fetch; animation counts require a real Vimeo
+    // source, lecture counts accept YouTube. Empty `in: []` returns nothing.
+    const chapterIds = chapters.map((ch) => ch.id);
+    const [videoRows, noteRows] = await Promise.all([
+      prisma.video.findMany({ where: { chapterId: { in: chapterIds } }, select: { chapterId: true, type: true, youtubeVideoId: true, vimeoVideoId: true } }),
+      prisma.note.findMany({ where: { chapterId: { in: chapterIds } }, select: { chapterId: true, title: true } }),
+    ]);
     const vMap = new Map<string, { animation: number; lecture: number }>();
     const nMap = new Map<string, { notes: number; ncert: number; pyq: number; important: number }>();
     for (const cid of chapterIds) {
       vMap.set(cid, { animation: 0, lecture: 0 });
       nMap.set(cid, { notes: 0, ncert: 0, pyq: 0, important: 0 });
     }
-    for (const g of vGroups) {
-      const e = vMap.get(g.chapterId)!;
-      if (g.type === "LECTURE_VIDEO") e.lecture += g._count; else e.animation += g._count;
+    for (const v of videoRows) {
+      const e = vMap.get(v.chapterId)!;
+      if (v.type === "LECTURE_VIDEO") { if (isRealVideo(v)) e.lecture++; }
+      else if (animatedHasVimeo(v)) e.animation++;
     }
     for (const n of noteRows) {
       const t = (n.title || "").toLowerCase();
@@ -133,7 +119,8 @@ export async function getChapters(req: Request, res: Response) {
       else if (t.includes("important")) e.important++;
       else e.notes++;
     }
-    const chaptersWithCounts = chaptersWithCount.map((ch: any) => ({
+
+    let chaptersWithCounts = chapters.map((ch: any) => ({
       ...ch,
       counts: {
         animation: vMap.get(ch.id)?.animation || 0,
@@ -144,7 +131,16 @@ export async function getChapters(req: Request, res: Response) {
         important: nMap.get(ch.id)?.important || 0,
         quiz: ch._count?.questions || 0,
       },
+      contentCount:
+        contentType === "animated_videos" ? (vMap.get(ch.id)?.animation || 0)
+        : contentType === "notes" ? ch._count.notes
+        : (contentType === "quiz" || contentType === "question_bank") ? ch._count.questions
+        : undefined,
     }));
+    // When filtering by animated videos, drop chapters with no real animation.
+    if (contentType === "animated_videos") {
+      chaptersWithCounts = chaptersWithCounts.filter((ch: any) => (ch.contentCount || 0) > 0);
+    }
 
     const chapterResult = { subject, chapters: chaptersWithCounts };
     cacheSet(chapterCacheKey, chapterResult, CACHE_TTL);
@@ -239,7 +235,10 @@ export async function getVideos(req: Request, res: Response) {
       where: { chapterId: id, ...(type ? { type } : {}) },
       orderBy: { order: "asc" },
     });
-    const allChapterVideos = chapterVideos.filter((v) => !!(v.youtubeVideoId || v.vimeoVideoId));
+    // Real content rule: YouTube is legitimate only for lecture videos. An
+    // animated video counts only if it has a Vimeo source — YouTube-only
+    // animated rows are placeholders, so the chapter shows "Coming soon".
+    const allChapterVideos = chapterVideos.filter((v) => isRealVideo(v));
 
     let videos = [];
     let usingFallback = false;
@@ -419,12 +418,13 @@ export async function getSubjectContentCounts(req: Request, res: Response) {
     const subject = await prisma.subject.findUnique({ where: { id } });
     if (!subject) return error(res, "Subject not found", 404);
 
-    const [animatedVideos, notes, quiz, boardPapers] = await Promise.all([
-      prisma.video.count({ where: { chapter: { subjectId: id }, type: "ANIMATED_VIDEO" } }),
+    const [animatedRows, notes, quiz, boardPapers] = await Promise.all([
+      prisma.video.findMany({ where: { chapter: { subjectId: id }, type: "ANIMATED_VIDEO" }, select: { youtubeVideoId: true, vimeoVideoId: true } }),
       prisma.note.count({ where: { chapter: { subjectId: id } } }),
       prisma.question.count({ where: { chapter: { subjectId: id } } }),
       prisma.boardPaper.count({ where: { subjectId: id } }),
     ]);
+    const animatedVideos = animatedRows.filter(animatedHasVimeo).length;
 
     const result = { animatedVideos, notes, quiz, boardPapers };
     cacheSet(cacheKey, result, CACHE_TTL);
