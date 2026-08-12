@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Atom, Bell, BookOpen, CreditCard, LayoutDashboard, Menu, Phone, Smartphone, User, X } from "lucide-react";
+import { Bell, BookOpen, CreditCard, LayoutDashboard, Menu, Phone, Smartphone, User, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
@@ -78,18 +78,7 @@ export function Navbar() {
               );
             })}
 
-            {/* Cross-link to the PhysicsLab webapp — styled in the physics brand (cyan→purple + glow). */}
-            <a
-              href="https://physics.visuallearning.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] px-3.5 py-1.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(0,212,255,0.35)] transition-all hover:shadow-[0_0_28px_rgba(0,212,255,0.5)] hover:brightness-110 active:scale-95"
-            >
-              <Atom className="w-4 h-4" />
-              PhysicsLab
-            </a>
-
-            {/* Download the Android app (only once it's live on Play) */}
+            {/* Download the Android app from the Play Store. */}
             {APP_PUBLISHED && (
               <a
                 href={PLAY_STORE_URL}
@@ -98,7 +87,7 @@ export function Navbar() {
                 className="flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 py-1.5 text-sm font-bold text-white shadow-md transition-all hover:bg-emerald-600 active:scale-95"
               >
                 <Smartphone className="w-4 h-4" />
-                Get App
+                Download App
               </a>
             )}
 
@@ -163,12 +152,9 @@ export function Navbar() {
                     </Link>
                   );
                 })}
-                <a href="https://physics.visuallearning.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] px-4 py-3 text-sm font-black text-white shadow-[0_0_20px_rgba(0,212,255,0.3)]" onClick={() => setMenuOpen(false)}>
-                  <Atom className="h-4 w-4" /> PhysicsLab
-                </a>
                 {APP_PUBLISHED && (
                   <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-black text-white" onClick={() => setMenuOpen(false)}>
-                    <Smartphone className="h-4 w-4" /> Get App
+                    <Smartphone className="h-4 w-4" /> Download App
                   </a>
                 )}
                 <button onClick={() => { logout(); window.location.href = "/"; }} className="block w-full rounded-xl bg-red-500/15 px-4 py-3 text-left text-sm font-black text-red-100">Logout</button>
@@ -191,12 +177,9 @@ export function Navbar() {
                     </Link>
                   );
                 })}
-                <a href="https://physics.visuallearning.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] px-4 py-3 text-sm font-black text-white shadow-[0_0_20px_rgba(0,212,255,0.3)]" onClick={() => setMenuOpen(false)}>
-                  <Atom className="h-4 w-4" /> PhysicsLab
-                </a>
                 {APP_PUBLISHED && (
                   <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-black text-white" onClick={() => setMenuOpen(false)}>
-                    <Smartphone className="h-4 w-4" /> Get App
+                    <Smartphone className="h-4 w-4" /> Download App
                   </a>
                 )}
                 <Link href="/auth/login" className="block rounded-xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/15" onClick={() => setMenuOpen(false)}>Login</Link>

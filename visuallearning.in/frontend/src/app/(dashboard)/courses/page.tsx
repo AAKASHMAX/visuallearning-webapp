@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
 import { BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain } from "lucide-react";
+import { DownloadAppBanner } from "@/components/home/download-app-banner";
 
 const demos = [
   { title: "3D Animated Video", desc: "Watch a sample 3D animation.", href: "/demo/video", icon: MonitorPlay, gradient: "from-violet-600 to-fuchsia-500" },
@@ -45,6 +46,11 @@ export default function CoursesClassGridPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      {/* Get-the-app banner at the top */}
+      <div className="mb-6">
+        <DownloadAppBanner />
+      </div>
+
       {/* Header banner */}
       <div className="rounded-2xl bg-gradient-to-br from-primary to-[#2a4a8a] p-6 mb-6 shadow-lg flex items-center justify-between gap-4">
         <div>
