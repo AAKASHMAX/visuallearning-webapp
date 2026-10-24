@@ -9,7 +9,6 @@ import { useAuth } from "@/lib/auth";
 import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
 import { BEATS, SUBJECTS, SUBJECT_START, type SubjectKey } from "./content";
 import { classHref, lessonHref } from "./lesson-link";
-import { scramble } from "./scramble";
 import { ExploreDock } from "./explore-dock";
 import type { SparkEngine, Tier } from "./engine/engine";
 import "./spark.css";
@@ -23,8 +22,6 @@ const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
-
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** Phones and modest machines get fewer particles and no glow pass; ?quality= overrides. */
 function detectTier(): Tier {
@@ -41,7 +38,6 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const beatRefs = useRef<(HTMLElement | null)[]>([]);
-  const headRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const progressRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
@@ -107,31 +103,49 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
     let shown = clampP(window.scrollY / beatPx);
     let last = performance.now();
 
+    // Every style write costs the browser a style recalculation, so a value is
+    // written only when it changes: scenes far off screen stay hidden untouched,
+    // and nothing is written while the page is still.
+    const written = new WeakMap<HTMLElement, Record<string, string>>();
+    const put = (el: HTMLElement, prop: "opacity" | "transform" | "visibility" | "pointerEvents", value: string) => {
+      const was = written.get(el) ?? {};
+      if (was[prop] === value) return;
+      was[prop] = value;
+      written.set(el, was);
+      el.style[prop] = value;
+    };
+
     const paint = (sp: number) => {
       beatRefs.current.forEach((el, i) => {
         if (!el) return;
         const d = sp - i;
         const o = 1 - smoothstep(0.26, 0.5, Math.abs(d));
-        el.style.opacity = String(o);
-        el.style.transform = `translate3d(0, ${(-d * 46).toFixed(1)}px, 0)`;
-        el.style.visibility = o < 0.01 ? "hidden" : "visible";
-        el.inert = o < 0.5;
+        if (o < 0.01) {
+          put(el, "visibility", "hidden");
+          put(el, "opacity", "0");
+          if (!el.inert) el.inert = true;
+          return;
+        }
+        put(el, "opacity", o.toFixed(3));
+        put(el, "transform", `translate3d(0, ${(-d * 46).toFixed(1)}px, 0)`);
+        put(el, "visibility", "visible");
+        if (el.inert !== o < 0.5) el.inert = o < 0.5;
       });
       const now = Math.round(sp);
       if (now !== activeRef.current) {
         activeRef.current = now;
         setActive(now);
       }
-      if (progressRef.current) progressRef.current.style.transform = `scaleX(${(sp / LAST).toFixed(4)})`;
-      if (hintRef.current) hintRef.current.style.opacity = String(1 - smoothstep(0.04, 0.22, sp));
+      if (progressRef.current) put(progressRef.current, "transform", `scaleX(${(sp / LAST).toFixed(4)})`);
+      if (hintRef.current) put(hintRef.current, "opacity", (1 - smoothstep(0.04, 0.22, sp)).toFixed(3));
       // Past the last scene the page carries on (about, FAQ, footer): the rail and the dock step aside.
       const past = (window.scrollY - LAST * beatPx) / window.innerHeight;
       const away = smoothstep(0.05, 0.4, past);
-      if (railRef.current) railRef.current.style.opacity = String(1 - away);
+      if (railRef.current) put(railRef.current, "opacity", (1 - away).toFixed(3));
       if (dockRef.current) {
-        dockRef.current.style.opacity = String(1 - away);
-        dockRef.current.style.pointerEvents = away > 0.5 ? "none" : "";
-        dockRef.current.style.visibility = away > 0.99 ? "hidden" : "visible";
+        put(dockRef.current, "opacity", (1 - away).toFixed(3));
+        put(dockRef.current, "pointerEvents", away > 0.5 ? "none" : "");
+        put(dockRef.current, "visibility", away > 0.99 ? "hidden" : "visible");
       }
     };
 
@@ -162,14 +176,6 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
       engine?.dispose();
     };
   }, [fonts.display, fonts.mono]);
-
-  // Each headline decodes itself as its scene arrives.
-  useEffect(() => {
-    if (reducedRef.current) return;
-    const el = headRefs.current[active];
-    if (!el) return;
-    return scramble(el, BEATS[active].headline);
-  }, [active]);
 
   const goTo = (beat: number) => {
     window.scrollTo({ top: beat * window.innerHeight * BEAT_VH, behavior: reducedRef.current ? "auto" : "smooth" });
@@ -255,14 +261,7 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
                   {beat.eyebrow}
                 </p>
                 <Heading id={`sj-h-${i}`} className="sj-headline">
-                  <span className="sj-sr">{beat.headline}</span>
-                  <span
-                    aria-hidden="true"
-                    ref={(el) => {
-                      headRefs.current[i] = el;
-                    }}
-                    dangerouslySetInnerHTML={{ __html: escapeHtml(beat.headline) }}
-                  />
+                  {beat.headline}
                 </Heading>
                 <p className="sj-body">{beat.body}</p>
                 {beat.formula && (

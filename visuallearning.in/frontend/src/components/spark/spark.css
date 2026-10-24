@@ -15,12 +15,6 @@
 }
 .sj-root ::selection { background: color-mix(in srgb, var(--sj-accent) 45%, transparent); color: #fff; }
 
-.sj-sr {
-  position: absolute !important;
-  width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
-
 /* ---------- the 3D stage ---------- */
 
 .sj-stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
