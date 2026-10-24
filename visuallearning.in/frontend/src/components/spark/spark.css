@@ -1,0 +1,282 @@
+/* Spark journey: an immersive, scroll-driven page. Everything is scoped to .sj-* */
+
+.sj-root {
+  --sj-bg: #04050f;
+  --sj-ink: #eef1fb;
+  --sj-muted: #a9b2cc;
+  --sj-faint: #6b7594;
+  --sj-line: rgba(255, 255, 255, 0.12);
+  --sj-accent: #a78bfa;
+  position: relative;
+  background: var(--sj-bg);
+  color: var(--sj-ink);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.sj-root ::selection { background: color-mix(in srgb, var(--sj-accent) 45%, transparent); color: #fff; }
+
+.sj-sr {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- the 3D stage ---------- */
+
+.sj-stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.sj-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.4s ease; }
+.sj-root.is-ready .sj-canvas { opacity: 1; }
+
+/* Shown while the 3D loads, and instead of it where WebGL is missing. */
+.sj-fallback {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(60vmax 45vmax at 66% 50%, color-mix(in srgb, var(--sj-accent) 22%, transparent), transparent 70%),
+    radial-gradient(90vmax 70vmax at 80% 120%, #1b1f4a 0%, transparent 60%),
+    linear-gradient(180deg, #04050f, #0a0d26);
+  transition: opacity 1.4s ease, background 1.2s ease;
+}
+.sj-root.is-ready .sj-fallback { opacity: 0; }
+.sj-fallback-spark {
+  position: absolute; left: 66%; top: 50%; width: 14px; height: 14px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow: 0 0 22px 8px #fff8, 0 0 80px 30px color-mix(in srgb, var(--sj-accent) 60%, transparent);
+  animation: sj-pulse 2.6s ease-in-out infinite;
+}
+@keyframes sj-pulse { 50% { transform: translate(-50%, -50%) scale(1.35); opacity: 0.85; } }
+
+/* ---------- header ---------- */
+
+.sj-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; align-items: center; gap: 28px;
+  padding: 18px clamp(18px, 4vw, 56px);
+  background: linear-gradient(180deg, rgba(4, 5, 15, 0.82), rgba(4, 5, 15, 0));
+}
+.sj-header .vl-brand { color: var(--sj-ink); font-size: 19px; }
+.sj-nav { display: flex; gap: 26px; margin-left: 18px; }
+.sj-nav a, .sj-login { color: var(--sj-muted); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: color 0.2s; }
+.sj-nav a:hover, .sj-login:hover { color: var(--sj-ink); }
+.sj-header-actions { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+
+.sj-button {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 22px; border-radius: 999px;
+  background: #f4f6ff; color: #05061a;
+  font-size: 14px; font-weight: 650; text-decoration: none; border: 0; cursor: pointer;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--sj-accent) 0%, transparent);
+  transition: transform 0.25s, box-shadow 0.35s, background 0.25s;
+}
+.sj-button:hover { transform: translateY(-2px); box-shadow: 0 10px 40px -6px color-mix(in srgb, var(--sj-accent) 70%, transparent); background: #fff; }
+.sj-button-small { padding: 10px 17px; font-size: 13px; }
+.sj-ghost {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 13px 18px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04); color: var(--sj-ink);
+  border: 1px solid var(--sj-line); font-size: 14px; font-weight: 550;
+  text-decoration: none; cursor: pointer; backdrop-filter: blur(10px);
+  transition: border-color 0.25s, background 0.25s;
+}
+.sj-ghost:hover { border-color: color-mix(in srgb, var(--sj-accent) 70%, transparent); background: color-mix(in srgb, var(--sj-accent) 10%, transparent); }
+
+/* ---------- scene text ---------- */
+
+.sj-overlay { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+/* A soft shade behind the words, so light passing behind them never washes them out. */
+.sj-overlay::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.42) 32%, rgba(0, 0, 0, 0) 58%);
+}
+.sj-overlay::after {
+  content: ""; position: absolute; inset: 0 0 0 auto; width: 260px;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+}
+.sj-beat {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  padding: 90px clamp(20px, 6.2vw, 104px) 70px;
+  will-change: opacity, transform;
+}
+.sj-copy { width: min(560px, 44vw); pointer-events: auto; }
+
+.sj-eyebrow {
+  display: flex; align-items: center; gap: 11px;
+  font-family: var(--sj-mono), ui-monospace, monospace;
+  font-size: 11.5px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--sj-accent);
+}
+.sj-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sj-accent); box-shadow: 0 0 14px 2px var(--sj-accent); }
+
+.sj-headline {
+  margin: 20px 0 22px;
+  font-family: var(--sj-display), Inter, sans-serif;
+  font-weight: 700;
+  font-size: clamp(30px, 4.15vw, 64px);
+  line-height: 1.03;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: #f7f8ff;
+  text-shadow: 0 0 34px color-mix(in srgb, var(--sj-accent) 30%, transparent);
+  text-wrap: balance;
+}
+.is-hero .sj-headline { font-size: clamp(40px, 6.1vw, 98px); line-height: 0.98; }
+.is-hero .sj-copy { width: min(720px, 52vw); }
+
+.sj-body { max-width: 31em; font-size: clamp(15px, 1.12vw, 17px); line-height: 1.75; color: var(--sj-muted); }
+
+/* The formula is written in light when its scene arrives. */
+.sj-formula {
+  position: relative; display: inline-block; margin-top: 24px; padding: 11px 17px;
+  border-radius: 12px; overflow: hidden;
+  font-family: var(--sj-mono), ui-monospace, monospace;
+  font-size: clamp(14px, 1.25vw, 18.5px); letter-spacing: 0.02em; color: #fff;
+  background: color-mix(in srgb, var(--sj-accent) 9%, rgba(4, 5, 15, 0.35));
+  border: 1px solid color-mix(in srgb, var(--sj-accent) 38%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--sj-accent) 85%, transparent);
+  backdrop-filter: blur(6px);
+}
+.sj-formula sub, .sj-formula sup { font-size: 0.68em; line-height: 0; }
+.sj-formula b { color: var(--sj-accent); font-weight: 700; }
+.sj-beat.is-active .sj-formula > span { animation: sj-write 1.5s cubic-bezier(0.6, 0, 0.2, 1) 0.15s both; }
+.sj-beat.is-active .sj-formula::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: sj-sweep 2.2s ease 0.4s;
+}
+@keyframes sj-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes sj-sweep { to { transform: translateX(120%); } }
+
+/* Every scene opens its real lesson. */
+.sj-lesson {
+  display: flex; align-items: center; gap: 13px; width: fit-content; max-width: 100%;
+  margin-top: 18px; padding: 10px 14px 10px 10px; border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045); border: 1px solid var(--sj-line);
+  color: var(--sj-ink); text-decoration: none; backdrop-filter: blur(12px);
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+}
+.sj-lesson:hover { border-color: color-mix(in srgb, var(--sj-accent) 65%, transparent); background: color-mix(in srgb, var(--sj-accent) 9%, transparent); transform: translateY(-2px); }
+.sj-lesson-play {
+  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--sj-accent); color: #05061a; box-shadow: 0 0 22px -2px var(--sj-accent);
+}
+.sj-lesson-text { display: grid; gap: 2px; min-width: 0; }
+.sj-lesson-text small { font-family: var(--sj-mono), monospace; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sj-faint); }
+.sj-lesson-text strong { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sj-lesson-go { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; margin-left: 6px; font-size: 12.5px; font-weight: 600; color: var(--sj-accent); }
+
+.sj-hero-actions, .sj-final-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 30px; }
+
+/* ---------- finale ---------- */
+
+.sj-classes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 26px; }
+.sj-classes > span { margin-right: 6px; font-family: var(--sj-mono), monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sj-faint); }
+.sj-classes a {
+  display: grid; place-items: center; min-width: 52px; height: 44px; padding: 0 14px; border-radius: 12px;
+  font-family: var(--sj-display), sans-serif; font-weight: 600; font-size: 16px;
+  color: var(--sj-ink); text-decoration: none;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--sj-line);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.sj-classes a:hover { background: color-mix(in srgb, var(--sj-accent) 18%, transparent); border-color: var(--sj-accent); transform: translateY(-2px); }
+.sj-final-links { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 24px; }
+.sj-final-links a, .sj-final-links button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--sj-muted); font-size: 13px; font-weight: 500; text-decoration: none;
+}
+.sj-final-links a:hover, .sj-final-links button:hover { color: var(--sj-ink); }
+
+/* ---------- side rail, progress, scroll hint ---------- */
+
+.sj-rail {
+  position: fixed; right: clamp(16px, 2.6vw, 40px); top: 50%; z-index: 5;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 18px;
+}
+.sj-rail::before {
+  content: ""; position: absolute; right: 4px; top: 8px; height: 92px; width: 1px;
+  background: linear-gradient(var(--sj-line), transparent);
+}
+.sj-rail button {
+  position: relative; display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--sj-faint); font-family: var(--sj-mono), monospace; font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  transition: color 0.3s;
+}
+.sj-rail button:hover { color: var(--sj-ink); }
+.sj-rail-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid currentColor; transition: background 0.3s, box-shadow 0.3s, border-color 0.3s; }
+.sj-rail button.is-current { color: var(--sj-dot); }
+.sj-rail button.is-current .sj-rail-dot { background: var(--sj-dot); border-color: var(--sj-dot); box-shadow: 0 0 14px 2px var(--sj-dot); }
+.sj-rail-scene { display: grid; justify-items: end; gap: 3px; margin-top: 18px; text-align: right; }
+.sj-rail-scene span { font-size: 12.5px; color: var(--sj-ink); }
+.sj-rail-scene strong { font-family: var(--sj-mono), monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; color: var(--sj-faint); }
+
+.sj-progress { position: fixed; left: 0; right: 0; bottom: 0; height: 2px; z-index: 5; background: rgba(255, 255, 255, 0.05); }
+.sj-progress > div {
+  height: 100%; transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, #a78bfa, #00d4ff 22%, #f59e0b 50%, #10b981 76%, #c084fc);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+}
+
+.sj-hint {
+  position: fixed; left: clamp(20px, 6.2vw, 104px); bottom: 30px; z-index: 5;
+  display: flex; flex-direction: row-reverse; align-items: center; gap: 14px; pointer-events: none;
+  font-family: var(--sj-mono), monospace; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--sj-muted);
+}
+.sj-hint i { position: relative; display: block; width: 1px; height: 34px; overflow: hidden; background: rgba(255, 255, 255, 0.12); }
+.sj-hint i::after { content: ""; position: absolute; left: 0; top: -40%; width: 1px; height: 40%; background: #fff; animation: sj-drop 1.8s ease-in-out infinite; }
+@keyframes sj-drop { to { top: 100%; } }
+
+.sj-spacer { position: relative; z-index: 1; pointer-events: none; }
+
+/* The rest of the homepage, then the footer, scroll up over the stage. */
+.sj-page .vl-footer { position: relative; z-index: 6; }
+.sj-after { position: relative; z-index: 6; background: #0a0e27; color: #e2e8f0; }
+.sj-after::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 160px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 14, 39, 0), #0a0e27);
+}
+
+/* ---------- smaller screens ---------- */
+
+@media (max-width: 1100px) {
+  .sj-copy { width: min(520px, 50vw); }
+  .is-hero .sj-copy { width: min(620px, 60vw); }
+  .sj-nav { display: none; }
+}
+
+@media (max-width: 760px) {
+  .sj-header { padding: 14px 16px; gap: 12px; }
+  .sj-header .vl-brand { font-size: 17px; }
+  .sj-login { font-size: 13px; }
+  .sj-rail { display: none; }
+  .sj-overlay::after { display: none; }
+  /* Text sits at the bottom, over a fade; the scene sits above it. */
+  .sj-overlay::before {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 62%;
+    background: linear-gradient(0deg, rgba(4, 5, 15, 0.94) 0%, rgba(4, 5, 15, 0.8) 52%, rgba(4, 5, 15, 0) 100%);
+  }
+  .sj-beat { align-items: flex-end; padding: 0 18px calc(84px + env(safe-area-inset-bottom)); }
+  .sj-copy, .is-hero .sj-copy { width: 100%; }
+  .sj-eyebrow { font-size: 10px; letter-spacing: 0.16em; }
+  .sj-headline { margin: 12px 0 12px; font-size: clamp(24px, 7.4vw, 36px); }
+  .is-hero .sj-headline { font-size: clamp(32px, 10vw, 48px); }
+  .sj-body { font-size: 14px; line-height: 1.6; }
+  .sj-formula { margin-top: 14px; padding: 8px 12px; font-size: 13px; }
+  .sj-lesson { margin-top: 12px; padding: 8px 12px 8px 8px; gap: 10px; }
+  .sj-lesson-play { width: 28px; height: 28px; }
+  .sj-lesson-go { font-size: 0; gap: 0; }
+  .sj-lesson-go svg { width: 17px; height: 17px; }
+  .sj-hero-actions, .sj-final-actions { margin-top: 18px; gap: 10px; }
+  .sj-button { padding: 12px 18px; font-size: 13.5px; }
+  .sj-ghost { padding: 11px 15px; font-size: 13.5px; }
+  .sj-classes { margin-top: 16px; }
+  .sj-classes > span { flex-basis: 100%; margin: 0 0 2px; }
+  .sj-classes a { min-width: 46px; height: 40px; }
+  .sj-final-links { margin-top: 16px; }
+  .sj-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sj-beat.is-active .sj-formula > span, .sj-beat.is-active .sj-formula::after, .sj-hint i::after, .sj-fallback-spark { animation: none; }
+}
