@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageLoader } from "@/components/ui/loading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import api from "@/lib/api";
+import { AnimatedChapterCard } from "@/app/(dashboard)/courses/_components/animated-chapter-card";
 import { ChevronRight, BookOpen, Sparkles, GraduationCap, FileText, BookMarked, HelpCircle, ClipboardList, type LucideIcon } from "lucide-react";
 
 interface Chapter {
@@ -12,6 +13,7 @@ interface Chapter {
   name: string;
   order?: number;
   counts?: Record<string, number>;
+  animationKey?: string | null;
 }
 
 // Route each content type to its existing viewer:
@@ -67,69 +69,12 @@ export default function ChapterListPage() {
   const label = meta.label;
   const Icon = meta.icon;
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <Breadcrumb items={[
-        { label: className, href: `/courses/${classId}` },
-        { label: subjectName, href: `/courses/${classId}/${subjectId}` },
-        { label },
-      ]} />
-
-      {/* Header banner */}
-      <div className={`rounded-2xl bg-gradient-to-br ${meta.gradient} p-6 mb-6 shadow-lg flex items-center justify-between`}>
-        <div>
-          <h1 className="text-2xl font-bold text-white">{label}</h1>
-          <p className="text-white/80 text-sm mt-1">{subjectName} • {className}</p>
-          <p className="text-white/70 text-xs mt-1">{chapters.length} Chapters</p>
-        </div>
-        <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-      </div>
-
-      <h2 className="text-base font-semibold text-gray-500 mb-3">Chapters</h2>
-
-      {chapters.length === 0 ? (
-        <div className="rounded-2xl bg-white p-10 text-center text-gray-400 shadow-sm">
-          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Chapters will be added soon.</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {chapters.map((ch, idx) => {
-            // "Coming soon" when the chapter has no content of this type yet.
-            const isEmpty = (ch.counts?.[contentType] ?? 0) === 0;
-            if (isEmpty) {
-              return (
-                <div key={ch.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm opacity-90 cursor-not-allowed">
-                  <div className="w-11 h-11 rounded-xl bg-gray-200 flex items-center justify-center shrink-0 text-gray-400 font-bold">
-                    {ch.order || idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-400 truncate">{ch.name}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">{label}</p>
-                  </div>
-                  <span className="rounded-full bg-amber-100 text-amber-700 px-2.5 py-1 text-[11px] font-bold shrink-0">Coming soon</span>
-                </div>
-              );
-            }
-            return (
-              <Link key={ch.id} href={chapterHref(classId, subjectId, ch.id, contentType)} className="block">
-                <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
-                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0 text-white font-bold`}>
-                    {ch.order || idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-heading truncate">{ch.name}</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="learning-page physics-chapter-page">
+    <Breadcrumb items={[{ label: className, href: `/courses/${classId}` }, { label: subjectName, href: `/courses/${classId}/${subjectId}` }, { label }]} />
+    <header className="learn-lesson-header"><div><span className="learn-eyebrow"><span /> {className} / {subjectName}</span><h1>{label}</h1><p>{chapters.length} chapters · Choose a chapter to start exploring.</p></div></header>
+    {chapters.length === 0 ? <div className="learn-empty"><BookOpen /><h3>Chapters are on the way.</h3><p>New learning resources will appear here as they become available.</p></div> : <div className="physics-chapter-grid">{chapters.map((chapter, index) => {
+      const count = chapter.counts?.[contentType] ?? 0;
+      return <AnimatedChapterCard key={chapter.id} name={chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} href={chapterHref(classId, subjectId, chapter.id, contentType)} resourceLabel={`${count} ${contentType === "animation" || contentType === "lecture" ? "videos" : "resources"}`} disabled={count === 0} />;
+    })}</div>}
+  </div>;
 }

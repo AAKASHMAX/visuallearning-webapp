@@ -4,32 +4,14 @@ import { ChevronRight, Home } from "lucide-react";
 
 export interface BreadcrumbItem {
   label: string;
-  href?: string; // if undefined, it's the current page (no link)
+  href?: string;
 }
-
-interface BreadcrumbProps {
-  items: BreadcrumbItem[];
-}
-
+interface BreadcrumbProps { items: BreadcrumbItem[]; }
 export function Breadcrumb({ items }: BreadcrumbProps) {
-  return (
-    <nav className="flex items-center gap-1 text-sm mb-5 flex-wrap">
-      <Link href="/courses" className="text-primary hover:underline flex items-center gap-1 shrink-0">
-        <Home className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Courses</span>
-      </Link>
-      {items.map((item, i) => (
-        <span key={i} className="flex items-center gap-1">
-          <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          {item.href ? (
-            <Link href={item.href} className="text-primary hover:underline truncate max-w-[150px] sm:max-w-none">
-              {item.label}
-            </Link>
-          ) : (
-            <span className="text-gray-600 font-medium truncate max-w-[150px] sm:max-w-none">{item.label}</span>
-          )}
-        </span>
-      ))}
-    </nav>
-  );
+  return <nav aria-label="Breadcrumb" className="vl-breadcrumb">
+    <ol>
+      <li><Link href="/courses" aria-label="Courses"><Home size={14} aria-hidden="true" /><span>Courses</span></Link></li>
+      {items.map((item, index) => <li key={`${item.label}-${index}`}><ChevronRight size={12} aria-hidden="true" />{item.href ? <Link href={item.href}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}</li>)}
+    </ol>
+  </nav>;
 }

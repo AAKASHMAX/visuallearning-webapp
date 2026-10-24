@@ -1,0 +1,366 @@
+/* Main learning surfaces use the PhysicsLab deep-space palette. Documents retain their own styles. */
+.learning-page { --learn-ink:#e2e8f0; --learn-muted:#94a3b8; --learn-line:#2a3060; --learn-accent:#00d4ff; color:var(--learn-ink); width:100%; max-width:1260px; margin:0 auto; padding:54px 44px 64px; }
+.learn-page-header { display:flex; align-items:center; justify-content:space-between; gap:40px; margin-bottom:54px; }
+.learn-eyebrow { display:inline-flex; align-items:center; gap:9px; font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#94a3b8; }
+.learn-eyebrow>span { width:7px; height:7px; border-radius:50%; background:#1c2252; }
+.learn-page-header h1 { margin:20px 0 18px; font-size:clamp(36px,3.4vw,55px); letter-spacing:-.045em; font-weight:500; line-height:1.08; color:var(--learn-ink); }
+.learn-page-header h1 em { font-family:inherit; font-weight:400; color:#94a3b8; letter-spacing:-.045em; }
+.learn-page-header p { max-width:520px; font-size:14px; line-height:1.8; color:var(--learn-muted); }
+.learn-header-note { display:flex; flex-direction:column; gap:19px; border-left:1px solid #2a3060; padding:13px 0 13px 30px; min-width:180px; }
+.learn-header-note>svg { color:#94a3b8; }
+.learn-header-note strong { font-family:inherit; font-size:20px; font-weight:400; line-height:1.45; }
+.learn-header-note>span { font-size:9px; letter-spacing:.13em; color:var(--learn-muted); }
+.learn-section { margin-bottom:48px; }
+.learn-section-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:23px; }
+.learn-step { display:block; color:var(--learn-muted); font-size:9px; font-weight:650; letter-spacing:.13em; line-height:1.7; }
+.learn-section-heading h2 { font-size:24px; font-weight:500; letter-spacing:-.035em; margin-top:6px; color:var(--learn-ink); }
+.learn-text-link { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#e2e8f0; text-decoration:none; white-space:nowrap; }
+.learn-text-link:hover { color:#e2e8f0; }
+.learn-text-link svg,.learn-resource-action svg,.learn-arrow-circle svg { transition:transform .2s; }
+.learn-text-link:hover svg,.learn-resource-card:hover .learn-resource-action svg { transform:translate(2px,-1px); }
+.learn-button { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:45px; padding:12px 20px; background:#0a0e27; color:#e2e8f0; border:1px solid transparent; border-radius:12px; font-family:inherit; font-size:12px; font-weight:650; line-height:1.4; cursor:pointer; text-decoration:none; transition:background .18s,transform .18s; }
+.learn-button:hover { background:#0a0e27; transform:translateY(-1px); }
+.learn-button-light { background:var(--learn-accent,#00d4ff); color:#e2e8f0; }
+.learn-button-light:hover { background:#00d4ff; color:#e2e8f0; }
+.learn-button-outline { background:transparent; border-color:#2a3060; color:#e2e8f0; }
+.learn-button-outline:hover { background:#1a1f4a; color:#e2e8f0; }
+.learn-button:disabled { opacity:.5; transform:none; cursor:not-allowed; background:#1a1f4a; color:#94a3b8; }
+.learning-page :is(a,button,input,select):focus-visible,.learn-resource-viewer :is(button,select,a):focus-visible { outline:2px solid #00d4ff; outline-offset:4px; }
+.learn-class-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:17px; }
+.learn-class-card { display:block; overflow:hidden; border:1px solid var(--learn-line); border-radius:23px; background:#151a3d; min-height:255px; transition:transform .2s,border-color .2s; }
+.learn-class-card:hover { transform:translateY(-5px); border-color:#2a3060; }
+.learn-class-art { position:relative; height:175px; overflow:hidden; background:#1a1f4a; color:#94a3b8; }
+.learn-tone-1 .learn-class-art { background:#1a1f4a; color:#94a3b8; }
+.learn-tone-2 .learn-class-art { background:#1a1f4a; color:#94a3b8; }
+.learn-tone-3 .learn-class-art { background:#1a1f4a; color:#94a3b8; }
+.learn-class-number { position:absolute; bottom:12px; left:22px; color:#e2e8f0; font-family:inherit; font-size:66px; line-height:1; font-weight:400; letter-spacing:-.07em; z-index:1; }
+.learn-orbit { position:absolute; right:-10px; top:18px; width:130px; height:80px; border:1px solid currentColor; border-radius:50%; opacity:.4; }
+.learn-orbit-one { transform:rotate(28deg); }
+.learn-orbit-two { transform:rotate(85deg); }
+.learn-orbit-three { transform:rotate(145deg); }
+.learn-orbit-core { position:absolute; width:22px; height:22px; right:44px; top:48px; border-radius:50%; background:currentColor; opacity:.8; }
+.learn-class-card:hover .learn-orbit-core { box-shadow:0 0 0 9px #00d4ff45; }
+.learn-class-info { display:flex; align-items:center; justify-content:space-between; gap:7px; padding:20px; }
+.learn-class-info h3 { font-size:17px; letter-spacing:-.025em; font-weight:600; }
+.learn-class-info p { font-size:10px; margin-top:5px; color:var(--learn-muted); }
+.learn-arrow-circle { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:33px; height:33px; border:1px solid #2a3060; border-radius:50%; color:#e2e8f0; }
+.learn-class-card:hover .learn-arrow-circle { background:#00d4ff; border-color:#2a3060; }
+.learn-resource-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.learn-resource-card { display:flex; flex-direction:column; align-items:flex-start; border:1px solid var(--learn-line); padding:23px; border-radius:20px; background:#151a3d; transition:transform .2s,border-color .2s; }
+.learn-resource-card:hover { border-color:#2a3060; transform:translateY(-3px); }
+.learn-resource-icon { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:14px; background:#1a1f4a; color:#94a3b8; flex-shrink:0; }
+.learn-resource-card h3 { color:var(--learn-ink); font-size:15px; letter-spacing:-.02em; font-weight:600; margin-top:19px; }
+.learn-resource-card p { color:var(--learn-muted); font-size:12px; line-height:1.7; margin-top:7px; flex:1; }
+.learn-resource-action { display:inline-flex; align-items:center; gap:8px; color:#94a3b8; margin-top:21px; font-size:11px; font-weight:650; }
+.learn-discovery-banner { display:flex; align-items:center; gap:23px; padding:30px; background:#0a0e27; color:#e2e8f0; border-radius:24px; margin-top:45px; }
+.learn-discovery-banner>div { flex:1; }
+.learn-discovery-banner h2 { font-family:inherit; font-size:25px; line-height:1.25; font-weight:400; color:#e2e8f0; }
+.learn-discovery-banner p { font-size:12px; line-height:1.7; margin-top:8px; color:#94a3b8; }
+.learn-discovery-banner .learn-step { color:#94a3b8; margin-bottom:10px; }
+.learn-banner-icon { width:58px; height:58px; border:1px solid #2a306030; border-radius:18px; display:flex; align-items:center; justify-content:center; color:#00d4ff; flex-shrink:0; }
+.learn-app-banner { margin-top:24px; }
+.learn-empty { display:flex; flex-direction:column; align-items:center; text-align:center; padding:54px 24px; border:1px dashed #2a3060; border-radius:23px; background:#151a3d; }
+.learn-empty>svg { color:#94a3b8; width:32px; height:32px; }
+.learn-empty h3 { font-family:inherit; font-size:26px; font-weight:400; margin-top:20px; }
+.learn-empty p { max-width:420px; color:var(--learn-muted); font-size:13px; line-height:1.8; margin:12px 0 22px; }
+.learn-skeleton { min-height:265px; border-color:#2a3060; background:linear-gradient(110deg,#1a1f4a 25%,#0f1333 40%,#1a1f4a 55%); background-size:200% 100%; animation:learn-loading 1.5s ease-in-out infinite; }
+@keyframes learn-loading { to { background-position:-200% 0; } }
+.learn-pill { display:inline-flex; align-items:center; gap:8px; border-radius:30px; padding:7px 11px; background:#1a1f4a; color:#94a3b8; font-size:10px; font-weight:600; white-space:nowrap; }
+.learn-pricing-header { text-align:center; justify-content:center; margin-bottom:30px; }
+.learn-pricing-header p { margin-left:auto; margin-right:auto; }
+.learn-pricing-controls { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; margin:28px 0; }
+.learn-cycle-switch { display:inline-flex; padding:5px; background:#1a1f4a; border-radius:14px; gap:3px; }
+.learn-cycle-switch button { padding:10px 19px; font-size:12px; color:#94a3b8; border-radius:10px; font-weight:600; cursor:pointer; }
+.learn-cycle-switch button.is-active { background:#151a3d; color:#e2e8f0; box-shadow:0 2px 3px #00000006; }
+.learn-pricing-period { display:inline-flex; align-items:center; gap:7px; font-size:10px; color:var(--learn-muted); }
+.learn-plan-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; align-items:stretch; }
+.learn-plan-card { display:flex; flex-direction:column; padding:25px; border:1px solid var(--learn-line); border-radius:24px; background:#151a3d; min-width:0; }
+.learn-plan-card.learn-skeleton { min-height:560px; }
+.learn-plan-top { display:flex; justify-content:space-between; align-items:center; min-height:45px; gap:7px; margin-bottom:24px; }
+.learn-plan-top .learn-pill { font-size:9px; padding:6px 9px; }
+.learn-plan-card h2 { font-size:23px; line-height:1.25; font-weight:600; letter-spacing:-.04em; }
+.learn-plan-tagline { color:var(--learn-muted); font-size:12px; line-height:1.7; min-height:41px; margin-top:9px; }
+.learn-plan-price { display:flex; flex-wrap:wrap; align-items:baseline; gap:7px; padding:25px 0; min-height:92px; }
+.learn-plan-price strong { font-size:39px; line-height:1; font-weight:500; letter-spacing:-.05em; }
+.learn-plan-price>span { font-size:10px; color:var(--learn-muted); }
+.learn-plan-price del { width:100%; font-size:11px; color:var(--learn-muted); }
+.learn-plan-class-select { border-top:1px solid var(--learn-line); border-bottom:1px solid var(--learn-line); padding:20px 0; }
+.learn-plan-class-select>div:first-child { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; }
+.learn-plan-class-select strong { font-size:11px; font-weight:650; }
+.learn-plan-class-select span { font-size:9px; color:var(--learn-muted); }
+.learn-class-choices { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.learn-class-choices button { display:flex; align-items:center; justify-content:center; height:37px; border:1px solid #2a3060; background:#0f1333; border-radius:9px; color:#94a3b8; font-size:13px; font-weight:600; cursor:pointer; }
+.learn-class-choices button.is-selected { background:#1a1f4a; color:#e2e8f0; border-color:#2a3060; }
+.learn-class-choices button:disabled { cursor:default; }
+.learn-plan-features { display:flex; flex-direction:column; gap:13px; margin:23px 0 29px; list-style:none; padding:0; }
+.learn-plan-features li { display:flex; gap:9px; align-items:flex-start; font-size:11px; line-height:1.7; color:#94a3b8; }
+.learn-plan-features svg { flex-shrink:0; margin-top:1px; color:#94a3b8; }
+.learn-plan-action { margin-top:auto; }
+.learn-plan-action .learn-button { width:100%; padding-left:10px; padding-right:10px; min-height:45px; font-size:11px; }
+.learn-plan-popular { background:#0a0e27; border-color:#2a3060; color:#e2e8f0; }
+.learn-plan-popular h2,.learn-plan-popular .learn-plan-price strong { color:#e2e8f0; }
+.learn-plan-popular .learn-resource-icon { background:#00d4ff12; color:#00d4ff; }
+.learn-plan-popular .learn-pill { background:#00d4ff; color:#e2e8f0; }
+.learn-plan-popular :is(.learn-plan-tagline,.learn-plan-price>span,.learn-plan-price del,.learn-plan-class-select span,.learn-plan-features li) { color:#94a3b8; }
+.learn-plan-popular .learn-plan-class-select { border-color:#2a306022; }
+.learn-plan-popular .learn-plan-features svg { color:#94a3b8; }
+.learn-plan-popular .learn-class-choices button { background:#00d4ff09; color:#e2e8f0; border-color:#2a306029; }
+.learn-plan-popular .learn-class-choices button.is-selected { background:#00d4ff; color:#e2e8f0; border-color:#2a3060; }
+.learn-plan-popular .learn-button:disabled { background:#00d4ff1a; color:#94a3b8; opacity:1; }
+.learn-coupon-panel { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; padding:25px 28px; margin-top:25px; border:1px solid var(--learn-line); border-radius:19px; background:#1a1f4a; }
+.learn-coupon-panel>div:first-child { display:flex; align-items:center; gap:14px; }
+.learn-coupon-panel h2 { font-size:13px; font-weight:600; letter-spacing:-.015em; }
+.learn-coupon-panel p { font-size:11px; color:var(--learn-muted); margin-top:5px; }
+.learn-coupon-form { display:flex; align-items:center; gap:8px; flex:1; max-width:390px; }
+.learn-coupon-form input { width:100%; min-width:0; border:1px solid #2a3060; background:#151a3d; border-radius:10px; padding:12px; font-size:11px; color:#e2e8f0; height:44px; }
+.learn-coupon-form .learn-button { min-height:44px; }
+.learn-coupon-applied { display:flex; align-items:center; flex-wrap:wrap; gap:10px; color:#94a3b8; font-size:11px; }
+.learn-coupon-applied button { display:flex; padding:5px; cursor:pointer; }
+.learn-pricing-signup { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:5px; margin-top:25px; font-size:11px; color:var(--learn-muted); }
+.learn-pricing-signup a { display:inline-flex; align-items:center; color:#e2e8f0; gap:3px; font-weight:600; }
+.learn-pricing-footnote { display:flex; justify-content:center; align-items:center; gap:11px; padding-top:34px; font-size:11px; color:var(--learn-muted); }
+.learn-pricing-footnote a { text-decoration:underline; text-underline-offset:3px; color:#e2e8f0; }
+.learn-dashboard-summary { display:grid; grid-template-columns:1fr 1fr 1.25fr; border:1px solid var(--learn-line); border-radius:20px; padding:23px 8px; background:#151a3d; margin-bottom:48px; }
+.learn-dashboard-summary>div,.learn-dashboard-summary>a { display:flex; align-items:center; gap:15px; padding:0 22px; }
+.learn-dashboard-summary>*+* { border-left:1px solid var(--learn-line); }
+.learn-dashboard-summary strong { display:block; font-size:18px; font-weight:600; letter-spacing:-.035em; }
+.learn-dashboard-summary div>span:not(.learn-resource-icon) { font-size:10px; color:var(--learn-muted); }
+.learn-dashboard-summary>a>svg { margin-left:auto; flex-shrink:0; }
+.learn-subscription-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.learn-subscription-card { display:flex; flex-direction:column; min-width:0; border:1px solid var(--learn-line); border-radius:23px; background:#151a3d; padding:25px; }
+.learn-subscription-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.learn-status-dot { display:flex; align-items:center; gap:6px; font-size:10px; color:#94a3b8; }
+.learn-status-dot:before { content:""; width:6px; height:6px; border-radius:50%; background:#1c2252; }
+.learn-subscription-card h3 { font-size:24px; letter-spacing:-.035em; font-weight:500; margin-top:7px; }
+.learn-subscription-expiry { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:15px; font-size:10px; color:var(--learn-muted); }
+.learn-subscription-expiry strong { margin-left:auto; color:#94a3b8; font-size:9px; font-weight:600; }
+.learn-subscription-resources { padding:18px 0; margin:15px 0 10px; border-top:1px solid #2a3060; flex:1; }
+.learn-subscription-resources>a { display:flex; align-items:center; justify-content:space-between; border-radius:11px; padding:10px 11px; margin:3px 0; background:#0f1333; }
+.learn-subscription-resources>a:hover { background:#1a1f4a; }
+.learn-subscription-resources strong { display:block; font-size:12px; font-weight:600; }
+.learn-subscription-resources small { display:block; font-size:9px; color:var(--learn-muted); margin-top:4px; }
+.learn-subscription-resources>p { display:flex; align-items:center; gap:8px; color:var(--learn-muted); font-size:12px; line-height:1.7; }
+.learn-dashboard-empty { display:flex; align-items:center; gap:32px; padding:40px; border-radius:24px; background:#1a1f4a; border:1px solid #2a3060; }
+.learn-empty-illustration { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:120px; height:140px; background:#1a1f4a; border-radius:60px 60px 20px 20px; color:#94a3b8; }
+.learn-dashboard-empty h3 { font-family:inherit; font-weight:400; font-size:29px; margin:9px 0 10px; letter-spacing:-.025em; }
+.learn-dashboard-empty p { font-size:12px; color:#94a3b8; max-width:490px; line-height:1.8; }
+.learn-inline-actions { display:flex; align-items:center; flex-wrap:wrap; gap:22px; margin-top:22px; }
+.learn-dashboard-shortcuts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; }
+.learn-demo-page { max-width:1200px; padding-top:64px; }
+.learn-demo-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.learn-demo-card { display:flex; flex-direction:column; padding:27px; border:1px solid var(--learn-line); border-radius:24px; background:#151a3d; min-width:0; transition:transform .2s,border-color .2s; }
+.learn-demo-card:hover { transform:translateY(-4px); border-color:#2a3060; }
+.learn-demo-card-top { display:flex; align-items:center; justify-content:space-between; }
+.learn-demo-index { font-size:11px; color:#94a3b8; letter-spacing:.08em; }
+.learn-demo-art { display:flex; align-items:center; justify-content:center; height:105px; position:relative; color:#94a3b8; }
+.learn-demo-card h2 { font-size:23px; letter-spacing:-.04em; font-weight:500; line-height:1.25; margin-top:10px; }
+.learn-demo-card p { font-size:12px; color:var(--learn-muted); line-height:1.8; margin-top:11px; flex:1; }
+.learn-demo-featured { grid-column:span 2; background:#1a1f4a; }
+.learn-demo-featured .learn-demo-art { height:122px; }
+.learn-demo-featured h2 { font-size:30px; font-family:inherit; }
+.learn-demo-featured p { max-width:400px; }
+.learn-demo-orbit { position:absolute; width:220px; height:70px; border:1px solid #2a306055; border-radius:50%; transform:rotate(-20deg); }
+.learn-demo-orbit.alternate { transform:rotate(20deg); }
+.learn-demo-featured .learn-demo-art>svg { z-index:1; padding:5px; background:#1a1f4a; }
+.learn-path-back { margin-bottom:25px; }
+.learn-path-page .learn-page-header { border-bottom:1px solid var(--learn-line); padding-bottom:28px; margin-bottom:30px; }
+.learn-path-page .learn-page-header h1 { font-size:42px; }
+.learn-path-page>.grid>a,.learn-path-page>.grid>div { border-color:var(--learn-line); border-radius:22px; box-shadow:none; padding:24px; }
+.learn-path-page h2,.learn-path-page h3 { font-weight:550; letter-spacing:-.025em; }
+.learn-path-page a[class*="shadow"] { box-shadow:none!important; }
+.learn-resource-viewer { color:#e2e8f0; }
+.learn-viewer-breadcrumb { padding:11px 3px 18px; }
+.learn-viewer-breadcrumb>a { font-weight:500; font-size:12px; }
+.learn-viewer-breadcrumb h1 { font-weight:500; font-size:13px; }
+.learn-viewer-document { overflow:hidden; border-color:#2a3060; box-shadow:0 8px 35px #00000005; }
+.learn-viewer-document:fullscreen { border-radius:0; }
+.learn-viewer-toolbar { min-height:65px; background:#0f1333!important; border-color:#2a3060!important; }
+.learn-viewer-toolbar>div:first-child { min-width:120px; }
+.learn-viewer-toolbar button,.learn-viewer-toolbar a { border-radius:7px; }
+.learn-document-select { width:100%; max-width:420px; font-size:12px; font-weight:500; color:#e2e8f0; background:#0f1333; border:1px solid #2a3060; border-radius:8px; padding:9px; }
+/* Align the existing class/subject screens with the new library without changing resources. */
+.learning-shell>div:not(.learning-page):not(.learn-resource-viewer)>div[class*="bg-gradient"] { background-image:none; background-color:#1a1f4a; color:#e2e8f0; border:1px solid #2a3060; box-shadow:none; border-radius:24px; }
+.learning-shell>div:not(.learning-page):not(.learn-resource-viewer)>div[class*="bg-gradient"] :is(h1,p) { color:#e2e8f0; }
+.learning-shell>div:not(.learning-page):not(.learn-resource-viewer)>div[class*="grid"]>a>div { border:1px solid #2a3060; border-radius:20px; box-shadow:none; }
+.learning-shell>div:not(.learning-page):not(.learn-resource-viewer)>div[class*="grid"]>a>div>div[class*="bg-gradient"] { background-image:none; background-color:#1a1f4a; color:#94a3b8; box-shadow:none; }
+.learning-shell>div:not(.learning-page):not(.learn-resource-viewer)>div[class*="grid"]>a>div>div[class*="bg-gradient"]>svg { color:#94a3b8; }
+@media(min-width:1600px) { .learn-resource-grid { grid-template-columns:repeat(6,minmax(0,1fr)); } .learn-resource-grid .learn-resource-card { padding:20px 17px; } }
+@media(max-width:1200px) { .learning-page { padding:40px 28px 50px; } .learn-plan-card { padding:21px; } .learn-plan-top .learn-pill { font-size:8px; } .learn-class-info { padding:17px 14px; } .learn-class-art { height:155px; } .learn-class-card { min-height:230px; } .learn-class-info p { font-size:9px; } .learn-class-grid { gap:12px; } .learn-dashboard-summary>div,.learn-dashboard-summary>a { padding:0 14px; gap:10px; } .learn-dashboard-summary strong { font-size:16px; } }
+@media(max-width:1050px) { .learn-header-note { display:none; } .learn-plan-card { padding:20px 18px; } .learn-plan-price strong { font-size:33px; } .learn-plan-top { align-items:flex-start; flex-direction:column; min-height:72px; } .learn-dashboard-summary .learn-resource-icon { width:37px; height:37px; } }
+@media(max-width:767px) { .learning-page { padding:33px 20px 45px; } .learn-page-header { margin-bottom:34px; gap:24px; align-items:flex-start; } .learn-page-header h1 { font-size:38px; margin-top:17px; } .learn-page-header p { font-size:12px; line-height:1.85; } .learn-section-heading { gap:14px; } .learn-section-heading h2 { font-size:21px; } .learn-section-heading>.learn-text-link { font-size:10px; } .learn-step { font-size:8px; } .learn-class-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; } .learn-class-info { padding:17px; } .learn-class-art { height:155px; } .learn-resource-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .learn-resource-card { padding:20px; } .learn-discovery-banner { flex-wrap:wrap; padding:27px; gap:20px; } .learn-discovery-banner>.learn-button { margin-top:3px; } .learn-banner-icon { display:none; } .learn-discovery-banner h2 { font-size:26px; } .learn-section { margin-bottom:37px; } .learn-plan-grid { grid-template-columns:1fr; gap:20px; max-width:480px; margin:0 auto; } .learn-plan-card { padding:28px; } .learn-plan-top { flex-direction:row; align-items:center; min-height:45px; } .learn-plan-top .learn-pill { font-size:10px; } .learn-plan-tagline { min-height:0; } .learn-plan-features { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; } .learn-plan-price strong { font-size:43px; } .learn-pricing-controls { justify-content:center; margin-bottom:28px; flex-direction:column; gap:14px; } .learn-coupon-panel { padding:23px; } .learn-coupon-form { min-width:100%; } .learn-pricing-header h1 { font-size:37px; } .learn-pricing-header { margin-bottom:0; } .learn-pricing-footnote { align-items:flex-start; line-height:1.8; } .learn-pricing-footnote>svg { flex-shrink:0; margin-top:1px; } .learn-dashboard-page>.learn-page-header { flex-direction:column; gap:0; } .learn-dashboard-page>.learn-page-header>.learn-button { margin-top:22px; } .learn-dashboard-summary { grid-template-columns:1fr 1fr; gap:20px 0; padding:20px 5px; } .learn-dashboard-summary>a { grid-column:span 2; border-left:0; border-top:1px solid var(--learn-line); padding-top:18px; } .learn-dashboard-summary strong { font-size:17px; } .learn-subscription-grid { grid-template-columns:1fr; } .learn-dashboard-empty { padding:28px; } .learn-empty-illustration { display:none; } .learn-dashboard-shortcuts { grid-template-columns:1fr; } .learn-dashboard-shortcuts .learn-resource-card { padding:25px; } .learn-demo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; } .learn-demo-card { padding:23px; } .learn-demo-featured { grid-column:span 2; } .learn-demo-page>.learn-section-heading { align-items:flex-start; flex-direction:column; } .learn-demo-card h2 { font-size:21px; } .learn-path-page .learn-page-header h1 { font-size:34px; } }
+@media(max-width:430px) { .learning-page { padding-left:16px; padding-right:16px; } .learn-page-header h1 { font-size:33px; } .learn-eyebrow { font-size:9px; } .learn-class-art { height:140px; } .learn-class-number { font-size:57px; left:16px; } .learn-class-info { padding:16px 13px; } .learn-class-info h3 { font-size:16px; } .learn-class-info p { font-size:8px; } .learn-arrow-circle { width:28px; height:28px; } .learn-resource-card { padding:18px 16px; } .learn-resource-card h3 { font-size:13px; } .learn-resource-card p { font-size:11px; } .learn-section-heading { align-items:flex-start; flex-direction:column; gap:12px; } .learn-demo-grid { grid-template-columns:1fr; } .learn-demo-featured { grid-column:auto; } .learn-demo-card { padding:25px; } .learn-demo-card h2 { font-size:24px; } .learn-plan-features { grid-template-columns:1fr; } .learn-plan-card { padding:26px; } .learn-dashboard-empty h3 { font-size:26px; } .learn-cycle-switch button { padding:10px 17px; } }
+/* Video lessons and the interactive science library. */
+.learn-chapter-page { max-width:1450px; padding-top:32px; }
+.learn-lesson-header { padding-bottom:30px; margin-bottom:26px; border-bottom:1px solid var(--learn-line); }
+.learn-lesson-header>.learn-text-link { margin:8px 0 27px; }
+.learn-lesson-header h1 { font-size:clamp(27px,2.7vw,41px); font-weight:500; line-height:1.2; letter-spacing:-.04em; margin:13px 0 9px; }
+.learn-lesson-header p { font-size:12px; line-height:1.8; color:var(--learn-muted); }
+.learn-lesson-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(265px,.5fr); gap:23px; align-items:start; }
+.learn-lesson-player-column,.learn-lesson-playlist { min-width:0; }
+.learn-lesson-player { position:sticky; top:100px; border:1px solid #2a3060; border-radius:21px; overflow:hidden; background:#151a3d; }
+.learn-lesson-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px; border-bottom:1px solid #2a3060; background:#0f1333; }
+.learn-now-playing { flex:1; min-width:130px; font-size:12px; font-weight:600; line-height:1.6; color:#e2e8f0; }
+.learn-language-switch { display:flex; gap:4px; border:1px solid #2a3060; padding:3px; border-radius:10px; background:#1a1f4a; flex-shrink:0; }
+.learn-language-switch button { font-size:10px; padding:7px 10px; font-weight:500; }
+.learn-lesson-player .video-container>div { border-radius:0; }
+.learn-lesson-tabs { display:flex; gap:5px; padding:5px; background:#1a1f4a; border-radius:13px; margin-bottom:16px; }
+.learn-lesson-tabs>button { display:flex; align-items:center; justify-content:center; flex:1; gap:6px; padding:10px 7px; border-radius:9px; background:transparent; color:#94a3b8; font-size:10px; font-weight:600; cursor:pointer; }
+.learn-lesson-tabs>button.is-active { background:#0a0e27; color:#e2e8f0; }
+.learn-lesson-tabs>button.is-active>span { background:#00d4ff16; color:#e2e8f0; }
+.learn-lesson-tabs>button:not(.is-active)>span { background:#151a3d; color:#94a3b8; }
+.learn-lesson-list { max-height:65vh; overflow-y:auto; padding:1px 3px 1px 1px; }
+.learn-video-row { display:flex; align-items:center; gap:12px; padding:11px; margin-bottom:10px; border:1px solid #2a3060; border-radius:14px; background:#151a3d; cursor:pointer; transition:background .18s,border-color .18s; }
+.learn-video-row:hover { background:#1a1f4a; border-color:#2a3060; }
+.learn-video-row.is-active { border-color:#2a3060; background:#1a1f4a; }
+.learn-video-row:focus-visible { outline:2px solid #00d4ff; outline-offset:2px; }
+.learn-video-thumbnail { display:flex; align-items:center; justify-content:center; position:relative; width:81px; height:53px; background:#1a1f4a; border-radius:8px; overflow:hidden; flex-shrink:0; }
+.learn-video-play-icon { display:flex; align-items:center; justify-content:center; width:29px; height:29px; background:#00d4ff; color:#e2e8f0; border-radius:50%; }
+.learn-video-title { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:11px; line-height:1.5; font-weight:600; color:#e2e8f0; }
+.learn-video-row.is-active .learn-video-title { color:#e2e8f0; }
+.learn-video-row span[class*="text-gray"] { font-size:9px; color:#94a3b8; }
+.learn-video-free { position:absolute; top:0; right:0; z-index:20; border-bottom-left-radius:6px; padding:2px 4px; font-size:7px; font-weight:700; color:#e2e8f0; background:#00d4ff; }
+.learn-locked-video>div { width:45px; height:45px; margin-bottom:12px; background:#00d4ff18; }
+.learn-locked-video>div>svg { width:25px; height:25px; }
+.learn-locked-video>h4 { font-size:16px; margin-bottom:7px; }
+.learn-locked-video>p { font-size:11px; line-height:1.6; }
+.learn-locked-video>button { margin-top:15px; min-height:34px; padding:8px 20px; font-size:11px; }
+.learn-lesson-modal { border-radius:24px; box-shadow:0 24px 90px #00000030; }
+.learn-lesson-modal h3 { font-family:inherit; font-weight:400; font-size:25px; }
+.learn-lesson-modal p { font-size:12px; line-height:1.8; }
+.learn-lesson-modal li { font-size:11px; }
+.learn-lab-categories { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.learn-lab-category { background:#151a3d; border:1px solid var(--learn-line); overflow:hidden; border-radius:25px; transition:transform .2s,border-color .2s; }
+.learn-lab-category:hover { transform:translateY(-4px); border-color:#2a3060; }
+.learn-lab-category-art { position:relative; display:flex; align-items:center; justify-content:center; height:205px; background:#1a1f4a; color:#94a3b8; overflow:hidden; }
+.learn-lab-experiment-art { background:#1a1f4a; color:#94a3b8; }
+.learn-lab-category-art>svg { position:relative; z-index:1; }
+.learn-lab-ring { position:absolute; width:230px; height:95px; border:1px solid currentColor; opacity:.2; border-radius:50%; transform:rotate(25deg); }
+.learn-lab-ring.alternate { transform:rotate(-25deg); }
+.learn-lab-count { position:absolute; top:20px; left:22px; font-size:9px; letter-spacing:.13em; font-weight:600; }
+.learn-lab-category-content { padding:28px; }
+.learn-lab-category-content h2 { font-family:inherit; font-weight:400; font-size:29px; line-height:1.2; letter-spacing:-.03em; margin-top:10px; }
+.learn-lab-category-content p { font-size:12px; line-height:1.9; color:var(--learn-muted); margin-top:12px; }
+.learn-device-note { display:flex; align-items:center; gap:13px; padding:18px 22px; margin-top:30px; background:#1a1f4a; border:1px solid #2a3060; border-radius:14px; color:#94a3b8; }
+.learn-device-note svg { flex-shrink:0; }
+.learn-device-note p { font-size:11px; line-height:1.8; }
+.learn-lab-heading-icon { display:flex; align-items:center; justify-content:center; border-radius:25px; background:#1a1f4a; width:92px; height:92px; flex-shrink:0; }
+.learn-lab-heading-icon>svg { width:36px; height:36px; color:#94a3b8; }
+.learn-lab-filter-bar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; margin-bottom:25px; }
+.learn-lab-filters { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.learn-lab-filters button { background:#1a1f4a; color:#94a3b8; border:1px solid transparent; border-radius:30px; padding:10px 15px; font-size:10px; font-weight:550; cursor:pointer; }
+.learn-lab-filters button.is-active { background:#0a0e27; color:#e2e8f0; }
+.learn-lab-filters button:hover:not(.is-active) { border-color:#2a3060; }
+.learn-lab-search { display:flex; align-items:center; gap:10px; border:1px solid #2a3060; border-radius:12px; padding:0 12px; background:#151a3d; color:#94a3b8; max-width:330px; flex:1; min-width:210px; }
+.learn-lab-search input { border:0; outline:none; width:100%; min-width:0; background:transparent; padding:13px 0; font-family:inherit; font-size:11px; color:#e2e8f0; }
+.learn-lab-search input:focus-visible { outline:none; }
+.learn-lab-search:focus-within { outline:2px solid #00d4ff; outline-offset:2px; }
+.learn-lab-search button { display:flex; cursor:pointer; }
+.learn-lab-results { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-bottom:19px; font-size:10px; color:#94a3b8; }
+.learn-lab-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:19px; }
+.learn-lab-card { display:flex; flex-direction:column; min-width:0; border:1px solid var(--learn-line); border-radius:20px; background:#151a3d; overflow:hidden; transition:border-color .2s,transform .2s; }
+.learn-lab-card:hover { border-color:#2a3060; transform:translateY(-4px); }
+.learn-lab-thumbnail { display:flex; align-items:center; justify-content:center; position:relative; height:160px; background:#1a1f4a; color:#94a3b8; overflow:hidden; }
+.learn-lab-chemistry { background:#1a1f4a; color:#94a3b8; }
+.learn-lab-physics { background:#1a1f4a; color:#94a3b8; }
+.learn-lab-environment { background:#1a1f4a; color:#94a3b8; }
+.learn-lab-thumbnail img,.learn-lab-thumbnail video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.learn-lab-lock { position:absolute; right:10px; top:10px; z-index:2; display:flex; align-items:center; gap:5px; color:#e2e8f0; background:#0a0e27de; border:1px solid #2a306030; border-radius:20px; padding:5px 8px; font-size:8px; }
+.learn-lab-card-content { padding:20px; display:flex; flex-direction:column; flex:1; }
+.learn-lab-card-content>.learn-step { text-transform:uppercase; font-size:8px; }
+.learn-lab-card-content h2 { font-size:14px; font-weight:550; line-height:1.5; color:#e2e8f0; margin-top:8px; flex:1; }
+.learn-lab-card-content>div { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:18px; margin-top:16px; border-top:1px solid #2a3060; color:#94a3b8; font-size:9px; font-weight:550; }
+.learn-lab-viewer-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding-bottom:27px; }
+.learn-lab-viewer-header h1 { font-size:28px; font-weight:500; letter-spacing:-.035em; line-height:1.25; margin:7px 0; }
+.learn-lab-viewer-header>.learn-button { flex-shrink:0; }
+.learn-lab-viewer-category { font-size:11px; color:#94a3b8; text-transform:capitalize; }
+.learn-lab-embed { position:relative; overflow:hidden; border-radius:24px; background:#0a0e27; border:1px solid #2a3060; box-shadow:0 12px 45px #00000006; }
+.learn-lab-embed:fullscreen { border-radius:0; border:0; padding-bottom:0!important; }
+.learn-lab-interaction-note { display:flex; justify-content:center; align-items:center; gap:9px; color:#94a3b8; font-size:11px; line-height:1.8; margin-top:19px; text-align:center; }
+.learn-lab-interaction-note>svg { flex-shrink:0; }
+.learn-lab-fullscreen-note { font-size:12px; line-height:1.8; background:#1a1f4a; color:#94a3b8; padding:12px 17px; border-radius:12px; margin-bottom:18px; }
+@media(min-width:1600px) { .learn-lab-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:1200px) { .learn-lesson-layout { grid-template-columns:minmax(0,1fr) 275px; gap:18px; } .learn-video-thumbnail { width:65px; height:46px; } .learn-lesson-toolbar { align-items:flex-start; flex-direction:column; } .learn-lab-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; } .learn-lab-thumbnail { height:140px; } }
+@media(max-width:1100px) { .learn-lesson-layout { grid-template-columns:1fr; } .learn-lesson-toolbar { align-items:center; flex-direction:row; } .learn-lesson-playlist { margin-top:4px; } .learn-lesson-tabs { max-width:400px; } .learn-lesson-list { max-height:430px; } .learn-video-thumbnail { width:95px; height:58px; } .learn-video-title { font-size:13px; } .learn-lab-category-content h2 { font-size:25px; } }
+@media(max-width:767px) { .learn-lesson-header { padding-bottom:25px; } .learn-lesson-header>.learn-text-link { margin-bottom:23px; } .learn-lesson-header h1 { font-size:30px; } .learn-lesson-layout { gap:21px; } .learn-lesson-toolbar { gap:10px; padding:13px; } .learn-now-playing { font-size:11px; } .learn-lesson-tabs { max-width:none; } .learn-lesson-list { max-height:none; } .learn-lab-categories { grid-template-columns:1fr; gap:21px; } .learn-lab-category-art { height:190px; } .learn-lab-category-content { padding:25px; } .learn-lab-category-content h2 { font-size:29px; } .learn-lab-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } .learn-lab-card-content { padding:16px; } .learn-lab-card-content h2 { font-size:12px; } .learn-lab-filter-bar { flex-direction:column; align-items:stretch; gap:17px; } .learn-lab-search { max-width:none; } .learn-lab-heading-icon { display:none; } .learn-lab-filters button { font-size:9px; padding:9px 12px; } .learn-lab-results { font-size:9px; } .learn-lab-thumbnail { height:140px; } .learn-lab-viewer-header { flex-wrap:wrap; gap:19px; } .learn-lab-viewer-header h1 { font-size:25px; } .learn-lab-viewer-header>.learn-button { margin-left:45px; min-height:37px; padding:9px 13px; font-size:11px; } .learn-lab-embed { border-radius:17px; } .learn-device-note { align-items:flex-start; padding:17px; } .learn-device-note>svg { margin-top:1px; } }
+@media(max-width:430px) { .learn-lab-grid { gap:11px; } .learn-lab-card-content { padding:14px; } .learn-lab-card-content h2 { font-size:11px; } .learn-lab-thumbnail { height:113px; } .learn-lab-card-content>div { font-size:8px; } .learn-lab-filters { gap:5px; } .learn-lab-filters button { padding:8px 10px; } .learn-lesson-toolbar { align-items:flex-start; flex-direction:column; } .learn-locked-video>div { width:35px; height:35px; margin-bottom:8px; } .learn-locked-video>div>svg { width:22px; height:22px; } .learn-locked-video>p { font-size:10px; } .learn-locked-video>button { margin-top:10px; } }
+@media(prefers-reduced-motion:reduce) { .learning-page * { animation:none!important; transition:none!important; } }
+
+/* PhysicsLab chapter cards: same numbered badge, glowing mini-scene, and title layout. */
+.learning-page { --learn-ink:#e2e8f0; --learn-muted:#94a3b8; --learn-line:#2a3060; --learn-accent:#00d4ff; }
+.learn-page-header h1,.learn-page-header h1 em { color:#ffffff; font-weight:700; font-style:normal; }
+.learn-page-header h1 em { background:linear-gradient(135deg,#00d4ff,#a78bfa); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.learn-eyebrow,.learn-text-link,.learn-resource-action { color:#00d4ff; }
+.learn-eyebrow>span { background:#00d4ff; box-shadow:0 0 10px #00d4ff70; }
+.learn-button { color:#050815; background:#00d4ff; border-color:#00d4ff; }
+.learn-button:hover,.learn-button-light:hover { background:#5ce1ff; color:#050815; }
+.learn-button-light { background:#00d4ff; color:#050815; }
+.learn-button-outline { background:#00d4ff0d; border-color:#00d4ff40; color:#5ce1ff; }
+.learn-button-outline:hover { background:#00d4ff1a; color:#5ce1ff; }
+.learn-button:disabled,.learn-plan-popular .learn-button:disabled { background:#1a1f4a; color:#94a3b8; border-color:#2a3060; opacity:.75; }
+.learn-resource-icon { color:#5ce1ff; background:#00d4ff12; border:1px solid #00d4ff24; }
+.learn-arrow-circle { color:#00d4ff; border-color:#00d4ff35; }
+.learn-class-card:hover .learn-arrow-circle { background:#00d4ff; color:#050815; }
+.learn-discovery-banner { background:linear-gradient(125deg,#141937,#151a3d); border:1px solid #2a3060; }
+.learn-discovery-banner h2 { font-weight:700; }
+.learn-banner-icon { color:#00d4ff; border-color:#00d4ff30; background:#00d4ff08; }
+.learn-class-art,.learn-tone-0 .learn-class-art { background:linear-gradient(135deg,#1a1f4a,#151a3d); color:#00d4ff; }
+.learn-tone-1 .learn-class-art { background:linear-gradient(135deg,#1a1f4a,#141937); color:#a78bfa; }
+.learn-tone-2 .learn-class-art { background:linear-gradient(135deg,#141937,#151a3d); color:#f59e0b; }
+.learn-tone-3 .learn-class-art { background:linear-gradient(135deg,#0f1333,#1c2252); color:#5ce1ff; }
+.learn-class-number { color:#ffffff; font-weight:700; font-family:inherit; font-size:61px; }
+.learn-orbit-core { box-shadow:0 0 20px currentColor; }
+.learn-plan-popular { background:linear-gradient(155deg,#1a1f4a,#151a3d); border-color:#00d4ff70; box-shadow:0 0 30px #00d4ff09; }
+.learn-plan-popular .learn-pill { background:#00d4ff; color:#050815; }
+.learn-cycle-switch button.is-active,.learn-class-choices button.is-selected,.learn-plan-popular .learn-class-choices button.is-selected { background:#00d4ff; color:#050815; border-color:#00d4ff; }
+.learn-plan-features svg,.learn-plan-popular .learn-plan-features svg,.learn-coupon-applied,.learn-status-dot { color:#5ce1ff; }
+.learn-status-dot:before { background:#10b981; }
+.learn-pill { color:#5ce1ff; background:#00d4ff10; }
+.learn-demo-featured { background:linear-gradient(145deg,#1a1f4a,#151a3d); border-color:#3b4280; }
+.learn-demo-featured .learn-demo-art>svg { color:#00d4ff; background:transparent; }
+.learn-demo-orbit { border-color:#00d4ff40; }
+.learn-lab-category-art,.learn-lab-thumbnail { background:linear-gradient(135deg,#1a1f4a,#151a3d); color:#00d4ff; }
+.learn-lab-experiment-art,.learn-lab-chemistry { color:#a78bfa; }
+.learn-lab-environment { color:#f59e0b; }
+.learn-lab-filters button.is-active,.learn-lesson-tabs>button.is-active { background:#00d4ff; color:#050815; }
+.learn-lesson-tabs>button.is-active>span { background:#05081515; color:#050815; }
+.learn-lab-lock { background:#050815df; color:#e2e8f0; border-color:#00d4ff30; }
+.learn-video-row.is-active { border-color:#00d4ff70; background:#00d4ff0c; }
+.learn-video-row.is-active .learn-video-title { color:#5ce1ff; }
+.learn-video-play-icon,.learn-video-free { background:#00d4ff; color:#050815; }
+.learn-chapter-page .bg-white,.learn-chapter-page .bg-surface { background:#151a3d; }
+.learn-chapter-page .text-primary { color:#5ce1ff; }
+.learn-language-switch .bg-primary { background:#00d4ff; color:#050815; }
+.learn-lesson-modal { background:#151a3d!important; border-color:#2a3060; }
+.learn-resource-viewer .learn-viewer-toolbar { background:#151a3d!important; }
+.learn-resource-viewer .learn-viewer-toolbar :is(button,a,.learn-document-select) { color:#e2e8f0; }
+.learn-resource-viewer .notes-html-viewer { color:#1f2937; }
+.physics-chapter-page { max-width:1320px; }
+.physics-chapter-page .learn-lesson-header { margin-top:25px; }
+.physics-chapter-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px; }
+.physics-chapter-grid-compact { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.physics-chapter-card { position:relative; display:flex; flex-direction:column; align-items:center; min-width:0; padding:24px; border:1px solid #2a3060; border-radius:16px; background:#151a3d; text-align:center; transition:border-color .3s,transform .3s,background .3s; }
+.physics-chapter-card:hover { border-color:#00d4ff65; background:#1c2252; transform:translateY(-4px); }
+.physics-chapter-number { position:absolute; top:12px; left:12px; display:flex; align-items:center; justify-content:center; min-width:28px; height:28px; padding:0 4px; border-radius:8px; background:#00d4ff12; border:1px solid #00d4ff30; color:#00d4ff; font-size:12px; font-weight:700; z-index:2; }
+.physics-chapter-visual { position:relative; width:100%; height:112px; min-height:112px; border-radius:12px; background:linear-gradient(135deg,#1a1f4a99,#1c225299); border:1px solid #2a306080; overflow:hidden; margin-bottom:16px; }
+.physics-chapter-card h3 { color:#fff; font-size:14px; font-weight:600; line-height:1.55; margin:0 0 8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.physics-chapter-description { color:#94a3b8; font-size:10px; line-height:1.7; margin:0 0 9px; }
+.physics-chapter-count { display:flex; align-items:center; justify-content:center; gap:5px; font-size:11px; color:#94a3b8; margin-top:auto; }
+.physics-chapter-arrow { position:absolute; top:14px; right:12px; opacity:0; color:#00d4ff; transition:opacity .2s; }
+.physics-chapter-card:hover .physics-chapter-arrow,.physics-chapter-card:focus-visible .physics-chapter-arrow { opacity:1; }
+.physics-chapter-card:focus-visible { outline:2px solid #00d4ff; outline-offset:4px; }
+.physics-chapter-preview { color:#10b981; font-size:9px; margin-top:8px; }
+.physics-chapter-card.is-unavailable { cursor:default; }
+.physics-chapter-card.is-unavailable .physics-chapter-count { color:#f59e0b; }
+.physics-chapter-card.is-unavailable:hover { transform:none; border-color:#2a3060; }
+.physics-chapter-orbits { position:relative; width:90px; height:80px; margin:15px auto; }
+.physics-chapter-orbits>span { position:absolute; inset:15px 0; border:1px solid #00d4ff70; border-radius:50%; transform:rotate(0deg); animation:physics-card-orbit 7s linear infinite; }
+.physics-chapter-orbits>span:nth-child(2) { animation-delay:-2.3s; border-color:#a78bfa80; }
+.physics-chapter-orbits>span:nth-child(3) { animation-delay:-4.6s; }
+.physics-chapter-orbits>span:after { content:''; position:absolute; left:-3px; top:19px; width:6px; height:6px; border-radius:50%; background:#00d4ff; box-shadow:0 0 10px #00d4ff; }
+.physics-chapter-orbits>i { position:absolute; left:38px; top:33px; width:14px; height:14px; border-radius:50%; background:#7c3aed; box-shadow:0 0 16px #a78bfa; }
+@keyframes physics-card-orbit { to { transform:rotate(360deg); } }
+@keyframes electronFlow { to { offset-distance:100%; } }
+@media(max-width:1200px) { .physics-chapter-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; } .physics-chapter-grid-compact { grid-template-columns:repeat(2,minmax(0,1fr)); } .physics-chapter-card { padding:21px; } }
+@media(max-width:767px) { .physics-chapter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } .physics-chapter-card { padding:18px 14px; } .physics-chapter-visual { height:112px; } .physics-chapter-card h3 { font-size:12px; } .physics-chapter-count { font-size:10px; } .physics-chapter-number { top:8px; left:8px; width:25px; height:25px; font-size:10px; } }
+@media(max-width:380px) { .physics-chapter-grid { gap:10px; } .physics-chapter-card { padding:18px 10px; } .physics-chapter-visual { height:100px; min-height:100px; } }
+@media(prefers-reduced-motion:reduce) { .physics-chapter-card * { animation:none!important; transition:none!important; } .physics-chapter-card:hover { transform:none; } }

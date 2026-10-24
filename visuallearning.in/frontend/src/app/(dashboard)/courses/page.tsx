@@ -1,116 +1,68 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageLoader } from "@/components/ui/loading";
-import api from "@/lib/api";
-import { BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain, Sparkles } from "lucide-react";
 import { DownloadAppBanner } from "@/components/home/download-app-banner";
+import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 const demos = [
-  { title: "3D Animated Video", desc: "Watch a sample 3D animation.", href: "/demo/video", icon: MonitorPlay, gradient: "from-violet-600 to-fuchsia-500" },
-  { title: "Lecture Video", desc: "Class 12 Physics — Chapter 1.", href: "/demo/lecture", icon: GraduationCap, gradient: "from-sky-500 to-blue-600" },
-  { title: "Notes", desc: "Browse visual chapter notes.", href: "/demo/visual-notes", icon: FileText, gradient: "from-sky-600 to-blue-500" },
-  { title: "NCERT", desc: "Step-by-step NCERT solutions.", href: "/demo/ncert-solution", icon: BookMarked, gradient: "from-emerald-600 to-teal-500" },
-  { title: "PYQs", desc: "Solved previous-year questions.", href: "/demo/pyq", icon: FileCheck2, gradient: "from-rose-600 to-orange-500" },
-  { title: "Quiz", desc: "Try an interactive quiz.", href: "/demo/quiz", icon: Brain, gradient: "from-amber-500 to-orange-500" },
+  { title: "3D animations", desc: "See a concept come to life.", href: "/demo/video", icon: MonitorPlay },
+  { title: "Video lessons", desc: "Learn with a teacher.", href: "/demo/lecture", icon: GraduationCap },
+  { title: "Visual notes", desc: "Make the big ideas stick.", href: "/demo/visual-notes", icon: FileText },
+  { title: "NCERT solutions", desc: "Work it out, step by step.", href: "/demo/ncert-solution", icon: BookMarked },
+  { title: "Past questions", desc: "Get familiar with exams.", href: "/demo/pyq", icon: FileCheck2 },
+  { title: "Quick quizzes", desc: "Put your learning to the test.", href: "/demo/quiz", icon: Brain },
 ];
 
-interface ClassItem {
-  id: string;
-  name: string;
-  order?: number;
-  _count?: { subjects: number };
-}
-
-function classGradient(name: string, index: number) {
-  const n = name.toLowerCase();
-  if (n.includes("12")) return "from-violet-500 to-purple-700";
-  if (n.includes("11")) return "from-amber-500 to-orange-600";
-  if (n.includes("10")) return "from-orange-500 to-orange-600";
-  if (n.includes("9")) return "from-blue-500 to-blue-700";
-  const fallbacks = ["from-blue-500 to-blue-700", "from-orange-500 to-orange-600", "from-amber-500 to-orange-600", "from-violet-500 to-purple-700"];
-  return fallbacks[index % fallbacks.length];
-}
+interface ClassItem { id: string; name: string; order?: number; _count?: { subjects: number } }
 
 export default function CoursesClassGridPage() {
+  const { isAuthenticated } = useAuth();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get("/courses/classes").then(({ data }) => {
+  const [error, setError] = useState(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const { data } = await api.get("/courses/classes");
       setClasses(Array.isArray(data.data) ? data.data : []);
-    }).catch(() => {}).finally(() => setLoading(false));
+    } catch { setError(true); }
+    finally { setLoading(false); }
   }, []);
-
-  if (loading) return <PageLoader />;
+  useEffect(() => { void load(); }, [load]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Get-the-app banner at the top */}
-      <div className="mb-6">
-        <DownloadAppBanner />
-      </div>
-
-      {/* Header banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-[#2a4a8a] p-6 mb-6 shadow-lg flex items-center justify-between gap-4">
+    <div className="learning-page course-library">
+      <header className="learn-page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">Start Learning</h1>
-          <p className="text-white/80 text-sm mt-1">Choose your class to begin</p>
+          <span className="learn-eyebrow"><span /> THE LEARNING LIBRARY</span>
+          <h1>Big ideas.<br /><em>Made beautifully clear.</em></h1>
+          <p>Discover the science behind your everyday world. Choose your class, follow your curiosity, and start connecting the dots.</p>
         </div>
-        <Link href="/pricing" className="rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/25 transition-colors shrink-0">
-          View Plans
-        </Link>
-      </div>
-
-      <h2 className="text-base font-semibold text-gray-500 mb-3">Classes</h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {classes.map((cls, i) => {
-          const grad = classGradient(cls.name, i);
-          return (
-            <Link key={cls.id} href={`/courses/${cls.id}`}>
-              <div className={`relative h-36 overflow-hidden rounded-2xl bg-gradient-to-br ${grad} p-5 shadow-lg transition-transform hover:scale-[1.02] cursor-pointer`}>
-                <GraduationCap className="absolute -bottom-3 -right-3 w-24 h-24 text-white/10" />
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg leading-tight">{cls.name}</h3>
-                    <p className="text-white/80 text-xs mt-1">{cls._count?.subjects ?? 0} Subjects</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {classes.length === 0 && (
-        <div className="rounded-2xl bg-white p-10 text-center text-gray-400 shadow-sm">
-          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Classes will be available soon.</p>
-        </div>
-      )}
-
-      {/* Demo section — free sample of each content type from Chapter 1 */}
-      <div className="mt-10">
-        <h2 className="text-base font-semibold text-gray-500 mb-1">Demo</h2>
-        <p className="text-sm text-gray-400 mb-3">Try a free sample of each content type — no subscription needed.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {demos.map((d) => (
-            <Link key={d.href} href={d.href}>
-              <div className="group h-full flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer">
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${d.gradient} flex items-center justify-center mb-3 shadow-sm`}>
-                  <d.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 text-sm">{d.title}</h3>
-                <p className="text-xs text-gray-400 mt-1 flex-1">{d.desc}</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">Try demo &rarr;</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+        <div className="learn-header-note"><BookOpen size={20} /><strong>Your next discovery<br />starts here.</strong><span>CLASS 9 — 12</span></div>
+      </header>
+      <section className="learn-section" aria-labelledby="choose-class">
+        <div className="learn-section-heading"><div><span className="learn-step">01 / FIND YOUR STARTING POINT</span><h2 id="choose-class">Which class are you in?</h2></div><Link className="learn-text-link" href="/pricing">Explore plans <ArrowUpRight size={17} /></Link></div>
+        {loading ? <div className="learn-class-grid" role="status" aria-label="Loading classes">{[0, 1, 2, 3].map(i => <div key={i} className="learn-class-card learn-skeleton" />)}</div>
+          : error ? <div className="learn-empty" role="alert"><BookOpen /><h3>Let’s try that again.</h3><p>We couldn’t load the classes. Please check your connection and try again.</p><button className="learn-button" onClick={() => void load()}>Reload classes <ArrowRight size={16} /></button></div>
+          : classes.length === 0 ? <div className="learn-empty"><BookOpen /><h3>A new chapter is on its way.</h3><p>Classes will appear here as they become available. Explore a free demo below.</p></div>
+          : <div className="learn-class-grid">{classes.map((cls, i) => {
+            const number = cls.name.match(/\d+/)?.[0];
+            return <Link key={cls.id} href={`/courses/${cls.id}`} className={`learn-class-card learn-tone-${i % 4}`}>
+              <div className="learn-class-art" aria-hidden="true"><span className="learn-orbit learn-orbit-one" /><span className="learn-orbit learn-orbit-two" /><span className="learn-orbit learn-orbit-three" /><span className="learn-orbit-core" /><span className="learn-class-number">{number?.padStart(2, "0") || String(i + 1).padStart(2, "0")}</span></div>
+              <div className="learn-class-info"><div><h3>{cls.name}</h3><p>{cls._count?.subjects ?? 0} subjects to explore</p></div><span className="learn-arrow-circle"><ArrowUpRight size={19} /></span></div>
+            </Link>;
+          })}</div>}
+      </section>
+      <section className="learn-section" aria-labelledby="sample-resources">
+        <div className="learn-section-heading"><div><span className="learn-step">02 / A TASTE OF WHAT’S INSIDE</span><h2 id="sample-resources">A different way to understand.</h2></div><Link className="learn-text-link" href="/demo">All free demos <ArrowUpRight size={17} /></Link></div>
+        <div className="learn-resource-grid">{demos.map(d => <Link key={d.href} href={d.href} className="learn-resource-card"><span className="learn-resource-icon"><d.icon size={22} strokeWidth={1.6} /></span><h3>{d.title}</h3><p>{d.desc}</p><span className="learn-resource-action">Try it out <ArrowRight size={15} /></span></Link>)}</div>
+      </section>
+      <div className="learn-discovery-banner"><span className="learn-banner-icon"><Sparkles size={25} /></span><div><h2>Small steps. Real understanding.</h2><p>{isAuthenticated ? "Find your active classes and keep your learning journey going." : "Create a free account to read notes, practise questions, and discover more."}</p></div><Link href={isAuthenticated ? "/dashboard" : "/auth/signup"} className="learn-button learn-button-light">{isAuthenticated ? "Your learning space" : "Start learning"} <ArrowUpRight size={17} /></Link></div>
+      <div className="learn-app-banner"><DownloadAppBanner /></div>
     </div>
   );
 }

@@ -1,0 +1,81 @@
+/* Final brand treatments shared with the Physics learning experience. */
+html { color-scheme: dark; }
+body { background: var(--color-primary); }
+.home-hero { background: #050815; }
+.home-hero::before { background: radial-gradient(ellipse at 76% 42%, #7c3aed18, transparent 53%), radial-gradient(ellipse at 94% 58%, #00d4ff15, transparent 53%); }
+.hero-content h1 { font-weight: 600; font-size: clamp(60px, 6.15vw, 92px); letter-spacing: -.06em; }
+.hero-content h1 em, .home-final h2 em { color: #00d4ff; font-style: normal; font-weight: 650; }
+.home-section-heading h2, .lab-feature h2, .home-faq h2, .about-intro h2, .home-final h2 { font-weight: 550; }
+.home-section-heading h2 em, .lab-feature h2 em, .home-faq h2 em, .about-intro h2 em, .admin-overview-heading h1 em { color: #a78bfa; font-style: normal; font-weight: 550; }
+.home-button-accent { background: #00d4ff; color: #050815; box-shadow: 0 0 25px #00d4ff15; }
+.home-button-accent:hover { background: #5ce1ff; box-shadow: 0 0 30px #00d4ff30; }
+.home-button-dark { background: #7c3aed; color: #fff; }
+.home-button-dark:hover { background: #8b5cf6; }
+.hero-watch:hover > span { color: #050815; }
+.home-context-strip { background: #0f1333; }
+.home-context-strip span { color: #cbd5e1; }
+.home-context-strip svg, .loop-top, .loop-link, .teacher-strip > a { color: #00d4ff; }
+.loop-item { background: linear-gradient(145deg, #151a3d, #111630); }
+.loop-item:hover { border-color: #00d4ff66; background: #1c2252; box-shadow: 0 10px 35px #00d4ff08; }
+.loop-item h3 { font-size: 25px; font-weight: 600; }
+.home-curriculum, .home-about { background: #0f1333; }
+.home-class-picker { background: #0a0e27; }
+.home-class-picker > button.is-active { background: #00d4ff; color: #050815; }
+.subject-art { background: radial-gradient(ellipse at center, #00d4ff12, #0b1836); }
+.subject-peach .subject-art { background: radial-gradient(ellipse at center, #f59e0b18, #19152e); }
+.subject-lilac .subject-art { background: radial-gradient(ellipse at center, #7c3aed28, #171336); }
+.subject-art > span { color: #a5b4fc; }
+.subject-info > h3 { font-size: 29px; font-weight: 600; }
+.subject-arrow { color: #00d4ff; border-color: #3b4280; background: #151a3dcc; }
+.subject-discovery:hover { border-color: #00d4ff66; box-shadow: 0 15px 40px #00d4ff0a; }
+.subject-discovery:hover .subject-arrow { color: #050815; }
+.lab-feature { background: linear-gradient(125deg, #151a3d, #12152e); }
+.lab-art { background: radial-gradient(ellipse at 50% 45%, #7c3aed25, transparent 67%); }
+.lab-center { background: linear-gradient(130deg, #22d3ee20, #7c3aed40); border-color: #3b4280; color: #67e8f9; box-shadow: inset 8px 8px 15px #00d4ff12, inset -5px -5px 30px #7c3aed25, 15px 30px 40px #0003; }
+.lab-liquid { background: #00d4ff55; }
+.lab-dot { background: radial-gradient(at 25% 25%, #cffafe, #22d3ee 55%, #164e63); }
+.lab-float { background: #151a3de6; border-color: #3b4280; }
+.lab-float-bottom { color: #00d4ff; }
+.home-app { background: linear-gradient(120deg, #151a3d, #191536); }
+.home-app .app-icon { color: #00d4ff; background: #00d4ff10; border-color: #00d4ff30; }
+.home-app h2, .vl-download-banner h2 { font-weight: 550; }
+.home-final { background: radial-gradient(ellipse at 50% 100%, #7c3aed28, transparent 60%), #050815; }
+.founder-card { background: #151a3d; }
+.founder-photo > img { filter: none; }
+.admin-stat-icon { background: #00d4ff12; color: #00d4ff; }
+.admin-stat-icon.tone-sand { background: #f59e0b15; color: #fbbf24; }
+.admin-stat-icon.tone-lilac { background: #7c3aed22; color: #a78bfa; }
+.admin-overview-shortcuts > a { background: #151a3d; }
+.admin-overview-shortcuts > a:hover { background: #1c2252; border-color: #00d4ff66; }
+.admin-overview-heading h1 { font-weight: 550; }
+.admin-recent-heading h2 { font-weight: 550; }
+.vl-download-banner { background: linear-gradient(110deg, #151a3d, #1b153b); color: #e2e8f0; }
+.vl-download-banner > a { background: #00d4ff; color: #050815; }
+.vl-download-banner > a:hover { background: #5ce1ff; }
+/* Older account and administration routes use the same shared surfaces. */
+:is(.learning-shell, .admin-shell) :is(.bg-white, .bg-gray-50, .bg-slate-50):not(.notes-html-viewer *) { background-color: #151a3d; }
+:is(.learning-shell, .admin-shell) :is(.bg-gray-100, .bg-slate-100):not(.notes-html-viewer *) { background-color: #1a1f4a; }
+:is(.learning-shell, .admin-shell) :is(.text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800):not(.notes-html-viewer *) { color: #e2e8f0; }
+:is(.learning-shell, .admin-shell) :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-slate-500, .text-slate-600):not(.notes-html-viewer *) { color: #94a3b8; }
+:is(.learning-shell, .admin-shell) :is(.text-primary, .text-primary-dark):not(.notes-html-viewer *) { color: #00d4ff; }
+:is(.learning-shell, .admin-shell) :is(.bg-accent.text-primary-dark, .bg-accent.text-heading, .bg-accent.text-white, .vl-ui-button.bg-accent):not(.notes-html-viewer *) { color: #050815; }
+:is(.learning-shell, .admin-shell) :is(.border-gray-100, .border-gray-200, .border-slate-100, .border-slate-200):not(.notes-html-viewer *) { border-color: #2a3060; }
+:is(.learning-shell, .admin-shell) .bg-heading:not(.notes-html-viewer *) { background-color: #050815; }
+:is(.learning-shell, .admin-shell) [class~="bg-heading/60"]:not(.notes-html-viewer *) { background-color: #05081599; }
+:is(.learning-shell, .admin-shell) [class~="bg-heading/40"]:not(.notes-html-viewer *) { background-color: #05081566; }
+:is(.learning-shell, .admin-shell) :is([class~="bg-white/80"], [class~="bg-white/95"], [class~="bg-[#f5f7fb]"]):not(.notes-html-viewer *) { background-color: #151a3df2; }
+:is(.learning-shell, .admin-shell) .text-black:not(.notes-html-viewer *) { color: #e2e8f0; }
+.learning-shell [class~="hover:bg-white"]:hover:not(.notes-html-viewer *) { background-color: #1c2252; }
+.learning-shell :is([class~="bg-amber-50/70"], [class~="bg-amber-50/50"]):not(.notes-html-viewer *) { background-color: #2b2140; border-color: #6e4b35; }
+.learning-shell [class~="text-primary/40"]:not(.notes-html-viewer *) { color: #00d4ff73; }
+:is(.learning-shell, .admin-shell) button.bg-primary:not(.notes-html-viewer *) { background-color: #00d4ff; color: #050815; }
+:is(.learning-shell, .admin-shell) button.bg-primary:hover:not(.notes-html-viewer *) { background-color: #5ce1ff; }
+.admin-shell th { background: #111630; color: #94a3b8; }
+.admin-shell td, .admin-shell tr { border-color: #2a3060; }
+.admin-shell tbody tr:hover { background: #1c2252; }
+.policy-page > .prose { color: #cbd5e1; }
+.policy-page > .prose :is(h2,h3) { color: #e2e8f0; }
+.policy-page > .prose a { color: #00d4ff; }
+@media(min-width:951px) and (max-width:1100px) { .hero-content h1 { font-size: 69px; max-width: 460px; } }
+@media(min-width:761px) and (max-width:950px) { .hero-content h1 { font-size: 78px; max-width: 700px; } }
+@media(max-width:760px) { .hero-content h1 { font-size: clamp(47px, 10vw, 72px); line-height: 1.08; }.hero-content h1 em { margin-top: 5px; }.home-section-heading h2, .lab-feature h2, .home-faq h2 { font-size: 34px; }.loop-item h3 { font-size: 21px; }.subject-info > h3 { font-size: 25px; } }

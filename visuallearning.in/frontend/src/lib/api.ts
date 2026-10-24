@@ -23,6 +23,7 @@ function isPublicPage(path: string) {
     path === "/courses" ||
     path.startsWith("/pricing") ||
     path.startsWith("/demo") ||
+    path.startsWith("/explore") ||
     path.startsWith("/auth/")
   );
 }

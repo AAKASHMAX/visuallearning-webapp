@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { AnimatedChapterCard } from "./animated-chapter-card";
 import { PageLoader } from "@/components/ui/loading";
 
 type Audience = "students" | "teachers";
@@ -68,6 +69,7 @@ type ChapterRow = {
   name: string;
   order: number;
   contentCount?: number;
+  animationKey?: string | null;
   _count?: { videos: number; notes: number; questions: number };
 };
 
@@ -285,19 +287,12 @@ function PageFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href={backHref} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
+    <div className="learning-page learn-path-page">
+      <Link href={backHref} className="learn-text-link learn-path-back">
         <ArrowLeft className="h-4 w-4" />
         Back
       </Link>
-      <div className="mb-8">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-primary shadow-sm">
-          <Sparkles className="h-4 w-4" />
-          {eyebrow}
-        </div>
-        <h1 className="text-3xl font-black tracking-tight text-heading sm:text-4xl">{title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">{description}</p>
-      </div>
+      <header className="learn-page-header"><div><span className="learn-eyebrow"><span />{eyebrow}</span><h1>{title}</h1><p>{description}</p></div></header>
       {children}
     </div>
   );
@@ -329,7 +324,7 @@ function ResourcePlaceholder({
       <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
         {content.slug === "virtual-lab"
           ? "Virtual Lab is already available as a separate interactive section."
-          : `${content.title} is now included in this course path. Upload fields and backend storage can be connected in the next backend pass.`}
+          : `${content.title} will appear here as new learning resources become available.`}
       </p>
       {actionHref && (
         <Link
@@ -379,7 +374,7 @@ export function AudienceClassesPage({ audience }: { audience: Audience }) {
   return (
     <PageFrame eyebrow={meta.label} title={`${meta.title} Classes`} description={meta.description} backHref="/courses">
       {classes.length === 0 ? (
-        <EmptyState title="No classes found" message="Class 9 to 12 cards will appear here after they are added in admin." />
+        <EmptyState title="Your next chapter is on its way" message="Classes will appear here as they become available." />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {classes.map((classItem) => (
@@ -436,7 +431,7 @@ export function AudienceSubjectsPage({ audience, classId }: { audience: Audience
       backHref={`/courses/${audience}`}
     >
       {subjects.length === 0 ? (
-        <EmptyState title="No subjects found" message="Physics, Chemistry, and Biology will appear here after they are enabled in admin." />
+        <EmptyState title="New subjects are on the way" message="Check back soon for more science resources." />
       ) : (
         <div className="grid gap-5 md:grid-cols-3">
           {subjects.map((subject) => {
@@ -769,52 +764,12 @@ function ChapterGrid({
   contentSlug: ContentSlug;
   returnTo: string;
 }) {
-  if (chapters.length === 0) {
-    return <EmptyState title="No chapters found" message="Content for this section will appear after chapters are added in admin." />;
-  }
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      {chapters.map((chapter, index) => {
-        const visual = subjectVisual(chapter.subjectName);
-        const unlocked = index === 0;
-        const href = contentSlug === "animated-videos"
-          ? `/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?tab=videos&returnTo=${encodeURIComponent(returnTo)}`
-          : `/courses/resource-viewer/${chapter.classId}/${chapter.subjectId}/${chapter.id}?type=${contentSlug}&returnTo=${encodeURIComponent(returnTo)}`;
-        const resourceCount = chapterContentCount(chapter, contentSlug);
-        const resourceLabel = contentSlug === "ppts" || contentSlug === "test-series"
-          ? "Open viewer"
-          : `${resourceCount} resources`;
-
-        return (
-          <Link
-            key={`${chapter.subjectId}-${chapter.id}`}
-            href={href}
-            className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md"
-          >
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${visual.accent} text-white shadow-sm transition-transform group-hover:scale-105`}>
-              <BookOpen className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-sm font-black text-heading group-hover:text-primary">
-                {chapter.order || index + 1}. {chapter.name}
-              </h2>
-              <div className="mt-0.5 flex items-center gap-3 text-xs text-text-muted">
-                <span>{chapter.className} - {chapter.subjectName}</span>
-                <span className="text-gray-300">|</span>
-                <span>{resourceLabel}</span>
-              </div>
-            </div>
-            <span className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider",
-              unlocked ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"
-            )}>
-              {unlocked ? "Preview" : <><Lock className="h-3 w-3" /> Locked</>}
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-primary/40 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-          </Link>
-        );
-      })}
-    </div>
-  );
+  if (chapters.length === 0) return <EmptyState title="No chapters found" message="Content for this section will appear as chapters become available." />;
+  return <div className="physics-chapter-grid">{chapters.map((chapter, index) => {
+    const href = contentSlug === "animated-videos"
+      ? `/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?tab=videos&returnTo=${encodeURIComponent(returnTo)}`
+      : `/courses/resource-viewer/${chapter.classId}/${chapter.subjectId}/${chapter.id}?type=${contentSlug}&returnTo=${encodeURIComponent(returnTo)}`;
+    const count = chapterContentCount(chapter, contentSlug);
+    return <AnimatedChapterCard key={`${chapter.subjectId}-${chapter.id}`} href={href} name={chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} description={`${chapter.className} · ${chapter.subjectName}`} resourceLabel={`${count} resources`} />;
+  })}</div>;
 }

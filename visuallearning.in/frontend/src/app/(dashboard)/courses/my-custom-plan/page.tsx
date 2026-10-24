@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
+import { AnimatedChapterCard } from "@/app/(dashboard)/courses/_components/animated-chapter-card";
 import { 
   BookOpen, Video, FileText, Layout, 
   ArrowRight, Sparkles, Star, ChevronRight,
@@ -123,22 +124,8 @@ export default function MyCustomPlan() {
                     <h4 className="text-2xl font-black text-white">{sub.name}</h4>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sub.chapters?.map((ch: any) => {
-                      const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
-                      return (
-                        <Link key={ch.id} href={`/courses/${cls.id}/${sub.id}/${ch.id}`} className="group bg-[#16213e] rounded-[2rem] p-8 border border-white/5 shadow-xl hover:bg-[#1a2c5a] transition-all duration-300 flex flex-col items-center text-center">
-                          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <ChapterIcon className="w-6 h-6 text-[#00b4d8]" />
-                          </div>
-                          <h5 className="text-lg font-black text-white mb-2">{ch.name}</h5>
-                          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Resume Learning</p>
-                          <div className="mt-4 flex items-center gap-2 text-[#00b4d8] font-black text-[9px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                            Continue <ArrowRight className="w-3 h-3" />
-                          </div>
-                        </Link>
-                      );
-                    })}
+                  <div className="physics-chapter-grid">
+                    {sub.chapters?.map((chapter: any, index: number) => <AnimatedChapterCard key={chapter.id} name={chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} href={`/courses/${cls.id}/${sub.id}/${chapter.id}`} resourceLabel="Explore chapter" />)}
                   </div>
                 </div>
               );

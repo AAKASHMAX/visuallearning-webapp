@@ -2,54 +2,29 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle } from "lucide-react";
+import { ArrowRight, Check, MailWarning } from "lucide-react";
+import { PageLoader, Spinner } from "@/components/ui/loading";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { authLink, safeInternalRedirect } from "@/lib/auth-redirect";
 import api from "@/lib/api";
 
 export default function VerifyEmailPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
-      <VerifyEmailContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<PageLoader />}><VerifyEmailContent /></Suspense>;
 }
-
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const next = safeInternalRedirect(searchParams.get("next"));
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-
   useEffect(() => {
     if (!token) { setStatus("error"); return; }
-    api.get(`/auth/verify-email?token=${token}`)
-      .then(() => setStatus("success"))
-      .catch(() => setStatus("error"));
+    let active = true;
+    api.get("/auth/verify-email", { params: { token } }).then(() => { if (active) setStatus("success"); }).catch(() => { if (active) setStatus("error"); });
+    return () => { active = false; };
   }, [token]);
-
-  return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center">
-        <CardContent className="p-8">
-          {status === "loading" && <p className="text-gray-500">Verifying your email...</p>}
-          {status === "success" && (
-            <>
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Email Verified!</h2>
-              <p className="text-gray-500 mb-6">Your account is now verified.</p>
-              <Link href="/dashboard"><Button className="w-full">Go to Dashboard</Button></Link>
-            </>
-          )}
-          {status === "error" && (
-            <>
-              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Verification Failed</h2>
-              <p className="text-gray-500 mb-6">The link is invalid or expired.</p>
-              <Link href="/auth/login"><Button className="w-full">Go to Login</Button></Link>
-            </>
-          )}
-        </CardContent>
-      </Card>
+  return <AuthShell title={status === "success" ? "You’re all set." : status === "error" ? "Let’s try that again." : "One small moment."} eyebrow="Make it official" description={status === "success" ? "Your email is verified. A world of discovery is ready when you are." : status === "error" ? "This verification link is invalid or has expired." : "We’re checking your email verification link."}>
+    <div className={`vl-auth-status${status === "error" ? " is-error" : ""}`} role="status">
+      {status === "loading" ? <Spinner /> : <><span className="vl-auth-status-icon">{status === "success" ? <Check size={31} /> : <MailWarning size={29} />}</span><strong>{status === "success" ? "Email verified successfully" : "We couldn’t verify your email"}</strong><p>{status === "success" ? "Your account is now verified." : "Log in to your account or get in touch if you need a hand."}</p><Link className="vl-account-primary-link" href={status === "success" ? next || "/dashboard" : authLink("/auth/login", next)}>{status === "success" ? "Continue learning" : "Back to log in"}<ArrowRight size={16} /></Link></>}
     </div>
-  );
+  </AuthShell>;
 }

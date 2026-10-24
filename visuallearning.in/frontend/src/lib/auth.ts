@@ -25,6 +25,7 @@ export const useAuth = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   login: (user, token) => {
+    sessionStorage.removeItem("vl_my_sub");
     const loginAt = String(Date.now());
     localStorage.setItem("vl_token", token);
     localStorage.setItem("vl_user", JSON.stringify(user));
@@ -34,6 +35,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    sessionStorage.removeItem("vl_my_sub");
     localStorage.removeItem("vl_token");
     localStorage.removeItem("vl_user");
     localStorage.removeItem("vl_login_at");

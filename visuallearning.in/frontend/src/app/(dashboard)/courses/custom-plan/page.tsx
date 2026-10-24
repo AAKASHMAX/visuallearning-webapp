@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
+import { AnimatedChapterCard } from "@/app/(dashboard)/courses/_components/animated-chapter-card";
 import { 
   CheckCircle2, ArrowRight, Zap, 
   BookOpen, Video, FileText, HelpCircle, Layout,
@@ -206,33 +207,8 @@ export default function CustomPlanPreview() {
                   </div>
 
                   {/* Chapter cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {sub.chapters?.map((ch: any) => {
-                      const ChapterIcon = iconMap[ch.icon] || SubjectIcon;
-                      return (
-                        <Link
-                          key={ch.id}
-                          href={`/courses/${cls.id}/${sub.id}/${ch.id}?returnTo=${encodeURIComponent(`/courses/custom-plan?subjects=${subjectIds.join(",")}`)}`}
-                          className="group flex flex-col items-center text-center bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-                        >
-                          {/* Icon */}
-                          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.iconGrad} flex items-center justify-center shadow-md mb-2.5 group-hover:scale-105 transition-transform duration-300`}>
-                            <ChapterIcon className="w-5 h-5 text-white drop-shadow" />
-                          </div>
-
-                          {/* Chapter name */}
-                          <h5 className="text-[12px] font-black text-heading leading-snug mb-1">
-                            {ch.name}
-                          </h5>
-
-                          {/* Subtitle */}
-                          <p className="text-[10px] text-text-muted leading-snug">
-                            Comprehensive lessons for{" "}
-                            <span className={theme.priceColor}>{ch.name}</span>
-                          </p>
-                        </Link>
-                      );
-                    })}
+                  <div className="physics-chapter-grid">
+                    {sub.chapters?.map((chapter: any, index: number) => <AnimatedChapterCard key={chapter.id} name={chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} href={`/courses/${cls.id}/${sub.id}/${chapter.id}?returnTo=${encodeURIComponent(`/courses/custom-plan?subjects=${subjectIds.join(",")}`)}`} resourceLabel="Explore chapter" />)}
                   </div>
                 </div>
               );

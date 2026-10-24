@@ -1,0 +1,149 @@
+.cell-world {
+  --cell-ink: #e2e8f0;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  color: var(--cell-ink);
+  font-family: inherit;
+}
+
+.cell-world__ambient {
+  position: absolute;
+  inset: 8% -4% 2%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 54% 47%, rgb(0 212 255 / 10%) 0, rgb(124 58 237 / 7%) 35%, transparent 66%);
+  pointer-events: none;
+}
+
+.cell-world__canvas,
+.cell-world__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cell-world__canvas { opacity: 0; transition: opacity 800ms ease; touch-action: pan-y; }
+.cell-world__canvas canvas { display: block; width: 100%; height: 100%; }
+.cell-world__fallback { transition: opacity 700ms ease; pointer-events: none; }
+.cell-world__illustration { width: 100%; height: 100%; display: block; }
+.cell-world--ready .cell-world__canvas { opacity: 1; }
+.cell-world--ready .cell-world__fallback { opacity: 0; }
+
+.cell-world__orbit {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgb(126 173 239 / 9%);
+  border-radius: 50%;
+}
+.cell-world__orbit--one { width: 78%; height: 74%; left: 13%; top: 11%; transform: rotate(-23deg); }
+.cell-world__orbit--two { width: 89%; height: 68%; left: 8%; top: 15%; transform: rotate(32deg); border-style: dashed; border-color: rgb(167 139 250 / 8%); }
+
+.cell-world__specimen {
+  position: absolute;
+  top: 6%;
+  left: 16%;
+  right: 7%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.cell-world__specimen > span:first-child { width: 5px; height: 5px; background: #00d4ff; border-radius: 50%; box-shadow: 0 0 12px rgb(0 212 255 / 45%); }
+.cell-world__specimen-number { margin-left: auto; color: #64748b; font-size: 8px; letter-spacing: 1.5px; }
+
+.cell-world__leaders { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cell-world__leaders path { fill: none; stroke: rgb(148 179 221 / 48%); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cell-world__leaders circle { fill: var(--organelle-color); stroke: rgb(148 179 221 / 20%); stroke-width: 5; paint-order: stroke fill; }
+.cell-world__leaders .is-selected path { stroke: var(--organelle-color); opacity: .64; }
+.cell-world__hotspot {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; justify-content: center;
+  width: max-content; max-width: calc(100% - 20px); min-height: 40px; padding: 0; border: 0;
+  background: transparent; cursor: pointer; color: #e2e8f0; transform: translate(-50%, -50%);
+  -webkit-tap-highlight-color: transparent;
+}
+.cell-world__hotspot--nucleus { left: 15%; top: 20.5%; }
+.cell-world__hotspot--mitochondria { left: 83%; top: 72%; }
+.cell-world__hotspot--membrane { left: 83%; top: 19%; }
+.cell-world__hotspot-label {
+  padding: 11px 13px; display: inline-flex; align-items: center; gap: 9px; min-height: 40px;
+  white-space: nowrap; font-size: 11px; font-weight: 400; line-height: 1.2;
+  background: rgb(15 20 47 / 94%); border: 1px solid #2a3060; border-radius: 6px;
+  backdrop-filter: blur(12px); transition: background 200ms, border-color 200ms;
+}
+.cell-world__hotspot-number { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 8px; color: var(--organelle-color); opacity: .9; }
+.cell-world__hotspot-plus { padding-left: 9px; color: #94a3b8; font-size: 14px; font-weight: 300; }
+.cell-world__hotspot:hover .cell-world__hotspot-label,
+.cell-world__hotspot.is-selected .cell-world__hotspot-label { background: rgb(27 33 72 / 96%); border-color: var(--organelle-color); }
+.cell-world__hotspot:focus-visible { outline: none; }
+.cell-world__hotspot:focus-visible .cell-world__hotspot-label { outline: 2px solid #00d4ff; outline-offset: 4px; }
+.cell-world__fact {
+  position: absolute;
+  z-index: 3;
+  left: 6%;
+  bottom: 11%;
+  width: min(252px, 42%);
+  padding: 18px 20px 19px;
+  border: 1px solid #2a3060;
+  border-radius: 7px;
+  background: linear-gradient(125deg, rgb(21 26 61 / 96%), rgb(12 17 43 / 96%));
+  box-shadow: 0 12px 30px rgb(2 6 23 / 24%);
+  backdrop-filter: blur(16px);
+}
+.cell-world__fact-eyebrow { display: flex; align-items: center; gap: 7px; font-size: 8px; letter-spacing: 1.6px; color: #a5b4cf; }
+.cell-world__fact-eyebrow > span { width: 5px; height: 5px; border-radius: 50%; background: var(--organelle-color); }
+.cell-world__fact h3 { margin: 11px 0 8px; font-size: 15px; font-weight: 500; line-height: 1.35; letter-spacing: -.35px; color: #e2e8f0; }
+.cell-world__fact p { margin: 0; color: #94a3b8; font-size: 11px; line-height: 1.75; font-weight: 400; }
+
+.cell-world__toolbar {
+  position: absolute;
+  z-index: 4;
+  left: 31%;
+  right: 8%;
+  bottom: 3%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.cell-world__hint { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; color: #94a3b8; }
+.cell-world__hint > span { font-size: 17px; color: #00d4ff; }
+.cell-world__motion { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 70px; min-height: 36px; border: 1px solid #2a3060; border-radius: 30px; color: #cbd5e1; background: rgb(15 20 47 / 75%); font-size: 10px; padding: 7px 12px; cursor: pointer; transition: border-color 200ms; }
+.cell-world__motion:hover { border-color: #00d4ff; }
+.cell-world__motion:focus-visible { outline: 2px solid #00d4ff; outline-offset: 4px; }
+.cell-world__motion:disabled { opacity: .55; cursor: default; }
+
+@media (max-width: 1100px) {
+  .cell-world { min-height: 490px; }
+  .cell-world__hotspot-label { padding: 8px 10px; gap: 6px; font-size: 10px; }
+  .cell-world__hotspot-plus { padding-left: 3px; }
+  .cell-world__fact { left: 2%; padding: 15px 16px; bottom: 10%; }
+  .cell-world__fact h3 { font-size: 14px; }
+  .cell-world__toolbar { left: 15%; }
+}
+
+@media (max-width: 640px) {
+  .cell-world { min-height: 470px; }
+  .cell-world__canvas, .cell-world__fallback, .cell-world__leaders { bottom: 150px; height: calc(100% - 150px); }
+  .cell-world__specimen { top: 3%; left: 9%; right: 9%; font-size: 8px; }
+  .cell-world__orbit--one { top: 7%; height: 66%; }
+  .cell-world__orbit--two { top: 10%; height: 63%; }
+  .cell-world__hotspot-label { padding: 9px; gap: 6px; font-size: 10px; }
+  .cell-world__hotspot-number { font-size: 7px; }
+  .cell-world__fact { left: 7%; bottom: 52px; width: 86%; padding: 12px 15px; }
+  .cell-world__fact-eyebrow { font-size: 7px; }
+  .cell-world__fact h3 { margin: 7px 0 4px; font-size: 13px; }
+  .cell-world__fact p { font-size: 10px; line-height: 1.6; }
+  .cell-world__toolbar { left: 8%; right: 8%; bottom: 2%; }
+  .cell-world__hint { font-size: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-world *, .cell-world *::before { transition-duration: 0ms !important; }
+}

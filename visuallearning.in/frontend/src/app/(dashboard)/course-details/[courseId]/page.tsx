@@ -14,6 +14,7 @@ import {
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
+import { AnimatedChapterCard } from "@/app/(dashboard)/courses/_components/animated-chapter-card";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 
@@ -429,24 +430,8 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                         </div>
                         <h3 className="text-xl font-bold text-gray-800">{subject.name}</h3>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {subject.chapters.map((chapter: any, cIdx: number) => {
-                          const Icon = getChapterIcon(chapter.title, chapter.icon);
-                          const grad = gradients[cIdx % gradients.length];
-                          return (
-                            <Link
-                              key={chapter.id}
-                              href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromDetails=${courseId}`}
-                              className={`group bg-gradient-to-br ${grad.light} rounded-2xl border border-white/80 p-4 hover:shadow-lg hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center`}
-                            >
-                              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${grad.bg} flex items-center justify-center shadow-md mb-2.5 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
-                                <Icon className="w-5 h-5 text-white" />
-                              </div>
-                              <h4 className="text-[13px] font-bold text-gray-800 leading-snug line-clamp-2 group-hover:text-gray-900 transition-colors">{chapter.title}</h4>
-                              {chapter.desc && <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">{chapter.desc}</p>}
-                            </Link>
-                          );
-                        })}
+                      <div className="physics-chapter-grid physics-chapter-grid-compact">
+                        {subject.chapters.map((chapter: any, index: number) => <AnimatedChapterCard key={chapter.id} name={chapter.title || chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} description={chapter.desc} href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromDetails=${courseId}`} />)}
                       </div>
                     </div>
                   );

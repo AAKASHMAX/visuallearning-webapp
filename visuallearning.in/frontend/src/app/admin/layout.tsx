@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Navbar />
         <div className="flex flex-1">
           <AdminSidebar />
-          <main className="flex-1 p-6 bg-gray-50">{children}</main>
+          <main id="main-content" className="admin-shell flex-1 min-w-0 p-6 bg-surface">{children}</main>
         </div>
       </div>
     </AdminGuard>

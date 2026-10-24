@@ -1,92 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Atom, BookOpen, CalendarDays, Check, ChevronRight, FlaskConical, GraduationCap, Layers, MonitorPlay, NotebookPen, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
-import {
-  BookOpen, CreditCard, PlayCircle, Radio, Users, Clock,
-  Beaker, Atom, MonitorPlay, PenTool, ClipboardList, FlaskConical, Eye,
-  Crown, ArrowRight, Sparkles, AlertCircle, Layout, CheckCircle2, Zap,
-  Search, Bookmark, Star, Info,
-  GraduationCap, Layers, ChevronRight, FlaskRound, BriefcaseBusiness
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/ui/loading";
-import type { Subscription, ClassItem } from "@/types";
+import type { ClassItem, Subscription } from "@/types";
 
-const iconMap: Record<string, any> = {
-  Atom, FlaskConical, FlaskRound, Beaker, GraduationCap, Layers, BookOpen, Zap, Crown, Sparkles, BriefcaseBusiness
-};
-
-function subjectTheme(name: string) {
-  const n = name.toLowerCase();
-  if (n.includes("physics"))   return { grad: "from-sky-500 to-blue-600",    bg: "bg-sky-50",    text: "text-sky-700",    border: "border-sky-200" };
-  if (n.includes("chemistry")) return { grad: "from-emerald-500 to-teal-600", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" };
-  if (n.includes("biology"))   return { grad: "from-rose-500 to-pink-600",    bg: "bg-rose-50",   text: "text-rose-700",   border: "border-rose-200" };
-  if (n.includes("math"))      return { grad: "from-violet-500 to-purple-600", bg: "bg-violet-50", text: "text-violet-700", border: "border-violet-200" };
-  return                              { grad: "from-primary to-primary-dark", bg: "bg-primary/10", text: "text-primary",   border: "border-primary/20" };
-}
-
-interface SubjectInfo {
-  subjectId: string;
-  subjectName: string;
-  classId: string;
-  className: string;
-  icon?: string;
-}
-
-function subjectTrackKey(name: string) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("chemistry")) return "chemistry";
-  if (normalized.includes("biology")) return "biology";
-  return "physics";
-}
-
+interface SubjectInfo { subjectId: string; subjectName: string; classId: string; className: string }
+interface PricingClass { id: string; name: string; subjects: { id: string; name: string }[] }
+function subjectTrackKey(name: string) { const n = name.toLowerCase(); return n.includes("chemistry") ? "chemistry" : n.includes("biology") ? "biology" : "physics"; }
 function planMeta(plan: string) {
-  const key = plan.toUpperCase();
-  if (key === "STUDENTS_PLAN") {
-    return {
-      badge: "STUDENTS",
-      title: "Students Plan",
-      subtitle: "Class-wise student learning resources",
-      grad: "from-sky-900 to-blue-900",
-      tint: "blue",
-      href: "/courses/students",
-      icon: GraduationCap,
-    };
-  }
-  if (key === "TEACHERS_PLAN") {
-    return {
-      badge: "TEACHERS",
-      title: "Teachers Plan",
-      subtitle: "Class-wise teaching resources",
-      grad: "from-emerald-900 to-teal-900",
-      tint: "emerald",
-      href: "/courses/teachers",
-      icon: Users,
-    };
-  }
-  if (key === "PROFESSIONAL_PLAN") {
-    return {
-      badge: "PROFESSIONAL",
-      title: "Professional Plan",
-      subtitle: "Subject tracks for advanced learning",
-      grad: "from-violet-900 to-fuchsia-900",
-      tint: "violet",
-      href: "/courses/professional",
-      icon: BriefcaseBusiness,
-    };
-  }
-  return {
-    badge: key.replace(/_/g, " "),
-    title: key.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()),
-    subtitle: "Active learning access",
-    grad: "from-blue-900 to-indigo-900",
-    tint: "blue",
-    href: "/courses",
-    icon: Crown,
+  const metadata: Record<string, { title: string; href: string }> = {
+    STUDENTS_PLAN: { title: "Students plan", href: "/courses/students" },
+    TEACHERS_PLAN: { title: "Teachers plan", href: "/courses/teachers" },
+    PROFESSIONAL_PLAN: { title: "Professional subjects", href: "/courses/professional" },
+    FLEXI_PLAN: { title: "Your custom subjects", href: "/courses/my-custom-plan" },
+    SINGLE_CLASS: { title: "Single class", href: "/courses" },
+    DUAL_CLASS: { title: "Dual class", href: "/courses" },
+    FULL_ACCESS: { title: "Full access", href: "/courses" },
   };
+  return metadata[plan] || { title: plan.replace(/_/g, " ").toLowerCase().replace(/^./, c => c.toUpperCase()), href: "/courses" };
 }
 
 export default function DashboardPage() {
@@ -95,301 +29,54 @@ export default function DashboardPage() {
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [subjectAccessBySubId, setSubjectAccessBySubId] = useState<Record<string, SubjectInfo[]>>({});
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [subRes, classRes] = await Promise.all([
-          api.get("/subscription/my-subscription"),
-          api.get("/courses/classes"),
-        ]);
-        const subs: Subscription[] = Array.isArray(subRes.data.data) ? subRes.data.data : [subRes.data.data].filter(Boolean);
-        setSubscriptions(subs);
-        setAllClasses(classRes.data.data);
-
-        // Resolve subject names for Flexi and Professional subject-track plans.
-        const subjectSubs = subs.filter(s => s.status === "ACTIVE" && s.subjectsAccess?.length > 0);
-        if (subjectSubs.length > 0) {
-          const { data: pricingRes } = await api.get("/courses/pricing/subjects");
-          const allCls = (pricingRes.data || pricingRes) as any[];
-          const byId: Record<string, SubjectInfo> = {};
-          const allSubjects: SubjectInfo[] = [];
-
-          for (const cls of allCls) {
-            for (const s of cls.subjects) {
-              const info = { subjectId: s.id, subjectName: s.name, classId: cls.id, className: cls.name, icon: s.icon };
-              byId[s.id] = info;
-              allSubjects.push(info);
-            }
-          }
-
-          const nextMap: Record<string, SubjectInfo[]> = {};
-          for (const sub of subjectSubs) {
-            nextMap[sub.id] = sub.subjectsAccess.flatMap((access) => {
-              if (byId[access]) return [byId[access]];
-              const key = access.toLowerCase();
-              return allSubjects.filter((subject) => subject.subjectName.toLowerCase().includes(key));
-            });
-          }
-          setSubjectAccessBySubId(nextMap);
-        }
-      } catch (err) {
-        console.error("Failed to load dashboard data", err);
-      } finally {
-        setLoading(false);
+  const [error, setError] = useState(false);
+  const load = useCallback(async () => {
+    setLoading(true); setError(false);
+    try {
+      const [subRes, classRes] = await Promise.all([api.get("/subscription/my-subscription"), api.get("/courses/classes")]);
+      const subs: Subscription[] = Array.isArray(subRes.data.data) ? subRes.data.data : [subRes.data.data].filter(Boolean);
+      setSubscriptions(subs);
+      setAllClasses(Array.isArray(classRes.data.data) ? classRes.data.data : []);
+      const subjectSubs = subs.filter(s => s.status === "ACTIVE" && s.subjectsAccess?.length > 0);
+      if (subjectSubs.length) {
+        const { data: pricingRes } = await api.get("/courses/pricing/subjects");
+        const pricingClasses = (pricingRes.data || []) as PricingClass[];
+        const subjects = pricingClasses.flatMap(cls => cls.subjects.map(s => ({ subjectId: s.id, subjectName: s.name, classId: cls.id, className: cls.name })));
+        const nextMap: Record<string, SubjectInfo[]> = {};
+        for (const sub of subjectSubs) nextMap[sub.id] = sub.subjectsAccess.flatMap(access => {
+          const exact = subjects.find(s => s.subjectId === access);
+          return exact ? [exact] : subjects.filter(s => s.subjectName.toLowerCase().includes(access.toLowerCase()));
+        });
+        setSubjectAccessBySubId(nextMap);
       }
-    }
-    loadData();
+    } catch { setError(true); }
+    finally { setLoading(false); }
   }, []);
-
+  useEffect(() => { void load(); }, [load]);
   const activeSubs = subscriptions.filter(s => s.status === "ACTIVE" && new Date(s.expiryDate) > new Date());
-  const isActive = activeSubs.length > 0;
+  const firstName = user?.name?.split(" ")[0] || "there";
 
-  if (loading) return <PageLoader />;
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Greeting */}
-      <div className="mb-12">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-          Hello, <span className="text-blue-600">{user?.name?.split(" ")[0]}!</span>
-        </h1>
-        <p className="text-gray-500 font-bold mt-1 text-sm md:text-base uppercase tracking-wider">Welcome to your Science Dashboard</p>
-      </div>
-
-      {/* Course Access Section */}
-      <div className="mb-16">
-        <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass mb-8">
-          <Layout className="w-4 h-4 text-primary" />
-          <span className="text-[11px] text-text-muted font-black uppercase tracking-widest">My Active Plans</span>
-        </div>
-
-        {isActive ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {activeSubs.map((sub) => (
-              <SubscriptionCard 
-                key={sub.id} 
-                sub={sub} 
-                subjectAccess={subjectAccessBySubId[sub.id] || []}
-                allClasses={allClasses}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-[3rem] border-2 border-dashed border-gray-200 p-8 md:p-16 text-center shadow-sm">
-            <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8">
-              <AlertCircle className="w-12 h-12 text-red-400" />
-            </div>
-            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">No course active on your account</h2>
-            <p className="text-gray-500 font-medium max-w-md mx-auto mb-10 text-lg">
-              Unlock the full potential of 3D science learning by subscribing to a plan.
-            </p>
-            <Link href="/courses">
-              <Button className="px-10 py-8 text-lg font-black bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02]">
-                View All Courses & Plans <ArrowRight className="w-6 h-6 ml-3" />
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Stats / Features Grid (only for active users) */}
-      {isActive && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
-          <DashboardStatCard icon={BookOpen} title="Curriculum" value="Class 9-12 Science" desc="Comprehensive 3D Learning" color="blue" />
-          <DashboardStatCard icon={MonitorPlay} title="Learning Resource" value="64+ Virtual Labs" desc="Interactive Simulations" color="purple" />
-          <DashboardStatCard icon={PenTool} title="Study Material" value="PDF Notes & Formulae" desc="Chapter-wise Downloads" color="emerald" />
-          <DashboardStatCard icon={Zap} title="Active Path" value="Animated Lessons" desc="Concept Visualization" color="orange" />
-        </div>
-      )}
-
-      {/* Bottom CTA (only for active users) */}
-      {isActive && (
-        <div className="bg-gray-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/10 to-transparent pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
-                <Sparkles className="w-4 h-4 text-yellow-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Premium Experience</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight">Ready to master science today?</h2>
-              <p className="text-white/50 font-medium">Dive into your chapter lessons and virtual experiments.</p>
-            </div>
-            <Link href="/courses">
-              <Button className="bg-white text-black hover:bg-white/90 font-black px-8 py-7 rounded-2xl shadow-2xl">
-                Explore More Courses <MonitorPlay className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <div className="learning-page learn-dashboard-page">
+    <header className="learn-page-header"><div><span className="learn-eyebrow"><span /> YOUR LEARNING SPACE</span><h1>Welcome back, {firstName}.<br /><em>Stay a little curious.</em></h1><p>Your classes, your pace, your next discovery. Pick up a subject and see where it takes you today.</p></div><Link className="learn-button" href="/courses">Explore the library <ArrowUpRight size={17} /></Link></header>
+    <div className="learn-dashboard-summary"><div><span className="learn-resource-icon"><Layers size={21} /></span><div><strong>{loading ? "…" : activeSubs.length}</strong><span>Active {activeSubs.length === 1 ? "plan" : "plans"}</span></div></div><div><span className="learn-resource-icon"><GraduationCap size={21} /></span><div><strong>Class 9–12</strong><span>A world of science</span></div></div><Link href="/courses/virtual-lab"><span className="learn-resource-icon"><FlaskConical size={21} /></span><div><strong>The virtual lab</strong><span>Learn by experimenting</span></div><ArrowUpRight size={19} /></Link></div>
+    <section className="learn-section" aria-labelledby="active-learning-plans"><div className="learn-section-heading"><div><span className="learn-step">MADE FOR YOUR LEARNING JOURNEY</span><h2 id="active-learning-plans">Your classroom, right here.</h2></div><Link className="learn-text-link" href="/pricing">Manage your access <ArrowUpRight size={16} /></Link></div>
+      {loading ? <div className="learn-subscription-grid" role="status" aria-label="Loading your plans">{[1, 2].map(i => <div className="learn-subscription-card learn-skeleton" key={i} />)}</div> : error ? <div className="learn-empty" role="alert"><BookOpen /><h3>We couldn’t load your learning space.</h3><p>Your plans are still there. Please try again in a moment.</p><button className="learn-button" onClick={() => void load()}>Reload my plans <ArrowRight size={16} /></button></div> : activeSubs.length ? <div className="learn-subscription-grid">{activeSubs.map(sub => <SubscriptionCard key={sub.id} sub={sub} subjects={subjectAccessBySubId[sub.id] || []} allClasses={allClasses} />)}</div> : <div className="learn-dashboard-empty"><span className="learn-empty-illustration"><BookOpen size={46} strokeWidth={1.25} /></span><div><span className="learn-step">EVERY JOURNEY STARTS SOMEWHERE</span><h3>Your first discovery is waiting.</h3><p>You don’t have an active plan yet. Explore the free study resources, or find a plan to unlock animated lessons and more.</p><div className="learn-inline-actions"><Link href="/courses" className="learn-button">Start exploring <ArrowUpRight size={16} /></Link><Link href="/pricing" className="learn-text-link">Find your plan <ArrowRight size={16} /></Link></div></div></div>}
+    </section>
+    <section className="learn-section"><div className="learn-section-heading"><div><span className="learn-step">A LITTLE INSPIRATION FOR TODAY</span><h2>How will you learn?</h2></div></div><div className="learn-dashboard-shortcuts">{[{ href: "/courses", icon: MonitorPlay, title: "See the big picture", text: "Turn abstract concepts into animated explanations.", label: "Explore lessons" }, { href: "/courses", icon: NotebookPen, title: "Make it stay with you", text: "Read, revise, and practise at your own pace.", label: "Find study resources" }, { href: "/courses/virtual-lab", icon: FlaskConical, title: "Let curiosity take over", text: "Step into interactive science experiments.", label: "Enter the lab" }].map(item => <Link key={item.title} href={item.href} className="learn-resource-card"><span className="learn-resource-icon"><item.icon size={24} strokeWidth={1.5} /></span><h3>{item.title}</h3><p>{item.text}</p><span className="learn-resource-action">{item.label} <ArrowRight size={16} /></span></Link>)}</div></section>
+    <div className="learn-discovery-banner"><span className="learn-banner-icon"><Sparkles size={26} /></span><div><h2>Understanding grows with every question.</h2><p>You don’t have to know it all. You just have to begin.</p></div><Link className="learn-button learn-button-light" href="/courses">Keep exploring <ArrowUpRight size={17} /></Link></div>
+  </div>;
 }
 
-function SubscriptionCard({ sub, subjectAccess, allClasses }: { sub: Subscription; subjectAccess: SubjectInfo[]; allClasses: ClassItem[] }) {
-  const daysLeft = Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / 86400000);
-  const planName = sub.plan.replace(/_/g, " ");
+function SubscriptionCard({ sub, subjects, allClasses }: { sub: Subscription; subjects: SubjectInfo[]; allClasses: ClassItem[] }) {
   const meta = planMeta(sub.plan);
-  const HeaderIcon = meta.icon;
-
-  // Subject-track plans (FlexiLearn / Professional)
-  if (sub.plan === "FLEXI_PLAN" || sub.plan === "PROFESSIONAL_PLAN" || (sub.subjectsAccess?.length || 0) > 0) {
-    const isProfessional = sub.plan === "PROFESSIONAL_PLAN";
-    const professionalTracks = Array.from(
-      new Map(subjectAccess.map((subject) => [subjectTrackKey(subject.subjectName), subject])).values()
-    );
-    const visibleSubjects = isProfessional ? professionalTracks : subjectAccess;
-
-    return (
-      <div className="bg-white rounded-3xl border border-indigo-100 shadow-xl overflow-hidden flex flex-col">
-        <div className={`p-6 bg-gradient-to-br ${isProfessional ? meta.grad : "from-indigo-900 to-slate-900"} text-white`}>
-          <div className="flex items-center justify-between mb-4">
-            <Badge className="bg-white/15 text-white border-white/20 font-black text-[9px]">{isProfessional ? meta.badge : "FLEXI LEARN"}</Badge>
-            <span className="text-[10px] font-bold text-white/60">{daysLeft} days left</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <HeaderIcon className="w-7 h-7 text-white/80" />
-            <div>
-              <h3 className="text-xl font-black mb-1">{isProfessional ? "Professional Subject Tracks" : "Customized Subjects"}</h3>
-              <p className="text-xs text-white/60 font-medium">
-                {isProfessional
-                  ? `${visibleSubjects.length || sub.subjectsAccess.length} selected professional subject${(visibleSubjects.length || sub.subjectsAccess.length) === 1 ? "" : "s"}`
-                  : `You have access to ${visibleSubjects.length || sub.subjectsAccess.length} selected subjects`}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="p-5 flex-1 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
-          {visibleSubjects.map((s) => {
-            const theme = subjectTheme(s.subjectName);
-            const SubIcon = iconMap[s.icon ?? ""] || Atom;
-            const href = isProfessional ? `/courses/professional/${subjectTrackKey(s.subjectName)}` : `/courses/${s.classId}/${s.subjectId}`;
-            return (
-              <Link href={href} key={`${s.subjectId}-${href}`}>
-                <div className={`group flex items-center justify-between p-3 rounded-xl border ${theme.border} ${theme.bg} hover:shadow-md transition-all mb-2`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${theme.grad} flex items-center justify-center shadow-sm`}>
-                      <SubIcon className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-xs font-black ${theme.text} truncate`}>{s.subjectName}</p>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase">{isProfessional ? "Professional Track" : s.className}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 ${theme.text} group-hover:translate-x-1 transition-transform`} />
-                </div>
-              </Link>
-          )})}
-        </div>
-      </div>
-    );
-  }
-
-  // Course-based plan (Standard/Grade courses)
-  if (sub.course) {
-    return (
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
-        <div className="h-2" style={{ background: sub.course.accentColor || "#3b82f6" }} />
-        <div className="p-8 flex flex-col h-full">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: sub.course.accentColor || "#3b82f6" }}>
-              {(() => { const I = iconMap[sub.course.icon ?? ""] || Crown; return <I className="w-7 h-7 text-white" />; })()}
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-900 leading-tight">{sub.course.name}</h3>
-              <Badge variant="info" className="text-[9px] mt-1 font-black uppercase tracking-widest">{planName}</Badge>
-            </div>
-          </div>
-          
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400 font-bold uppercase tracking-widest">Status</span>
-              <span className="text-emerald-500 font-black">ACTIVE</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400 font-bold uppercase tracking-widest">Valid Until</span>
-              <span className="text-gray-900 font-black">{new Date(sub.expiryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400 font-bold uppercase tracking-widest">Remaining</span>
-              <span className="text-blue-600 font-black">{daysLeft} Days</span>
-            </div>
-          </div>
-
-          <Link href={`/courses/view-course/${sub.course.slug}`} className="mt-auto">
-            <button className="w-full py-4 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-95" style={{ background: sub.course.accentColor || "#3b82f6" }}>
-              Go To Classroom <ArrowRight className="w-4 h-4" />
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Class-based plan fallback
-  const subClasses = allClasses.filter(c => sub.classesAccess.includes(c.id));
-  const isFullAccess = sub.classesAccess.length === 0 || sub.classesAccess.length >= allClasses.length;
-  const tintClasses: Record<string, { badge: string; text: string; button: string }> = {
-    blue: { badge: "bg-blue-500/20 text-blue-200 border-blue-500/30", text: "text-blue-400", button: "bg-blue-600 hover:bg-blue-700" },
-    emerald: { badge: "bg-emerald-500/20 text-emerald-200 border-emerald-500/30", text: "text-emerald-400", button: "bg-emerald-600 hover:bg-emerald-700" },
-    violet: { badge: "bg-violet-500/20 text-violet-200 border-violet-500/30", text: "text-violet-400", button: "bg-violet-600 hover:bg-violet-700" },
-  };
-  const tint = tintClasses[meta.tint] || tintClasses.blue;
-
-  return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
-      <div className={`p-6 bg-gradient-to-br ${meta.grad} text-white`}>
-        <div className="flex items-center justify-between mb-4">
-          <Badge className={`${tint.badge} font-black text-[9px]`}>{meta.badge}</Badge>
-          <span className={`text-[10px] font-bold ${tint.text}`}>{daysLeft} days left</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <HeaderIcon className="w-7 h-7 text-white/80" />
-          <div>
-            <h3 className="text-xl font-black mb-1">{meta.title}</h3>
-            <p className="text-xs text-white/60 font-medium">{isFullAccess ? "All Class 9-12 access" : `${subClasses.length} selected class${subClasses.length === 1 ? "" : "es"}`}</p>
-          </div>
-        </div>
-      </div>
-      <div className="p-6 flex-1 flex flex-col">
-        {!isFullAccess && (
-          <div className="space-y-2 mb-6">
-            {subClasses.map(c => (
-              <div key={c.id} className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" /> {c.name}
-              </div>
-            ))}
-          </div>
-        )}
-        <Link href={meta.href} className="mt-auto">
-          <Button className={`w-full py-6 text-sm font-black ${tint.button} text-white rounded-2xl shadow-xl transition-all`}>
-            Enter Classroom <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function DashboardStatCard({ icon: Icon, title, value, desc, color }: any) {
-  const colors: any = {
-    blue: "bg-blue-50 text-blue-600 border-blue-100",
-    purple: "bg-purple-50 text-purple-600 border-purple-100",
-    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    orange: "bg-orange-50 text-orange-600 border-orange-100"
-  };
-  return (
-    <div className="p-6 rounded-[2rem] border bg-white shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${colors[color]}`}>
-        <Icon className="w-6 h-6" />
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-        <h4 className="text-sm font-black text-gray-900 mb-0.5">{value}</h4>
-        <p className="text-[11px] text-gray-500 font-medium">{desc}</p>
-      </div>
-    </div>
-  );
+  const daysLeft = Math.max(0, Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / 86400000));
+  const isProfessional = sub.plan === "PROFESSIONAL_PLAN";
+  const subjectPlan = sub.plan === "FLEXI_PLAN" || isProfessional || (sub.subjectsAccess?.length || 0) > 0;
+  const visibleSubjects = isProfessional ? [...new Map(subjects.map(s => [subjectTrackKey(s.subjectName), s])).values()] : subjects;
+  const classes = allClasses.filter(cls => !sub.classesAccess?.length || sub.classesAccess.includes(cls.id));
+  const href = !subjectPlan && sub.course ? `/courses/view-course/${sub.course.slug}` : meta.href;
+  return <article className="learn-subscription-card"><div className="learn-subscription-heading"><span className="learn-resource-icon">{subjectPlan ? <Atom size={23} /> : <GraduationCap size={23} />}</span><span className="learn-status-dot">Active</span></div><span className="learn-step">{sub.plan.replace(/_/g, " ")}</span><h3>{!subjectPlan && sub.course ? sub.course.name : meta.title}</h3><div className="learn-subscription-expiry"><CalendarDays size={14} /><span>Until {new Date(sub.expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span><strong>{daysLeft} days left</strong></div>
+    <div className="learn-subscription-resources">{subjectPlan ? visibleSubjects.length ? visibleSubjects.map(s => <Link key={s.subjectId} href={isProfessional ? `/courses/professional/${subjectTrackKey(s.subjectName)}` : `/courses/${s.classId}/${s.subjectId}`}><span><strong>{s.subjectName}</strong><small>{isProfessional ? "Professional subject" : s.className}</small></span><ChevronRight size={17} /></Link>) : <p>Your selected subjects are included in this plan.</p> : sub.course ? <p><Check size={16} /> Your assigned course is ready to explore.</p> : classes.map(cls => <Link key={cls.id} href={`/courses/${cls.id}`}><span><strong>{cls.name}</strong><small>Explore subjects & chapters</small></span><ChevronRight size={17} /></Link>)}</div>
+    <Link href={href} className="learn-button learn-button-outline">Enter your classroom <ArrowUpRight size={17} /></Link>
+  </article>;
 }

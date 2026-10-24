@@ -6,6 +6,14 @@ import { RefCapture } from "@/components/affiliate/ref-capture";
 import { TelegramNotesButton } from "@/components/layout/telegram-notes-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
+import "./fonts.css";
+import "./navigation.css";
+import "./learning.css";
+import "./account.css";
+import "./home.css";
+import "./workspace.css";
+import "./admin-workspace.css";
+import "./physics-theme.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://visuallearning.in"),

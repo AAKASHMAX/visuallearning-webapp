@@ -1,83 +1,66 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { PageLoader } from "@/components/ui/loading";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { useAuth } from "@/lib/auth";
 import api from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/subscription-access";
+import { authLink, safeInternalRedirect } from "@/lib/auth-redirect";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  return <Suspense fallback={<PageLoader />}><LoginContent /></Suspense>;
+}
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeInternalRedirect(searchParams.get("next"));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
       login(data.data.user, data.data.token);
       toast.success("Welcome back!");
-      if (data.data.user.role === "ADMIN") {
+      if (next) {
+        router.push(next);
+      } else if (data.data.user.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else {
-        // Subscribed users land on the dashboard; everyone else on the courses page.
         let subscribed = false;
         try {
           const { data: subRes } = await api.get("/subscription/my-subscription");
           subscribed = hasActiveSubscription(subRes);
-        } catch {
-          subscribed = false;
-        }
+        } catch { subscribed = false; }
         router.push(subscribed ? "/dashboard" : "/courses");
       }
-    } catch (err: any) {
-      const apiMsg = err.response?.data?.message;
-      const validation =
-        Array.isArray(err.response?.data?.errors) && err.response.data.errors.length
-          ? err.response.data.errors.join(" ")
-          : undefined;
-      const networkHint =
-        err.code === "ERR_NETWORK" || err.message === "Network Error"
-          ? "Cannot reach the API. Start the backend (port 5000) and set NEXT_PUBLIC_API_URL=http://localhost:5000/api in frontend/.env.local"
-          : undefined;
-      toast.error(apiMsg || validation || networkHint || err.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error: any) {
+      const apiMessage = error.response?.data?.message;
+      const validation = Array.isArray(error.response?.data?.errors) ? error.response.data.errors.filter((item: unknown) => typeof item === "string").join(" ") : "";
+      const networkError = error.code === "ERR_NETWORK" || error.message === "Network Error";
+      toast.error(apiMessage || validation || (networkError ? "We couldn’t connect just now. Check your connection and try again." : "We couldn’t sign you in. Please check your details and try again."));
+    } finally { setLoading(false); }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary">
-              <BookOpen className="w-8 h-8 text-accent" />
-              VisualLearning
-            </Link>
-            <p className="text-gray-500 mt-2">Sign in to your account</p>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" required />
-            <div className="text-right">
-              <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">Forgot password?</Link>
-            </div>
-            <Button type="submit" disabled={loading} className="w-full">{loading ? "Signing in..." : "Sign In"}</Button>
-          </form>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Don&apos;t have an account? <Link href="/auth/signup" className="text-primary font-medium hover:underline">Sign up</Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <AuthShell title="Welcome back." eyebrow="Good to see you again" description="Your next discovery is waiting. Let’s pick up where you left off.">
+    <form onSubmit={handleSubmit} className="vl-auth-form">
+      <Input label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
+      <PasswordInput autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required />
+      <div className="vl-auth-form-options"><span><ShieldCheck size={14} />Your learning, safely saved</span><Link href={authLink("/auth/forgot-password", next)}>Forgot password?</Link></div>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "Signing you in…" : <>Let’s keep learning <ArrowRight size={16} /></>}</Button>
+    </form>
+    <p className="vl-auth-switch">New to VisualLearning? <Link href={authLink("/auth/signup", next)}>Create an account <ArrowUpRightIcon /></Link></p>
+  </AuthShell>;
 }
+function ArrowUpRightIcon() { return <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9 9 3M3 3h6v6" stroke="currentColor" strokeWidth="1.2" /></svg>; }

@@ -16,6 +16,7 @@ import {
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PageLoader } from "@/components/ui/loading";
 import api from "@/lib/api";
+import { AnimatedChapterCard } from "@/app/(dashboard)/courses/_components/animated-chapter-card";
 
 // Extended icon map for DB-stored icon names
 const iconMap: Record<string, LucideIcon> = {
@@ -222,47 +223,8 @@ export default function CourseContentPage({ params }: { params: { courseId: stri
                 </div>
 
                 {/* Chapters Grid — screenshot-style centered cards with gradients */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {subject.chapters.map((chapter: any, cIdx: number) => {
-                    const ChapterIcon = getChapterIcon(chapter.title, chapter.icon);
-                    const grad = gradients[cIdx % gradients.length];
-                    const classId = chapter.classId;
-                    const subjectId = chapter.subjectId;
-
-                    return (
-                      <Link
-                        key={chapter.id}
-                        href={`/courses/${classId}/${subjectId}/${chapter.id}?fromCourse=${courseId}`}
-                        className={`group relative bg-gradient-to-br ${grad.light} rounded-2xl border border-white/80 p-5 hover:shadow-xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center`}
-                      >
-                        {/* Gradient icon container */}
-                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${grad.bg} flex items-center justify-center shadow-md mb-3 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
-                          <ChapterIcon className="w-6 h-6 text-white" />
-                        </div>
-
-                        {/* Title */}
-                        <h3 className="text-[13px] font-bold text-gray-800 leading-snug mb-1.5 line-clamp-2 group-hover:text-gray-900 transition-colors">
-                          {chapter.title}
-                        </h3>
-
-                        {/* Content counts */}
-                        <div className="flex items-center gap-2 text-[10px] font-medium text-gray-400">
-                          {chapter.contentCount.videos > 0 && (
-                            <span className="flex items-center gap-0.5">
-                              <PlayCircle className="w-3 h-3" />
-                              {chapter.contentCount.videos}
-                            </span>
-                          )}
-                          {chapter.contentCount.notes > 0 && (
-                            <span className="flex items-center gap-0.5">
-                              <FileText className="w-3 h-3" />
-                              {chapter.contentCount.notes}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
+                <div className="physics-chapter-grid">
+                  {subject.chapters.map((chapter: any, index: number) => <AnimatedChapterCard key={chapter.id} name={chapter.title || chapter.name} order={chapter.order || index + 1} animationKey={chapter.animationKey} href={`/courses/${chapter.classId}/${chapter.subjectId}/${chapter.id}?fromCourse=${courseId}`} resourceLabel={`${chapter.contentCount?.videos || 0} videos · ${chapter.contentCount?.notes || 0} notes`} />)}
                 </div>
               </div>
             );

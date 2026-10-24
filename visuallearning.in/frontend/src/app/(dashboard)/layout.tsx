@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 bg-surface w-full">{children}</main>
+        <main id="main-content" className="learning-shell flex-1 min-w-0 bg-surface w-full">{children}</main>
       </div>
       <Footer />
     </div>

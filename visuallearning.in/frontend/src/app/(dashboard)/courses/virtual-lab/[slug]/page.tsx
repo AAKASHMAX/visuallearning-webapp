@@ -2,83 +2,56 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Maximize2, Beaker } from "lucide-react";
+import { ArrowLeft, Maximize2, Beaker, MousePointer2 } from "lucide-react";
 import { virtualLabGames, GAMES_BASE_URL } from "@/data/virtual-lab-games";
-import { useAuth } from "@/lib/auth";
-import api from "@/lib/api";
-import { hasActiveSubscription, getSubscriptionList } from "@/lib/subscription-access";
+import { useLabAccess } from "../_components/use-lab-access";
 
 export default function VirtualLabGamePage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
-  const { user } = useAuth();
-  const [checked, setChecked] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { status, retry } = useLabAccess();
+  const [fullscreenError, setFullscreenError] = useState("");
   const game = virtualLabGames.find((g) => g.slug === slug);
-
-  useEffect(() => {
-    // Logged-out visitors are treated as not subscribed and sent to the
-    // subscription page (which prompts login/subscribe) rather than a blank screen.
-    if (!user) { setChecked(true); return; }
-    if (user.role === "ADMIN") {
-      setIsSubscribed(true);
-      setChecked(true);
-      return;
-    }
-
-    const cached = sessionStorage.getItem("vl_my_sub");
-    if (cached) {
-      try {
-        const { data, ts } = JSON.parse(cached);
-        if (Date.now() - ts < 5 * 60 * 1000 && data) {
-          setIsSubscribed(hasActiveSubscription(data));
-          setChecked(true);
-          return;
-        }
-      } catch {}
-    }
-    api.get("/subscription/my-subscription").then(({ data }) => {
-      const subscriptions = getSubscriptionList(data);
-      sessionStorage.setItem("vl_my_sub", JSON.stringify({ data: subscriptions, ts: Date.now() }));
-      setIsSubscribed(hasActiveSubscription(subscriptions));
-      setChecked(true);
-    }).catch(() => setChecked(true));
-  }, [user]);
 
   useEffect(() => {
     if (!game) router.replace("/courses/virtual-lab");
   }, [game, router]);
 
   useEffect(() => {
-    if (checked && !isSubscribed) router.replace("/subscription");
-  }, [checked, isSubscribed, router]);
+    if (status === "denied") router.replace("/pricing");
+  }, [status, router]);
 
-  if (!game || !checked || !isSubscribed) return null;
+  if (status === "error") return <div className="learning-page"><div className="learn-empty" role="alert"><Beaker /><h3>We couldn’t check your access.</h3><p>Please check your connection and try again.</p><button className="learn-button" onClick={retry}>Try again</button></div></div>;
+  if (!game || status !== "allowed") return <div className="learning-page"><div className="learn-empty" role="status"><Beaker /><h3>Getting your lab ready…</h3><p>One moment while we check your access.</p></div></div>;
 
-  const handleFullscreen = () => {
+  const handleFullscreen = async () => {
     const container = document.getElementById("game-container");
-    container?.requestFullscreen?.();
+    setFullscreenError("");
+    try {
+      if (!container?.requestFullscreen) throw new Error("Fullscreen unavailable");
+      await container.requestFullscreen();
+    } catch { setFullscreenError("Fullscreen isn’t available in this browser. You can keep exploring below."); }
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="learning-page learn-lab-viewer-page">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="learn-lab-viewer-header">
         <div className="flex items-center gap-3">
-          <Link href="/courses/virtual-lab" className="text-gray-400 hover:text-gray-600">
+          <Link href="/courses/virtual-lab" aria-label="Back to virtual labs" className="learn-arrow-circle">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Beaker className="w-5 h-5 text-teal-600" />
+            <span className="learn-step">YOUR VIRTUAL LAB</span>
+            <h1>
               {game.title}
             </h1>
-            <p className="text-gray-400 text-sm capitalize">{game.category}</p>
+            <p className="learn-lab-viewer-category">{game.category} · {game.labType === "viewer" ? "3D model" : "Interactive experiment"}</p>
           </div>
         </div>
         <button
           onClick={handleFullscreen}
-          className="flex items-center gap-2 px-3 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm text-white transition-colors"
+          className="learn-button learn-button-outline"
         >
           <Maximize2 className="w-4 h-4" />
           Fullscreen
@@ -86,8 +59,10 @@ export default function VirtualLabGamePage() {
       </div>
 
       {/* Game Embed */}
-      <div id="game-container" className="relative bg-gray-900 rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: "62.5%" }}>
+      {fullscreenError && <p className="learn-lab-fullscreen-note" role="status">{fullscreenError}</p>}
+      <div id="game-container" className="learn-lab-embed" style={{ paddingBottom: "62.5%" }}>
         <iframe
+          title={`${game.title} interactive ${game.labType === "viewer" ? "3D model" : "experiment"}`}
           src={`${GAMES_BASE_URL}/${game.slug}/index.html`}
           className="absolute inset-0 w-full h-full"
           allowFullScreen
@@ -95,7 +70,7 @@ export default function VirtualLabGamePage() {
         />
       </div>
 
-      <p className="text-center text-gray-400 text-sm mt-4">
+      <p className="learn-lab-interaction-note"><MousePointer2 size={16} />
         Click inside the simulation to interact. Use Fullscreen for best experience.
       </p>
     </div>

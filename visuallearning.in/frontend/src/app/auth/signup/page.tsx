@@ -1,17 +1,23 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { PageLoader } from "@/components/ui/loading";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { useAuth } from "@/lib/auth";
+import { authLink, safeInternalRedirect } from "@/lib/auth-redirect";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { SignupWelcomeModal } from "@/components/subscription/signup-welcome-modal";
 
 export default function SignupPage() {
+  return <Suspense fallback={<PageLoader />}><SignupContent /></Suspense>;
+}
+function SignupContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,55 +27,36 @@ export default function SignupPage() {
   const [welcome, setWelcome] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeInternalRedirect(searchParams.get("next"));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const cleanPhone = phone.replace(/\D/g, "").replace(/^0+/, "").replace(/^91(?=\d{10}$)/, "");
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) { toast.error("Enter a valid 10-digit mobile number"); return; }
-    if (password !== confirm) { toast.error("Passwords don't match"); return; }
+    if (password !== confirm) { toast.error("Passwords don’t match"); return; }
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setLoading(true);
     try {
       const { data } = await api.post("/auth/signup", { name, email, phone: cleanPhone, password });
       login(data.data.user, data.data.token);
-      setWelcome(true); // congratulations popup; redirect on close
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Signup failed");
-    } finally {
-      setLoading(false);
-    }
+      setWelcome(true);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "We couldn’t create your account just now. Please try again.");
+    } finally { setLoading(false); }
   };
+  const closeWelcome = () => { setWelcome(false); router.push(next || "/courses"); };
 
-  const closeWelcome = () => {
-    setWelcome(false);
-    router.push("/courses");
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center p-4">
-      {welcome && <SignupWelcomeModal onClose={closeWelcome} />}
-      <Card className="w-full max-w-md">
-        <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary">
-              <BookOpen className="w-8 h-8 text-accent" />
-              VisualLearning
-            </Link>
-            <p className="text-gray-500 mt-2">Create your free account</p>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-            <Input label="Mobile Number" type="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="10-digit mobile number" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" required />
-            <Input label="Confirm Password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" required />
-            <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating account..." : "Create Account"}</Button>
-          </form>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Already have an account? <Link href="/auth/login" className="text-primary font-medium hover:underline">Sign in</Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <AuthShell compact title="Let curiosity begin." eyebrow="Your first step, a brighter way" description="Create your free account and see learning in a whole new light.">
+    {welcome && <SignupWelcomeModal onClose={closeWelcome} />}
+    <form onSubmit={handleSubmit} className="vl-auth-form">
+      <Input label="Full name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="What should we call you?" required />
+      <Input label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
+      <Input label="Mobile number" type="tel" autoComplete="tel-national" inputMode="numeric" maxLength={10} value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))} placeholder="Your 10-digit mobile number" required />
+      <div className="vl-auth-password-row"><PasswordInput autoComplete="new-password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 6 characters" required /><PasswordInput label="Confirm password" autoComplete="new-password" minLength={6} value={confirm} onChange={(event) => setConfirm(event.target.value)} placeholder="One more time" required /></div>
+      <p className="vl-auth-terms">By creating an account, you agree to our <Link href="/terms-of-service">Terms of Service</Link> and <Link href="/privacy-policy">Privacy Policy</Link>.</p>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating your account…" : <>Create free account <ArrowRight size={16} /></>}</Button>
+    </form>
+    <p className="vl-auth-switch">Already part of the journey? <Link href={authLink("/auth/login", next)}>Log in</Link></p>
+  </AuthShell>;
 }

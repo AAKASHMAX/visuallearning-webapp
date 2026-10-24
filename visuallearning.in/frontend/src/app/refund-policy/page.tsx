@@ -7,7 +7,7 @@ export default function RefundPolicyPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 bg-surface">
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="policy-page max-w-4xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Refund Policy</h1>
 
           <div className="prose prose-gray max-w-none space-y-6 text-gray-700">

@@ -1,0 +1,294 @@
+/* Shared navigation, account controls and learning chrome. */
+.vl-navbar {
+  --nav-ink: #e2e8f0;
+  --nav-muted: #94a3b8;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  width: 100%;
+  height: 80px;
+  background: rgba(20, 25, 55, .93);
+  border-bottom: 1px solid rgba(42, 48, 96, .08);
+  color: var(--nav-ink);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: background .25s, border-color .25s, color .25s;
+}
+.vl-navbar.is-home { margin-bottom: -80px; }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) {
+  --nav-ink: #e2e8f0;
+  --nav-muted: #94a3b8;
+  color: var(--nav-ink);
+  background: transparent;
+  border-color: rgba(42, 48, 96, .12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.vl-navbar-inner { width: min(1360px, 100%); height: 80px; margin: 0 auto; padding: 0 44px; display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+.vl-brand { display: inline-flex; align-items: center; gap: 9px; color: inherit; font-size: 21px; font-weight: 740; letter-spacing: -1.1px; white-space: nowrap; text-decoration: none; flex-shrink: 0; }
+.vl-brand-mark { width: 36px; height: 38px; display: grid; place-items: center; border-radius: 10px; color: #00d4ff; background: #141937; }
+.vl-brand-mark svg { width: 33px; height: 33px; }
+.vl-brand-light { font-weight: 450; }
+.vl-brand-dot { color: #94a3b8; }
+.vl-brand-inverse { color: #e2e8f0; }
+.vl-brand-inverse .vl-brand-mark { background: #00d4ff; color: #e2e8f0; }
+.vl-brand-inverse .vl-brand-dot { color: #00d4ff; }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-brand-mark { background: #00d4ff; color: #e2e8f0; }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-brand-dot { color: #00d4ff; }
+.vl-desktop-nav { display: flex; align-items: center; gap: 3px; padding: 5px; border: 1px solid rgba(42, 48, 96, .12); border-radius: 99px; background: rgba(20, 25, 55, .38); }
+.vl-desktop-nav > a { padding: 9px 14px; border-radius: 99px; font-size: 12px; line-height: 1.1; font-weight: 550; color: var(--nav-muted); text-decoration: none; white-space: nowrap; transition: color .2s, background .2s; }
+.vl-desktop-nav > a:hover, .vl-desktop-nav > a.is-active { color: var(--nav-ink); background: rgba(5, 8, 21, .07); }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-desktop-nav { border-color: rgba(42, 48, 96, .18); background: rgba(20, 25, 55, .06); }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-desktop-nav > a:hover { background: rgba(20, 25, 55, .12); }
+.vl-navbar-actions { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
+.vl-login-link { color: var(--nav-ink); font-size: 12px; font-weight: 550; text-decoration: none; }
+.vl-login-link:hover { opacity: .7; }
+.vl-nav-cta { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 40px; padding: 10px 19px; color: #e2e8f0; background: #00d4ff; border: 1px solid transparent; border-radius: 99px; font-size: 12px; font-weight: 650; text-decoration: none; transition: background .2s, transform .2s; white-space: nowrap; }
+.vl-nav-cta:hover { color: #e2e8f0; background: #00d4ff; transform: translateY(-1px); }
+.vl-icon-button { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: inherit; background: transparent; cursor: pointer; flex-shrink: 0; transition: background .15s; }
+.vl-icon-button:hover { background: rgba(5, 8, 21, .12); }
+.vl-navbar a:focus-visible, .vl-navbar button:focus-visible, .vl-sidebar a:focus-visible, .vl-sidebar button:focus-visible, .vl-footer a:focus-visible, .vl-dialog-backdrop button:focus-visible, .vl-app-nudge a:focus-visible, .vl-app-nudge button:focus-visible, .vl-telegram-notes:focus-visible, .vl-breadcrumb a:focus-visible { outline: 2px solid #00d4ff; outline-offset: 4px; }
+.vl-language-compact { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; background: none; border: 0; padding: 6px 0; color: inherit; cursor: pointer; }
+.vl-account { position: relative; }
+.vl-account-trigger { display: flex; align-items: center; gap: 7px; background: none; padding: 0; border: 0; color: inherit; cursor: pointer; }
+.vl-avatar { display: grid; place-items: center; width: 35px; height: 35px; background: #1a1f4a; border: 1px solid #2a3060; color: #e2e8f0; font-size: 13px; font-weight: 650; border-radius: 50%; }
+.vl-account-menu { position: absolute; top: 49px; right: 0; width: 242px; padding: 8px; border: 1px solid #2a3060; border-radius: 18px; background: #151a3d; color: #e2e8f0; box-shadow: 0 12px 40px #05081514; }
+.vl-account-summary { padding: 12px 11px 15px; margin-bottom: 5px; border-bottom: 1px solid #2a3060; }
+.vl-account-summary strong, .vl-account-summary span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl-account-summary strong { font-size: 13px; font-weight: 650; }
+.vl-account-summary span { margin-top: 4px; color: #94a3b8; font-size: 11px; }
+.vl-account-menu > a, .vl-account-menu > button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px; border-radius: 10px; color: #e2e8f0; font-size: 12px; text-align: left; background: none; border: 0; cursor: pointer; text-decoration: none; }
+.vl-account-menu > a:hover, .vl-account-menu > button:hover { background: #1a1f4a; color: #e2e8f0; }
+.vl-notifications { position: relative; }
+.vl-notification-dot { position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: #00d4ff; border: 1px solid #2a3060; }
+.vl-notification-panel { position: absolute; top: 50px; right: -10px; width: min(350px, calc(100vw - 32px)); border: 1px solid #2a3060; border-radius: 22px; overflow: hidden; color: #e2e8f0; background: #151a3d; box-shadow: 0 12px 40px #05081514; }
+.vl-notification-heading { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 18px; border-bottom: 1px solid #2a3060; }
+.vl-notification-heading h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.4px; }
+.vl-notification-heading p { margin: 5px 0 0; font-size: 11px; color: #94a3b8; }
+.vl-notification-list { max-height: 360px; overflow-y: auto; }
+.vl-notification-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 36px 20px; text-align: center; color: #94a3b8; font-size: 12px; }
+.vl-notification-empty > svg { color: #94a3b8; margin-bottom: 4px; }
+.vl-notification-empty strong { color: #e2e8f0; font-weight: 550; }
+.vl-notification-item { display: flex; align-items: flex-start; gap: 10px; padding: 18px 20px; border-bottom: 1px solid #2a3060; }
+.vl-notification-type { width: 6px; height: 6px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: #141937; }
+.vl-notification-type.type-alert { background: #141937; }
+.vl-notification-type.type-warning { background: #1a1f4a; }
+.vl-notification-item h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.vl-notification-item p { margin: 6px 0 0; color: #94a3b8; font-size: 12px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.vl-notification-item a { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 11px; color: #e2e8f0; text-decoration: underline; text-underline-offset: 3px; }
+.vl-mobile-toggle, .vl-mobile-panel, .vl-mobile-backdrop { display: none; }
+.vl-sidebar { position: sticky; top: 80px; display: none; flex-direction: column; flex-shrink: 0; align-self: flex-start; width: 238px; height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; background: #0a0e27; border-right: 1px solid #2a3060; scrollbar-width: thin; scrollbar-color: #2a3060 transparent; }
+.vl-side-navigation { flex: 1; padding: 25px 16px 16px; }
+.vl-nav-eyebrow { color: #94a3b8; font-size: 9px; font-weight: 650; line-height: 1.6; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 12px 17px; }
+.vl-side-link { display: flex; align-items: center; gap: 11px; width: 100%; margin-bottom: 3px; padding: 11px 13px; border: 0; border-radius: 11px; color: #94a3b8; background: transparent; font-size: 12px; font-weight: 500; line-height: 1.5; text-align: left; text-decoration: none; cursor: pointer; transition: color .15s, background .15s; }
+.vl-side-link > svg { flex-shrink: 0; stroke-width: 1.6; }
+.vl-side-link > span:first-of-type { flex: 1; }
+.vl-side-link:hover { background: #1a1f4a; color: #e2e8f0; }
+.vl-side-link.is-active { color: #e2e8f0; background: #1a1f4a; font-weight: 650; }
+.vl-side-link.is-active > svg { color: #94a3b8; }
+.vl-side-divider { height: 1px; background: #1a1f4a; margin: 18px 12px 13px; }
+.vl-language-trigger .vl-language-value { font-size: 10px; color: #e2e8f0; flex: 0; }
+.vl-sidebar-bottom { padding: 16px; }
+.vl-side-discover { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; padding: 21px 17px; margin-bottom: 20px; background: #1a1f4a; border: 1px solid #2a3060; border-radius: 18px; color: #e2e8f0; text-decoration: none; }
+.vl-side-discover > svg { color: #94a3b8; }
+.vl-side-discover strong { font-size: 14px; font-weight: 550; letter-spacing: -.3px; line-height: 1.6; }
+.vl-side-discover > span { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; }
+.vl-side-discover:hover { background: #1a1f4a; }
+.vl-logout { color: #94a3b8; }
+.vl-logout:hover { color: #ef4444; background: #1a1f4a; }
+.vl-settings-sublinks { margin: 6px 0 0 15px; padding-left: 6px; border-left: 1px solid #2a3060; }
+.vl-settings-sublinks .vl-side-link { font-size: 11px; padding: 10px; }
+.vl-chevron-open { transform: rotate(180deg); }
+.vl-dialog-backdrop { position: fixed; inset: 0; z-index: 130; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(5, 8, 21, .38); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.vl-language-dialog { width: min(400px,100%); padding: 28px; color: #e2e8f0; background: #0a0e27; border: 1px solid #2a3060; border-radius: 26px; box-shadow: 0 20px 80px #05081526; }
+.vl-dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.vl-dialog-icon { display: grid; place-items: center; width: 48px; height: 48px; color: #e2e8f0; background: #1a1f4a; border-radius: 15px; }
+.vl-language-dialog h2 { margin: 0 0 10px; color: #e2e8f0; font-size: 25px; font-weight: 550; letter-spacing: -.9px; line-height: 1.2; }
+.vl-language-dialog > p { margin: 0 0 23px; font-size: 12px; color: #94a3b8; line-height: 1.7; }
+.vl-language-options { display: flex; flex-direction: column; gap: 10px; }
+.vl-language-options > button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 16px; border: 1px solid #2a3060; border-radius: 14px; background: #151a3d; color: #e2e8f0; text-align: left; cursor: pointer; }
+.vl-language-options > button:hover, .vl-language-options > button.is-selected { background: #1a1f4a; border-color: #2a3060; }
+.vl-language-options strong, .vl-language-options small { display: block; }
+.vl-language-options strong { font-size: 13px; font-weight: 600; }
+.vl-language-options small { margin-top: 4px; color: #94a3b8; font-size: 10px; }
+.vl-breadcrumb { margin-bottom: 22px; font-size: 11px; line-height: 1.6; color: #94a3b8; }
+.vl-breadcrumb ol { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; padding: 0; margin: 0; list-style: none; }
+.vl-breadcrumb li { display: inline-flex; align-items: center; gap: 7px; }
+.vl-breadcrumb a { display: inline-flex; align-items: center; gap: 7px; color: #94a3b8; text-decoration: none; }
+.vl-breadcrumb a:hover { color: #e2e8f0; }
+.vl-breadcrumb [aria-current="page"] { color: #e2e8f0; font-weight: 550; }
+.vl-footer { margin-top: auto; background: #050815; color: #e2e8f0; }
+.vl-footer-inner { width: min(1280px, 100%); padding: 70px 44px 25px; margin: 0 auto; }
+.vl-footer-top { display: grid; grid-template-columns: 1.4fr .85fr .95fr 1fr; gap: 48px; padding-bottom: 60px; }
+.vl-footer-brand > p { margin: 23px 0 9px; color: #e2e8f0; font-size: 13px; line-height: 1.85; font-weight: 400; }
+.vl-footer-caption { color: #94a3b8; font-size: 10px; }
+.vl-footer-app { display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 23px; padding: 13px 15px; border: 1px solid #2a3060; border-radius: 13px; color: #e2e8f0; text-decoration: none; }
+.vl-footer-app > span { display: block; font-size: 9px; color: #94a3b8; }
+.vl-footer-app strong { display: block; margin-top: 3px; color: #e2e8f0; font-size: 11px; font-weight: 550; }
+.vl-footer-app:hover { border-color: #2a3060; }
+.vl-footer-group h2 { margin: 9px 0 25px; color: #e2e8f0; font-size: 11px; font-weight: 600; }
+.vl-footer-group a { display: block; margin-bottom: 16px; font-size: 11px; color: #94a3b8; text-decoration: none; transition: color .2s; }
+.vl-footer-group a:hover { color: #00d4ff; }
+.vl-footer-note { padding-top: 2px; }
+.vl-footer-orbit { display: block; margin-bottom: 17px; color: #00d4ff; font-size: 48px; line-height: 1; font-weight: 300; }
+.vl-footer-note h2 { margin: 0 0 20px; color: #e2e8f0; font-size: 23px; line-height: 1.4; letter-spacing: -.7px; font-weight: 450; }
+.vl-footer-note a { display: inline-flex; align-items: center; gap: 10px; color: #00d4ff; font-size: 11px; text-decoration: none; }
+.vl-footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; border-top: 1px solid #2a3060; padding-top: 24px; font-size: 9px; color: #94a3b8; }
+.vl-footer-bottom p { margin: 0; }
+.vl-footer-bottom nav { display: flex; gap: 23px; flex-wrap: wrap; }
+.vl-footer-bottom a { color: inherit; text-decoration: none; }
+.vl-footer-bottom a:hover { color: #00d4ff; }
+.vl-footer-bottom > span { display: flex; align-items: center; gap: 6px; }
+.vl-app-nudge { position: fixed; bottom: 22px; left: 22px; z-index: 65; display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100vw - 44px); padding: 13px 12px 13px 15px; border: 1px solid #2a3060; border-radius: 18px; background: #151a3d; color: #e2e8f0; box-shadow: 0 8px 30px #05081510; }
+.vl-app-nudge-icon { display: grid; place-items: center; width: 40px; height: 44px; border-radius: 12px; background: #1a1f4a; }
+.vl-app-nudge strong { display: block; font-size: 12px; font-weight: 600; }
+.vl-app-nudge a { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; color: #94a3b8; font-size: 10px; text-decoration: none; }
+.vl-telegram-notes { position: fixed; bottom: 94px; right: 22px; z-index: 65; display: inline-flex; align-items: center; gap: 8px; padding: 12px 15px; background: #151a3d; color: #e2e8f0; border: 1px solid #2a3060; border-radius: 99px; font-size: 11px; font-weight: 550; text-decoration: none; box-shadow: 0 4px 15px #05081508; }
+.vl-telegram-notes:hover { background: #1a1f4a; }
+@media (min-width: 1024px) { .vl-sidebar { display: flex; } }
+@media (max-width: 1199px) {
+  .vl-navbar-inner { padding: 0 28px; gap: 16px; }
+  .vl-desktop-nav > a { padding: 9px 11px; font-size: 11px; }
+  .vl-navbar-actions { gap: 13px; }
+  .vl-footer-top { gap: 30px; }
+}
+@media (max-width: 1023px) {
+  .vl-desktop-nav, .vl-desktop-language { display: none; }
+  .vl-mobile-toggle { display: inline-flex; }
+  .vl-navbar-inner { padding: 0 26px; }
+  .vl-mobile-backdrop { position: fixed; top: 80px; left: 0; right: 0; height: calc(100dvh - 80px); display: block; background: rgba(5, 8, 21, .3); border: 0; z-index: -1; backdrop-filter: blur(5px); }
+  .vl-mobile-panel { display: block; position: absolute; top: 79px; right: 0; width: min(420px, 100%); max-height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; background: #0a0e27; border-top: 1px solid #2a3060; border-bottom: 1px solid #2a3060; padding: 24px; border-bottom-left-radius: 24px; box-shadow: 0 18px 35px #05081510; }
+  .vl-mobile-panel .vl-nav-eyebrow { margin-left: 12px; margin-bottom: 13px; }
+  .vl-mobile-public-link { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px; border-bottom: 1px solid #2a3060; color: #e2e8f0; font-size: 22px; font-weight: 450; letter-spacing: -.6px; text-decoration: none; }
+  .vl-mobile-public-link:hover { color: #94a3b8; }
+  .vl-mobile-settings { margin-top: 24px; padding-top: 20px; border-top: 1px solid #2a3060; }
+  .vl-mobile-extra { margin-top: 20px; }
+  .vl-mobile-extra .vl-side-link { padding-top: 13px; padding-bottom: 13px; }
+  .vl-mobile-auth { display: flex; justify-content: space-between; align-items: center; margin: 17px 10px 2px; gap: 20px; }
+  .vl-mobile-auth > a:first-child { color: #e2e8f0; font-size: 13px; }
+  .vl-footer-top { grid-template-columns: 1.5fr 1fr 1fr; gap: 35px; }
+  .vl-footer-note { display: none; }
+}
+@media (max-width: 639px) {
+  .vl-navbar, .vl-navbar-inner { height: 72px; }
+  .vl-navbar.is-home { margin-bottom: -72px; }
+  .vl-navbar-inner { padding: 0 18px; gap: 12px; }
+  .vl-brand { gap: 6px; font-size: 19px; letter-spacing: -.9px; }
+  .vl-brand-mark { width: 31px; height: 34px; border-radius: 9px; }
+  .vl-brand-mark svg { width: 29px; height: 29px; }
+  .vl-navbar-actions { gap: 7px; }
+  .vl-login-link { display: none; }
+  .vl-nav-cta { min-height: 35px; padding: 8px 13px; font-size: 10px; gap: 7px; }
+  .vl-navbar-actions > .vl-nav-cta > svg { width: 13px; }
+  .vl-mobile-toggle { width: 30px; }
+  .vl-account-trigger > svg { display: none; }
+  .vl-avatar { width: 31px; height: 31px; }
+  .vl-notification-panel { position: fixed; top: 81px; right: 16px; width: calc(100vw - 32px); }
+  .vl-mobile-backdrop { top: 72px; height: calc(100dvh - 72px); }
+  .vl-mobile-panel { top: 71px; max-height: calc(100dvh - 72px); padding: 24px 20px; border-radius: 0 0 24px 24px; }
+  .vl-language-dialog { padding: 24px; }
+  .vl-footer-inner { padding: 48px 24px 24px; }
+  .vl-footer-top { grid-template-columns: 1fr 1fr; gap: 37px 22px; padding-bottom: 38px; }
+  .vl-footer-brand { grid-column: 1 / -1; }
+  .vl-footer-brand > p { font-size: 14px; margin-top: 18px; }
+  .vl-footer-group h2 { margin-top: 0; font-size: 12px; }
+  .vl-footer-group a { font-size: 11px; }
+  .vl-footer-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .vl-footer-bottom nav { gap: 16px; }
+  .vl-footer-bottom > span { display: none; }
+  .vl-app-nudge { left: 14px; bottom: 14px; max-width: calc(100vw - 28px); padding: 10px; gap: 10px; }
+  .vl-telegram-notes { right: 16px; bottom: 91px; padding: 10px 12px; }
+}
+@media (max-width: 374px) {
+  .vl-navbar-inner { padding: 0 12px; }
+  .vl-brand { font-size: 17px; gap: 4px; }
+  .vl-brand-mark { width: 27px; height: 31px; }
+  .vl-nav-cta { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vl-navbar *, .vl-sidebar *, .vl-footer *, .vl-ui-button { transition: none; }
+  .vl-nav-cta:hover { transform: none; }
+}
+
+/* VisualLearning brand: the Physics app's deep-space palette. */
+.vl-navbar {
+  --nav-ink: #e2e8f0;
+  --nav-muted: #94a3b8;
+  background: rgba(10, 14, 39, .95);
+  border-bottom-color: #2a3060;
+}
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) { --nav-ink: #ffffff; --nav-muted: #94a3b8; border-bottom-color: rgba(42,48,96,.65); }
+.vl-brand, .vl-brand-inverse { color: #ffffff; font-weight: 700; letter-spacing: -.75px; }
+.vl-brand-light { color: #00d4ff; font-weight: 600; }
+.vl-brand-mark, .vl-brand-inverse .vl-brand-mark,
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-brand-mark {
+  width: 40px; height: 40px; background: transparent; border-radius: 0; color: inherit;
+}
+.vl-brand-logo { width: 40px; height: 40px; object-fit: contain; }
+.vl-desktop-nav { background: #141937; border-color: #2a3060; }
+.vl-desktop-nav > a:hover, .vl-desktop-nav > a.is-active { color: #00d4ff; background: rgba(0,212,255,.09); }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-desktop-nav { background: rgba(20,25,55,.6); border-color: #2a3060; }
+.vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-desktop-nav > a:hover { background: rgba(0,212,255,.1); }
+.vl-nav-cta { color: #050815; background: #00d4ff; }
+.vl-nav-cta:hover { color: #050815; background: #5ce1ff; }
+.vl-icon-button:hover { background: #1a1f4a; }
+.vl-avatar { color: #a78bfa; background: rgba(124,58,237,.2); border-color: rgba(124,58,237,.45); }
+.vl-account-menu, .vl-notification-panel { background: #151a3d; border-color: #2a3060; color: #e2e8f0; }
+.vl-account-summary strong, .vl-notification-heading h2, .vl-notification-item h3 { color: #ffffff; }
+.vl-account-summary span, .vl-notification-heading p, .vl-notification-item p, .vl-notification-empty { color: #94a3b8; }
+.vl-account-menu > a, .vl-account-menu > button { color: #e2e8f0; }
+.vl-account-menu > a:hover, .vl-account-menu > button:hover { color: #00d4ff; background: rgba(0,212,255,.08); }
+.vl-notification-dot { background: #00d4ff; border-color: #050815; }
+.vl-notification-type { background: #00d4ff; }
+.vl-notification-type.type-success { background: #10b981; }
+.vl-notification-type.type-alert { background: #ef4444; }
+.vl-notification-type.type-warning { background: #f59e0b; }
+.vl-notification-item a { color: #00d4ff; }
+.vl-sidebar { background: #0f1333; border-color: #2a3060; scrollbar-color: #2a3060 transparent; }
+.vl-nav-eyebrow { color: #94a3b8; }
+.vl-side-link { color: #94a3b8; }
+.vl-side-link:hover { color: #e2e8f0; background: #1a1f4a; }
+.vl-side-link.is-active { color: #00d4ff; background: rgba(0,212,255,.09); box-shadow: inset 0 0 0 1px rgba(0,212,255,.23); }
+.vl-side-link.is-active > svg, .vl-language-trigger .vl-language-value { color: #00d4ff; }
+.vl-side-divider, .vl-settings-sublinks { border-color: #2a3060; }
+.vl-side-divider { background: #2a3060; }
+.vl-side-discover { background: linear-gradient(145deg, #151a3d, #201b43); border-color: #3b3060; color: #e2e8f0; }
+.vl-side-discover > svg { color: #a78bfa; }
+.vl-side-discover > span { color: #00d4ff; }
+.vl-side-discover:hover { background: #1c2252; }
+.vl-logout { color: #94a3b8; }
+.vl-logout:hover { color: #fca5a5; background: rgba(239,68,68,.1); }
+.vl-mobile-panel { background: #0a0e27; border-color: #2a3060; }
+.vl-mobile-public-link { color: #e2e8f0; border-color: #2a3060; }
+.vl-mobile-public-link:hover, .vl-mobile-auth > a:first-child { color: #00d4ff; }
+.vl-dialog-backdrop { background: rgba(5,8,21,.7); }
+.vl-language-dialog { background: #151a3d; color: #e2e8f0; border-color: #2a3060; }
+.vl-language-dialog h2 { color: #ffffff; }
+.vl-language-dialog > p { color: #94a3b8; }
+.vl-dialog-icon { background: rgba(124,58,237,.17); color: #a78bfa; }
+.vl-language-options > button { background: #0f1333; border-color: #2a3060; color: #e2e8f0; }
+.vl-language-options > button:hover, .vl-language-options > button.is-selected { background: rgba(0,212,255,.08); border-color: #00d4ff; color: #00d4ff; }
+.vl-language-options small { color: #94a3b8; }
+.vl-breadcrumb, .vl-breadcrumb a { color: #94a3b8; }
+.vl-breadcrumb a:hover { color: #00d4ff; }
+.vl-breadcrumb [aria-current="page"] { color: #e2e8f0; }
+.vl-footer { background: #050815; color: #94a3b8; }
+.vl-footer-brand > p, .vl-footer-group h2, .vl-footer-note h2 { color: #e2e8f0; }
+.vl-footer-caption, .vl-footer-group a, .vl-footer-bottom, .vl-footer-app > span { color: #94a3b8; }
+.vl-footer-app, .vl-footer-bottom { border-color: #2a3060; }
+.vl-footer-app { background: #0f1333; }
+.vl-footer-app strong, .vl-footer-app > svg { color: #00d4ff; }
+.vl-footer-app:hover { border-color: #00d4ff; }
+.vl-footer-orbit { color: #a78bfa; }
+.vl-footer-note a, .vl-footer-group a:hover, .vl-footer-bottom a:hover { color: #00d4ff; }
+.vl-app-nudge, .vl-telegram-notes { background: #151a3d; border-color: #2a3060; color: #e2e8f0; }
+.vl-app-nudge-icon { color: #a78bfa; background: rgba(124,58,237,.16); }
+.vl-app-nudge a { color: #00d4ff; }
+.vl-telegram-notes > svg { color: #00d4ff; }
+.vl-telegram-notes:hover { background: #1c2252; }
+.vl-navbar a:focus-visible, .vl-navbar button:focus-visible, .vl-sidebar a:focus-visible, .vl-sidebar button:focus-visible, .vl-footer a:focus-visible, .vl-dialog-backdrop button:focus-visible, .vl-app-nudge a:focus-visible, .vl-app-nudge button:focus-visible, .vl-telegram-notes:focus-visible, .vl-breadcrumb a:focus-visible { outline-color: #00d4ff; }
+@media(max-width:639px) {
+  .vl-brand { font-size: 18px; }
+  .vl-brand-mark, .vl-brand-inverse .vl-brand-mark, .vl-navbar.is-home:not(.is-scrolled):not(.is-menu-open) .vl-brand-mark, .vl-brand-logo { width: 34px; height: 34px; }
+}
+@media(max-width:374px) { .vl-brand { font-size: 16px; } }
