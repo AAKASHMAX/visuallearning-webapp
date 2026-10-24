@@ -60,7 +60,7 @@ function pickNote(notes: NoteDoc[], kind: DemoKind): NoteDoc | null {
 
 function StateBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-200 bg-white text-text-muted">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-card-border bg-card text-text-muted">
       {children}
     </div>
   );
@@ -171,7 +171,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   if (loading) {
     return (
       <StateBox>
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-accent" />
         <p className="text-sm font-medium">Loading demo content…</p>
       </StateBox>
     );
@@ -204,7 +204,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
     content = (
       <div className="space-y-4">
         {questions.map((q, idx) => (
-          <div key={q.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div key={q.id} className="rounded-xl border border-card-border bg-card p-5 shadow-sm">
             <p className="mb-4 text-sm font-bold text-heading">Q{idx + 1}. {q.questionText}</p>
             <div className="grid grid-cols-1 gap-2">
               {(["A", "B", "C", "D"] as const).map((opt) => {
@@ -219,35 +219,35 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
                     onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt }))}
                     className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                       correct
-                        ? "border-emerald-500 bg-emerald-50 font-bold text-emerald-700"
+                        ? "border-emerald-500 bg-emerald-500/10 font-bold text-emerald-300"
                         : wrong
-                        ? "border-red-500 bg-red-50 text-red-600"
+                        ? "border-red-500 bg-red-500/10 text-red-300"
                         : selected
-                        ? "border-primary bg-primary/5 font-bold text-primary"
-                        : "border-gray-200 text-text-muted hover:border-primary/40 hover:bg-gray-50"
+                        ? "border-accent bg-accent/10 font-bold text-accent"
+                        : "border-card-border text-text-muted hover:border-accent/40 hover:bg-card-hover"
                     }`}
                   >
                     <span><span className="mr-2 opacity-50">{opt}.</span>{value}</span>
-                    {correct && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                    {wrong && <X className="h-4 w-4 text-red-500" />}
+                    {correct && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                    {wrong && <X className="h-4 w-4 text-red-400" />}
                   </button>
                 );
               })}
             </div>
             {showResults && q.solution && (
-              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-xs text-blue-800"><span className="font-bold">Solution:</span> {q.solution}</p>
+              <div className="mt-3 rounded-lg border border-sky-500/30 bg-sky-500/10 p-3">
+                <p className="text-xs text-sky-200"><span className="font-bold">Solution:</span> {q.solution}</p>
               </div>
             )}
           </div>
         ))}
-        <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-sm backdrop-blur">
+        <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-card-border bg-card/95 p-4 shadow-sm backdrop-blur">
           {showResults ? (
             <>
               <span className="text-base font-black text-heading">Score: {score} / {questions.length}</span>
               <button
                 onClick={() => { setShowResults(false); setAnswers({}); }}
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark"
+                className="rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-dark hover:bg-accent-light"
               >
                 Retry
               </button>
@@ -257,7 +257,7 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
               <span className="text-xs font-medium text-text-muted">{Object.keys(answers).length} / {questions.length} answered</span>
               <button
                 onClick={() => setShowResults(true)}
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark"
+                className="rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-dark hover:bg-accent-light"
               >
                 Submit Quiz
               </button>
@@ -276,17 +276,18 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   } else if (doc.pdfUrl && doc.pdfUrl !== "pending" && !doc.htmlContent) {
     // PDF-based (PPT or any note without HTML).
     content = (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-slate-100 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-card-border bg-surface-light shadow-sm">
         <iframe src={pdfViewerUrl(doc.pdfUrl)} title={doc.title} className={cn("w-full", docHeight)} />
       </div>
     );
   } else {
-    // HTML-based notes / NCERT / PYQ.
+    // HTML-based notes / NCERT / PYQ: light paper pages on the dark site, so the
+    // pages keep dark text instead of inheriting the site's light text colour.
     content = (
-      <div className={cn("relative overflow-auto rounded-2xl border border-gray-200 bg-slate-100 shadow-sm", docHeight)}>
+      <div className={cn("relative overflow-auto rounded-2xl border border-card-border bg-surface-light shadow-sm", docHeight)}>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
         {doc.cssContent && <style dangerouslySetInnerHTML={{ __html: scopeCSS(doc.cssContent) }} />}
-        <div ref={containerRef} className="demo-notes-viewer" style={{ zoom: docZoom }} dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
+        <div ref={containerRef} className="demo-notes-viewer" style={{ zoom: docZoom, color: "#1f2937" }} dangerouslySetInnerHTML={{ __html: doc.htmlContent || "" }} />
       </div>
     );
   }
@@ -294,12 +295,12 @@ export function DemoResourceViewer({ kind }: { kind: DemoKind }) {
   return (
     <div
       ref={wrapperRef}
-      className={cn("relative", isFullscreen && "fixed inset-0 z-[80] flex flex-col overflow-auto bg-white p-4 sm:p-6")}
+      className={cn("relative", isFullscreen && "fixed inset-0 z-[80] flex flex-col overflow-auto bg-surface p-4 sm:p-6")}
     >
       <div className="mb-3 flex items-center justify-end">
         <button
           onClick={toggleFullscreen}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-heading transition-all hover:border-primary/40 hover:text-primary"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-card px-3 py-1.5 text-xs font-bold text-heading transition-all hover:border-accent/50 hover:text-accent"
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}

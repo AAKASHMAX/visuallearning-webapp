@@ -68,6 +68,8 @@ export interface Video {
   locked?: boolean;
   hasVideo?: boolean;
   type?: string;
+  /** BASIC: the original 3D video. ADVANCED: its new, more detailed version. */
+  level?: "BASIC" | "ADVANCED";
 }
 
 export interface BoardPaper {

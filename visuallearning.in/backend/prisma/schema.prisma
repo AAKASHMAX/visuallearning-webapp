@@ -261,6 +261,8 @@ model Video {
   order          Int             @default(0)
   isFree         Boolean         @default(false)
   type           String          @default("ANIMATED_VIDEO")
+  /// BASIC: the original 3D video. ADVANCED: its new, more detailed version (published from the animation tracker).
+  level          String          @default("BASIC")
   createdAt      DateTime        @default(now())
 
   chapter        Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
@@ -270,6 +272,7 @@ model Video {
   @@index([chapterId, language])
   @@index([chapterId, type])
   @@index([chapterId, language, type])
+  @@index([chapterId, level])
   @@index([order])
 }
 

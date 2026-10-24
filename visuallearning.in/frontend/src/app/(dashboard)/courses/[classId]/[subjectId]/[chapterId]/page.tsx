@@ -22,12 +22,16 @@ import {
   Globe,
   MonitorPlay,
   Gift,
-  Check
+  Check,
+  Sparkles
 } from "lucide-react";
 import { Video, Note, Question } from "@/types";
 import { useLanguage } from "@/lib/language";
 
-type Tab = "videos" | "lecture" | "notes" | "quiz" | "quiz_active";
+type Tab = "advanced" | "basic" | "notes" | "quiz" | "quiz_active";
+
+// Every 3D video comes in two versions: Basic (the original) and Advanced (its new, more detailed version).
+const isAdvanced = (v: Video) => v.level === "ADVANCED";
 
 const LANG_LABEL: Record<string, string> = { HINDI: "Hinglish", ENGLISH: "English" };
 
@@ -38,7 +42,6 @@ export default function UnifiedChapterPage() {
   
   const fromCourse = searchParams.get("fromCourse");
   const fromDetails = searchParams.get("fromDetails");
-  const wantLecture = searchParams.get("tab") === "lecture";
 
   const classId = Array.isArray(params.classId) ? params.classId[0] : (params.classId as string);
   const subjectId = Array.isArray(params.subjectId) ? params.subjectId[0] : (params.subjectId as string);
@@ -47,8 +50,8 @@ export default function UnifiedChapterPage() {
   const [chapterName, setChapterName] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [className, setClassName] = useState("");
-  // Video-only page with 3D-animated and lecture tabs; open lecture when requested.
-  const [activeTab, setActiveTab] = useState<Tab>(wantLecture ? "lecture" : "videos");
+  // Video-only page: the chapter's 3D videos, Advanced and Basic in their own tabs.
+  const [activeTab, setActiveTab] = useState<Tab>("basic");
   
   const [allVideos, setAllVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -92,19 +95,21 @@ export default function UnifiedChapterPage() {
           api.get(`/courses/chapters/${chapterId}/questions`)
         ]);
   
-        const videoList = videosRes.data.data.videos || [];
+        // Lecture videos are not offered, so they are never listed or played.
+        const videoList = (videosRes.data.data.videos || []).filter((v: Video) => v.type !== "LECTURE_VIDEO");
         setAllVideos(videoList);
         setNotes(notesRes.data.data.notes || notesRes.data.data || []);
         const quizData = quizRes.data.data;
         setQuestions(quizData.questions || quizData || []);
         setQuizLocked(quizData.locked || false);
 
-        // Initial Video Selection — honour the saved language preference.
+        // Initial Video Selection — honour the saved language preference, and open
+        // on Advanced when the chapter has it in that language.
         const initialLang = (typeof window !== "undefined" && localStorage.getItem("vl_language")) || "HINDI";
-        // Select the first video of the requested tab (lecture, else 3D animated).
-        const isWanted = (v: Video) => (wantLecture ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO");
-        const langVideos = videoList.filter((v: Video) => v.language === initialLang && isWanted(v));
-        const firstVideo = langVideos[0] || videoList.filter(isWanted)[0] || videoList[0];
+        const startTab: Tab = videoList.some((v: Video) => isAdvanced(v) && v.language === initialLang) ? "advanced" : "basic";
+        setActiveTab(startTab);
+        const tabVideos = videoList.filter((v: Video) => isAdvanced(v) === (startTab === "advanced"));
+        const firstVideo = tabVideos.find((v: Video) => v.language === initialLang) || tabVideos[0] || videoList[0];
         if (firstVideo) setSelectedVideo(firstVideo);
         
       } catch (err) {
@@ -116,19 +121,17 @@ export default function UnifiedChapterPage() {
     fetchData();
   }, [chapterId, subjectId, reloadKey]);
 
-  // Videos split by content type (3D animated vs lecture), filtered by language.
-  // `filteredVideos` is the list for the active tab, so the list rendering below
-  // works unchanged for both tabs.
-  const animatedVideos = allVideos.filter((v) => v.language === language && v.type !== "LECTURE_VIDEO");
-  const lectureVideos = allVideos.filter((v) => v.language === language && v.type === "LECTURE_VIDEO");
-  const filteredVideos = activeTab === "lecture" ? lectureVideos : animatedVideos;
+  // The chapter's videos in the chosen language, per version; the list shows the active tab's.
+  const advancedVideos = allVideos.filter((v) => v.language === language && isAdvanced(v));
+  const basicVideos = allVideos.filter((v) => v.language === language && !isAdvanced(v));
+  const videoTab = activeTab === "advanced" || activeTab === "basic";
+  const shownVideos = activeTab === "advanced" ? advancedVideos : basicVideos;
+  const hasAdvanced = allVideos.some(isAdvanced);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
-    if (tab === "videos" || tab === "lecture") {
-      const list = allVideos.filter((v) => v.language === language && (tab === "lecture" ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO"));
-      if (list.length) setSelectedVideo(list[0]);
-    }
+    const list = tab === "advanced" ? advancedVideos : tab === "basic" ? basicVideos : [];
+    if (list.length) setSelectedVideo(list[0]);
   };
 
   // Ask before switching, since this changes the default language for every chapter.
@@ -139,14 +142,14 @@ export default function UnifiedChapterPage() {
     if (!pendingLang) return;
     setLanguage(pendingLang); // persists as the new default
     // Re-select the first video of the current tab in the new language.
-    const list = allVideos.filter((v) => v.language === pendingLang && (activeTab === "lecture" ? v.type === "LECTURE_VIDEO" : v.type !== "LECTURE_VIDEO"));
+    const list = allVideos.filter((v) => v.language === pendingLang && isAdvanced(v) === (activeTab === "advanced"));
     if (list.length) setSelectedVideo(list[0]);
     setPendingLang(null);
   };
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
-    { key: "videos", label: "3D Animated", icon: Play, count: animatedVideos.length },
-    { key: "lecture", label: "Lecture Videos", icon: MonitorPlay, count: lectureVideos.length },
+    { key: "advanced", label: "Advanced", icon: Sparkles, count: advancedVideos.length },
+    { key: "basic", label: "Basic", icon: Play, count: basicVideos.length },
   ];
 
   const returnTo = searchParams.get("returnTo");
@@ -193,7 +196,12 @@ export default function UnifiedChapterPage() {
             {selectedVideo ? (
               <>
                 <div className="learn-lesson-toolbar">
-                  <h3 className="learn-now-playing">{selectedVideo.title}</h3>
+                  <h3 className="learn-now-playing">
+                    <span className={`learn-level-tag ${isAdvanced(selectedVideo) ? "is-advanced" : ""}`}>
+                      {isAdvanced(selectedVideo) ? "Advanced" : "Basic"}
+                    </span>
+                    {selectedVideo.title}
+                  </h3>
                   <div className="learn-language-switch">
                     <button
                       onClick={() => requestLanguage("HINDI")}
@@ -256,7 +264,7 @@ export default function UnifiedChapterPage() {
                 <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-accent/10 text-primary" : "bg-surface text-text-muted"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${activeTab === tab.key ? "bg-black/15 text-[#050815]" : "bg-surface text-text-muted"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -265,22 +273,34 @@ export default function UnifiedChapterPage() {
           </div>
 
           <div className="learn-lesson-list">
-            {/* Videos List (3D animated or lecture, per active tab) */}
-            {(activeTab === "videos" || activeTab === "lecture") && (
+            {/* 3D videos: the active tab's version */}
+            {videoTab && (
               <>
-                {filteredVideos.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
-                    <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
-                    <p className="text-sm text-text-muted">Coming soon in {language === "HINDI" ? "Hinglish" : "English"}</p>
-                    <button
-                      onClick={() => requestLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
-                      className="text-xs text-primary font-bold mt-2 hover:underline"
-                    >
-                      Switch to {language === "HINDI" ? "English" : "Hinglish"}
-                    </button>
-                  </div>
+                {shownVideos.length === 0 ? (
+                  activeTab === "advanced" && !hasAdvanced ? (
+                    <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
+                      <Sparkles className="w-8 h-8 text-primary-light mx-auto mb-2" />
+                      <p className="text-sm text-text-muted">The Advanced version of this chapter is on its way.</p>
+                      {basicVideos.length > 0 && (
+                        <button onClick={() => handleTabChange("basic")} className="text-xs text-primary font-bold mt-2 hover:underline">
+                          Watch the Basic videos
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-white rounded-xl border border-dashed border-card-border">
+                      <Play className="w-8 h-8 text-primary-light mx-auto mb-2" />
+                      <p className="text-sm text-text-muted">Coming soon in {language === "HINDI" ? "Hinglish" : "English"}</p>
+                      <button
+                        onClick={() => requestLanguage(language === "HINDI" ? "ENGLISH" : "HINDI")}
+                        className="text-xs text-primary font-bold mt-2 hover:underline"
+                      >
+                        Switch to {language === "HINDI" ? "English" : "Hinglish"}
+                      </button>
+                    </div>
+                  )
                 ) : (
-                  filteredVideos.map((video, idx) => {
+                  shownVideos.map((video, idx) => {
                     const isActive = selectedVideo?.id === video.id;
                     const ytThumb = !video.vimeoVideoId && video.youtubeVideoId
                       ? `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`
@@ -321,7 +341,7 @@ export default function UnifiedChapterPage() {
                             {idx + 1}. {video.title}
                           </h3>
                           <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[11px] text-gray-500">{video.duration || (video.type === "LECTURE_VIDEO" ? "Video lesson" : "3D animation")}{video.locked && " · Premium"}</span>
+                            <span className="text-[11px] text-gray-500">{video.duration || "3D animation"}{video.locked && " · Premium"}</span>
                           </div>
                         </div>
                       </div>
@@ -474,10 +494,10 @@ export default function UnifiedChapterPage() {
             <h3 id="locked-video-title" className="text-xl font-bold text-heading mb-2">There’s more to discover.</h3>
             <p className="text-text-muted text-sm mb-4">
               Notes, NCERT, PYQ &amp; quizzes are free to read. Subscribe to also watch all{" "}
-              <span className="font-bold text-heading">3D animated &amp; lecture videos</span> and download PDFs.
+              <span className="font-bold text-heading">3D animated videos</span> and download PDFs.
             </p>
             <ul className="text-left text-xs text-text-muted mb-6 space-y-1.5 mx-auto max-w-[15rem]">
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary" /> All 3D animated &amp; lecture videos</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary" /> All 3D animated videos</li>
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary" /> Download Notes, NCERT &amp; PYQ PDFs</li>
             </ul>
             <div className="flex flex-col gap-2">

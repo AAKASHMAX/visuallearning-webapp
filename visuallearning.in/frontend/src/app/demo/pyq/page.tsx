@@ -8,7 +8,7 @@ export default function DemoPyqPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center gap-2 text-sm text-text-muted">
-        <Link href="/demo" className="hover:text-primary">Demo</Link>
+        <Link href="/demo" className="hover:text-accent">Demo</Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="font-semibold text-heading">PYQ Solutions</span>
       </div>

@@ -2,18 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BookOpen, GraduationCap, MonitorPlay, FileText, BookMarked, FileCheck2, Brain, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Sparkles } from "lucide-react";
 import { DownloadAppBanner } from "@/components/home/download-app-banner";
+import { ContentArt } from "@/components/courses/course-art";
+import "@/components/courses/course-cards.css";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+// Each format keeps its own colour; the artwork matches the subject pages.
 const demos = [
-  { title: "3D animations", desc: "See a concept come to life.", href: "/demo/video", icon: MonitorPlay },
-  { title: "Video lessons", desc: "Learn with a teacher.", href: "/demo/lecture", icon: GraduationCap },
-  { title: "Visual notes", desc: "Make the big ideas stick.", href: "/demo/visual-notes", icon: FileText },
-  { title: "NCERT solutions", desc: "Work it out, step by step.", href: "/demo/ncert-solution", icon: BookMarked },
-  { title: "Past questions", desc: "Get familiar with exams.", href: "/demo/pyq", icon: FileCheck2 },
-  { title: "Quick quizzes", desc: "Put your learning to the test.", href: "/demo/quiz", icon: Brain },
+  { slug: "animation", title: "3D animations", desc: "See a concept come to life, in vivid 3D animation.", href: "/demo/video", accent: "#a78bfa" },
+  { slug: "notes", title: "Visual notes", desc: "Make the big ideas stick.", href: "/demo/visual-notes", accent: "#34d399" },
+  { slug: "ncert", title: "NCERT solutions", desc: "Work it out, step by step.", href: "/demo/ncert-solution", accent: "#22d3ee" },
+  { slug: "pyq", title: "Past questions", desc: "Get familiar with exams.", href: "/demo/pyq", accent: "#fb7185" },
+  { slug: "quiz", title: "Quick quizzes", desc: "Put your learning to the test.", href: "/demo/quiz", accent: "#f59e0b" },
 ];
 
 interface ClassItem { id: string; name: string; order?: number; _count?: { subjects: number } }
@@ -59,7 +61,19 @@ export default function CoursesClassGridPage() {
       </section>
       <section className="learn-section" aria-labelledby="sample-resources">
         <div className="learn-section-heading"><div><span className="learn-step">02 / A TASTE OF WHAT’S INSIDE</span><h2 id="sample-resources">A different way to understand.</h2></div><Link className="learn-text-link" href="/demo">All free demos <ArrowUpRight size={17} /></Link></div>
-        <div className="learn-resource-grid">{demos.map(d => <Link key={d.href} href={d.href} className="learn-resource-card"><span className="learn-resource-icon"><d.icon size={22} strokeWidth={1.6} /></span><h3>{d.title}</h3><p>{d.desc}</p><span className="learn-resource-action">Try it out <ArrowRight size={15} /></span></Link>)}</div>
+        <div className={`cx-grid${demos.length === 6 ? " cx-grid-6" : ""}`}>
+          {demos.map((d, i) => (
+            <Link key={d.href} href={d.href} className={`cx-card${i === 0 ? " cx-card-feature" : ""}`} style={{ ["--cx-accent" as string]: d.accent }}>
+              <div className="cx-card-art"><ContentArt slug={d.slug} /></div>
+              <div className="cx-card-body">
+                <span className="cx-chip">Free demo</span>
+                <h3>{d.title}</h3>
+                <p>{d.desc}</p>
+              </div>
+              <span className="cx-go" aria-hidden="true"><ArrowUpRight size={18} /></span>
+            </Link>
+          ))}
+        </div>
       </section>
       <div className="learn-discovery-banner"><span className="learn-banner-icon"><Sparkles size={25} /></span><div><h2>Small steps. Real understanding.</h2><p>{isAuthenticated ? "Find your active classes and keep your learning journey going." : "Create a free account to read notes, practise questions, and discover more."}</p></div><Link href={isAuthenticated ? "/dashboard" : "/auth/signup"} className="learn-button learn-button-light">{isAuthenticated ? "Your learning space" : "Start learning"} <ArrowUpRight size={17} /></Link></div>
       <div className="learn-app-banner"><DownloadAppBanner /></div>

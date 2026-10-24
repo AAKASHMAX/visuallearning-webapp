@@ -200,6 +200,8 @@
 .learn-lesson-player { position:sticky; top:100px; border:1px solid #2a3060; border-radius:21px; overflow:hidden; background:#151a3d; }
 .learn-lesson-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px; border-bottom:1px solid #2a3060; background:#0f1333; }
 .learn-now-playing { flex:1; min-width:130px; font-size:12px; font-weight:600; line-height:1.6; color:#e2e8f0; }
+.learn-level-tag { display:inline-block; margin-right:8px; padding:1px 7px; border-radius:6px; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; vertical-align:1px; background:#ffffff12; color:#94a3b8; }
+.learn-level-tag.is-advanced { background:#7c3aed33; color:#c4b5fd; }
 .learn-language-switch { display:flex; gap:4px; border:1px solid #2a3060; padding:3px; border-radius:10px; background:#1a1f4a; flex-shrink:0; }
 .learn-language-switch button { font-size:10px; padding:7px 10px; font-weight:500; }
 .learn-lesson-player .video-container>div { border-radius:0; }

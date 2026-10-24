@@ -1,13 +1,10 @@
-import { JetBrains_Mono, Unbounded } from "next/font/google";
 import { Footer } from "@/components/layout/footer";
 import { AboutSection } from "@/components/home/about-section";
 import { HomeFaq } from "@/components/home/home-faq";
 import { SparkJourney } from "@/components/spark/spark-journey";
+import { sparkDisplay as display, sparkMono as mono } from "@/lib/spark-fonts";
 
 // The previous homepage is kept at /home-classic.
-
-const display = Unbounded({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--sj-display", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin", "greek"], weight: ["400", "500", "700"], variable: "--sj-mono", display: "swap" });
 
 export default function HomePage() {
   return (

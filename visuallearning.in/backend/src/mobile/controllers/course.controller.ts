@@ -122,8 +122,11 @@ export async function getVideoList(req: Request, res: Response) {
     });
     if (!chapter) return mobileError(res, "Chapter not found", 404);
 
+    // Advanced videos (the new versions) go only to app versions that show them in
+    // their own tab and ask with ?levels=all; older apps keep seeing the Basic list.
+    const withAdvanced = req.query.levels === "all";
     const rawVideos = await prisma.video.findMany({
-      where: { chapterId },
+      where: { chapterId, ...(withAdvanced ? {} : { level: "BASIC" }) },
       orderBy: { order: "asc" },
     });
     // YouTube is legitimate only for lecture videos. An animated video counts
@@ -192,7 +195,8 @@ export async function getVideoList(req: Request, res: Response) {
     for (const v of videos) {
       const effectiveVimeoId = getEffectiveVimeoId(v);
       const isVimeo = !!effectiveVimeoId;
-      const groupKey = `${normTitle(v.title)}:${v.type}`;
+      // The Basic and Advanced versions of a topic share its title but stay separate entries.
+      const groupKey = `${normTitle(v.title)}:${v.type}:${v.level}`;
       // Lecture videos flagged isFree are unlocked for everyone (e.g. Class 12
       // Physics Ch-1). Animated videos are never free-previewed.
       const free = v.isFree === true && v.type === "LECTURE_VIDEO";
@@ -210,6 +214,7 @@ export async function getVideoList(req: Request, res: Response) {
           video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
           vimeo_video_id: effectiveVimeoId || null,
           content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
+          video_level: v.level === "ADVANCED" ? "advanced" : "basic",
           description: "",
           is_paid: (isFirstChapter || free) ? 2 : 1,
           is_purchase: canWatch ? 2 : 1,
@@ -270,6 +275,7 @@ export async function getVideoList(req: Request, res: Response) {
             video_type: isVimeo ? 3 : 2, // 2=YouTube, 3=Vimeo
             vimeo_video_id: v.vimeoVideoId || null,
             content_type: v.type === "LECTURE_VIDEO" ? "lecture" : "animation",
+            video_level: v.level === "ADVANCED" ? "advanced" : "basic",
             description: "",
             is_paid: (isFirstChapter || free) ? 2 : 1,
             is_purchase: canWatch ? 2 : 1,
@@ -451,6 +457,8 @@ export async function searchVideos(req: Request, res: Response) {
     const videos = await prisma.video.findMany({
       where: {
         title: { contains: searchTerm, mode: "insensitive" },
+        // Like the chapter list: Advanced only for app versions that ask for it.
+        ...(req.query.levels === "all" ? {} : { level: "BASIC" }),
       },
       include: { chapter: true },
       take: 20,

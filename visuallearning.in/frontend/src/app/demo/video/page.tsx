@@ -58,7 +58,7 @@ export default function DemoVideoPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-text-muted">
-        <Link href="/demo" className="hover:text-primary">Demo</Link>
+        <Link href="/demo" className="hover:text-accent">Demo</Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="font-semibold text-heading">3D Animated Videos</span>
       </div>
@@ -94,8 +94,8 @@ export default function DemoVideoPage() {
           </div>
 
           {/* Now playing */}
-          <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-violet-600">
+          <div className="mt-5 rounded-xl border border-card-border bg-card p-5 shadow-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-violet-300">
               <MonitorPlay className="h-3 w-3" />
               Now Playing
             </span>
@@ -111,30 +111,30 @@ export default function DemoVideoPage() {
 
         {/* Playlist sidebar */}
         <div className="w-full lg:w-80">
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-5 py-4">
+          <div className="rounded-2xl border border-card-border bg-card shadow-sm">
+            <div className="border-b border-card-border px-5 py-4">
               <h3 className="flex items-center gap-2 text-sm font-black text-heading">
-                <BookOpen className="h-4 w-4 text-primary" />
+                <BookOpen className="h-4 w-4 text-violet-400" />
                 Sample Lessons
               </h3>
               <p className="mt-1 text-xs text-text-muted">{videos.length} animated videos · Hindi</p>
             </div>
-            <div className="flex max-h-[60vh] flex-col divide-y divide-gray-50 overflow-y-auto">
+            <div className="flex max-h-[60vh] flex-col divide-y divide-card-border overflow-y-auto">
               {videos.map((v, i) => {
                 const isActive = i === activeIndex;
                 return (
                   <button
                     key={v.vimeoId}
                     onClick={() => selectVideo(i)}
-                    className={`flex items-center gap-3 px-5 py-3.5 text-left transition-all hover:bg-gray-50 ${
-                      isActive ? "bg-violet-50/60" : ""
+                    className={`flex items-center gap-3 px-5 py-3.5 text-left transition-all hover:bg-card-hover ${
+                      isActive ? "bg-violet-500/10" : ""
                     }`}
                   >
                     <div
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
                         isActive
                           ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md"
-                          : "bg-gray-100 text-gray-500"
+                          : "bg-surface-light text-text-muted"
                       }`}
                     >
                       {isActive ? <MonitorPlay className="h-4 w-4" /> : i + 1}
