@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ArrowUpRight, Play, Smartphone } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpRight, Menu, Play, Smartphone, X } from "lucide-react";
+import { AppDownloadButton } from "@/components/layout/app-download";
 import { Brand } from "@/components/layout/brand";
 import { useAuth } from "@/lib/auth";
 import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
@@ -57,6 +58,22 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
   }, [hydrate]);
   const signedIn = mounted && isAuthenticated;
   const dashboardHref = user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
+
+  // Phones and tablets hide the header links: they live in this menu, with the app.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    // Scrolling would move the scenes behind the menu.
+    const root = document.documentElement;
+    const before = root.style.overflow;
+    root.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      root.style.overflow = before;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -218,8 +235,48 @@ export function SparkJourney({ fonts }: { fonts: { display: string; mono: string
               <Link href="/auth/signup" className="sj-button sj-button-small">Start free</Link>
             </>
           )}
+          <button
+            type="button"
+            className="sj-menu-toggle"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="sj-menu"
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="sj-menu-backdrop" onClick={() => setMenuOpen(false)}>
+          <nav id="sj-menu" className="sj-menu" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
+            <AppDownloadButton className="sj-menu-app" onClick={() => setMenuOpen(false)} />
+            {[
+              ["/courses", "Courses"],
+              ["/courses/virtual-lab", "Virtual lab"],
+              ["/pricing", "Plans"],
+              ["/#about", "About"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href} className="sj-menu-link" onClick={() => setMenuOpen(false)}>
+                {label} <ArrowUpRight size={18} />
+              </Link>
+            ))}
+            <div className="sj-menu-auth">
+              {signedIn ? (
+                <Link href={dashboardHref} className="sj-button sj-button-small" onClick={() => setMenuOpen(false)}>
+                  Dashboard <ArrowUpRight size={15} />
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="sj-login" onClick={() => setMenuOpen(false)}>Log in</Link>
+                  <Link href="/auth/signup" className="sj-button sj-button-small" onClick={() => setMenuOpen(false)}>Start free</Link>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
 
       <nav ref={railRef} className="sj-rail" aria-label="Jump to a subject">
         {RAIL.map((key) => (

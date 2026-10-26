@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, Bell, ChevronDown, LayoutDashboard, LogOut, Menu, Settings, Smartphone, User, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bell, ChevronDown, LayoutDashboard, LogOut, Menu, Settings, User, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import api from "@/lib/api";
-import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
+import { AppDownloadButton } from "./app-download";
 import { Brand } from "./brand";
 import { LanguagePicker } from "./language-picker";
 import { adminLinks, isNavigationActive, learningLinks, publicLinks, settingsLinks } from "./navigation-links";
@@ -104,13 +104,13 @@ export function Navbar() {
       <button type="button" className="vl-mobile-backdrop" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} tabIndex={-1} />
       <div className="vl-mobile-panel" id="mobile-navigation" ref={mobilePanel}>
         <nav aria-label="Mobile navigation">
+          <AppDownloadButton className="vl-mobile-app" onClick={() => setMenuOpen(false)} />
           <p className="vl-nav-eyebrow">{signedIn ? onAdminPage && isAdmin ? "Your workspace" : "Your learning space" : "Discover something new"}</p>
           {signedIn ? mobileLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`vl-side-link${isNavigationActive(pathname, href) ? " is-active" : ""}`} aria-current={isNavigationActive(pathname, href) ? "page" : undefined} onClick={() => setMenuOpen(false)}><Icon size={18} /><span>{label}</span><ArrowUpRight size={15} /></Link>) : publicLinks.map((link) => <Link key={link.href} href={link.href} className="vl-mobile-public-link" onClick={() => setMenuOpen(false)}>{link.label}<ArrowUpRight size={20} /></Link>)}
           {signedIn && isAdmin && <div className="vl-mobile-settings"><p className="vl-nav-eyebrow">Administration</p>{!onAdminPage && adminLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className="vl-side-link" onClick={() => setMenuOpen(false)}><Icon size={17} /><span>{label}</span></Link>)}<Link href="/admin/settings" className="vl-side-link" onClick={() => setMenuOpen(false)}><Settings size={17} /><span>All settings</span></Link>{settingsLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`vl-side-link${pathname === href ? " is-active" : ""}`} onClick={() => setMenuOpen(false)}><Icon size={16} /><span>{label}</span></Link>)}</div>}
           <div className="vl-mobile-extra">
             {signedIn && <><LanguagePicker /><Link href="/demo" className="vl-side-link" onClick={() => setMenuOpen(false)}>Explore demos <ArrowUpRight size={16} /></Link></>}
             <Link href="/contact" className="vl-side-link" onClick={() => setMenuOpen(false)}>Get in touch <ArrowUpRight size={16} /></Link>
-            {APP_PUBLISHED && <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="vl-side-link" onClick={() => setMenuOpen(false)}><Smartphone size={17} /><span>Get the Android app</span><ArrowUpRight size={16} /></a>}
             {signedIn ? <button type="button" className="vl-side-link vl-logout" onClick={handleLogout}><LogOut size={17} />Log out</button> : <div className="vl-mobile-auth"><Link href="/auth/login" onClick={() => setMenuOpen(false)}>Log in</Link><Link href="/auth/signup" className="vl-nav-cta" onClick={() => setMenuOpen(false)}>Start learning <ArrowRight size={16} /></Link></div>}
           </div>
         </nav>
