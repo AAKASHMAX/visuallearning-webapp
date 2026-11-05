@@ -18,6 +18,8 @@ import notificationRoutes from "./routes/notification.routes";
 import telegramRoutes from "./routes/telegram.routes";
 import affiliateRoutes from "./routes/affiliate.routes";
 import mobileRoutes from "./mobile/routes";
+import publicRoutes from "./routes/public.routes";
+import { ensureChapterSlugs } from "./services/public-links.service";
 import { prisma } from "./config/prisma";
 
 // The only offered plans are the three class-count plans.
@@ -103,6 +105,8 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/telegram", telegramRoutes);
 app.use("/api/affiliate", affiliateRoutes);
+// No-login document pages linked from YouTube descriptions (visuallearning.in/notes/12-bio-1)
+app.use("/api/public", publicRoutes);
 
 // Mobile app compatibility routes (separate from web API)
 app.use("/api", mobileRoutes);
@@ -137,6 +141,8 @@ app.listen(config.port, async () => {
   console.log(`VisualLearning API running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
   await migratePlansConfig();
+  // Every chapter needs its short public link; new chapters get theirs here or on first visit.
+  ensureChapterSlugs().catch((e) => console.error("Chapter slugs error:", e));
   scheduleLeadsSync();
 });
 

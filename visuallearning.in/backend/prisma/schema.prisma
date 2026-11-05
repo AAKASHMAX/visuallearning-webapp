@@ -239,6 +239,9 @@ model Chapter {
   subjectId String
   name      String
   order     Int        @default(0)
+  /// Short public link id, e.g. "12-bio-1" for visuallearning.in/notes/12-bio-1 (YouTube
+  /// descriptions). Set once and never changed, so renaming or reordering chapters can't break links.
+  slug      String?    @unique
 
   subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   videos    Video[]

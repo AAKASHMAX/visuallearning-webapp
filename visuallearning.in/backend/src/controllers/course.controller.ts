@@ -10,7 +10,7 @@ const CACHE_TTL = 300; // 5 minutes for static content
 // vimeoVideoId, or as a numeric id in youtubeVideoId (legacy: some Vimeo ids
 // were stored there). A non-numeric YouTube id on an animated video (e.g. the
 // rickroll placeholder dQw4w9WgXcQ) is junk and treated as "no content".
-function animatedHasVimeo(v: { youtubeVideoId: string | null; vimeoVideoId: string | null }) {
+export function animatedHasVimeo(v: { youtubeVideoId: string | null; vimeoVideoId: string | null }) {
   const yt = (v.youtubeVideoId || "").trim();
   const vm = (v.vimeoVideoId || "").trim();
   return !!vm || /^\d{7,}$/.test(yt);

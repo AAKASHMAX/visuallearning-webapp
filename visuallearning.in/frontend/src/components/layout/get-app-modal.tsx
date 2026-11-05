@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Smartphone, X } from "lucide-react";
 import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
+import { isPublicDocPath } from "@/lib/public-docs";
 
 /** When the suggestion may show again (a timestamp); an older "1" just means "now". */
 const SEEN_KEY = "vl_get_app_seen";
@@ -41,7 +42,8 @@ export function GetAppModal() {
     setMode(null);
   };
 
-  const hidden = pathname.startsWith("/auth") || pathname.startsWith("/admin");
+  // The public notes pages (opened from YouTube) carry their own app banner and sign-up bar.
+  const hidden = pathname.startsWith("/auth") || pathname.startsWith("/admin") || isPublicDocPath(pathname);
   useEffect(() => {
     if (mode !== "sheet" || hidden) return;
     sheet.current?.focus();
