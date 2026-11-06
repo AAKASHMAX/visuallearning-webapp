@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { config } from "../config";
 import { prisma } from "../config/prisma";
 import { success, error } from "../utils/apiResponse";
 import { cacheGet, cacheSet } from "../utils/cache";
+import { DOC_KIND_LABELS, docKind } from "../utils/doc-kind";
+import { attachmentHeader, stampForStudent, storedPdf, studentLabel } from "../services/note-download.service";
 
 const CACHE_TTL = 300; // 5 minutes for static content
 
@@ -151,15 +155,23 @@ export async function getChapters(req: Request, res: Response) {
   }
 }
 
-// Helper: check if user has access to a specific chapter/class/subject (cached for 60s)
-async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string, forNotes = false): Promise<{ hasAccess: boolean; subscription: any }> {
-  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}:${forNotes ? "n" : "a"}`;
+// A yearly plan: PDF downloads come only with these. The billing cycle isn't stored, so it's read
+// from the plan's length (yearly plans run 365 days; monthly 30, quarterly 90).
+const YEARLY_MIN_DAYS = 300;
+export function isYearlySubscription(sub: { plan: string; startDate: Date; expiryDate: Date }) {
+  return sub.plan !== "TRIAL" && sub.expiryDate.getTime() - sub.startDate.getTime() >= YEARLY_MIN_DAYS * 86_400_000;
+}
+
+// Helper: check if user has access to a specific chapter/class/subject (cached for 60s).
+// yearlyOnly: count only yearly plans (PDF downloads).
+async function checkClassAccess(userId: string, classId: string, subjectId?: string, chapterId?: string, forNotes = false, yearlyOnly = false): Promise<{ hasAccess: boolean; subscription: any }> {
+  const cacheKey = `access:${userId}:${classId}:${subjectId ?? ""}:${chapterId ?? ""}:${forNotes ? "n" : "a"}${yearlyOnly ? ":y" : ""}`;
   const cached = cacheGet<{ hasAccess: boolean; subscription: any }>(cacheKey);
   if (cached) return cached;
 
-  const activeSubscriptions = await prisma.subscription.findMany({
+  const activeSubscriptions = (await prisma.subscription.findMany({
     where: { userId, status: "ACTIVE", expiryDate: { gt: new Date() } },
-  });
+  })).filter((sub) => !yearlyOnly || isYearlySubscription(sub));
 
   if (activeSubscriptions.length === 0) {
     const result = { hasAccess: false, subscription: null };
@@ -217,6 +229,21 @@ async function isFirstChapterForSubject(chapterId: string, subjectId: string) {
   });
 
   return firstChapter?.id === chapterId;
+}
+
+/**
+ * PDF downloads of Notes / NCERT / PYQ: free in the first chapter of every subject for anyone signed
+ * in; everywhere else only with an active yearly plan that covers the chapter.
+ */
+async function canDownloadChapterPdfs(
+  user: { id: string; role: string } | undefined,
+  chapter: { id: string; subject: { id: string; class: { id: string } } },
+  isFirstChapter: boolean,
+) {
+  if (!user) return false;
+  if (user.role === "ADMIN" || isFirstChapter) return true;
+  const { hasAccess } = await checkClassAccess(user.id, chapter.subject.class.id, chapter.subject.id, chapter.id, true, true);
+  return hasAccess;
 }
 
 export async function getVideos(req: Request, res: Response) {
@@ -351,14 +378,17 @@ export async function getNotes(req: Request, res: Response) {
       return ["ppt", "pptx", "presentation", "slide"].some((k) => t.includes(k));
     };
 
-    // Subscription check drives both premium (PPT) viewing and downloads.
+    // Subscription check drives premium (PPT) viewing.
     let subAccess = false;
     if (req.user && !isAdmin) {
       const result = await checkClassAccess(req.user.id, chapter.subject.class.id, chapter.subject.id, chapter.id, true);
       subAccess = result.hasAccess;
     }
-    // Downloads (protected image-PDFs) are for subscribers only — no add-on needed.
-    const canDownload = isAdmin || subAccess;
+    // PDF downloads: chapter 1 free for anyone signed in, otherwise a yearly plan.
+    const canDownload = await canDownloadChapterPdfs(req.user, chapter, isFirstChapter);
+    const withPdf = new Set(
+      (await prisma.noteDownload.findMany({ where: { noteId: { in: notes.map((n) => n.id) } }, select: { noteId: true } })).map((d) => d.noteId),
+    );
 
     const notesWithAccess = notes.map((n) => {
       const freeDoc = !isPpt(n);
@@ -371,6 +401,8 @@ export async function getNotes(req: Request, res: Response) {
         htmlContent: canView ? n.htmlContent : null,
         cssContent: canView ? n.cssContent : null,
         locked: !canView,
+        // A downloadable PDF exists (Notes / NCERT / PYQ; PPTs keep their own file).
+        hasPdf: freeDoc && withPdf.has(n.id),
       };
     });
 
@@ -646,5 +678,76 @@ export async function getSubjectPricing(_req: Request, res: Response) {
   } catch (e) {
     console.error("Get subject pricing error:", e);
     return error(res, "Failed to fetch pricing information");
+  }
+}
+
+// ---- PDF downloads ---------------------------------------------------------------------------
+
+const DOWNLOAD_PURPOSE = "note-pdf";
+
+/** POST /courses/notes/:id/download: checks the download rule, then hands out a 3-minute link to the file. */
+export async function requestNoteDownload(req: Request, res: Response) {
+  try {
+    const note = await prisma.note.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true,
+        title: true,
+        pdfUrl: true,
+        download: { select: { noteId: true } },
+        chapter: { select: { id: true, subject: { select: { id: true, class: { select: { id: true } } } } } },
+      },
+    });
+    if (!note || docKind(note.title, note.pdfUrl) === "ppt") return error(res, "This document can't be downloaded", 404, { reason: "not_downloadable" });
+    if (!note.download) return error(res, "The PDF of this document is being prepared", 404, { reason: "not_ready" });
+    const isFirstChapter = await isFirstChapterForSubject(note.chapter.id, note.chapter.subject.id);
+    if (!(await canDownloadChapterPdfs(req.user, note.chapter, isFirstChapter))) {
+      return error(res, "PDF download is available only on the yearly subscription", 403, { reason: "yearly_required" });
+    }
+    // A link (not the file) so phones hand the download to their own download manager.
+    const token = jwt.sign({ purpose: DOWNLOAD_PURPOSE, noteId: note.id, userId: req.user!.id }, config.jwt.secret, { expiresIn: "3m" });
+    return success(res, { url: `/courses/notes/${note.id}/file?token=${encodeURIComponent(token)}` });
+  } catch (e) {
+    console.error("Request download error:", e);
+    return error(res, "Couldn't start the download");
+  }
+}
+
+/** GET /courses/notes/:id/file?token=...: the PDF, stamped with the student's name and phone. */
+export async function sendNoteDownload(req: Request, res: Response) {
+  // Opened by the browser itself, so answer in plain words rather than JSON.
+  const plain = (status: number, message: string) => res.status(status).type("text/plain; charset=utf-8").send(message);
+  let payload: any;
+  try {
+    payload = jwt.verify(String(req.query.token || ""), config.jwt.secret);
+  } catch {
+    return plain(410, "This download link has expired. Go back and press Download PDF again.");
+  }
+  if (payload?.purpose !== DOWNLOAD_PURPOSE || payload.noteId !== req.params.id) return plain(400, "This download link isn't valid.");
+  try {
+    const [note, user] = await Promise.all([
+      prisma.note.findUnique({
+        where: { id: req.params.id },
+        select: {
+          title: true,
+          pdfUrl: true,
+          download: { select: { key: true } },
+          chapter: { select: { name: true, order: true, subject: { select: { name: true, class: { select: { name: true } } } } } },
+        },
+      }),
+      prisma.user.findUnique({ where: { id: payload.userId }, select: { name: true, phone: true, email: true } }),
+    ]);
+    if (!note?.download || !user) return plain(404, "This PDF isn't available right now.");
+    const { chapter } = note;
+    const title = `${chapter.subject.class.name} ${chapter.subject.name} - Ch ${chapter.order} ${chapter.name} - ${DOC_KIND_LABELS[docKind(note.title, note.pdfUrl)]}`.replace(/[\/:*?"<>|]+/g, "-");
+    const stamped = await stampForStudent(await storedPdf(note.download.key), studentLabel(user), title);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", attachmentHeader(`${title}.pdf`));
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Content-Length", String(stamped.length));
+    return res.end(Buffer.from(stamped));
+  } catch (e) {
+    console.error("Send download error:", e);
+    return plain(500, "Couldn't prepare this PDF. Please try again.");
   }
 }

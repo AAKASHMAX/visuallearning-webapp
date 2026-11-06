@@ -347,7 +347,7 @@ export async function createSubscriptionOrder(req: Request, res: Response) {
       originalAmount,
       upgradeDiscount,
       couponDiscount,
-      downloadAddon: true, // downloads included with every subscription
+      downloadAddon: billingCycle === "yearly", // PDF downloads come with yearly plans only
       addOnAmount,
       isUpgrade: false,
     });
@@ -472,7 +472,8 @@ export async function verifyPayment(req: Request, res: Response) {
         amount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         discountAmount,
-        downloadAddon: true,
+        // PDF downloads come with yearly plans only (the app reads this flag).
+        downloadAddon: billingCycle === "yearly",
       },
     });
 

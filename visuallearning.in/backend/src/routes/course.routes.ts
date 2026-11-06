@@ -1,8 +1,10 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { authenticate } from "../middleware/auth";
 import {
   getClasses, getSubjects, getChapters, getVideos, getVideoById, getNotes, getQuestions,
   getSubjectContentCounts, getBoardPapers, getCourseBySlug, getSubjectPricing, getCourses,
+  requestNoteDownload, sendNoteDownload,
 } from "../controllers/course.controller";
 
 const router = Router();
@@ -28,5 +30,19 @@ router.get("/chapters/:id/notes", optionalAuth, getNotes);
 router.get("/chapters/:id/questions", optionalAuth, getQuestions);
 router.get("/course-content/:slug", optionalAuth, getCourseBySlug);
 router.get("/pricing/subjects", getSubjectPricing);
+
+// PDF downloads: a signed-in request gets a short-lived link, which the browser then opens.
+// Per student: plenty for studying, slows anyone trying to download everything.
+const downloadLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => req.user?.id || req.ip || "unknown",
+  validate: { xForwardedForHeader: false },
+  message: { success: false, message: "Too many downloads at once. Please try again in a few minutes." },
+});
+router.post("/notes/:id/download", authenticate, downloadLimiter, requestNoteDownload);
+router.get("/notes/:id/file", sendNoteDownload);
 
 export default router;

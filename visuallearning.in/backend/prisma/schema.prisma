@@ -289,8 +289,27 @@ model Note {
   createdAt   DateTime @default(now())
 
   chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  download    NoteDownload?
 
   @@index([chapterId])
+}
+
+/// The downloadable PDF of a note: image pages with the logo watermark, made by the
+/// gen-download-pdfs script and stored on R2. Kept apart from Note so the file's storage key
+/// is never sent to browsers or the app along with the note.
+model NoteDownload {
+  noteId     String   @id
+  /// R2 object key (random, secret). The file is only ever served through the download endpoint.
+  key        String
+  pages      Int
+  bytes      Int
+  /// sha256 of the PDF layout version + the note's html + css when the PDF was made; a different
+  /// hash means the PDF is stale.
+  sourceHash String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  note       Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
 }
 
 model Question {

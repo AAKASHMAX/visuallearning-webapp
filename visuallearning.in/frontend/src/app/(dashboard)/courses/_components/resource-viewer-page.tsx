@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import api from "@/lib/api";
+import { DownloadPdfButton } from "@/components/notes/download-pdf";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,8 @@ type ViewerDocument = {
   cssContent?: string | null;
   locked?: boolean;
   meta?: string;
+  /** A downloadable PDF exists (Notes / NCERT / PYQ / Important Questions). */
+  hasPdf?: boolean;
 };
 
 type ChapterInfo = {
@@ -272,6 +275,7 @@ export function ResourceViewerPage({
             cssContent: note.cssContent || null,
             locked: Boolean(note.locked),
             meta: note.htmlContent ? "HTML Questions" : "Question PDF",
+            hasPdf: Boolean(note.hasPdf),
           }));
           const questionBankDocuments = filterDocuments(kind, noteDocuments);
           const questionData = questionsRes.data.data || {};
@@ -313,6 +317,7 @@ export function ResourceViewerPage({
           cssContent: note.cssContent || null,
           locked: Boolean(note.locked),
           meta: kind === "ppts" ? "Presentation PDF" : kind === "pyq" ? "PYQ Solution" : note.htmlContent ? "HTML Notes" : "PDF Notes",
+          hasPdf: Boolean(note.hasPdf),
         }));
         const filteredDocuments = filterDocuments(kind, noteDocuments);
 
@@ -596,7 +601,17 @@ function DocumentViewer({
                   </div>
                 )}
                 <ZoomControls zoom={zoom} setZoom={setZoom} />
-                {activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
+                {/* Notes / NCERT / PYQ: the watermarked PDF (chapter 1 free, otherwise the yearly plan). */}
+                {kind !== "ppts" && activeDocument.hasPdf ? (
+                  <DownloadPdfButton
+                    noteId={activeDocument.id}
+                    canDownload={canDownload}
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-60 [&>span]:hidden sm:[&>span]:inline",
+                      canDownload ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                    )}
+                  />
+                ) : kind === "ppts" && activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
                   canDownload ? (
                     <a
                       href={downloadUrl(activeDocument.pdfUrl, activeDocument.title)}
@@ -690,9 +705,9 @@ function DocumentViewer({
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600 mx-auto">
               <Lock className="h-7 w-7" />
             </div>
-            <h3 className="text-center text-lg font-black text-heading">Subscribe to Download</h3>
+            <h3 className="text-center text-lg font-black text-heading">Download on the yearly plan</h3>
             <p className="mt-2 text-center text-sm leading-6 text-text-muted">
-              PDF downloads are available for subscribed users. Subscribe to a plan to download notes.
+              PDF download is available only on the yearly subscription. Chapter 1 PDFs of every subject are free to download.
             </p>
             <div className="mt-5 flex gap-3">
               <button

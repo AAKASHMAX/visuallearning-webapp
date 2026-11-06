@@ -9,6 +9,7 @@ import { authLink } from "@/lib/auth-redirect";
 import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
 import { PUBLIC_DOC_KINDS, PUBLIC_DOC_LABELS, PublicDocKind, describeSlug, publicDocPath } from "@/lib/public-docs";
 import { VimeoThumb } from "@/components/video-thumb";
+import { DownloadPdfButton } from "@/components/notes/download-pdf";
 import { cn } from "@/lib/utils";
 
 type ChapterSummary = { id: string; name: string; order: number; slug: string | null; notes: boolean; ncert: boolean; pyq: boolean; videos: number };
@@ -16,7 +17,7 @@ type ChapterSummary = { id: string; name: string; order: number; slug: string | 
 type PublicDocData = {
   kind: PublicDocKind;
   slug: string;
-  doc: { id: string; title: string; htmlContent: string | null; cssContent: string | null; pdfUrl: string | null } | null;
+  doc: { id: string; title: string; htmlContent: string | null; cssContent: string | null; pdfUrl: string | null; hasPdf?: boolean } | null;
   chapter: { id: string; name: string; order: number; slug: string; isFree: boolean };
   subject: { id: string; name: string };
   class: { id: string; name: string };
@@ -241,7 +242,19 @@ export function PublicDocPage({ kind, slug }: { kind: PublicDocKind; slug: strin
             <article className="overflow-hidden rounded-2xl border border-card-border bg-slate-100 shadow-xl shadow-black/20">
               <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
                 <p className="min-w-0 truncate text-sm font-bold text-slate-800">{data.doc.title}</p>
-                <span className="shrink-0 text-[11px] font-bold text-slate-500">VisualLearning</span>
+                {data.doc.hasPdf ? (
+                  <DownloadPdfButton
+                    noteId={data.doc.id}
+                    freeChapter={data.chapter.isFree}
+                    returnTo={publicDocPath(kind, data.slug)}
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60",
+                      data.chapter.isFree ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-700"
+                    )}
+                  />
+                ) : (
+                  <span className="shrink-0 text-[11px] font-bold text-slate-500">VisualLearning</span>
+                )}
               </div>
               {data.doc.htmlContent ? (
                 <div
@@ -361,6 +374,7 @@ function SignupCard({ data, subjectTitle, signupHref, loginHref }: { data: Publi
     notes === total ? `Notes for all ${total} chapters` : notes > 1 ? `Notes for ${notes} chapters, more on the way` : "New chapter notes as they're released",
     count("ncert") > 0 && `NCERT solutions for ${count("ncert")} chapter${count("ncert") === 1 ? "" : "s"}`,
     count("pyq") > 0 && `Solved PYQs for ${count("pyq")} chapter${count("pyq") === 1 ? "" : "s"}`,
+    (data.chapters[0]?.notes || data.chapters[0]?.ncert || data.chapters[0]?.pyq) && `Free PDF downloads for chapter ${data.chapters[0].order}`,
     (data.chapters[0]?.videos ?? 0) > 0 && `Free 3D videos for chapter ${data.chapters[0].order}`,
   ].filter(Boolean) as string[];
 

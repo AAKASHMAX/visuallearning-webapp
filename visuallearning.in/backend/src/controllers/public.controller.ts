@@ -4,6 +4,7 @@ import { success, error } from "../utils/apiResponse";
 import { cacheGet, cacheSet } from "../utils/cache";
 import { animatedHasVimeo } from "./course.controller";
 import { ensureChapterSlugsThrottled } from "../services/public-links.service";
+import { DocKind, docKind } from "../utils/doc-kind";
 
 /**
  * Public document pages linked from YouTube descriptions (visuallearning.in/notes/12-bio-1).
@@ -14,17 +15,6 @@ import { ensureChapterSlugsThrottled } from "../services/public-links.service";
 
 const PUBLIC_KINDS = ["notes", "ncert", "pyq"] as const;
 type PublicKind = (typeof PUBLIC_KINDS)[number];
-type DocKind = PublicKind | "ppt" | "important";
-
-// Same rules as the course viewer: PPTs by title or file, then NCERT, PYQ, Important Questions, Notes.
-function docKind(title: string, pdfUrl: string | null): DocKind {
-  if (/(ppt|pptx|presentation|slide)/.test(`${title} ${pdfUrl || ""}`.toLowerCase())) return "ppt";
-  const t = title.toLowerCase();
-  if (t.includes("ncert")) return "ncert";
-  if (/pyq|previous year|board paper/.test(t)) return "pyq";
-  if (/important|question bank/.test(t)) return "important";
-  return "notes";
-}
 
 function vimeoIdOf(v: { youtubeVideoId: string | null; vimeoVideoId: string | null }) {
   const vm = (v.vimeoVideoId || "").trim();
@@ -102,7 +92,10 @@ export async function getPublicDoc(req: Request, res: Response) {
     // The linked document itself, with its content.
     const docMeta = subjectNotes.find((n) => n.chapterId === chapter!.id && docKind(n.title, n.pdfUrl) === kind);
     const doc = docMeta
-      ? await prisma.note.findUnique({ where: { id: docMeta.id }, select: { id: true, title: true, pdfUrl: true, htmlContent: true, cssContent: true } })
+      ? await prisma.note.findUnique({
+          where: { id: docMeta.id },
+          select: { id: true, title: true, pdfUrl: true, htmlContent: true, cssContent: true, download: { select: { noteId: true } } },
+        })
       : null;
 
     const chapterVideos = mainLanguageVideos(chapter.id);
@@ -120,6 +113,8 @@ export async function getPublicDoc(req: Request, res: Response) {
             htmlContent: doc.htmlContent || null,
             cssContent: doc.htmlContent ? doc.cssContent || null : null,
             pdfUrl: doc.htmlContent ? null : doc.pdfUrl || null,
+            // A downloadable PDF exists (the download itself needs sign-in; see course.controller).
+            hasPdf: !!doc.download,
           }
         : null,
       chapter: { id: chapter.id, name: chapter.name, order: chapter.order, slug: chapter.slug, isFree: isFreeChapter },
