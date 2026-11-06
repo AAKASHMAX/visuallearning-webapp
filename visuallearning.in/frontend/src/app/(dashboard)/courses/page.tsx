@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 
 // Each format keeps its own colour; the artwork matches the subject pages.
 const demos = [
-  { slug: "animation", title: "3D animations", desc: "See a concept come to life, in vivid 3D animation.", href: "/demo/video", accent: "#a78bfa" },
+  { slug: "animation", title: "3D Animations", desc: "See a concept come to life, in vivid 3D animation.", href: "/demo/video", accent: "#a78bfa" },
   { slug: "notes", title: "Visual notes", desc: "Make the big ideas stick.", href: "/demo/visual-notes", accent: "#34d399" },
   { slug: "ncert", title: "NCERT solutions", desc: "Work it out, step by step.", href: "/demo/ncert-solution", accent: "#22d3ee" },
   { slug: "pyq", title: "Past questions", desc: "Get familiar with exams.", href: "/demo/pyq", accent: "#fb7185" },
