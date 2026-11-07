@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, ChevronRight, Clock3, FileText, Loader2, Lock, Play, RefreshCw, Smartphone, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Clock3, FileText, Loader2, Lock, Maximize2, Minimize2, Play, RefreshCw, Smartphone, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { authLink } from "@/lib/auth-redirect";
@@ -64,11 +64,55 @@ export function PublicDocPage({ kind, slug }: { kind: PublicDocKind; slug: strin
   const [attempt, setAttempt] = useState(0);
   const { isAuthenticated, hydrate } = useAuth();
   const docRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const label = PUBLIC_DOC_LABELS[kind];
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  // Full-screen reading: the browser's own full screen where it exists; otherwise (iPhone) the
+  // document card covers the whole window. The button or Esc leaves it.
+  useEffect(() => {
+    const sync = () => setFullscreen(!!viewerRef.current && document.fullscreenElement === viewerRef.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  useEffect(() => {
+    if (!fullscreen || document.fullscreenElement) return; // real full screen handles Esc and scrolling itself
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
+  const toggleFullscreen = async () => {
+    const el = viewerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => {});
+      return;
+    }
+    if (fullscreen) {
+      setFullscreen(false);
+      return;
+    }
+    if (typeof el.requestFullscreen === "function") {
+      try {
+        await el.requestFullscreen();
+        return;
+      } catch {
+        // not allowed here: cover the window instead
+      }
+    }
+    setFullscreen(true);
+  };
 
   useEffect(() => {
     let active = true;
@@ -137,6 +181,11 @@ export function PublicDocPage({ kind, slug }: { kind: PublicDocKind; slug: strin
       fitDoc.current = () => {};
     };
   }, [html]);
+
+  // The card changes width when it enters or leaves full screen: fit the document again.
+  useEffect(() => {
+    fitDoc.current();
+  }, [fullscreen]);
 
   // KaTeX for documents that still carry raw LaTeX ($...$, \(...\), \[...\]).
   useEffect(() => {
@@ -239,27 +288,45 @@ export function PublicDocPage({ kind, slug }: { kind: PublicDocKind; slug: strin
       <div className="mx-auto flex max-w-6xl flex-col gap-5 px-3 py-5 sm:px-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">
           {data.doc && (data.doc.htmlContent || data.doc.pdfUrl) ? (
-            <article className="overflow-hidden rounded-2xl border border-card-border bg-slate-100 shadow-xl shadow-black/20">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+            <article
+              ref={viewerRef}
+              className={cn(
+                "overflow-hidden rounded-2xl border border-card-border bg-slate-100 shadow-xl shadow-black/20",
+                fullscreen && "fixed inset-0 z-[1000] flex flex-col rounded-none border-0 shadow-none"
+              )}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
                 <p className="min-w-0 truncate text-sm font-bold text-slate-800">{data.doc.title}</p>
-                {data.doc.hasPdf ? (
-                  <DownloadPdfButton
-                    noteId={data.doc.id}
-                    freeChapter={data.chapter.isFree}
-                    returnTo={publicDocPath(kind, data.slug)}
-                    className={cn(
-                      "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60",
-                      data.chapter.isFree ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-700"
-                    )}
-                  />
-                ) : (
-                  <span className="shrink-0 text-[11px] font-bold text-slate-500">VisualLearning</span>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {data.doc.hasPdf ? (
+                    <DownloadPdfButton
+                      noteId={data.doc.id}
+                      freeChapter={data.chapter.isFree}
+                      returnTo={publicDocPath(kind, data.slug)}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60",
+                        data.chapter.isFree ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-700"
+                      )}
+                    />
+                  ) : (
+                    <span className="shrink-0 text-[11px] font-bold text-slate-500">VisualLearning</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    aria-label={fullscreen ? "Exit full screen" : "Read in full screen"}
+                    title={fullscreen ? "Exit full screen (Esc)" : "Read in full screen"}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    {fullscreen ? <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" /> : <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                    <span className="hidden sm:inline">{fullscreen ? "Exit full screen" : "Full screen"}</span>
+                  </button>
+                </div>
               </div>
               {data.doc.htmlContent ? (
                 <div
                   // relative: keeps KaTeX's hidden, absolutely positioned MathML inside this box.
-                  className="relative overflow-x-auto py-2 sm:py-4"
+                  className={cn("relative overflow-x-auto py-2 sm:py-4", fullscreen && "min-h-0 flex-1 overflow-y-auto")}
                   style={{ userSelect: "none", WebkitUserSelect: "none" } as React.CSSProperties}
                   onContextMenu={(e) => e.preventDefault()}
                   onCopy={(e) => e.preventDefault()}
@@ -270,7 +337,7 @@ export function PublicDocPage({ kind, slug }: { kind: PublicDocKind; slug: strin
                   <div ref={docRef} className="notes-html-viewer" style={{ color: "#1f2937" }} dangerouslySetInnerHTML={{ __html: data.doc.htmlContent }} />
                 </div>
               ) : (
-                <iframe src={`${data.doc.pdfUrl}#toolbar=0&navpanes=0&view=FitH`} title={data.doc.title} className="h-[80vh] w-full border-0 bg-white" />
+                <iframe src={`${data.doc.pdfUrl}#toolbar=0&navpanes=0&view=FitH`} title={data.doc.title} className={cn("h-[80vh] w-full border-0 bg-white", fullscreen && "h-auto min-h-0 flex-1")} />
               )}
             </article>
           ) : (
