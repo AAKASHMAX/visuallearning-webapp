@@ -207,8 +207,8 @@ export function ResourceViewerPage({
   const [locked, setLocked] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [loadError, setLoadError] = useState("");
-  // Mobile defaults to 50% zoom so desktop-formatted documents fit the screen.
-  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? 0.5 : 0.75));
+  // Documents open at 100%; the zoom buttons step through ZOOM_LEVELS (75%–150%).
+  const [zoom, setZoom] = useState(1);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [showQuestionAnswers, setShowQuestionAnswers] = useState(false);
@@ -423,6 +423,14 @@ function ComingSoonResourcePanel({
   );
 }
 
+/** Zoom steps, like a browser's: from 75% up to 150%, opening at 100%. */
+const ZOOM_LEVELS = [0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5];
+
+// Download buttons on the dark viewer toolbar. learning.css gives every toolbar button light text,
+// so the colours are set with "!" and the backgrounds are dark tints (a light fill made the text vanish).
+const DOWNLOAD_READY = "border-emerald-400/50 bg-emerald-500/15 text-emerald-200! hover:bg-emerald-500/25";
+const DOWNLOAD_LOCKED = "border-white/15 bg-white/5 text-slate-200! hover:bg-white/10";
+
 function ZoomControls({
   zoom,
   setZoom,
@@ -430,29 +438,30 @@ function ZoomControls({
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const step = (direction: 1 | -1) =>
+    setZoom((value) => {
+      const next = direction > 0
+        ? ZOOM_LEVELS.find((level) => level > value + 0.001)
+        : [...ZOOM_LEVELS].reverse().find((level) => level < value - 0.001);
+      return next ?? value;
+    });
+  const atMin = zoom <= ZOOM_LEVELS[0] + 0.001;
+  const atMax = zoom >= ZOOM_LEVELS[ZOOM_LEVELS.length - 1] - 0.001;
+  const buttonClass = "flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent";
+
   return (
     <div className="flex shrink-0 items-center gap-1 rounded-md border border-gray-200 bg-surface p-0.5">
-      <button
-        type="button"
-        onClick={() => setZoom((value) => Math.max(0.5, Number((value - 0.1).toFixed(2))))}
-        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
-        aria-label="Zoom out"
-      >
+      <button type="button" onClick={() => step(-1)} disabled={atMin} className={buttonClass} aria-label="Zoom out">
         <Minus className="h-3.5 w-3.5" />
       </button>
       <span className="min-w-10 text-center text-[11px] font-bold text-heading">{Math.round(zoom * 100)}%</span>
-      <button
-        type="button"
-        onClick={() => setZoom((value) => Math.min(1.6, Number((value + 0.1).toFixed(2))))}
-        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
-        aria-label="Zoom in"
-      >
+      <button type="button" onClick={() => step(1)} disabled={atMax} className={buttonClass} aria-label="Zoom in">
         <Plus className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
         onClick={() => setZoom(1)}
-        className="flex h-7 w-7 items-center justify-center rounded text-heading hover:bg-white"
+        className={buttonClass}
         aria-label="Reset zoom"
       >
         <RotateCcw className="h-3 w-3" />
@@ -608,7 +617,8 @@ function DocumentViewer({
                     canDownload={canDownload}
                     className={cn(
                       "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-60 [&>span]:hidden sm:[&>span]:inline",
-                      canDownload ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                      // The toolbar is dark (learning.css forces light text on its buttons), so these are dark-surface styles.
+                      canDownload ? DOWNLOAD_READY : DOWNLOAD_LOCKED
                     )}
                   />
                 ) : kind === "ppts" && activeDocument.pdfUrl && activeDocument.pdfUrl !== "pending" && (
@@ -618,7 +628,7 @@ function DocumentViewer({
                       download
                       aria-label="Download document"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
+                      className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold", DOWNLOAD_READY)}
                     >
                       <Download className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Download</span>
@@ -628,7 +638,7 @@ function DocumentViewer({
                       type="button"
                       onClick={() => setShowDownloadModal(true)}
                       aria-label="Download document"
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-100"
+                      className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold", DOWNLOAD_LOCKED)}
                     >
                       <Download className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Download</span>
