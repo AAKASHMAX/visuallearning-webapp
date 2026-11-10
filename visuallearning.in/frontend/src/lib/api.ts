@@ -1,5 +1,6 @@
 import axios from "axios";
 import { isPublicDocPath } from "./public-docs";
+import { isClassLandingPath } from "./class-landing";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
@@ -26,7 +27,8 @@ function isPublicPage(path: string) {
     path.startsWith("/demo") ||
     path.startsWith("/explore") ||
     path.startsWith("/auth/") ||
-    isPublicDocPath(path)
+    isPublicDocPath(path) ||
+    isClassLandingPath(path)
   );
 }
 

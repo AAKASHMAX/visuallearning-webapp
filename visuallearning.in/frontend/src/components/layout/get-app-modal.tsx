@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowUpRight, Smartphone, X } from "lucide-react";
 import { APP_PUBLISHED, PLAY_STORE_URL } from "@/lib/app-links";
 import { isPublicDocPath } from "@/lib/public-docs";
+import { isClassLandingPath } from "@/lib/class-landing";
 
 /** When the suggestion may show again (a timestamp); an older "1" just means "now". */
 const SEEN_KEY = "vl_get_app_seen";
@@ -42,8 +43,8 @@ export function GetAppModal() {
     setMode(null);
   };
 
-  // The public notes pages (opened from YouTube) carry their own app banner and sign-up bar.
-  const hidden = pathname.startsWith("/auth") || pathname.startsWith("/admin") || isPublicDocPath(pathname);
+  // The public notes and course pages (opened from YouTube) carry their own app banner and sign-up bar.
+  const hidden = pathname.startsWith("/auth") || pathname.startsWith("/admin") || isPublicDocPath(pathname) || isClassLandingPath(pathname);
   useEffect(() => {
     if (mode !== "sheet" || hidden) return;
     sheet.current?.focus();
