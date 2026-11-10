@@ -1,6 +1,6 @@
 import { Router, Request } from "express";
 import rateLimit from "express-rate-limit";
-import { getPublicDoc } from "../controllers/public.controller";
+import { getPublicClass, getPublicDoc } from "../controllers/public.controller";
 
 const router = Router();
 
@@ -26,5 +26,6 @@ const publicLimiter = rateLimit({
 });
 
 router.get("/docs/:kind/:slug", publicLimiter, getPublicDoc);
+router.get("/classes/:number", publicLimiter, getPublicClass);
 
 export default router;
